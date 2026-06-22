@@ -13,6 +13,8 @@ namespace ApexShift.EditorTools
     {
         private const string ScenePath = "Assets/_Project/Scenes/Game.unity";
         private const string MaterialPath = "Assets/_Project/Materials/Ground_Test_Material.mat";
+        private const string PlayerPrefabPath = "Assets/StylizedCore/StylizedWoodMonsters/URP/AnimationGallery/Prefab/Player.prefab";
+        private static readonly Quaternion PlayerFacingRotation = Quaternion.Euler(0f, 45f, 0f);
 
         [MenuItem("Tools/Apex Shift/Create Base Playable Scene")]
         public static void CreateBasePlayableScene()
@@ -38,11 +40,19 @@ namespace ApexShift.EditorTools
             ground.transform.localScale = new Vector3(10f, 1f, 10f);
             ApplyGroundMaterial(ground);
 
-            GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            player.name = "Player";
+            GameObject player = LoadOrCreatePlayer();
             player.transform.SetParent(gameRoot.transform, false);
-            player.transform.localPosition = new Vector3(0f, 1f, 0f);
-            player.AddComponent<IsometricPlayerController>();
+            player.transform.localPosition = new Vector3(0f, 0f, 0f);
+            player.transform.localScale = Vector3.one * 0.85f;
+            player.transform.localRotation = PlayerFacingRotation;
+            if (player.GetComponent<IsometricPlayerController>() == null)
+            {
+                player.AddComponent<IsometricPlayerController>();
+            }
+            if (player.GetComponent<PlayerAnimationDriver>() == null)
+            {
+                player.AddComponent<PlayerAnimationDriver>();
+            }
 
             GameObject cameraObject = new GameObject("Main Camera");
             cameraObject.transform.SetParent(gameRoot.transform, false);
@@ -125,6 +135,21 @@ namespace ApexShift.EditorTools
             }
         }
 
+        private static GameObject LoadOrCreatePlayer()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
+            if (prefab == null)
+            {
+                GameObject fallback = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                fallback.name = "Player";
+                return fallback;
+            }
+
+            GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            instance.name = "Player";
+            return instance;
+        }
+
         private static Material LoadOrCreateGroundMaterial()
         {
             Material material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
@@ -150,4 +175,3 @@ namespace ApexShift.EditorTools
         }
     }
 }
-
