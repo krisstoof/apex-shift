@@ -70,8 +70,8 @@ public class UniversalAnimationViewer : MonoBehaviour
         if (animationEffects == null)
             animationEffects = GetComponentInChildren<AnimationEffects>();
 
-        if (cameraController == null)
-            cameraController = FindFirstObjectByType<ViewerCameraController>();
+            if (cameraController == null)
+                cameraController = FindAnyObjectByType<ViewerCameraController>();
 
         // Force initial camera adaptation
         if (cameraController != null)

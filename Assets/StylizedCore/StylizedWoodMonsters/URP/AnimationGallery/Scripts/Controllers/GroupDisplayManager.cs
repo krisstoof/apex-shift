@@ -207,7 +207,7 @@ namespace StylizedCore.StylizedWoodMonsters.AnimationGallery.Controllers
     /// </summary>
     private void PositionCameraForGroup()
     {
-        var cameraController = FindFirstObjectByType<ViewerCameraController>();
+        var cameraController = FindAnyObjectByType<ViewerCameraController>();
 
         if (cameraController != null)
         {
@@ -231,7 +231,7 @@ namespace StylizedCore.StylizedWoodMonsters.AnimationGallery.Controllers
 
         activeClones.Clear();
 
-        var cameraController = FindFirstObjectByType<ViewerCameraController>();
+        var cameraController = FindAnyObjectByType<ViewerCameraController>();
         cameraController?.ResetCamera();
     }
 

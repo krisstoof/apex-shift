@@ -1,4 +1,5 @@
 using UnityEngine;
+using CameraComponent = UnityEngine.Camera;
 
 namespace ApexShift.Runtime.Player
 {
@@ -6,6 +7,9 @@ namespace ApexShift.Runtime.Player
     {
         [SerializeField]
         private float moveSpeed = 5f;
+
+        [SerializeField]
+        private float turnSpeed = 18f;
 
         private void Update()
         {
@@ -52,6 +56,45 @@ namespace ApexShift.Runtime.Player
             }
 
             transform.position += movement * (moveSpeed * Time.deltaTime);
+            RotateTowardMouse();
+        }
+
+        private void RotateTowardMouse()
+        {
+            CameraComponent mainCamera = CameraComponent.main;
+            if (mainCamera == null)
+            {
+                return;
+            }
+
+#if ENABLE_INPUT_SYSTEM
+            if (UnityEngine.InputSystem.Mouse.current == null)
+            {
+                return;
+            }
+
+            Vector3 mousePosition = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
+#else
+            Vector3 mousePosition = Input.mousePosition;
+#endif
+
+            Ray ray = mainCamera.ScreenPointToRay(mousePosition);
+            Plane groundPlane = new Plane(Vector3.up, new Vector3(0f, transform.position.y, 0f));
+            if (!groundPlane.Raycast(ray, out float enter))
+            {
+                return;
+            }
+
+            Vector3 hitPoint = ray.GetPoint(enter);
+            Vector3 direction = hitPoint - transform.position;
+            direction.y = 0f;
+            if (direction.sqrMagnitude < 0.0001f)
+            {
+                return;
+            }
+
+            Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Mathf.Clamp01(turnSpeed * Time.deltaTime));
         }
     }
 }

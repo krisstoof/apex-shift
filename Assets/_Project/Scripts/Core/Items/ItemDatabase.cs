@@ -34,6 +34,10 @@ namespace ApexShift.Core.Items
                 new ItemDefinition(new ItemId("torch"), "Torch", 1),
                 new ItemDefinition(new ItemId("spear"), "Spear", 1),
                 new ItemDefinition(new ItemId("bow"), "Bow", 1),
+                new ItemDefinition(new ItemId("campfire"), "Campfire", 1),
+                new ItemDefinition(new ItemId("trap"), "Trap", 1),
+                new ItemDefinition(new ItemId("wall"), "Wall", 20),
+                new ItemDefinition(new ItemId("storage_box"), "Storage Box", 1),
                 new ItemDefinition(new ItemId("berries"), "Berries", 20),
                 new ItemDefinition(new ItemId("grass"), "Grass", 20),
                 new ItemDefinition(new ItemId("tent"), "Tent", 1)
@@ -92,4 +96,3 @@ namespace ApexShift.Core.Items
         public IReadOnlyCollection<ItemDefinition> GetAllDefinitions() => definitionsById.Values.ToArray();
     }
 }
-

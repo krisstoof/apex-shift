@@ -19,6 +19,12 @@ namespace ApexShift.EditorTools
         [MenuItem("Tools/Apex Shift/Create Base Playable Scene")]
         public static void CreateBasePlayableScene()
         {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                Debug.LogWarning("Create Base Playable Scene can only run in Edit mode. Exit Play mode first.");
+                return;
+            }
+
             EnsureFolders();
 
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -45,6 +51,7 @@ namespace ApexShift.EditorTools
             player.transform.localPosition = new Vector3(0f, 0f, 0f);
             player.transform.localScale = Vector3.one * 0.85f;
             player.transform.localRotation = PlayerFacingRotation;
+            RemoveDemoViewerComponents(player);
             if (player.GetComponent<IsometricPlayerController>() == null)
             {
                 player.AddComponent<IsometricPlayerController>();
@@ -55,12 +62,13 @@ namespace ApexShift.EditorTools
             }
 
             GameObject cameraObject = new GameObject("Main Camera");
+            cameraObject.tag = "MainCamera";
             cameraObject.transform.SetParent(gameRoot.transform, false);
-            cameraObject.transform.position = new Vector3(0f, 18f, -18f);
+            cameraObject.transform.position = new Vector3(0f, 8f, -8f);
             cameraObject.transform.rotation = Quaternion.Euler(35.264f, 45f, 0f);
             Camera camera = cameraObject.AddComponent<Camera>();
             camera.orthographic = true;
-            camera.orthographicSize = 14f;
+            camera.orthographicSize = 6f;
             IsometricCameraFollow follow = cameraObject.AddComponent<IsometricCameraFollow>();
             follow.SetTarget(player.transform);
 
@@ -148,6 +156,18 @@ namespace ApexShift.EditorTools
             GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
             instance.name = "Player";
             return instance;
+        }
+
+        private static void RemoveDemoViewerComponents(GameObject player)
+        {
+            MonoBehaviour[] components = player.GetComponentsInChildren<MonoBehaviour>(true);
+            foreach (MonoBehaviour component in components)
+            {
+                if (component != null && component.GetType().Name == "UniversalAnimationViewer")
+                {
+                    Object.DestroyImmediate(component);
+                }
+            }
         }
 
         private static Material LoadOrCreateGroundMaterial()

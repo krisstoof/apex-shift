@@ -4,7 +4,7 @@ using ApexShift.Core.Items;
 using ApexShift.Core.Save;
 using NUnit.Framework;
 
-namespace ApexShift.Tests.EditMode.Inventory
+namespace ApexShift.Tests.Unit.Inventory
 {
     public class InventoryStateTests
     {
