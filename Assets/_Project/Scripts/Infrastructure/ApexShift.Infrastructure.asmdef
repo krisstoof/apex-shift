@@ -1,0 +1,7 @@
+{
+  "name": "ApexShift.Infrastructure",
+  "references": [
+    "ApexShift.Core"
+  ]
+}
+

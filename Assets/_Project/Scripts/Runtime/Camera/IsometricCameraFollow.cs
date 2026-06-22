@@ -1,0 +1,56 @@
+using UnityEngine;
+using CameraComponent = UnityEngine.Camera;
+
+namespace ApexShift.Runtime.Camera
+{
+    [RequireComponent(typeof(CameraComponent))]
+    public sealed class IsometricCameraFollow : MonoBehaviour
+    {
+        [SerializeField]
+        private Transform target;
+
+        [SerializeField]
+        private Vector3 offset = new Vector3(0f, 18f, -18f);
+
+        [SerializeField]
+        private float smoothing = 10f;
+
+        private CameraComponent cachedCamera;
+
+        private void Reset()
+        {
+            cachedCamera = GetComponent<CameraComponent>();
+            if (cachedCamera != null)
+            {
+                cachedCamera.orthographic = true;
+            }
+        }
+
+        private void Awake()
+        {
+            cachedCamera = GetComponent<CameraComponent>();
+            if (cachedCamera != null)
+            {
+                cachedCamera.orthographic = true;
+            }
+        }
+
+        private void LateUpdate()
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            Vector3 desiredPosition = target.position + offset;
+            if (smoothing <= 0f)
+            {
+                transform.position = desiredPosition;
+                return;
+            }
+
+            float t = Mathf.Clamp01(smoothing * Time.deltaTime);
+            transform.position = Vector3.Lerp(transform.position, desiredPosition, t);
+        }
+    }
+}

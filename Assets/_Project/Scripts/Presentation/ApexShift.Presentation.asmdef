@@ -1,0 +1,7 @@
+{
+  "name": "ApexShift.Presentation",
+  "references": [
+    "ApexShift.Core"
+  ]
+}
+

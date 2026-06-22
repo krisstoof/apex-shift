@@ -1,0 +1,7 @@
+{
+  "name": "ApexShift.Runtime",
+  "references": [
+    "ApexShift.Core"
+  ]
+}
+
