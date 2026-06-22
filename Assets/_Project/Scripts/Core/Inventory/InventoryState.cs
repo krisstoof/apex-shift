@@ -32,8 +32,13 @@ namespace ApexShift.Core.Inventory
 
         public int AddItem(string itemId, int amount)
         {
+            if (amount <= 0)
+            {
+                return 0;
+            }
+
             string normalizedId = itemDatabase.NormalizeItemId(itemId).ToString();
-            if (amount <= 0 || !itemDatabase.HasItem(normalizedId))
+            if (!itemDatabase.HasItem(normalizedId))
             {
                 return amount;
             }
@@ -158,7 +163,8 @@ namespace ApexShift.Core.Inventory
                 return 0;
             }
 
-            int removed = amount <= 0 ? slot.Amount : slot.Stack.RemoveAmount(amount);
+            int requested = amount <= 0 ? slot.Amount : amount;
+            int removed = slot.Stack.RemoveAmount(requested);
             if (removed > 0)
             {
                 InventoryChanged?.Invoke();
@@ -276,9 +282,22 @@ namespace ApexShift.Core.Inventory
 
                 int maxStack = itemDatabase.GetMaxStack(normalizedId);
                 int amount = Math.Max(1, Math.Min(slotData.Amount, maxStack));
-                if (slotData.SlotIndex.HasValue && IsValidSlotIndex(slotData.SlotIndex.Value) && slots[slotData.SlotIndex.Value].IsEmpty)
+                if (slotData.SlotIndex.HasValue)
                 {
-                    slots[slotData.SlotIndex.Value].Stack.SetStack(normalizedId, amount);
+                    int slotIndex = slotData.SlotIndex.Value;
+                    if (!IsValidSlotIndex(slotIndex))
+                    {
+                        continue;
+                    }
+
+                    if (slots[slotIndex].IsEmpty)
+                    {
+                        slots[slotIndex].Stack.SetStack(normalizedId, amount);
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
                 else
                 {

@@ -77,6 +77,17 @@ namespace ApexShift.Tests.EditMode.Inventory
         }
 
         [Test]
+        public void AddItemWithNonPositiveAmountReturnsZero()
+        {
+            InventoryState inventory = new InventoryState(itemDatabase);
+
+            int remainder = inventory.AddItem("wood", 0);
+
+            Assert.AreEqual(0, remainder);
+            Assert.AreEqual(9, inventory.GetEmptySlotCount());
+        }
+
+        [Test]
         public void UnknownItemIsRejectedByReturningFullAmount()
         {
             InventoryState inventory = new InventoryState(itemDatabase);
@@ -156,6 +167,7 @@ namespace ApexShift.Tests.EditMode.Inventory
 
             Assert.AreEqual(10, removed);
             Assert.IsTrue(inventory.PeekSlotStack(0).Amount == 0);
+            Assert.IsTrue(inventory.Slots[0].IsEmpty);
         }
 
         [Test]
@@ -212,6 +224,38 @@ namespace ApexShift.Tests.EditMode.Inventory
             inventory.LoadFromSaveData(saveData);
 
             Assert.AreEqual(0, inventory.GetAllItems().Count);
+        }
+
+        [Test]
+        public void LoadFromSaveDataIgnoresInvalidExplicitSlotIndex()
+        {
+            InventoryState inventory = new InventoryState(itemDatabase);
+            InventorySaveData saveData = new InventorySaveData(9, new[]
+            {
+                new InventorySlotSaveData(99, "wood", 5)
+            });
+
+            inventory.LoadFromSaveData(saveData);
+
+            Assert.AreEqual(0, inventory.GetAmount("wood"));
+            Assert.AreEqual(9, inventory.GetEmptySlotCount());
+        }
+
+        [Test]
+        public void LoadFromSaveDataIgnoresOccupiedExplicitSlotTarget()
+        {
+            InventoryState inventory = new InventoryState(itemDatabase);
+            InventorySaveData saveData = new InventorySaveData(9, new[]
+            {
+                new InventorySlotSaveData(0, "wood", 5),
+                new InventorySlotSaveData(0, "stone", 3)
+            });
+
+            inventory.LoadFromSaveData(saveData);
+
+            Assert.AreEqual(5, inventory.GetAmount("wood"));
+            Assert.AreEqual(0, inventory.GetAmount("stone"));
+            Assert.AreEqual("wood", inventory.PeekSlotStack(0).ItemId);
         }
 
         [Test]
