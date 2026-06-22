@@ -1,7 +1,7 @@
 {
   "name": "ApexShift.Runtime",
   "references": [
-    "ApexShift.Core"
+    "ApexShift.Core",
+    "Unity.InputSystem"
   ]
 }
-
