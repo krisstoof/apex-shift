@@ -1,0 +1,153 @@
+using System.IO;
+using ApexShift.Runtime.Bootstrap;
+using ApexShift.Runtime.Camera;
+using ApexShift.Runtime.Player;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+namespace ApexShift.EditorTools
+{
+    public static class ApexShiftSceneBuilder
+    {
+        private const string ScenePath = "Assets/_Project/Scenes/Game.unity";
+        private const string MaterialPath = "Assets/_Project/Materials/Ground_Test_Material.mat";
+
+        [MenuItem("Tools/Apex Shift/Create Base Playable Scene")]
+        public static void CreateBasePlayableScene()
+        {
+            EnsureFolders();
+
+            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            GameObject gameRoot = new GameObject("Game");
+            SceneManager.MoveGameObjectToScene(gameRoot, scene);
+
+            CreateBootstrapper(gameRoot.transform);
+            GameObject worldRoot = CreateChild(gameRoot.transform, "WorldRoot");
+            GameObject terrainRoot = CreateChild(worldRoot.transform, "TerrainRoot");
+            CreateChild(worldRoot.transform, "ResourceRoot");
+            CreateChild(worldRoot.transform, "CreatureRoot");
+            CreateChild(worldRoot.transform, "BuildingRoot");
+
+            GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
+            ground.name = "Ground";
+            ground.transform.SetParent(terrainRoot.transform, false);
+            ground.transform.localPosition = Vector3.zero;
+            ground.transform.localScale = new Vector3(10f, 1f, 10f);
+            ApplyGroundMaterial(ground);
+
+            GameObject player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            player.name = "Player";
+            player.transform.SetParent(gameRoot.transform, false);
+            player.transform.localPosition = new Vector3(0f, 1f, 0f);
+            player.AddComponent<IsometricPlayerController>();
+
+            GameObject cameraObject = new GameObject("Main Camera");
+            cameraObject.transform.SetParent(gameRoot.transform, false);
+            cameraObject.transform.position = new Vector3(0f, 18f, -18f);
+            cameraObject.transform.rotation = Quaternion.Euler(35.264f, 45f, 0f);
+            Camera camera = cameraObject.AddComponent<Camera>();
+            camera.orthographic = true;
+            camera.orthographicSize = 14f;
+            IsometricCameraFollow follow = cameraObject.AddComponent<IsometricCameraFollow>();
+            follow.SetTarget(player.transform);
+
+            GameObject lightObject = new GameObject("Directional Light");
+            lightObject.transform.SetParent(gameRoot.transform, false);
+            lightObject.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+            Light light = lightObject.AddComponent<Light>();
+            light.type = LightType.Directional;
+
+            CreateChild(gameRoot.transform, "UI");
+            CreateChild(gameRoot.transform, "DebugRoot");
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            EditorSceneManager.OpenScene(ScenePath);
+
+            Debug.Log("Apex Shift base playable scene created at " + ScenePath);
+        }
+
+        private static void EnsureFolders()
+        {
+            EnsureFolder("Assets/_Project");
+            EnsureFolder("Assets/_Project/Scenes");
+            EnsureFolder("Assets/_Project/Materials");
+            EnsureFolder("Assets/_Project/Scripts");
+            EnsureFolder("Assets/_Project/Scripts/Editor");
+        }
+
+        private static void EnsureFolder(string path)
+        {
+            if (AssetDatabase.IsValidFolder(path))
+            {
+                return;
+            }
+
+            string parent = Path.GetDirectoryName(path)?.Replace('\\', '/');
+            string name = Path.GetFileName(path);
+            if (!string.IsNullOrEmpty(parent) && !string.IsNullOrEmpty(name))
+            {
+                AssetDatabase.CreateFolder(parent, name);
+            }
+        }
+
+        private static GameObject CreateChild(Transform parent, string name)
+        {
+            GameObject child = new GameObject(name);
+            child.transform.SetParent(parent, false);
+            return child;
+        }
+
+        private static void CreateBootstrapper(Transform parent)
+        {
+            GameObject bootstrapper = new GameObject("GameBootstrapper");
+            bootstrapper.transform.SetParent(parent, false);
+            bootstrapper.AddComponent<GameBootstrapper>();
+        }
+
+        private static void ApplyGroundMaterial(GameObject ground)
+        {
+            Material material = LoadOrCreateGroundMaterial();
+            if (material == null)
+            {
+                return;
+            }
+
+            MeshRenderer renderer = ground.GetComponent<MeshRenderer>();
+            if (renderer != null)
+            {
+                renderer.sharedMaterial = material;
+            }
+        }
+
+        private static Material LoadOrCreateGroundMaterial()
+        {
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
+            if (material != null)
+            {
+                return material;
+            }
+
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
+            if (shader == null)
+            {
+                shader = Shader.Find("Standard");
+            }
+
+            material = new Material(shader)
+            {
+                name = "Ground_Test_Material"
+            };
+            material.color = new Color(0.45f, 0.52f, 0.42f, 1f);
+
+            AssetDatabase.CreateAsset(material, MaterialPath);
+            return material;
+        }
+    }
+}
+
