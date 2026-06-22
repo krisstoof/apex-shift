@@ -15,6 +15,9 @@ namespace ApexShift.Runtime.Camera
         [SerializeField]
         private float smoothing = 10f;
 
+        [SerializeField]
+        private float orthographicSize = 14f;
+
         private CameraComponent cachedCamera;
 
         private void Reset()
@@ -32,7 +35,9 @@ namespace ApexShift.Runtime.Camera
             if (cachedCamera != null)
             {
                 cachedCamera.orthographic = true;
+                cachedCamera.orthographicSize = orthographicSize;
             }
+            transform.rotation = Quaternion.Euler(35.264f, 45f, 0f);
         }
 
         private void LateUpdate()
@@ -51,6 +56,11 @@ namespace ApexShift.Runtime.Camera
 
             float t = Mathf.Clamp01(smoothing * Time.deltaTime);
             transform.position = Vector3.Lerp(transform.position, desiredPosition, t);
+        }
+
+        public void SetTarget(Transform newTarget)
+        {
+            target = newTarget;
         }
     }
 }

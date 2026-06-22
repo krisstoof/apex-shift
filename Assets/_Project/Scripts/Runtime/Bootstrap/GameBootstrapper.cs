@@ -8,8 +8,7 @@ namespace ApexShift.Runtime.Bootstrap
         {
             // Future systems should be composed through services and adapters.
             // Keep this class small so it only coordinates startup, not gameplay.
-            Debug.Log("Apex Shift runtime foundation has started.");
+            Debug.Log("Apex Shift base playable scene initialized.");
         }
     }
 }
-
