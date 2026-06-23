@@ -30,6 +30,9 @@ namespace ApexShift.Runtime.Camera
         [SerializeField]
         private float maxOrthographicSize = 22f;
 
+        [SerializeField]
+        private bool enableSmoothing = true;
+
         private bool firstFrame = true;
 
         private CameraComponent cachedCamera;
@@ -72,7 +75,7 @@ namespace ApexShift.Runtime.Camera
                 return;
             }
 
-            if (smoothing <= 0f)
+            if (!enableSmoothing || smoothing <= 0f)
             {
                 transform.position = desiredPosition;
                 return;
@@ -124,6 +127,11 @@ namespace ApexShift.Runtime.Camera
         public void SetTarget(Transform newTarget)
         {
             target = newTarget;
+        }
+
+        public void SetSmoothingEnabled(bool enabled)
+        {
+            enableSmoothing = enabled;
         }
     }
 }

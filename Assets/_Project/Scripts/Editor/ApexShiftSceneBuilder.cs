@@ -19,6 +19,7 @@ namespace ApexShift.EditorTools
         private const string MaterialPath = "Assets/_Project/Materials/Ground_Test_Material.mat";
         private const string PlayerPrefabPath = "Assets/StylizedCore/StylizedWoodMonsters/URP/AnimationGallery/Prefab/Player.prefab";
         private const string InputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
+        private const string PlayerControllerPath = "Assets/_Project/Animations/Player/PlayerPrototype.controller";
         private static readonly Quaternion PlayerFacingRotation = Quaternion.Euler(0f, 45f, 0f);
 
         [MenuItem("Tools/Apex Shift/Create Base Playable Scene")]
@@ -57,7 +58,6 @@ namespace ApexShift.EditorTools
             player.transform.localScale = Vector3.one * 0.85f;
             player.transform.localRotation = PlayerFacingRotation;
             RemoveDemoViewerComponents(player);
-            ConfigurePlayerRuntime(player);
 
             GameObject cameraObject = new GameObject("Main Camera");
             cameraObject.tag = "MainCamera";
@@ -69,6 +69,8 @@ namespace ApexShift.EditorTools
             camera.orthographicSize = 6f;
             IsometricCameraFollow follow = cameraObject.AddComponent<IsometricCameraFollow>();
             follow.SetTarget(player.transform);
+
+            ConfigurePlayerRuntime(player, cameraObject);
 
             GameObject lightObject = new GameObject("Directional Light");
             lightObject.transform.SetParent(gameRoot.transform, false);
@@ -168,7 +170,7 @@ namespace ApexShift.EditorTools
             }
         }
 
-        private static void ConfigurePlayerRuntime(GameObject player)
+        private static void ConfigurePlayerRuntime(GameObject player, GameObject cameraObject)
         {
             PlayerInputReader inputReader = player.GetComponent<PlayerInputReader>();
             if (inputReader == null)
@@ -186,12 +188,12 @@ namespace ApexShift.EditorTools
                 Debug.LogWarning("Missing input actions asset at " + InputActionsPath);
             }
 
-            IsometricPlayerController controller = player.GetComponent<IsometricPlayerController>();
-            if (controller == null)
+            IsometricPlayerController playerController = player.GetComponent<IsometricPlayerController>();
+            if (playerController == null)
             {
-                controller = player.AddComponent<IsometricPlayerController>();
+                playerController = player.AddComponent<IsometricPlayerController>();
             }
-            controller.SetInputReader(inputReader);
+            playerController.SetInputReader(inputReader);
 
             PlayerAnimationDriver animationDriver = player.GetComponent<PlayerAnimationDriver>();
             if (animationDriver == null)
@@ -199,6 +201,7 @@ namespace ApexShift.EditorTools
                 animationDriver = player.AddComponent<PlayerAnimationDriver>();
             }
             animationDriver.SetInputReader(inputReader);
+            animationDriver.SetAnimator(player.GetComponentInChildren<Animator>());
 
             PlayerActionFeedback feedback = player.GetComponent<PlayerActionFeedback>();
             if (feedback == null)
@@ -207,12 +210,33 @@ namespace ApexShift.EditorTools
             }
             feedback.SetInputReader(inputReader);
 
+            PlayerMotionVisualFeedback motionFeedback = player.GetComponent<PlayerMotionVisualFeedback>();
+            if (motionFeedback == null)
+            {
+                motionFeedback = player.AddComponent<PlayerMotionVisualFeedback>();
+            }
+            motionFeedback.SetInputReader(inputReader);
+            motionFeedback.SetVisualRoot(ResolvePlayerVisualRoot(player));
+
             PlayerActionDebugLog debugLog = player.GetComponent<PlayerActionDebugLog>();
             if (debugLog == null)
             {
                 debugLog = player.AddComponent<PlayerActionDebugLog>();
             }
             debugLog.SetInputReader(inputReader);
+            debugLog.SetWatchedTarget(player.transform);
+            debugLog.SetSecondaryTarget(cameraObject != null ? cameraObject.transform : null);
+            debugLog.SetMovementController(playerController);
+            debugLog.SetMotionFeedback(motionFeedback);
+            debugLog.SetCameraFollow(cameraObject != null ? cameraObject.GetComponent<IsometricCameraFollow>() : null);
+
+            Animator animator = player.GetComponentInChildren<Animator>();
+            RuntimeAnimatorController runtimeController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(PlayerControllerPath);
+            if (animator != null && runtimeController != null)
+            {
+                animator.runtimeAnimatorController = runtimeController;
+                animationDriver.SetAnimator(animator);
+            }
         }
 
         private static Material LoadOrCreateGroundMaterial()
@@ -237,6 +261,28 @@ namespace ApexShift.EditorTools
 
             AssetDatabase.CreateAsset(material, MaterialPath);
             return material;
+        }
+
+        private static Transform ResolvePlayerVisualRoot(GameObject player)
+        {
+            SkinnedMeshRenderer skinnedMeshRenderer = player.GetComponentInChildren<SkinnedMeshRenderer>(true);
+            if (skinnedMeshRenderer != null)
+            {
+                return skinnedMeshRenderer.transform;
+            }
+
+            Animator animator = player.GetComponentInChildren<Animator>(true);
+            if (animator != null && animator.transform != player.transform)
+            {
+                return animator.transform;
+            }
+
+            if (player.transform.childCount > 0)
+            {
+                return player.transform.GetChild(0);
+            }
+
+            return player.transform;
         }
     }
 }

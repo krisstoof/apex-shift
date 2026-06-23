@@ -5,7 +5,7 @@ using CameraComponent = UnityEngine.Camera;
 
 namespace ApexShift.Runtime.Player
 {
-        public sealed class IsometricPlayerController : MonoBehaviour
+    public sealed class IsometricPlayerController : MonoBehaviour
     {
         [SerializeField]
         private PlayerInputReader inputReader;
@@ -19,18 +19,36 @@ namespace ApexShift.Runtime.Player
         [SerializeField]
         private float turnSpeed = 18f;
 
+        [SerializeField]
+        private bool usePhysicsMovement = true;
+
+        [SerializeField]
+        private bool movementEnabled = true;
+
+        private CharacterController characterController;
+        private Rigidbody rigidbodyComponent;
+
         private void Awake()
         {
             if (inputReader == null)
             {
                 inputReader = GetComponent<PlayerInputReader>();
             }
+
+            characterController = GetComponent<CharacterController>();
+            rigidbodyComponent = GetComponent<Rigidbody>();
         }
 
         private void Update()
         {
             if (inputReader == null)
             {
+                return;
+            }
+
+            if (!movementEnabled)
+            {
+                RotateTowardLookPosition(inputReader.LookScreenPosition);
                 return;
             }
 
@@ -85,27 +103,27 @@ namespace ApexShift.Runtime.Player
 
             if (worldBounds.Contains(desiredPosition))
             {
-                transform.position = desiredPosition;
+                ApplyMovement(desiredPosition);
                 return;
             }
 
             Vector3 xOnly = new Vector3(desiredPosition.x, currentPosition.y, currentPosition.z);
             if (worldBounds.Contains(xOnly))
             {
-                transform.position = xOnly;
+                ApplyMovement(xOnly);
                 return;
             }
 
             Vector3 zOnly = new Vector3(currentPosition.x, currentPosition.y, desiredPosition.z);
             if (worldBounds.Contains(zOnly))
             {
-                transform.position = zOnly;
+                ApplyMovement(zOnly);
                 return;
             }
 
             Vector3 clamped = worldBounds.ClampToNearestAllowed(desiredPosition);
             clamped.y = currentPosition.y;
-            transform.position = clamped;
+            ApplyMovement(clamped);
         }
 
         private void RotateTowardLookPosition(Vector2 screenPosition)
@@ -143,6 +161,39 @@ namespace ApexShift.Runtime.Player
         public void SetInputReader(PlayerInputReader reader)
         {
             inputReader = reader;
+        }
+
+        public void SetMovementEnabled(bool enabled)
+        {
+            movementEnabled = enabled;
+        }
+
+        private void ApplyMovement(Vector3 position)
+        {
+            if (!usePhysicsMovement)
+            {
+                transform.position = position;
+                return;
+            }
+
+            if (characterController != null && characterController.enabled)
+            {
+                Vector3 delta = position - transform.position;
+                if (delta.sqrMagnitude > 0.000001f)
+                {
+                    characterController.Move(delta);
+                }
+
+                return;
+            }
+
+            if (rigidbodyComponent != null && !rigidbodyComponent.isKinematic)
+            {
+                rigidbodyComponent.MovePosition(position);
+                return;
+            }
+
+            transform.position = position;
         }
     }
 }

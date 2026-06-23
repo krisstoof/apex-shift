@@ -38,12 +38,16 @@ namespace ApexShift.Runtime.Player
         [SerializeField]
         private float crossFadeDuration = 0.12f;
 
+        [SerializeField]
+        private bool logAnimationSetup = true;
+
         private bool hasSpeed;
         private bool hasMoving;
         private bool hasSprinting;
         private bool hasAttack;
         private bool hasInteract;
         private bool hasStateFallback;
+        private bool loggedMissingStateFallback;
         private string currentState;
 
         private void Awake()
@@ -59,6 +63,15 @@ namespace ApexShift.Runtime.Player
             }
 
             CacheParameters();
+
+            if (logAnimationSetup)
+            {
+                Debug.Log(
+                    $"[PlayerAnimationDriver] Animator={(animator != null ? animator.name : "missing")}, " +
+                    $"hasSpeed={hasSpeed}, hasMoving={hasMoving}, hasSprinting={hasSprinting}, " +
+                    $"hasAttack={hasAttack}, hasInteract={hasInteract}, hasStateFallback={hasStateFallback}",
+                    this);
+            }
         }
 
         private void OnEnable()
@@ -133,6 +146,17 @@ namespace ApexShift.Runtime.Player
 
         private void UpdateStateFallback(bool isMoving, bool isSprinting)
         {
+            if (!CanUseStateFallback())
+            {
+                if (!loggedMissingStateFallback)
+                {
+                    loggedMissingStateFallback = true;
+                    Debug.LogWarning("[PlayerAnimationDriver] State fallback skipped because Idle/Walking/Running clips were not found.", this);
+                }
+
+                return;
+            }
+
             string targetState = idleStateName;
             if (isMoving)
             {
@@ -155,7 +179,7 @@ namespace ApexShift.Runtime.Player
             hasSprinting = false;
             hasAttack = false;
             hasInteract = false;
-            hasStateFallback = true;
+            hasStateFallback = false;
 
             if (animator == null)
             {
@@ -164,8 +188,6 @@ namespace ApexShift.Runtime.Player
 
             foreach (AnimatorControllerParameter parameter in animator.parameters)
             {
-                hasStateFallback = false;
-
                 if (parameter.name == speedParameter)
                 {
                     hasSpeed = parameter.type == AnimatorControllerParameterType.Float;
@@ -187,6 +209,39 @@ namespace ApexShift.Runtime.Player
                     hasInteract = parameter.type == AnimatorControllerParameterType.Trigger;
                 }
             }
+
+            hasStateFallback = !hasSpeed && !hasMoving && CanUseStateFallback();
+        }
+
+        private bool CanUseStateFallback()
+        {
+            if (animator == null || animator.runtimeAnimatorController == null)
+            {
+                return false;
+            }
+
+            AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
+            return ContainsClip(clips, idleStateName)
+                && ContainsClip(clips, walkingStateName)
+                && ContainsClip(clips, runningStateName);
+        }
+
+        private static bool ContainsClip(AnimationClip[] clips, string clipName)
+        {
+            if (clips == null || string.IsNullOrWhiteSpace(clipName))
+            {
+                return false;
+            }
+
+            foreach (AnimationClip clip in clips)
+            {
+                if (clip != null && clip.name == clipName)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public void SetInputReader(PlayerInputReader reader)
@@ -197,6 +252,8 @@ namespace ApexShift.Runtime.Player
         public void SetAnimator(Animator targetAnimator)
         {
             animator = targetAnimator;
+            currentState = null;
+            loggedMissingStateFallback = false;
             CacheParameters();
         }
     }

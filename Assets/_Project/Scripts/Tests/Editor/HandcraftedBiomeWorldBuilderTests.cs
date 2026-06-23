@@ -105,11 +105,83 @@ namespace ApexShift.Tests.Editor
             Assert.IsTrue(handcraftedSource.Contains("PlayerInputReader"));
             Assert.IsTrue(handcraftedSource.Contains("PlayerActionDebugLog"));
             Assert.IsTrue(handcraftedSource.Contains("PlayerActionFeedback"));
+            Assert.IsTrue(handcraftedSource.Contains("PlayerMotionVisualFeedback"));
+            Assert.IsTrue(handcraftedSource.Contains("PlayerPrototype.controller"));
+            Assert.IsTrue(handcraftedSource.Contains("PlayerAnimationControllerBuilder"));
             Assert.IsTrue(baseSceneSource.Contains("ApexShiftInputActions.inputactions"));
             Assert.IsTrue(baseSceneSource.Contains("SetInputActions"));
             Assert.IsTrue(baseSceneSource.Contains("PlayerInputReader"));
             Assert.IsTrue(baseSceneSource.Contains("PlayerActionDebugLog"));
             Assert.IsTrue(baseSceneSource.Contains("PlayerActionFeedback"));
+            Assert.IsTrue(baseSceneSource.Contains("PlayerMotionVisualFeedback"));
+            Assert.IsTrue(baseSceneSource.Contains("PlayerPrototype.controller"));
+            Assert.IsTrue(baseSceneSource.Contains("PlayerAnimationControllerBuilder"));
+        }
+
+        [Test]
+        public void SceneBuilders_ReferenceTheAnimationControllerBuilder()
+        {
+            string handcraftedSource = System.IO.File.ReadAllText("Assets/_Project/Scripts/Editor/World/HandcraftedBiomeWorldBuilder.cs");
+            string baseSceneSource = System.IO.File.ReadAllText("Assets/_Project/Scripts/Editor/ApexShiftSceneBuilder.cs");
+
+            Assert.IsTrue(handcraftedSource.Contains("PlayerAnimationControllerBuilder"));
+            Assert.IsTrue(handcraftedSource.Contains("PlayerPrototype.controller"));
+            Assert.IsTrue(baseSceneSource.Contains("PlayerAnimationControllerBuilder"));
+            Assert.IsTrue(baseSceneSource.Contains("PlayerPrototype.controller"));
+        }
+
+        [Test]
+        public void PlayerAnimationControllerBuilder_UsesRequiredStatesParametersAndClips()
+        {
+            string source = System.IO.File.ReadAllText("Assets/_Project/Scripts/Editor/Player/PlayerAnimationControllerBuilder.cs");
+
+            Assert.IsTrue(source.Contains("SpeedParameter"));
+            Assert.IsTrue(source.Contains("IsMovingParameter"));
+            Assert.IsTrue(source.Contains("IsSprintingParameter"));
+            Assert.IsTrue(source.Contains("AttackTrigger"));
+            Assert.IsTrue(source.Contains("InteractTrigger"));
+            Assert.IsTrue(source.Contains("IdleStateName"));
+            Assert.IsTrue(source.Contains("WalkingStateName"));
+            Assert.IsTrue(source.Contains("RunningStateName"));
+            Assert.IsTrue(source.Contains("AttackStateName"));
+            Assert.IsTrue(source.Contains("InteractStateName"));
+            Assert.IsTrue(source.Contains("tree_04.4"));
+            Assert.IsTrue(source.Contains("tree_02.1"));
+            Assert.IsTrue(source.Contains("tree_04"));
+            Assert.IsTrue(source.Contains("stone_01"));
+            Assert.IsTrue(source.Contains("bush_02.1"));
+            Assert.IsTrue(source.Contains("bush_02.2"));
+            Assert.IsTrue(source.Contains("AnyStateTransition"));
+            Assert.IsTrue(source.Contains("ConfigureTriggerTransition"));
+            Assert.IsTrue(source.Contains("WireMovementTransitions"));
+            Assert.IsTrue(source.Contains("WireActionTransitions"));
+            Assert.IsFalse(source.Contains("compareBool"));
+        }
+
+        [Test]
+        public void PlayerAnimationControllerBuilder_LogsClipAndStateSummary()
+        {
+            string source = System.IO.File.ReadAllText("Assets/_Project/Scripts/Editor/Player/PlayerAnimationControllerBuilder.cs");
+
+            Assert.IsTrue(source.Contains("LogClipSelection"));
+            Assert.IsTrue(source.Contains("LogControllerSummary"));
+            Assert.IsTrue(source.Contains("Prototype animation controller clip:"));
+            Assert.IsTrue(source.Contains("Prototype animation controller states:"));
+            Assert.IsTrue(source.Contains("could not find"));
+            Assert.IsTrue(source.Contains("StateLabel"));
+        }
+
+        [Test]
+        public void PlayerAnimationDriver_StateFallbackDependsOnAnimationClips()
+        {
+            string source = System.IO.File.ReadAllText("Assets/_Project/Scripts/Runtime/Player/PlayerAnimationDriver.cs");
+
+            Assert.IsTrue(source.Contains("logAnimationSetup"));
+            Assert.IsTrue(source.Contains("loggedMissingStateFallback"));
+            Assert.IsTrue(source.Contains("CanUseStateFallback"));
+            Assert.IsTrue(source.Contains("ContainsClip"));
+            Assert.IsTrue(source.Contains("runtimeAnimatorController.animationClips"));
+            Assert.IsTrue(source.Contains("Idle/Walking/Running clips were not found"));
         }
 
         private static bool InvokeIsInsideIsland(float x, float z)

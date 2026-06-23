@@ -23,6 +23,7 @@ namespace ApexShift.EditorTools.World
         private const string MaterialFolder = "Assets/_Project/Materials/Biomes";
         private const string PlayerPrefabPath = "Assets/StylizedCore/StylizedWoodMonsters/URP/AnimationGallery/Prefab/Player.prefab";
         private const string InputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
+        private const string PlayerControllerPath = "Assets/_Project/Animations/Player/PlayerPrototype.controller";
         private const float TileSize = 3.5f;
         private const float IslandRadiusX = 56f;
         private const float IslandRadiusZ = 43f;
@@ -71,7 +72,8 @@ namespace ApexShift.EditorTools.World
             CreateStartClearing(terrainRoot.transform, vegetationRoot.transform, Vector3.zero, new Vector2(8f, 8f), materials.Get(BiomeKind.HearthMeadow));
 
             GameObject player = CreatePlayer(gameRoot.transform);
-            CreateCamera(gameRoot.transform, player.transform);
+            GameObject cameraObject = CreateCamera(gameRoot.transform, player.transform);
+            ConfigurePlayerRuntime(player, cameraObject);
             CreateLight(gameRoot.transform);
 
             CreateChild(gameRoot.transform, "UI");
@@ -1618,12 +1620,10 @@ namespace ApexShift.EditorTools.World
 
             RemoveDemoViewerComponents(player);
 
-            ConfigurePlayerRuntime(player);
-
             return player;
         }
 
-        private static void CreateCamera(Transform parent, Transform player)
+        private static GameObject CreateCamera(Transform parent, Transform player)
         {
             GameObject cameraObject = new GameObject("Main Camera");
             cameraObject.tag = "MainCamera";
@@ -1638,6 +1638,7 @@ namespace ApexShift.EditorTools.World
             IsometricCameraFollow follow = cameraObject.AddComponent<IsometricCameraFollow>();
             follow.SetTarget(player);
             follow.SnapToTarget();
+            return cameraObject;
         }
 
         private static void CreateLight(Transform parent)
@@ -1733,7 +1734,7 @@ namespace ApexShift.EditorTools.World
             }
         }
 
-        private static void ConfigurePlayerRuntime(GameObject player)
+        private static void ConfigurePlayerRuntime(GameObject player, GameObject cameraObject)
         {
             PlayerInputReader inputReader = player.GetComponent<PlayerInputReader>();
             if (inputReader == null)
@@ -1751,12 +1752,12 @@ namespace ApexShift.EditorTools.World
                 Debug.LogWarning("Missing input actions asset at " + InputActionsPath);
             }
 
-            IsometricPlayerController controller = player.GetComponent<IsometricPlayerController>();
-            if (controller == null)
+            IsometricPlayerController playerController = player.GetComponent<IsometricPlayerController>();
+            if (playerController == null)
             {
-                controller = player.AddComponent<IsometricPlayerController>();
+                playerController = player.AddComponent<IsometricPlayerController>();
             }
-            controller.SetInputReader(inputReader);
+            playerController.SetInputReader(inputReader);
 
             PlayerAnimationDriver animationDriver = player.GetComponent<PlayerAnimationDriver>();
             if (animationDriver == null)
@@ -1764,6 +1765,7 @@ namespace ApexShift.EditorTools.World
                 animationDriver = player.AddComponent<PlayerAnimationDriver>();
             }
             animationDriver.SetInputReader(inputReader);
+            animationDriver.SetAnimator(player.GetComponentInChildren<Animator>());
 
             PlayerActionFeedback feedback = player.GetComponent<PlayerActionFeedback>();
             if (feedback == null)
@@ -1772,12 +1774,55 @@ namespace ApexShift.EditorTools.World
             }
             feedback.SetInputReader(inputReader);
 
+            PlayerMotionVisualFeedback motionFeedback = player.GetComponent<PlayerMotionVisualFeedback>();
+            if (motionFeedback == null)
+            {
+                motionFeedback = player.AddComponent<PlayerMotionVisualFeedback>();
+            }
+            motionFeedback.SetInputReader(inputReader);
+            motionFeedback.SetVisualRoot(ResolvePlayerVisualRoot(player));
+
             PlayerActionDebugLog debugLog = player.GetComponent<PlayerActionDebugLog>();
             if (debugLog == null)
             {
                 debugLog = player.AddComponent<PlayerActionDebugLog>();
             }
             debugLog.SetInputReader(inputReader);
+            debugLog.SetWatchedTarget(player.transform);
+            debugLog.SetSecondaryTarget(cameraObject != null ? cameraObject.transform : null);
+            debugLog.SetMovementController(playerController);
+            debugLog.SetMotionFeedback(motionFeedback);
+            debugLog.SetCameraFollow(cameraObject != null ? cameraObject.GetComponent<IsometricCameraFollow>() : null);
+
+            Animator animator = player.GetComponentInChildren<Animator>();
+            RuntimeAnimatorController runtimeController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(PlayerControllerPath);
+            if (animator != null && runtimeController != null)
+            {
+                animator.runtimeAnimatorController = runtimeController;
+                animationDriver.SetAnimator(animator);
+            }
+        }
+
+        private static Transform ResolvePlayerVisualRoot(GameObject player)
+        {
+            SkinnedMeshRenderer skinnedMeshRenderer = player.GetComponentInChildren<SkinnedMeshRenderer>(true);
+            if (skinnedMeshRenderer != null)
+            {
+                return skinnedMeshRenderer.transform;
+            }
+
+            Animator animator = player.GetComponentInChildren<Animator>(true);
+            if (animator != null && animator.transform != player.transform)
+            {
+                return animator.transform;
+            }
+
+            if (player.transform.childCount > 0)
+            {
+                return player.transform.GetChild(0);
+            }
+
+            return player.transform;
         }
 
         private static void EnsureFolders()

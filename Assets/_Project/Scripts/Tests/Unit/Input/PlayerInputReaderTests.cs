@@ -54,6 +54,10 @@ namespace ApexShift.Tests.Unit.Input
             Assert.IsTrue(source.Contains("PlayerInputReader"));
             Assert.IsTrue(source.Contains("walkSpeed"));
             Assert.IsTrue(source.Contains("sprintSpeed"));
+            Assert.IsTrue(source.Contains("CharacterController"));
+            Assert.IsTrue(source.Contains("Rigidbody"));
+            Assert.IsTrue(source.Contains("ApplyMovement"));
+            Assert.IsTrue(source.Contains("SetMovementEnabled"));
         }
 
         [Test]
@@ -67,6 +71,9 @@ namespace ApexShift.Tests.Unit.Input
             Assert.IsTrue(source.Contains("Speed"));
             Assert.IsTrue(source.Contains("IsMoving"));
             Assert.IsTrue(source.Contains("IsSprinting"));
+            Assert.IsTrue(source.Contains("Idle"));
+            Assert.IsTrue(source.Contains("Walking"));
+            Assert.IsTrue(source.Contains("Running"));
             Assert.IsFalse(source.Contains("Keyboard.current"));
             Assert.IsFalse(source.Contains("Input.GetAxisRaw"));
         }
@@ -91,6 +98,10 @@ namespace ApexShift.Tests.Unit.Input
             Assert.IsTrue(source.Contains("F1"));
             Assert.IsTrue(source.Contains("F2"));
             Assert.IsTrue(source.Contains("Reset Position"));
+            Assert.IsTrue(source.Contains("Delta:"));
+            Assert.IsTrue(source.Contains("targetPositionDelta"));
+            Assert.IsTrue(source.Contains("Cam Delta:"));
+            Assert.IsTrue(source.Contains("secondaryTarget"));
         }
 
         [Test]
@@ -111,6 +122,60 @@ namespace ApexShift.Tests.Unit.Input
             Assert.IsFalse(source.Contains("Mouse.current"));
             Assert.IsFalse(source.Contains("Input.GetAxisRaw"));
             Assert.IsFalse(source.Contains("Input.mousePosition"));
+        }
+
+        [Test]
+        public void PlayerMotionVisualFeedback_ProvidesMovementFallback()
+        {
+            string source = File.ReadAllText("Assets/_Project/Scripts/Runtime/Player/PlayerMotionVisualFeedback.cs");
+
+            Assert.IsTrue(source.Contains("PlayerInputReader"));
+            Assert.IsTrue(source.Contains("bobHeight"));
+            Assert.IsTrue(source.Contains("walkBobSpeed"));
+            Assert.IsTrue(source.Contains("sprintBobSpeed"));
+            Assert.IsTrue(source.Contains("Vector3.Lerp"));
+            Assert.IsFalse(source.Contains("Keyboard.current"));
+            Assert.IsFalse(source.Contains("Mouse.current"));
+            Assert.IsFalse(source.Contains("Input.GetAxisRaw"));
+            Assert.IsFalse(source.Contains("Input.mousePosition"));
+            Assert.IsTrue(source.Contains("ResolveVisualRoot"));
+            Assert.IsTrue(source.Contains("SkinnedMeshRenderer"));
+            Assert.IsTrue(source.Contains("enableBobbing"));
+            Assert.IsTrue(source.Contains("SetBobbingEnabled"));
+        }
+
+        [Test]
+        public void PlayerAnimationDriver_LogsSetupAndChecksStateFallbackSafely()
+        {
+            string source = File.ReadAllText("Assets/_Project/Scripts/Runtime/Player/PlayerAnimationDriver.cs");
+
+            Assert.IsTrue(source.Contains("logAnimationSetup"));
+            Assert.IsTrue(source.Contains("hasStateFallback"));
+            Assert.IsTrue(source.Contains("CanUseStateFallback"));
+            Assert.IsTrue(source.Contains("ContainsClip"));
+            Assert.IsTrue(source.Contains("Idle/Walking/Running clips were not found"));
+        }
+
+        [Test]
+        public void IsometricCameraFollow_ExposesSmoothingToggle()
+        {
+            string source = File.ReadAllText("Assets/_Project/Scripts/Runtime/Camera/IsometricCameraFollow.cs");
+
+            Assert.IsTrue(source.Contains("enableSmoothing"));
+            Assert.IsTrue(source.Contains("SetSmoothingEnabled"));
+        }
+
+        [Test]
+        public void PlayerActionDebugLog_ExposesRuntimeToggles()
+        {
+            string source = File.ReadAllText("Assets/_Project/Scripts/Runtime/Debug/PlayerActionDebugLog.cs");
+
+            Assert.IsTrue(source.Contains("Movement Enabled"));
+            Assert.IsTrue(source.Contains("Bobbing Enabled"));
+            Assert.IsTrue(source.Contains("Camera Smoothing"));
+            Assert.IsTrue(source.Contains("SetMovementController"));
+            Assert.IsTrue(source.Contains("SetMotionFeedback"));
+            Assert.IsTrue(source.Contains("SetCameraFollow"));
         }
     }
 }

@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using ApexShift.Runtime.Camera;
+using ApexShift.Runtime.Player;
 using ApexShift.Runtime.PlayerInput;
 using UnityEngine;
 
@@ -25,6 +27,21 @@ namespace ApexShift.Runtime.Debugging
         private Rect panelRect = new Rect(12f, 12f, 280f, 140f);
 
         [SerializeField]
+        private Transform watchedTarget;
+
+        [SerializeField]
+        private Transform secondaryTarget;
+
+        [SerializeField]
+        private IsometricPlayerController playerController;
+
+        [SerializeField]
+        private PlayerMotionVisualFeedback motionFeedback;
+
+        [SerializeField]
+        private IsometricCameraFollow cameraFollow;
+
+        [SerializeField]
         private KeyCode resetPositionKey = KeyCode.F2;
 
         private readonly List<string> entries = new List<string>();
@@ -32,6 +49,14 @@ namespace ApexShift.Runtime.Debugging
         private Vector2 lastMove;
         private bool lastSprintHeld;
         private bool subscribed;
+        private Vector3 lastTargetPosition;
+        private Vector3 lastTargetForward;
+        private Vector3 targetPositionDelta;
+        private Vector3 secondaryTargetPositionDelta;
+        private Vector3 lastSecondaryTargetPosition;
+        private bool movementEnabled = true;
+        private bool bobbingEnabled = true;
+        private bool smoothingEnabled = true;
 
         private const string ShowOverlayPrefKey = "ApexShift.PlayerActionDebugLog.ShowOverlay";
         private const string LogToConsolePrefKey = "ApexShift.PlayerActionDebugLog.LogToConsole";
@@ -50,6 +75,11 @@ namespace ApexShift.Runtime.Debugging
             if (inputReader == null && transform.root != null)
             {
                 inputReader = transform.root.GetComponentInChildren<PlayerInputReader>(true);
+            }
+
+            if (watchedTarget == null)
+            {
+                watchedTarget = transform;
             }
 
             LoadPreferences();
@@ -91,6 +121,7 @@ namespace ApexShift.Runtime.Debugging
 
             lastMove = move;
             lastSprintHeld = sprintHeld;
+            CaptureTargetState();
         }
 
         private void OnGUI()
@@ -134,6 +165,27 @@ namespace ApexShift.Runtime.Debugging
                 SavePreferences();
             }
 
+            bool newMovementEnabled = GUILayout.Toggle(movementEnabled, "Movement Enabled");
+            if (newMovementEnabled != movementEnabled)
+            {
+                movementEnabled = newMovementEnabled;
+                ApplyRuntimeToggles();
+            }
+
+            bool newBobbingEnabled = GUILayout.Toggle(bobbingEnabled, "Bobbing Enabled");
+            if (newBobbingEnabled != bobbingEnabled)
+            {
+                bobbingEnabled = newBobbingEnabled;
+                ApplyRuntimeToggles();
+            }
+
+            bool newSmoothingEnabled = GUILayout.Toggle(smoothingEnabled, "Camera Smoothing");
+            if (newSmoothingEnabled != smoothingEnabled)
+            {
+                smoothingEnabled = newSmoothingEnabled;
+                ApplyRuntimeToggles();
+            }
+
             GUILayout.Label("Total actions: " + totalActions);
 
             if (GUILayout.Button("Clear"))
@@ -162,6 +214,26 @@ namespace ApexShift.Runtime.Debugging
                 GUILayout.Label("Reader: " + inputReader.name);
             }
 
+            if (watchedTarget != null)
+            {
+                GUILayout.Label("Target: " + watchedTarget.name);
+                GUILayout.Label("Pos: " + FormatVector(watchedTarget.position));
+                GUILayout.Label("Delta: " + FormatVector(targetPositionDelta));
+                GUILayout.Label("Fwd: " + FormatVector(watchedTarget.forward));
+                GUILayout.Label("Last Pos: " + FormatVector(lastTargetPosition));
+                GUILayout.Label("Last Fwd: " + FormatVector(lastTargetForward));
+                GUILayout.Label("Move: " + FormatVector(lastMove));
+                GUILayout.Label("Sprint: " + (lastSprintHeld ? "yes" : "no"));
+            }
+
+            if (secondaryTarget != null)
+            {
+                GUILayout.Label("Cam: " + secondaryTarget.name);
+                GUILayout.Label("Cam Pos: " + FormatVector(secondaryTarget.position));
+                GUILayout.Label("Cam Delta: " + FormatVector(secondaryTargetPositionDelta));
+                GUILayout.Label("Cam Last Pos: " + FormatVector(lastSecondaryTargetPosition));
+            }
+
             for (int i = entries.Count - 1; i >= 0; i--)
             {
                 GUILayout.Label(entries[i]);
@@ -181,6 +253,36 @@ namespace ApexShift.Runtime.Debugging
             inputReader = reader;
             TrySubscribe();
             CaptureInitialState();
+        }
+
+        public void SetWatchedTarget(Transform target)
+        {
+            watchedTarget = target;
+            CaptureTargetState();
+        }
+
+        public void SetSecondaryTarget(Transform target)
+        {
+            secondaryTarget = target;
+            CaptureSecondaryTargetState();
+        }
+
+        public void SetMovementController(IsometricPlayerController controller)
+        {
+            playerController = controller;
+            ApplyRuntimeToggles();
+        }
+
+        public void SetMotionFeedback(PlayerMotionVisualFeedback feedback)
+        {
+            motionFeedback = feedback;
+            ApplyRuntimeToggles();
+        }
+
+        public void SetCameraFollow(IsometricCameraFollow follow)
+        {
+            cameraFollow = follow;
+            ApplyRuntimeToggles();
         }
 
         private void TrySubscribe()
@@ -227,6 +329,8 @@ namespace ApexShift.Runtime.Debugging
 
             lastMove = inputReader.Move;
             lastSprintHeld = inputReader.SprintHeld;
+            CaptureTargetState();
+            CaptureSecondaryTargetState();
         }
 
         private void OnInteractPressed() => Append("Interact");
@@ -261,6 +365,41 @@ namespace ApexShift.Runtime.Debugging
             }
         }
 
+        private void CaptureTargetState()
+        {
+            if (watchedTarget == null)
+            {
+                lastTargetPosition = Vector3.zero;
+                lastTargetForward = Vector3.forward;
+                targetPositionDelta = Vector3.zero;
+                return;
+            }
+
+            Vector3 currentPosition = watchedTarget.position;
+            targetPositionDelta = currentPosition - lastTargetPosition;
+            lastTargetPosition = currentPosition;
+            lastTargetForward = watchedTarget.forward;
+        }
+
+        private void CaptureSecondaryTargetState()
+        {
+            if (secondaryTarget == null)
+            {
+                secondaryTargetPositionDelta = Vector3.zero;
+                lastSecondaryTargetPosition = Vector3.zero;
+                return;
+            }
+
+            Vector3 currentPosition = secondaryTarget.position;
+            secondaryTargetPositionDelta = currentPosition - lastSecondaryTargetPosition;
+            lastSecondaryTargetPosition = currentPosition;
+        }
+
+        private static string FormatVector(Vector3 value)
+        {
+            return value.x.ToString("0.00") + ", " + value.y.ToString("0.00") + ", " + value.z.ToString("0.00");
+        }
+
         private void LoadPreferences()
         {
             showOverlay = PlayerPrefs.GetInt(ShowOverlayPrefKey, showOverlay ? 1 : 0) != 0;
@@ -284,6 +423,24 @@ namespace ApexShift.Runtime.Debugging
         {
             panelRect = DefaultPanelRect;
             SavePreferences();
+        }
+
+        private void ApplyRuntimeToggles()
+        {
+            if (playerController != null)
+            {
+                playerController.SetMovementEnabled(movementEnabled);
+            }
+
+            if (motionFeedback != null)
+            {
+                motionFeedback.SetBobbingEnabled(bobbingEnabled);
+            }
+
+            if (cameraFollow != null)
+            {
+                cameraFollow.SetSmoothingEnabled(smoothingEnabled);
+            }
         }
     }
 }

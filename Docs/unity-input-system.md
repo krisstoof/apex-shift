@@ -64,6 +64,23 @@ At this stage:
 - Interact, Attack, Open Inventory, Open Crafting, Toggle Map and Pause produce debug and visual placeholder feedback.
 - Final gameplay systems for those actions are implemented in later issues.
 
+## Animation status
+
+The current prototype supports two animation feedback paths:
+
+1. Animator Controller path:
+   - `Speed`
+   - `IsMoving`
+   - `IsSprinting`
+   - `Attack`
+   - `Interact`
+
+2. Visual fallback path:
+   - subtle movement bob when moving,
+   - faster bob when sprinting.
+
+This keeps player feedback visible even when final animation clips are not ready.
+
 ## Manual test
 
 1. Open Unity.
