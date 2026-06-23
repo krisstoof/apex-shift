@@ -4,6 +4,7 @@ using ApexShift.Runtime.Bootstrap;
 using ApexShift.EditorTools.Camera;
 using ApexShift.Runtime.Camera;
 using ApexShift.Runtime.Debugging;
+using ApexShift.Runtime.Interaction;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.PlayerInput;
 using UnityEditor;
@@ -192,6 +193,20 @@ namespace ApexShift.EditorTools
                 playerController = player.AddComponent<IsometricPlayerController>();
             }
             playerController.SetInputReader(inputReader);
+
+            PlayerInventoryRuntime inventoryRuntime = player.GetComponent<PlayerInventoryRuntime>();
+            if (inventoryRuntime == null)
+            {
+                inventoryRuntime = player.AddComponent<PlayerInventoryRuntime>();
+            }
+
+            PlayerInteractionController interactionController = player.GetComponent<PlayerInteractionController>();
+            if (interactionController == null)
+            {
+                interactionController = player.AddComponent<PlayerInteractionController>();
+            }
+            interactionController.SetInputReader(inputReader);
+            interactionController.SetInteractionOrigin(player.transform);
 
             PlayerAnimationDriver animationDriver = player.GetComponent<PlayerAnimationDriver>();
             if (animationDriver == null)
