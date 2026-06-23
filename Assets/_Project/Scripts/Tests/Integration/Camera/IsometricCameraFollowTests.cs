@@ -29,8 +29,7 @@ namespace ApexShift.Tests.Integration.Camera
 
             follow.SetTarget(targetObject.transform);
 
-            FieldInfo field = typeof(IsometricCameraFollow).GetField("target", BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.IsNotNull(field);
+            FieldInfo field = TestReflection.GetInstanceField(typeof(IsometricCameraFollow), "target");
             Assert.AreSame(targetObject.transform, field.GetValue(follow));
         }
     }

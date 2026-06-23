@@ -1,0 +1,15 @@
+{
+  "name": "ApexShift.EditorTests",
+  "references": [
+    "ApexShift.Core",
+    "ApexShift.Runtime",
+    "ApexShift.Infrastructure",
+    "Assembly-CSharp-Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

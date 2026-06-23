@@ -10,22 +10,25 @@ namespace ApexShift.Runtime.Camera
         private Transform target;
 
         [SerializeField]
-        private Vector3 offset = new Vector3(0f, 8f, -8f);
+        private Vector3 focusOffset = new Vector3(0f, 1.25f, 0f);
 
         [SerializeField]
-        private float smoothing = 18f;
+        private float followDistance = 20f;
 
         [SerializeField]
-        private float orthographicSize = 6f;
+        private float smoothing = 12f;
+
+        [SerializeField]
+        private float orthographicSize = 14f;
 
         [SerializeField]
         private float zoomSpeed = 4f;
 
         [SerializeField]
-        private float minOrthographicSize = 8f;
+        private float minOrthographicSize = 10f;
 
         [SerializeField]
-        private float maxOrthographicSize = 18f;
+        private float maxOrthographicSize = 22f;
 
         private bool firstFrame = true;
 
@@ -37,6 +40,7 @@ namespace ApexShift.Runtime.Camera
             if (cachedCamera != null)
             {
                 cachedCamera.orthographic = true;
+                cachedCamera.orthographicSize = orthographicSize;
             }
         }
 
@@ -59,7 +63,8 @@ namespace ApexShift.Runtime.Camera
             }
 
             HandleZoom();
-            Vector3 desiredPosition = target.position + offset;
+
+            Vector3 desiredPosition = CalculateDesiredPosition();
             if (firstFrame)
             {
                 transform.position = desiredPosition;
@@ -75,6 +80,24 @@ namespace ApexShift.Runtime.Camera
 
             float t = Mathf.Clamp01(smoothing * Time.deltaTime);
             transform.position = Vector3.Lerp(transform.position, desiredPosition, t);
+        }
+
+        public void SnapToTarget()
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            transform.position = CalculateDesiredPosition();
+            firstFrame = false;
+        }
+
+        private Vector3 CalculateDesiredPosition()
+        {
+            Vector3 focusPoint = target.position + focusOffset;
+            Vector3 backwardOffset = -transform.forward * followDistance;
+            return focusPoint + backwardOffset;
         }
 
         private void HandleZoom()
