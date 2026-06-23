@@ -16,7 +16,8 @@ The prototype uses a Cinemachine-based orthographic isometric camera.
   - Camera
   - CinemachineBrain
 - PlayerFollowCamera
-  - Cinemachine camera component
+  - CinemachineCamera
+  - CinemachineFollow
   - Follow: Player
 
 ## Fallback

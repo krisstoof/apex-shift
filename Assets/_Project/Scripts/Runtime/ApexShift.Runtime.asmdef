@@ -2,6 +2,7 @@
   "name": "ApexShift.Runtime",
   "references": [
     "ApexShift.Core",
-    "Unity.InputSystem"
+    "Unity.InputSystem",
+    "Unity.Cinemachine"
   ]
 }

@@ -1,4 +1,6 @@
 ﻿<Solution>
+  <Project Path="Unity.Cinemachine.Editor.csproj" />
+  <Project Path="Unity.Cinemachine.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="ApexShift.Core.csproj" />
   <Project Path="Assembly-CSharp.csproj" />

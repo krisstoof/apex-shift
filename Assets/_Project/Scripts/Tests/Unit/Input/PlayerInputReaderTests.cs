@@ -196,9 +196,11 @@ namespace ApexShift.Tests.Unit.Input
             Assert.IsTrue(helper.Contains("CreateIsometricCameraRig"));
             Assert.IsTrue(helper.Contains("CinemachineBrain"));
             Assert.IsTrue(helper.Contains("CinemachineCamera"));
-            Assert.IsTrue(helper.Contains("CinemachineVirtualCamera"));
+            Assert.IsTrue(helper.Contains("CinemachineFollow"));
             Assert.IsTrue(helper.Contains("followDistance"));
             Assert.IsTrue(helper.Contains("orthographicSize"));
+            Assert.IsFalse(helper.Contains("GetField(\"Target\""));
+            Assert.IsFalse(helper.Contains("ReflectionTypeLoadException"));
         }
 
         [Test]
@@ -212,6 +214,7 @@ namespace ApexShift.Tests.Unit.Input
             Assert.IsTrue(docs.Contains("Yaw: 45"));
             Assert.IsTrue(docs.Contains("Main Camera"));
             Assert.IsTrue(docs.Contains("PlayerFollowCamera"));
+            Assert.IsTrue(docs.Contains("CinemachineFollow"));
             Assert.IsTrue(docs.Contains("IsometricCameraFollow"));
         }
     }
