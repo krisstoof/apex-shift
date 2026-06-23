@@ -44,6 +44,16 @@ namespace ApexShift.Core.Items
             });
         }
 
+        public static ItemDatabase FromDefinitions(IEnumerable<ItemDefinition> definitions)
+        {
+            if (definitions == null)
+            {
+                throw new ArgumentNullException(nameof(definitions));
+            }
+
+            return new ItemDatabase(definitions);
+        }
+
         public bool HasItem(string itemId) => HasItem(NormalizeItemId(itemId));
 
         public bool HasItem(ItemId itemId) => itemId.IsValid && definitionsById.ContainsKey(itemId.ToString());

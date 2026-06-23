@@ -2,7 +2,8 @@
   "name": "ApexShift.Tests",
   "references": [
     "ApexShift.Core",
-    "ApexShift.Runtime"
+    "ApexShift.Runtime",
+    "ApexShift.Infrastructure"
   ],
   "optionalUnityReferences": [
     "TestAssemblies"
