@@ -1,20 +1,40 @@
+using ApexShift.Runtime.PlayerInput;
 using ApexShift.Runtime.World;
 using UnityEngine;
 using CameraComponent = UnityEngine.Camera;
 
 namespace ApexShift.Runtime.Player
 {
-    public sealed class IsometricPlayerController : MonoBehaviour
+        public sealed class IsometricPlayerController : MonoBehaviour
     {
         [SerializeField]
-        private float moveSpeed = 5f;
+        private PlayerInputReader inputReader;
+
+        [SerializeField]
+        private float walkSpeed = 5f;
+
+        [SerializeField]
+        private float sprintSpeed = 8f;
 
         [SerializeField]
         private float turnSpeed = 18f;
 
+        private void Awake()
+        {
+            if (inputReader == null)
+            {
+                inputReader = GetComponent<PlayerInputReader>();
+            }
+        }
+
         private void Update()
         {
-            Vector2 input = ReadMoveInput();
+            if (inputReader == null)
+            {
+                return;
+            }
+
+            Vector2 input = inputReader.Move;
             Vector3 movement = CalculateCameraRelativeMovement(input);
             if (movement.sqrMagnitude > 1f)
             {
@@ -22,48 +42,7 @@ namespace ApexShift.Runtime.Player
             }
 
             MoveWithWorldBounds(movement);
-            RotateTowardMouse();
-        }
-
-        private Vector2 ReadMoveInput()
-        {
-            float horizontal;
-            float vertical;
-
-#if ENABLE_INPUT_SYSTEM
-            Vector2 moveInput = Vector2.zero;
-            var keyboard = UnityEngine.InputSystem.Keyboard.current;
-            if (keyboard != null)
-            {
-                if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)
-                {
-                    moveInput.x -= 1f;
-                }
-
-                if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed)
-                {
-                    moveInput.x += 1f;
-                }
-
-                if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed)
-                {
-                    moveInput.y -= 1f;
-                }
-
-                if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed)
-                {
-                    moveInput.y += 1f;
-                }
-            }
-
-            horizontal = moveInput.x;
-            vertical = moveInput.y;
-#else
-            horizontal = Input.GetAxisRaw("Horizontal");
-            vertical = Input.GetAxisRaw("Vertical");
-#endif
-
-            return new Vector2(horizontal, vertical);
+            RotateTowardLookPosition(inputReader.LookScreenPosition);
         }
 
         private Vector3 CalculateCameraRelativeMovement(Vector2 input)
@@ -94,7 +73,8 @@ namespace ApexShift.Runtime.Player
             }
 
             Vector3 currentPosition = transform.position;
-            Vector3 desiredPosition = currentPosition + movement * (moveSpeed * Time.deltaTime);
+            float speed = inputReader != null && inputReader.SprintHeld ? sprintSpeed : walkSpeed;
+            Vector3 desiredPosition = currentPosition + movement * (speed * Time.deltaTime);
 
             WorldBounds worldBounds = WorldBounds.Active;
             if (worldBounds == null)
@@ -128,7 +108,7 @@ namespace ApexShift.Runtime.Player
             transform.position = clamped;
         }
 
-        private void RotateTowardMouse()
+        private void RotateTowardLookPosition(Vector2 screenPosition)
         {
             CameraComponent mainCamera = CameraComponent.main;
             if (mainCamera == null)
@@ -136,18 +116,12 @@ namespace ApexShift.Runtime.Player
                 return;
             }
 
-#if ENABLE_INPUT_SYSTEM
-            if (UnityEngine.InputSystem.Mouse.current == null)
+            if (screenPosition.sqrMagnitude < 0.0001f)
             {
                 return;
             }
 
-            Vector3 mousePosition = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
-#else
-            Vector3 mousePosition = Input.mousePosition;
-#endif
-
-            Ray ray = mainCamera.ScreenPointToRay(mousePosition);
+            Ray ray = mainCamera.ScreenPointToRay(screenPosition);
             Plane groundPlane = new Plane(Vector3.up, new Vector3(0f, transform.position.y, 0f));
             if (!groundPlane.Raycast(ray, out float enter))
             {
@@ -164,6 +138,11 @@ namespace ApexShift.Runtime.Player
 
             Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Mathf.Clamp01(turnSpeed * Time.deltaTime));
+        }
+
+        public void SetInputReader(PlayerInputReader reader)
+        {
+            inputReader = reader;
         }
     }
 }

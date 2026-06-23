@@ -1,11 +1,15 @@
 using System.IO;
+using System;
 using ApexShift.Runtime.Bootstrap;
 using ApexShift.Runtime.Camera;
+using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.Player;
+using ApexShift.Runtime.PlayerInput;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 
 namespace ApexShift.EditorTools
 {
@@ -14,6 +18,7 @@ namespace ApexShift.EditorTools
         private const string ScenePath = "Assets/_Project/Scenes/Game.unity";
         private const string MaterialPath = "Assets/_Project/Materials/Ground_Test_Material.mat";
         private const string PlayerPrefabPath = "Assets/StylizedCore/StylizedWoodMonsters/URP/AnimationGallery/Prefab/Player.prefab";
+        private const string InputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
         private static readonly Quaternion PlayerFacingRotation = Quaternion.Euler(0f, 45f, 0f);
 
         [MenuItem("Tools/Apex Shift/Create Base Playable Scene")]
@@ -52,14 +57,7 @@ namespace ApexShift.EditorTools
             player.transform.localScale = Vector3.one * 0.85f;
             player.transform.localRotation = PlayerFacingRotation;
             RemoveDemoViewerComponents(player);
-            if (player.GetComponent<IsometricPlayerController>() == null)
-            {
-                player.AddComponent<IsometricPlayerController>();
-            }
-            if (player.GetComponent<PlayerAnimationDriver>() == null)
-            {
-                player.AddComponent<PlayerAnimationDriver>();
-            }
+            ConfigurePlayerRuntime(player);
 
             GameObject cameraObject = new GameObject("Main Camera");
             cameraObject.tag = "MainCamera";
@@ -165,9 +163,56 @@ namespace ApexShift.EditorTools
             {
                 if (component != null && component.GetType().Name == "UniversalAnimationViewer")
                 {
-                    Object.DestroyImmediate(component);
+                    UnityEngine.Object.DestroyImmediate(component);
                 }
             }
+        }
+
+        private static void ConfigurePlayerRuntime(GameObject player)
+        {
+            PlayerInputReader inputReader = player.GetComponent<PlayerInputReader>();
+            if (inputReader == null)
+            {
+                inputReader = player.AddComponent<PlayerInputReader>();
+            }
+
+            InputActionAsset inputActions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
+            if (inputActions != null)
+            {
+                inputReader.SetInputActions(inputActions);
+            }
+            else
+            {
+                Debug.LogWarning("Missing input actions asset at " + InputActionsPath);
+            }
+
+            IsometricPlayerController controller = player.GetComponent<IsometricPlayerController>();
+            if (controller == null)
+            {
+                controller = player.AddComponent<IsometricPlayerController>();
+            }
+            controller.SetInputReader(inputReader);
+
+            PlayerAnimationDriver animationDriver = player.GetComponent<PlayerAnimationDriver>();
+            if (animationDriver == null)
+            {
+                animationDriver = player.AddComponent<PlayerAnimationDriver>();
+            }
+            animationDriver.SetInputReader(inputReader);
+
+            PlayerActionFeedback feedback = player.GetComponent<PlayerActionFeedback>();
+            if (feedback == null)
+            {
+                feedback = player.AddComponent<PlayerActionFeedback>();
+            }
+            feedback.SetInputReader(inputReader);
+
+            PlayerActionDebugLog debugLog = player.GetComponent<PlayerActionDebugLog>();
+            if (debugLog == null)
+            {
+                debugLog = player.AddComponent<PlayerActionDebugLog>();
+            }
+            debugLog.SetInputReader(inputReader);
         }
 
         private static Material LoadOrCreateGroundMaterial()

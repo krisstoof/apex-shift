@@ -1,9 +1,16 @@
+using ApexShift.Runtime.PlayerInput;
 using UnityEngine;
 
 namespace ApexShift.Runtime.Player
 {
     public sealed class PlayerAnimationDriver : MonoBehaviour
     {
+        [SerializeField]
+        private PlayerInputReader inputReader;
+
+        [SerializeField]
+        private Animator animator;
+
         [SerializeField]
         private string idleStateName = "Idle";
 
@@ -14,29 +21,122 @@ namespace ApexShift.Runtime.Player
         private string runningStateName = "Running";
 
         [SerializeField]
-        private float runningThreshold = 0.95f;
+        private string speedParameter = "Speed";
 
-        private Animator animator;
+        [SerializeField]
+        private string movingParameter = "IsMoving";
+
+        [SerializeField]
+        private string sprintingParameter = "IsSprinting";
+
+        [SerializeField]
+        private string attackTrigger = "Attack";
+
+        [SerializeField]
+        private string interactTrigger = "Interact";
+
+        [SerializeField]
+        private float crossFadeDuration = 0.12f;
+
+        private bool hasSpeed;
+        private bool hasMoving;
+        private bool hasSprinting;
+        private bool hasAttack;
+        private bool hasInteract;
+        private bool hasStateFallback;
         private string currentState;
 
         private void Awake()
         {
-            animator = GetComponentInChildren<Animator>();
+            if (inputReader == null)
+            {
+                inputReader = GetComponent<PlayerInputReader>();
+            }
+
+            if (animator == null)
+            {
+                animator = GetComponentInChildren<Animator>();
+            }
+
+            CacheParameters();
         }
 
-        private void Update()
+        private void OnEnable()
         {
-            if (animator == null)
+            if (inputReader == null)
             {
                 return;
             }
 
-            Vector2 movementInput = ReadMovementInput();
-            string targetState = idleStateName;
+            inputReader.AttackPressed += OnAttackPressed;
+            inputReader.InteractPressed += OnInteractPressed;
+        }
 
-            if (movementInput.sqrMagnitude > 0.01f)
+        private void OnDisable()
+        {
+            if (inputReader == null)
             {
-                targetState = movementInput.sqrMagnitude >= runningThreshold ? runningStateName : walkingStateName;
+                return;
+            }
+
+            inputReader.AttackPressed -= OnAttackPressed;
+            inputReader.InteractPressed -= OnInteractPressed;
+        }
+
+        private void Update()
+        {
+            if (inputReader == null || animator == null)
+            {
+                return;
+            }
+
+            float moveAmount = Mathf.Clamp01(inputReader.Move.magnitude);
+            bool isMoving = moveAmount > 0.05f;
+            bool isSprinting = inputReader.SprintHeld && isMoving;
+
+            if (hasSpeed)
+            {
+                animator.SetFloat(speedParameter, isSprinting ? moveAmount * 2f : moveAmount);
+            }
+
+            if (hasMoving)
+            {
+                animator.SetBool(movingParameter, isMoving);
+            }
+
+            if (hasSprinting)
+            {
+                animator.SetBool(sprintingParameter, isSprinting);
+            }
+
+            if (hasStateFallback)
+            {
+                UpdateStateFallback(isMoving, isSprinting);
+            }
+        }
+
+        private void OnAttackPressed()
+        {
+            if (animator != null && hasAttack)
+            {
+                animator.SetTrigger(attackTrigger);
+            }
+        }
+
+        private void OnInteractPressed()
+        {
+            if (animator != null && hasInteract)
+            {
+                animator.SetTrigger(interactTrigger);
+            }
+        }
+
+        private void UpdateStateFallback(bool isMoving, bool isSprinting)
+        {
+            string targetState = idleStateName;
+            if (isMoving)
+            {
+                targetState = isSprinting ? runningStateName : walkingStateName;
             }
 
             if (string.Equals(currentState, targetState))
@@ -45,44 +145,59 @@ namespace ApexShift.Runtime.Player
             }
 
             currentState = targetState;
-            animator.CrossFadeInFixedTime(currentState, 0.1f);
+            animator.CrossFadeInFixedTime(currentState, crossFadeDuration);
         }
 
-        private static Vector2 ReadMovementInput()
+        private void CacheParameters()
         {
-#if ENABLE_INPUT_SYSTEM
-            Vector2 moveInput = Vector2.zero;
-            var keyboard = UnityEngine.InputSystem.Keyboard.current;
-            if (keyboard == null)
+            hasSpeed = false;
+            hasMoving = false;
+            hasSprinting = false;
+            hasAttack = false;
+            hasInteract = false;
+            hasStateFallback = true;
+
+            if (animator == null)
             {
-                return moveInput;
+                return;
             }
 
-            if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed)
+            foreach (AnimatorControllerParameter parameter in animator.parameters)
             {
-                moveInput.x -= 1f;
-            }
+                hasStateFallback = false;
 
-            if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed)
-            {
-                moveInput.x += 1f;
+                if (parameter.name == speedParameter)
+                {
+                    hasSpeed = parameter.type == AnimatorControllerParameterType.Float;
+                }
+                else if (parameter.name == movingParameter)
+                {
+                    hasMoving = parameter.type == AnimatorControllerParameterType.Bool;
+                }
+                else if (parameter.name == sprintingParameter)
+                {
+                    hasSprinting = parameter.type == AnimatorControllerParameterType.Bool;
+                }
+                else if (parameter.name == attackTrigger)
+                {
+                    hasAttack = parameter.type == AnimatorControllerParameterType.Trigger;
+                }
+                else if (parameter.name == interactTrigger)
+                {
+                    hasInteract = parameter.type == AnimatorControllerParameterType.Trigger;
+                }
             }
+        }
 
-            if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed)
-            {
-                moveInput.y -= 1f;
-            }
+        public void SetInputReader(PlayerInputReader reader)
+        {
+            inputReader = reader;
+        }
 
-            if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed)
-            {
-                moveInput.y += 1f;
-            }
-
-            return moveInput;
-#else
-            return new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-#endif
+        public void SetAnimator(Animator targetAnimator)
+        {
+            animator = targetAnimator;
+            CacheParameters();
         }
     }
 }
-

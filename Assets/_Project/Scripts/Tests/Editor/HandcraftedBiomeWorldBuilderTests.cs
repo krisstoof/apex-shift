@@ -94,6 +94,24 @@ namespace ApexShift.Tests.Editor
             Assert.IsNotNull(GameObject.Find("BoundaryRoot"));
         }
 
+        [Test]
+        public void SceneBuilders_ReferenceTheGeneratedInputActionsAsset()
+        {
+            string handcraftedSource = System.IO.File.ReadAllText("Assets/_Project/Scripts/Editor/World/HandcraftedBiomeWorldBuilder.cs");
+            string baseSceneSource = System.IO.File.ReadAllText("Assets/_Project/Scripts/Editor/ApexShiftSceneBuilder.cs");
+
+            Assert.IsTrue(handcraftedSource.Contains("ApexShiftInputActions.inputactions"));
+            Assert.IsTrue(handcraftedSource.Contains("SetInputActions"));
+            Assert.IsTrue(handcraftedSource.Contains("PlayerInputReader"));
+            Assert.IsTrue(handcraftedSource.Contains("PlayerActionDebugLog"));
+            Assert.IsTrue(handcraftedSource.Contains("PlayerActionFeedback"));
+            Assert.IsTrue(baseSceneSource.Contains("ApexShiftInputActions.inputactions"));
+            Assert.IsTrue(baseSceneSource.Contains("SetInputActions"));
+            Assert.IsTrue(baseSceneSource.Contains("PlayerInputReader"));
+            Assert.IsTrue(baseSceneSource.Contains("PlayerActionDebugLog"));
+            Assert.IsTrue(baseSceneSource.Contains("PlayerActionFeedback"));
+        }
+
         private static bool InvokeIsInsideIsland(float x, float z)
         {
             MethodInfo method = EditorTestReflection.GetStaticMethod(

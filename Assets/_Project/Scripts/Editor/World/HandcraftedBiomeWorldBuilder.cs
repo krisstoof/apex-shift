@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.IO;
 using ApexShift.Runtime.Bootstrap;
 using ApexShift.Runtime.Camera;
+using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.Player;
+using ApexShift.Runtime.PlayerInput;
 using ApexShift.Runtime.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 using CameraComponent = UnityEngine.Camera;
 using Object = UnityEngine.Object;
 
@@ -19,6 +22,7 @@ namespace ApexShift.EditorTools.World
         private const string ScenePath = "Assets/_Project/Scenes/BiomeWorldTest.unity";
         private const string MaterialFolder = "Assets/_Project/Materials/Biomes";
         private const string PlayerPrefabPath = "Assets/StylizedCore/StylizedWoodMonsters/URP/AnimationGallery/Prefab/Player.prefab";
+        private const string InputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
         private const float TileSize = 3.5f;
         private const float IslandRadiusX = 56f;
         private const float IslandRadiusZ = 43f;
@@ -1614,15 +1618,7 @@ namespace ApexShift.EditorTools.World
 
             RemoveDemoViewerComponents(player);
 
-            if (player.GetComponent<IsometricPlayerController>() == null)
-            {
-                player.AddComponent<IsometricPlayerController>();
-            }
-
-            if (player.GetComponent<PlayerAnimationDriver>() == null)
-            {
-                player.AddComponent<PlayerAnimationDriver>();
-            }
+            ConfigurePlayerRuntime(player);
 
             return player;
         }
@@ -1735,6 +1731,53 @@ namespace ApexShift.EditorTools.World
                     Object.DestroyImmediate(component);
                 }
             }
+        }
+
+        private static void ConfigurePlayerRuntime(GameObject player)
+        {
+            PlayerInputReader inputReader = player.GetComponent<PlayerInputReader>();
+            if (inputReader == null)
+            {
+                inputReader = player.AddComponent<PlayerInputReader>();
+            }
+
+            InputActionAsset inputActions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
+            if (inputActions != null)
+            {
+                inputReader.SetInputActions(inputActions);
+            }
+            else
+            {
+                Debug.LogWarning("Missing input actions asset at " + InputActionsPath);
+            }
+
+            IsometricPlayerController controller = player.GetComponent<IsometricPlayerController>();
+            if (controller == null)
+            {
+                controller = player.AddComponent<IsometricPlayerController>();
+            }
+            controller.SetInputReader(inputReader);
+
+            PlayerAnimationDriver animationDriver = player.GetComponent<PlayerAnimationDriver>();
+            if (animationDriver == null)
+            {
+                animationDriver = player.AddComponent<PlayerAnimationDriver>();
+            }
+            animationDriver.SetInputReader(inputReader);
+
+            PlayerActionFeedback feedback = player.GetComponent<PlayerActionFeedback>();
+            if (feedback == null)
+            {
+                feedback = player.AddComponent<PlayerActionFeedback>();
+            }
+            feedback.SetInputReader(inputReader);
+
+            PlayerActionDebugLog debugLog = player.GetComponent<PlayerActionDebugLog>();
+            if (debugLog == null)
+            {
+                debugLog = player.AddComponent<PlayerActionDebugLog>();
+            }
+            debugLog.SetInputReader(inputReader);
         }
 
         private static void EnsureFolders()
