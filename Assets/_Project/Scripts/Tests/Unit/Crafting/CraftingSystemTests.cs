@@ -109,6 +109,25 @@ namespace ApexShift.Tests.Unit.Crafting
         }
 
         [Test]
+        public void CanCraftReturnsFalseWhenResultDoesNotFit()
+        {
+            InventoryState inventory = new InventoryState(itemDatabase, 1);
+            inventory.AddItem("wood", 20);
+
+            RecipeDefinition recipe = new RecipeDefinition(new RecipeId("test_output"), new ItemId("stone"), 1, new[]
+            {
+                new RecipeIngredient(new ItemId("wood"), 1)
+            });
+
+            recipeDatabase = new RecipeDatabase(new[] { recipe });
+            craftingSystem = new CraftingSystem(recipeDatabase, itemDatabase);
+
+            Assert.IsFalse(craftingSystem.CanCraft(inventory, "test_output"));
+            Assert.AreEqual(20, inventory.GetAmount("wood"));
+            Assert.AreEqual(0, inventory.GetAmount("stone"));
+        }
+
+        [Test]
         public void MissingIngredientsAreReported()
         {
             InventoryState inventory = new InventoryState(itemDatabase);
@@ -123,6 +142,18 @@ namespace ApexShift.Tests.Unit.Crafting
         }
 
         [Test]
+        public void CampfireRecipeMatchesPrototypeData()
+        {
+            RecipeDefinition recipe = recipeDatabase.GetRecipe("campfire");
+
+            Assert.AreEqual("campfire", recipe.ResultItemId);
+            Assert.AreEqual(1, recipe.ResultAmount);
+            Assert.AreEqual(2, recipe.Ingredients.Count);
+            AssertIngredient(recipe, 0, "wood", 3);
+            AssertIngredient(recipe, 1, "stone", 2);
+        }
+
+        [Test]
         public void TorchRecipeMatchesPrototypeData()
         {
             RecipeDefinition torch = recipeDatabase.GetRecipe("torch");
@@ -130,10 +161,8 @@ namespace ApexShift.Tests.Unit.Crafting
             Assert.AreEqual("torch", torch.ResultItemId);
             Assert.AreEqual(1, torch.ResultAmount);
             Assert.AreEqual(2, torch.Ingredients.Count);
-            Assert.AreEqual("wood", torch.Ingredients[0].ItemId.ToString());
-            Assert.AreEqual(1, torch.Ingredients[0].Amount);
-            Assert.AreEqual("fiber", torch.Ingredients[1].ItemId.ToString());
-            Assert.AreEqual(1, torch.Ingredients[1].Amount);
+            AssertIngredient(torch, 0, "wood", 1);
+            AssertIngredient(torch, 1, "fiber", 1);
         }
 
         [Test]
@@ -144,12 +173,74 @@ namespace ApexShift.Tests.Unit.Crafting
             Assert.AreEqual("spear", spear.ResultItemId);
             Assert.AreEqual(1, spear.ResultAmount);
             Assert.AreEqual(3, spear.Ingredients.Count);
-            Assert.AreEqual("wood", spear.Ingredients[0].ItemId.ToString());
-            Assert.AreEqual(2, spear.Ingredients[0].Amount);
-            Assert.AreEqual("stone", spear.Ingredients[1].ItemId.ToString());
-            Assert.AreEqual(1, spear.Ingredients[1].Amount);
-            Assert.AreEqual("fiber", spear.Ingredients[2].ItemId.ToString());
-            Assert.AreEqual(1, spear.Ingredients[2].Amount);
+            AssertIngredient(spear, 0, "wood", 2);
+            AssertIngredient(spear, 1, "stone", 1);
+            AssertIngredient(spear, 2, "fiber", 1);
+        }
+
+        [Test]
+        public void BowRecipeMatchesPrototypeData()
+        {
+            RecipeDefinition recipe = recipeDatabase.GetRecipe("bow");
+
+            Assert.AreEqual("bow", recipe.ResultItemId);
+            Assert.AreEqual(1, recipe.ResultAmount);
+            Assert.AreEqual(3, recipe.Ingredients.Count);
+            AssertIngredient(recipe, 0, "wood", 3);
+            AssertIngredient(recipe, 1, "fiber", 4);
+            AssertIngredient(recipe, 2, "bone", 1);
+        }
+
+        [Test]
+        public void TrapRecipeMatchesPrototypeData()
+        {
+            RecipeDefinition recipe = recipeDatabase.GetRecipe("trap");
+
+            Assert.AreEqual("trap", recipe.ResultItemId);
+            Assert.AreEqual(1, recipe.ResultAmount);
+            Assert.AreEqual(2, recipe.Ingredients.Count);
+            AssertIngredient(recipe, 0, "wood", 2);
+            AssertIngredient(recipe, 1, "fiber", 2);
+        }
+
+        [Test]
+        public void WallRecipeMatchesPrototypeData()
+        {
+            RecipeDefinition recipe = recipeDatabase.GetRecipe("wall");
+
+            Assert.AreEqual("wall", recipe.ResultItemId);
+            Assert.AreEqual(1, recipe.ResultAmount);
+            Assert.AreEqual(1, recipe.Ingredients.Count);
+            AssertIngredient(recipe, 0, "wood", 3);
+        }
+
+        [Test]
+        public void StorageBoxRecipeMatchesPrototypeData()
+        {
+            RecipeDefinition recipe = recipeDatabase.GetRecipe("storage_box");
+
+            Assert.AreEqual("storage_box", recipe.ResultItemId);
+            Assert.AreEqual(1, recipe.ResultAmount);
+            Assert.AreEqual(1, recipe.Ingredients.Count);
+            AssertIngredient(recipe, 0, "wood", 4);
+        }
+
+        [Test]
+        public void TentRecipeMatchesPrototypeData()
+        {
+            RecipeDefinition recipe = recipeDatabase.GetRecipe("tent");
+
+            Assert.AreEqual("tent", recipe.ResultItemId);
+            Assert.AreEqual(1, recipe.ResultAmount);
+            Assert.AreEqual(2, recipe.Ingredients.Count);
+            AssertIngredient(recipe, 0, "wood", 4);
+            AssertIngredient(recipe, 1, "fiber", 3);
+        }
+
+        private static void AssertIngredient(RecipeDefinition recipe, int index, string expectedItemId, int expectedAmount)
+        {
+            Assert.AreEqual(expectedItemId, recipe.Ingredients[index].ItemId.ToString());
+            Assert.AreEqual(expectedAmount, recipe.Ingredients[index].Amount);
         }
     }
 }

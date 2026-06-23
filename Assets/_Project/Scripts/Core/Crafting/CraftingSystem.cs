@@ -36,13 +36,7 @@ public sealed class CraftingSystem
                 return CraftingResult.Failed(CraftingResultStatus.MissingIngredients, normalizedRecipeId, recipe.ResultItemId, recipe.ResultAmount, missingIngredients);
             }
 
-            InventoryState simulation = new InventoryState(itemDatabase, inventory.SlotCount);
-            simulation.LoadFromSaveData(inventory.ToSaveData());
-            foreach (RecipeIngredient ingredient in recipe.Ingredients)
-            {
-                simulation.RemoveItem(ingredient.ItemId.ToString(), ingredient.Amount);
-            }
-
+            InventoryState simulation = CreateSimulationAfterConsumingIngredients(inventory, recipe);
             if (!simulation.CanAddItem(recipe.ResultItemId, recipe.ResultAmount))
             {
                 return CraftingResult.Failed(CraftingResultStatus.InventoryFull, normalizedRecipeId, recipe.ResultItemId, recipe.ResultAmount);
@@ -65,17 +59,39 @@ public sealed class CraftingSystem
 
         public bool CanCraft(InventoryState inventory, string recipeId)
         {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
             RecipeId normalizedRecipeId = recipeDatabase.NormalizeRecipeId(recipeId);
             if (!recipeDatabase.HasRecipe(normalizedRecipeId))
             {
                 return false;
             }
 
-            return CanCraft(inventory, recipeDatabase.GetRecipe(normalizedRecipeId));
+            RecipeDefinition recipe = recipeDatabase.GetRecipe(normalizedRecipeId);
+            if (GetMissingIngredients(inventory, recipe).Count > 0)
+            {
+                return false;
+            }
+
+            InventoryState simulation = CreateSimulationAfterConsumingIngredients(inventory, recipe);
+            return simulation.CanAddItem(recipe.ResultItemId, recipe.ResultAmount);
         }
 
         public IReadOnlyList<RecipeIngredient> GetMissingIngredients(InventoryState inventory, RecipeDefinition recipe)
         {
+            if (inventory == null)
+            {
+                throw new ArgumentNullException(nameof(inventory));
+            }
+
+            if (recipe == null)
+            {
+                throw new ArgumentNullException(nameof(recipe));
+            }
+
             List<RecipeIngredient> missing = new List<RecipeIngredient>();
             foreach (RecipeIngredient ingredient in recipe.Ingredients)
             {
@@ -89,9 +105,17 @@ public sealed class CraftingSystem
             return missing;
         }
 
-        private bool CanCraft(InventoryState inventory, RecipeDefinition recipe)
+        private InventoryState CreateSimulationAfterConsumingIngredients(InventoryState inventory, RecipeDefinition recipe)
         {
-            return GetMissingIngredients(inventory, recipe).Count == 0;
+            InventoryState simulation = new InventoryState(itemDatabase, inventory.SlotCount);
+            simulation.LoadFromSaveData(inventory.ToSaveData());
+
+            foreach (RecipeIngredient ingredient in recipe.Ingredients)
+            {
+                simulation.RemoveItem(ingredient.ItemId.ToString(), ingredient.Amount);
+            }
+
+            return simulation;
         }
     }
 }
