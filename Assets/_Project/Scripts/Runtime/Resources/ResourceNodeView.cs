@@ -36,14 +36,52 @@ namespace ApexShift.Runtime.Resources
         private ResourceState state;
         private readonly HarvestSystem harvestSystem = new HarvestSystem();
 
-        public string Prompt => harvestSystem.GetPrompt(state);
-        public int Priority => 0;
+        public string Prompt
+        {
+            get
+            {
+                EnsureState();
+                return harvestSystem.GetPrompt(state);
+            }
+        }
 
-        private void Awake() => EnsureState();
+        public int Priority => 0;
+        public ResourceState State
+        {
+            get
+            {
+                EnsureState();
+                return state;
+            }
+        }
+
+        private void Awake()
+        {
+            EnsureState();
+            EnsureInteractionCollider();
+        }
+
+        private void Reset()
+        {
+            ConfigureDefault(resourceKind);
+            EnsureInteractionCollider();
+        }
+
+        private void OnValidate()
+        {
+            amount = Mathf.Max(1, amount);
+            interactionRadius = Mathf.Max(0.1f, interactionRadius);
+        }
 
         public void ConfigureDefault(string kind)
         {
-            resourceKind = kind;
+            ResourceDefinition defaultDefinition = ResourceDefinition.CreateDefault(kind);
+            resourceKind = defaultDefinition.Id.ToString();
+            displayName = defaultDefinition.DisplayName;
+            itemId = defaultDefinition.ItemId;
+            amount = defaultDefinition.HarvestAmount;
+            playerHarvestable = defaultDefinition.PlayerHarvestable;
+            deactivateOnHarvest = defaultDefinition.RemoveWhenHarvested;
             definition = null;
             state = null;
             EnsureState();
@@ -52,7 +90,8 @@ namespace ApexShift.Runtime.Resources
         public bool CanInteract(GameObject actor)
         {
             EnsureState();
-            return TryResolveInventory(actor, out PlayerInventoryRuntime inventoryRuntime) && harvestSystem.CanHarvest(state, inventoryRuntime.Inventory, out _);
+            return TryResolveInventory(actor, out PlayerInventoryRuntime inventoryRuntime)
+                   && harvestSystem.CanHarvest(state, inventoryRuntime.Inventory, out _);
         }
 
         public bool Interact(GameObject actor)
@@ -72,7 +111,11 @@ namespace ApexShift.Runtime.Resources
             }
 
             Debug.Log(result.Message, this);
-            if (result.ShouldRemoveNode) ApplyDepletedVisualState();
+            if (result.ShouldRemoveNode)
+            {
+                ApplyDepletedVisualState();
+            }
+
             return true;
         }
 
@@ -81,7 +124,11 @@ namespace ApexShift.Runtime.Resources
             EnsureState();
             state.RestoreToFull();
             SetVisualsEnabled(true);
-            if (!gameObject.activeSelf) gameObject.SetActive(true);
+            EnsureInteractionCollider();
+            if (!gameObject.activeSelf)
+            {
+                gameObject.SetActive(true);
+            }
         }
 
         private void EnsureState()
@@ -89,42 +136,89 @@ namespace ApexShift.Runtime.Resources
             if (definition == null)
             {
                 string resolvedKind = string.IsNullOrWhiteSpace(resourceKind) ? "conifer_tree" : resourceKind;
-                if (string.IsNullOrWhiteSpace(itemId))
-                {
-                    definition = ResourceDefinition.CreateDefault(resolvedKind);
-                }
-                else
-                {
-                    definition = new ResourceDefinition(new ResourceId(resolvedKind), string.IsNullOrWhiteSpace(displayName) ? resolvedKind : displayName, itemId, Mathf.Max(1, amount), playerHarvestable, deactivateOnHarvest || destroyOnHarvest);
-                }
+                definition = string.IsNullOrWhiteSpace(itemId)
+                    ? ResourceDefinition.CreateDefault(resolvedKind)
+                    : new ResourceDefinition(
+                        new ResourceId(resolvedKind),
+                        string.IsNullOrWhiteSpace(displayName) ? resolvedKind : displayName,
+                        itemId,
+                        Mathf.Max(1, amount),
+                        playerHarvestable,
+                        deactivateOnHarvest || destroyOnHarvest);
             }
 
-            if (state == null) state = definition.CreateState();
+            if (state == null)
+            {
+                state = definition.CreateState();
+            }
+        }
+
+        private void EnsureInteractionCollider()
+        {
+            SphereCollider trigger = GetComponent<SphereCollider>();
+            if (trigger == null)
+            {
+                trigger = gameObject.AddComponent<SphereCollider>();
+            }
+
+            trigger.isTrigger = true;
+            trigger.radius = Mathf.Max(0.1f, interactionRadius);
         }
 
         private void ApplyDepletedVisualState()
         {
-            if (destroyOnHarvest) { Destroy(gameObject); return; }
-            if (deactivateOnHarvest) { gameObject.SetActive(false); return; }
+            if (destroyOnHarvest)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            if (deactivateOnHarvest)
+            {
+                gameObject.SetActive(false);
+                return;
+            }
+
             SetVisualsEnabled(false);
         }
 
         private void SetVisualsEnabled(bool enabled)
         {
-            foreach (Renderer rendererComponent in GetComponentsInChildren<Renderer>(true)) rendererComponent.enabled = enabled;
-            foreach (Collider colliderComponent in GetComponentsInChildren<Collider>(true)) colliderComponent.enabled = enabled;
+            foreach (Renderer rendererComponent in GetComponentsInChildren<Renderer>(true))
+            {
+                rendererComponent.enabled = enabled;
+            }
+
+            foreach (Collider colliderComponent in GetComponentsInChildren<Collider>(true))
+            {
+                colliderComponent.enabled = enabled;
+            }
         }
 
         private static bool TryResolveInventory(GameObject actor, out PlayerInventoryRuntime inventoryRuntime)
         {
             inventoryRuntime = null;
-            if (actor == null) return false;
+            if (actor == null)
+            {
+                return false;
+            }
+
             inventoryRuntime = actor.GetComponent<PlayerInventoryRuntime>();
+            if (inventoryRuntime == null)
+            {
+                inventoryRuntime = actor.GetComponentInParent<PlayerInventoryRuntime>();
+            }
+
             if (inventoryRuntime == null && actor.transform.root != null)
             {
                 inventoryRuntime = actor.transform.root.GetComponentInChildren<PlayerInventoryRuntime>(true);
             }
-            if (inventoryRuntime != null) inventoryRuntime.EnsureInitialized();
+
+            if (inventoryRuntime != null)
+            {
+                inventoryRuntime.EnsureInitialized();
+            }
+
             return inventoryRuntime != null;
         }
 

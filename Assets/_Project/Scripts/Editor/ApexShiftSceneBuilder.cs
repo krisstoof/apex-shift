@@ -7,6 +7,8 @@ using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.Interaction;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.PlayerInput;
+using ApexShift.Presentation.Interaction;
+using ApexShift.Presentation.HUD;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -207,6 +209,18 @@ namespace ApexShift.EditorTools
             }
             interactionController.SetInputReader(inputReader);
             interactionController.SetInteractionOrigin(player.transform);
+
+            PlayerInteractionOverlay interactionOverlay = player.GetComponent<PlayerInteractionOverlay>();
+            if (interactionOverlay == null)
+            {
+                interactionOverlay = player.AddComponent<PlayerInteractionOverlay>();
+            }
+
+            PlayerSurvivalOverlay survivalOverlay = player.GetComponent<PlayerSurvivalOverlay>();
+            if (survivalOverlay == null)
+            {
+                survivalOverlay = player.AddComponent<PlayerSurvivalOverlay>();
+            }
 
             PlayerAnimationDriver animationDriver = player.GetComponent<PlayerAnimationDriver>();
             if (animationDriver == null)

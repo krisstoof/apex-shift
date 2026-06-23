@@ -1,7 +1,7 @@
 {
   "name": "ApexShift.Presentation",
   "references": [
-    "ApexShift.Core"
+    "ApexShift.Core",
+    "ApexShift.Runtime"
   ]
 }
-

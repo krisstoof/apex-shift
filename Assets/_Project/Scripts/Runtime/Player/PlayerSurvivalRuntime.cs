@@ -22,26 +22,15 @@ namespace ApexShift.Runtime.Player
         private float startingRest = 100f;
 
         [SerializeField]
-        private bool showDebugOverlay = true;
-
-        [SerializeField]
         private bool logToConsole;
 
         [SerializeField]
         private float debugLogInterval = 2f;
 
-        [SerializeField]
-        private KeyCode toggleOverlayKey = KeyCode.F3;
-
-        [SerializeField]
-        private Rect panelRect = new Rect(12f, 164f, 260f, 176f);
-
         private SurvivalRules rules;
         private SurvivalSystem survivalSystem;
         private SurvivalStats stats;
         private float debugLogTimer;
-        private const int PanelWindowId = 431073;
-
         public PlayerInputReader InputReader => inputReader;
         public SurvivalStats Stats => stats;
         public SurvivalSystem SurvivalSystem => survivalSystem;
@@ -78,23 +67,6 @@ namespace ApexShift.Runtime.Player
                     Debug.Log(FormatDebugLine(), this);
                 }
             }
-        }
-
-        private void OnGUI()
-        {
-            Event currentEvent = Event.current;
-            if (currentEvent != null && currentEvent.type == EventType.KeyDown && currentEvent.keyCode == toggleOverlayKey)
-            {
-                showDebugOverlay = !showDebugOverlay;
-                currentEvent.Use();
-            }
-
-            if (!showDebugOverlay)
-            {
-                return;
-            }
-
-            panelRect = GUI.Window(PanelWindowId, panelRect, DrawWindowContents, "Survival");
         }
 
         public void SetInputReader(PlayerInputReader reader)
@@ -157,29 +129,6 @@ namespace ApexShift.Runtime.Player
             {
                 InitializeCore();
             }
-        }
-
-        private void DrawWindowContents(int windowId)
-        {
-            if (stats == null)
-            {
-                GUILayout.Label("Survival not initialized.");
-                GUI.DragWindow(new Rect(0f, 0f, 10000f, 24f));
-                return;
-            }
-
-            GUILayout.Label("Health: " + stats.Health.ToString("0.0"));
-            GUILayout.Label("Hunger: " + stats.Hunger.ToString("0.0"));
-            GUILayout.Label("Stamina: " + stats.Stamina.ToString("0.0"));
-            GUILayout.Label("Rest: " + stats.Rest.ToString("0.0"));
-            GUILayout.Label("Condition: " + ConditionText);
-            GUILayout.Label("Wants sprint: " + (WantsSprint ? "yes" : "no"));
-            GUILayout.Label("Sprinting: " + (IsSprinting ? "yes" : "no"));
-            GUILayout.Label("Speed x" + SpeedMultiplier.ToString("0.00"));
-            GUILayout.Label("Campfire regen: " + (stats.CampfireRegenActive ? "yes" : "no"));
-            GUILayout.Label("God mode: " + (stats.GodMode ? "yes" : "no"));
-
-            GUI.DragWindow(new Rect(0f, 0f, 10000f, 24f));
         }
 
         private string FormatDebugLine()

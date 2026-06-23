@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ApexShift.Runtime.Player;
 using ApexShift.Runtime.PlayerInput;
 using UnityEngine;
 
@@ -12,32 +13,44 @@ namespace ApexShift.Runtime.Interaction
         [SerializeField] private float interactionRadius = 2.25f;
         [SerializeField] private LayerMask interactionMask = Physics.DefaultRaycastLayers;
         [SerializeField] private int maxOverlapResults = 16;
-        [SerializeField] private bool showDebugOverlay;
-        [SerializeField] private Rect panelRect = new Rect(12f, 348f, 380f, 120f);
-
         private readonly List<IInteractable> nearbyInteractables = new List<IInteractable>();
         private Collider[] overlapResults;
-        private const int PanelWindowId = 431074;
+        private bool subscribed;
 
         public IInteractable CurrentInteractable { get; private set; }
         public string CurrentPrompt { get; private set; } = string.Empty;
 
         private void Awake()
         {
-            if (inputReader == null) inputReader = GetComponent<PlayerInputReader>();
-            if (interactionOrigin == null) interactionOrigin = transform;
+            if (inputReader == null)
+            {
+                inputReader = GetComponent<PlayerInputReader>();
+            }
+
+            if (interactionOrigin == null)
+            {
+                interactionOrigin = transform;
+            }
+
             overlapResults = new Collider[Mathf.Max(1, maxOverlapResults)];
         }
 
         private void OnEnable()
         {
-            if (inputReader == null) inputReader = GetComponent<PlayerInputReader>();
-            if (inputReader != null) inputReader.InteractPressed += TryInteract;
+            if (inputReader == null)
+            {
+                inputReader = GetComponent<PlayerInputReader>();
+            }
+
+            SubscribeInput();
         }
 
         private void OnDisable()
         {
-            if (inputReader != null) inputReader.InteractPressed -= TryInteract;
+            UnsubscribeInput();
+            nearbyInteractables.Clear();
+            CurrentInteractable = null;
+            CurrentPrompt = string.Empty;
         }
 
         private void Update()
@@ -46,34 +59,91 @@ namespace ApexShift.Runtime.Interaction
             UpdateCurrentInteractable();
         }
 
-        private void OnGUI()
+        public void SetInputReader(PlayerInputReader reader)
         {
-            if (!showDebugOverlay) return;
-            panelRect = GUI.Window(PanelWindowId, panelRect, DrawWindowContents, "Interaction");
+            if (inputReader == reader)
+            {
+                return;
+            }
+
+            UnsubscribeInput();
+            inputReader = reader;
+            if (enabled)
+            {
+                SubscribeInput();
+            }
         }
 
-        public void SetInputReader(PlayerInputReader reader) => inputReader = reader;
-        public void SetInteractionOrigin(Transform origin) => interactionOrigin = origin != null ? origin : transform;
+        public void SetInteractionOrigin(Transform origin)
+        {
+            interactionOrigin = origin != null ? origin : transform;
+        }
 
-        private void TryInteract()
+        public void TryInteract()
         {
             RefreshNearbyInteractables();
             UpdateCurrentInteractable();
             if (CurrentInteractable != null && CurrentInteractable.CanInteract(gameObject))
             {
                 CurrentInteractable.Interact(gameObject);
+                RefreshNearbyInteractables();
+                UpdateCurrentInteractable();
+                return;
             }
+
+            Debug.Log("No interactable resource in range.", this);
+        }
+
+        private void SubscribeInput()
+        {
+            if (subscribed || inputReader == null)
+            {
+                return;
+            }
+
+            inputReader.InteractPressed += TryInteract;
+            subscribed = true;
+        }
+
+        private void UnsubscribeInput()
+        {
+            if (!subscribed || inputReader == null)
+            {
+                subscribed = false;
+                return;
+            }
+
+            inputReader.InteractPressed -= TryInteract;
+            subscribed = false;
         }
 
         private void RefreshNearbyInteractables()
         {
             nearbyInteractables.Clear();
             Vector3 origin = interactionOrigin != null ? interactionOrigin.position : transform.position;
-            Collider[] colliders = Physics.OverlapSphere(origin, interactionRadius, interactionMask, QueryTriggerInteraction.Collide);
-            foreach (Collider collider in colliders)
+
+            if (overlapResults == null || overlapResults.Length != Mathf.Max(1, maxOverlapResults))
             {
-                if (collider == null) continue;
-                MonoBehaviour[] behaviours = collider.GetComponentsInParent<MonoBehaviour>(true);
+                overlapResults = new Collider[Mathf.Max(1, maxOverlapResults)];
+            }
+
+            int count = Physics.OverlapSphereNonAlloc(
+                origin,
+                Mathf.Max(0.1f, interactionRadius),
+                overlapResults,
+                interactionMask,
+                QueryTriggerInteraction.Collide);
+
+            for (int i = 0; i < count; i++)
+            {
+                Collider hit = overlapResults[i];
+                overlapResults[i] = null;
+                if (hit == null)
+                {
+                    continue;
+                }
+
+                MonoBehaviour[] behaviours = hit.GetComponentsInParent<MonoBehaviour>(true);
                 foreach (MonoBehaviour behaviour in behaviours)
                 {
                     if (behaviour is IInteractable interactable && !nearbyInteractables.Contains(interactable))
@@ -101,10 +171,10 @@ namespace ApexShift.Runtime.Interaction
             }
         }
 
-        private void DrawWindowContents(int windowId)
+        private void OnDrawGizmosSelected()
         {
-            GUILayout.Label(string.IsNullOrEmpty(CurrentPrompt) ? "No interactable target." : CurrentPrompt);
-            GUI.DragWindow(new Rect(0f, 0f, 10000f, 24f));
+            Transform origin = interactionOrigin != null ? interactionOrigin : transform;
+            Gizmos.DrawWireSphere(origin.position, Mathf.Max(0.1f, interactionRadius));
         }
     }
 }
