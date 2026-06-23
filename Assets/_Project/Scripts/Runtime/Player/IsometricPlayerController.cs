@@ -11,6 +11,9 @@ namespace ApexShift.Runtime.Player
         private PlayerInputReader inputReader;
 
         [SerializeField]
+        private PlayerSurvivalRuntime survivalRuntime;
+
+        [SerializeField]
         private float walkSpeed = 5f;
 
         [SerializeField]
@@ -33,6 +36,11 @@ namespace ApexShift.Runtime.Player
             if (inputReader == null)
             {
                 inputReader = GetComponent<PlayerInputReader>();
+            }
+
+            if (survivalRuntime == null)
+            {
+                survivalRuntime = GetComponent<PlayerSurvivalRuntime>();
             }
 
             characterController = GetComponent<CharacterController>();
@@ -91,7 +99,7 @@ namespace ApexShift.Runtime.Player
             }
 
             Vector3 currentPosition = transform.position;
-            float speed = inputReader != null && inputReader.SprintHeld ? sprintSpeed : walkSpeed;
+            float speed = GetCurrentMovementSpeed();
             Vector3 desiredPosition = currentPosition + movement * (speed * Time.deltaTime);
 
             WorldBounds worldBounds = WorldBounds.Active;
@@ -168,6 +176,11 @@ namespace ApexShift.Runtime.Player
             movementEnabled = enabled;
         }
 
+        public void SetSurvivalRuntime(PlayerSurvivalRuntime runtime)
+        {
+            survivalRuntime = runtime;
+        }
+
         private void ApplyMovement(Vector3 position)
         {
             if (!usePhysicsMovement)
@@ -194,6 +207,23 @@ namespace ApexShift.Runtime.Player
             }
 
             transform.position = position;
+        }
+
+        private float GetCurrentMovementSpeed()
+        {
+            bool shouldSprint;
+            float speedMultiplier = 1f;
+            if (survivalRuntime != null)
+            {
+                shouldSprint = inputReader != null && inputReader.SprintHeld && survivalRuntime.CanSprint;
+                speedMultiplier = survivalRuntime.SpeedMultiplier;
+            }
+            else
+            {
+                shouldSprint = inputReader != null && inputReader.SprintHeld;
+            }
+
+            return (shouldSprint ? sprintSpeed : walkSpeed) * Mathf.Max(0f, speedMultiplier);
         }
     }
 }
