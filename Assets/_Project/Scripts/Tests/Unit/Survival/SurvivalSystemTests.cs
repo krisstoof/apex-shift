@@ -65,6 +65,17 @@ namespace ApexShift.Tests.Unit.Survival
         }
 
         [Test]
+        public void SprintStartsAtMinimumThresholds()
+        {
+            SurvivalStats stats = new SurvivalStats(rules);
+            stats.Restore(100f, rules.MinimumHungerToSprint, rules.MinimumStaminaToSprint, rules.MinimumRestToSprint);
+
+            SurvivalTickResult result = system.Tick(stats, 1f, true);
+
+            Assert.IsTrue(result.IsSprinting);
+        }
+
+        [Test]
         public void StaminaRegeneratesWhenNotSprinting()
         {
             SurvivalStats stats = new SurvivalStats(rules);

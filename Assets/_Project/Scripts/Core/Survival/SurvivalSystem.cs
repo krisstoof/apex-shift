@@ -184,9 +184,9 @@ namespace ApexShift.Core.Survival
                 throw new ArgumentNullException(nameof(stats));
             }
 
-            return stats.Stamina > rules.MinimumStaminaToSprint
-                   && stats.Hunger > rules.MinimumHungerToSprint
-                   && stats.Rest > rules.MinimumRestToSprint;
+            return stats.Stamina >= rules.MinimumStaminaToSprint
+                   && stats.Hunger >= rules.MinimumHungerToSprint
+                   && stats.Rest >= rules.MinimumRestToSprint;
         }
 
         public float GetStaminaRegenRate(SurvivalStats stats)

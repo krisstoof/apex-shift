@@ -24,7 +24,7 @@ namespace ApexShift.Runtime.Debugging
         private KeyCode toggleOverlayKey = KeyCode.F1;
 
         [SerializeField]
-        private Rect panelRect = new Rect(12f, 12f, 280f, 140f);
+        private Rect panelRect = new Rect(12f, 12f, 380f, 260f);
 
         [SerializeField]
         private Transform watchedTarget;
@@ -63,7 +63,7 @@ namespace ApexShift.Runtime.Debugging
         private const string PanelPositionXPrefKey = "ApexShift.PlayerActionDebugLog.PanelPositionX";
         private const string PanelPositionYPrefKey = "ApexShift.PlayerActionDebugLog.PanelPositionY";
         private const int PanelWindowId = 431072;
-        private static readonly Rect DefaultPanelRect = new Rect(12f, 12f, 240f, 110f);
+        private static readonly Rect DefaultPanelRect = new Rect(12f, 12f, 380f, 260f);
 
         private void Awake()
         {
@@ -140,9 +140,9 @@ namespace ApexShift.Runtime.Debugging
                 currentEvent.Use();
             }
 
-            const float width = 240f;
-            const float lineHeight = 16f;
-            float height = Mathf.Max(110f, 84f + entries.Count * lineHeight);
+            const float width = 380f;
+            const float lineHeight = 18f;
+            float height = Mathf.Max(260f, 180f + entries.Count * lineHeight);
 
             panelRect.width = width;
             panelRect.height = height;
