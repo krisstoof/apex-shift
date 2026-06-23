@@ -163,6 +163,8 @@ namespace ApexShift.Tests.Unit.Input
 
             Assert.IsTrue(source.Contains("enableSmoothing"));
             Assert.IsTrue(source.Contains("SetSmoothingEnabled"));
+            Assert.IsTrue(source.Contains("disableWhenCinemachineBrainExists"));
+            Assert.IsTrue(source.Contains("HasCinemachineBrain"));
         }
 
         [Test]
@@ -176,6 +178,41 @@ namespace ApexShift.Tests.Unit.Input
             Assert.IsTrue(source.Contains("SetMovementController"));
             Assert.IsTrue(source.Contains("SetMotionFeedback"));
             Assert.IsTrue(source.Contains("SetCameraFollow"));
+        }
+
+        [Test]
+        public void CinemachineCameraSceneBuilder_IsReferencedBySceneBuilders()
+        {
+            string baseScene = File.ReadAllText("Assets/_Project/Scripts/Editor/ApexShiftSceneBuilder.cs");
+            string worldBuilder = File.ReadAllText("Assets/_Project/Scripts/Editor/World/HandcraftedBiomeWorldBuilder.cs");
+            string helper = File.ReadAllText("Assets/_Project/Scripts/Editor/Camera/CinemachineCameraSceneBuilder.cs");
+
+            Assert.IsTrue(baseScene.Contains("CinemachineCameraSceneBuilder.CreateIsometricCameraRig"));
+            Assert.IsTrue(worldBuilder.Contains("CinemachineCameraSceneBuilder.CreateIsometricCameraRig"));
+            Assert.IsTrue(baseScene.Contains("pitch: 35.264f"));
+            Assert.IsTrue(baseScene.Contains("yaw: 45f"));
+            Assert.IsTrue(worldBuilder.Contains("pitch: 35.264f"));
+            Assert.IsTrue(worldBuilder.Contains("yaw: 45f"));
+            Assert.IsTrue(helper.Contains("CreateIsometricCameraRig"));
+            Assert.IsTrue(helper.Contains("CinemachineBrain"));
+            Assert.IsTrue(helper.Contains("CinemachineCamera"));
+            Assert.IsTrue(helper.Contains("CinemachineVirtualCamera"));
+            Assert.IsTrue(helper.Contains("followDistance"));
+            Assert.IsTrue(helper.Contains("orthographicSize"));
+        }
+
+        [Test]
+        public void UnityCameraDocs_MatchImplementedCinemachineSetup()
+        {
+            string docs = File.ReadAllText("Docs/unity-camera.md");
+
+            Assert.IsTrue(docs.Contains("Cinemachine-based orthographic isometric camera"));
+            Assert.IsTrue(docs.Contains("Orthographic Size: 14"));
+            Assert.IsTrue(docs.Contains("Pitch: 35.264"));
+            Assert.IsTrue(docs.Contains("Yaw: 45"));
+            Assert.IsTrue(docs.Contains("Main Camera"));
+            Assert.IsTrue(docs.Contains("PlayerFollowCamera"));
+            Assert.IsTrue(docs.Contains("IsometricCameraFollow"));
         }
     }
 }

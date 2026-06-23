@@ -1,6 +1,7 @@
 using System.IO;
 using System;
 using ApexShift.Runtime.Bootstrap;
+using ApexShift.EditorTools.Camera;
 using ApexShift.Runtime.Camera;
 using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.Player;
@@ -59,17 +60,14 @@ namespace ApexShift.EditorTools
             player.transform.localRotation = PlayerFacingRotation;
             RemoveDemoViewerComponents(player);
 
-            GameObject cameraObject = new GameObject("Main Camera");
-            cameraObject.tag = "MainCamera";
-            cameraObject.transform.SetParent(gameRoot.transform, false);
-            cameraObject.transform.position = new Vector3(0f, 8f, -8f);
-            cameraObject.transform.rotation = Quaternion.Euler(35.264f, 45f, 0f);
-            Camera camera = cameraObject.AddComponent<Camera>();
-            camera.orthographic = true;
-            camera.orthographicSize = 6f;
-            IsometricCameraFollow follow = cameraObject.AddComponent<IsometricCameraFollow>();
-            follow.SetTarget(player.transform);
-
+            GameObject cameraObject = CinemachineCameraSceneBuilder.CreateIsometricCameraRig(
+                gameRoot.transform,
+                player.transform,
+                pitch: 35.264f,
+                yaw: 45f,
+                roll: 0f,
+                orthographicSize: 14f,
+                followDistance: 20f);
             ConfigurePlayerRuntime(player, cameraObject);
 
             GameObject lightObject = new GameObject("Directional Light");

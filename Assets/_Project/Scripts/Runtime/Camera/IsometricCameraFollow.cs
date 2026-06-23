@@ -33,7 +33,11 @@ namespace ApexShift.Runtime.Camera
         [SerializeField]
         private bool enableSmoothing = true;
 
+        [SerializeField]
+        private bool disableWhenCinemachineBrainExists = true;
+
         private bool firstFrame = true;
+        private Quaternion initialRotation = Quaternion.Euler(35.264f, 45f, 0f);
 
         private CameraComponent cachedCamera;
 
@@ -49,13 +53,19 @@ namespace ApexShift.Runtime.Camera
 
         private void Awake()
         {
+            if (disableWhenCinemachineBrainExists && HasCinemachineBrain())
+            {
+                enabled = false;
+                return;
+            }
+
             cachedCamera = GetComponent<CameraComponent>();
             if (cachedCamera != null)
             {
                 cachedCamera.orthographic = true;
                 cachedCamera.orthographicSize = orthographicSize;
             }
-            transform.rotation = Quaternion.Euler(35.264f, 45f, 0f);
+            transform.rotation = initialRotation;
         }
 
         private void LateUpdate()
@@ -96,6 +106,26 @@ namespace ApexShift.Runtime.Camera
             firstFrame = false;
         }
 
+        public void SetInitialRotation(Quaternion rotation)
+        {
+            initialRotation = rotation;
+            transform.rotation = rotation;
+        }
+
+        public void SetOrthographicSize(float size)
+        {
+            orthographicSize = size;
+            if (cachedCamera != null)
+            {
+                cachedCamera.orthographicSize = size;
+            }
+        }
+
+        public void SetFollowDistance(float distance)
+        {
+            followDistance = distance;
+        }
+
         private Vector3 CalculateDesiredPosition()
         {
             Vector3 focusPoint = target.position + focusOffset;
@@ -132,6 +162,20 @@ namespace ApexShift.Runtime.Camera
         public void SetSmoothingEnabled(bool enabled)
         {
             enableSmoothing = enabled;
+        }
+
+        private bool HasCinemachineBrain()
+        {
+            Component[] components = GetComponents<Component>();
+            foreach (Component component in components)
+            {
+                if (component != null && component.GetType().Name.Contains("CinemachineBrain"))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

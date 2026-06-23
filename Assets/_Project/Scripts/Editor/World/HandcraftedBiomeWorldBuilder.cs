@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using ApexShift.Runtime.Bootstrap;
+using ApexShift.EditorTools.Camera;
 using ApexShift.Runtime.Camera;
 using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.Player;
@@ -72,7 +73,14 @@ namespace ApexShift.EditorTools.World
             CreateStartClearing(terrainRoot.transform, vegetationRoot.transform, Vector3.zero, new Vector2(8f, 8f), materials.Get(BiomeKind.HearthMeadow));
 
             GameObject player = CreatePlayer(gameRoot.transform);
-            GameObject cameraObject = CreateCamera(gameRoot.transform, player.transform);
+            GameObject cameraObject = CinemachineCameraSceneBuilder.CreateIsometricCameraRig(
+                gameRoot.transform,
+                player.transform,
+                pitch: 35.264f,
+                yaw: 45f,
+                roll: 0f,
+                orthographicSize: 14f,
+                followDistance: 20f);
             ConfigurePlayerRuntime(player, cameraObject);
             CreateLight(gameRoot.transform);
 
@@ -1621,24 +1629,6 @@ namespace ApexShift.EditorTools.World
             RemoveDemoViewerComponents(player);
 
             return player;
-        }
-
-        private static GameObject CreateCamera(Transform parent, Transform player)
-        {
-            GameObject cameraObject = new GameObject("Main Camera");
-            cameraObject.tag = "MainCamera";
-            cameraObject.transform.SetParent(parent, false);
-            cameraObject.transform.position = new Vector3(0f, 16f, -16f);
-            cameraObject.transform.rotation = Quaternion.Euler(35.264f, 45f, 0f);
-
-            CameraComponent camera = cameraObject.AddComponent<CameraComponent>();
-            camera.orthographic = true;
-            camera.orthographicSize = 14f;
-
-            IsometricCameraFollow follow = cameraObject.AddComponent<IsometricCameraFollow>();
-            follow.SetTarget(player);
-            follow.SnapToTarget();
-            return cameraObject;
         }
 
         private static void CreateLight(Transform parent)
