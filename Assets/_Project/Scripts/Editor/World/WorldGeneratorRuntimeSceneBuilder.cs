@@ -79,8 +79,19 @@ namespace ApexShift.Editor.World
             // Generate once in Edit mode
             generator.Generate();
 
+            // Manually trigger HUD creation for Edit Mode visibility
+            GameObject player = GameObject.Find("Player");
+            if (player != null)
+            {
+                var provisioner = generatorGo.GetComponent<RuntimeHUDProvisioner>();
+                if (provisioner != null)
+                {
+                    provisioner.CreateHUD(player);
+                }
+            }
+
             EditorSceneManager.MarkSceneDirty(newScene);
-            Debug.Log("Runtime World Generator scene created with Player model and URP shader conversion.");
+Debug.Log("Runtime World Generator scene created with Player model and URP shader conversion.");
         }
 
         private static void PopulateResourcePrefabs(SerializedObject so)

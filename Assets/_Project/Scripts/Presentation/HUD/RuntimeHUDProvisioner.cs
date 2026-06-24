@@ -64,10 +64,18 @@ namespace ApexShift.Presentation.HUD
             CreateHUD(player);
         }
 
-        private void CreateHUD(GameObject player)
+        public void CreateHUD(GameObject player)
         {
+            // Cleanup existing HUD if any
+            GameObject existingUI = GameObject.Find("UI");
+            if (existingUI != null)
+            {
+                if (Application.isPlaying) Destroy(existingUI);
+                else DestroyImmediate(existingUI);
+            }
+
             GameObject uiRoot = new GameObject("UI");
-            
+
             GameObject hudGo = new GameObject("PlayerHUD");
             hudGo.transform.SetParent(uiRoot.transform, false);
             
