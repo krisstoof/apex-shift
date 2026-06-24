@@ -2,6 +2,7 @@ using ApexShift.Runtime.World.Generation;
 using ApexShift.Runtime.World.Biomes;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.PlayerInput;
+using ApexShift.Runtime.Creatures;
 using ApexShift.Presentation.HUD;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -9,6 +10,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
+using UnityEngine.AI;
+using Unity.AI.Navigation;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -161,14 +164,35 @@ Debug.Log("Runtime World Generator scene created with Player model and URP shade
             }
         }
 
+        private static void BuildNavMesh(GameObject generatorGo)
+        {
+            Transform terrainRoot = generatorGo.transform.Find("TerrainRoot");
+            if (terrainRoot == null) return;
+
+            NavMeshSurface surface = terrainRoot.gameObject.GetComponent<NavMeshSurface>();
+            if (surface == null) surface = terrainRoot.gameObject.AddComponent<NavMeshSurface>();
+
+            surface.collectObjects = CollectObjects.Children;
+            surface.useGeometry = NavMeshCollectGeometry.RenderMeshes;
+            surface.BuildNavMesh();
+
+            // Warp creatures to nearest NavMesh
+            var adapters = GameObject.FindObjectsByType<CreatureNavigationAdapter>(FindObjectsSortMode.None);
+            foreach (var adapter in adapters)
+            {
+                adapter.WarpToNearestNavMesh();
+            }
+        }
+
         private static void PopulateCreaturePrefabs(SerializedObject so)
         {
             var prop = so.FindProperty("creaturePrefabs");
             prop.ClearArray();
 
             // Using reliable animal models from ithappy Animals_FREE
-            AddCreatureEntries(prop, "rabbit", "Chicken_001", "Dog_001");
-            AddCreatureEntries(prop, "wolf", "Tiger_001", "Deer_001");
+            AddCreatureEntries(prop, "small_prey", "Chicken_001", "Dog_001");
+            AddCreatureEntries(prop, "grazer", "Deer_001");
+            AddCreatureEntries(prop, "varnak", "Tiger_001");
         }
 
         private static void AddCreatureEntries(SerializedProperty listProp, string creatureId, params string[] searchNames)

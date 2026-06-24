@@ -9,6 +9,7 @@ using ApexShift.Runtime.Player;
 using ApexShift.Runtime.PlayerInput;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.World.Biomes;
+using ApexShift.Runtime.Creatures;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
@@ -337,22 +338,133 @@ namespace ApexShift.Runtime.World.Generation
             }
             else
             {
-                instance = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                instance.name = $"Creature_{entry.CreatureId}_Fallback";
-                instance.transform.position = position + Vector3.up * 0.5f;
+                instance = CreateCreatureFallback(entry.CreatureId, position);
                 instance.transform.SetParent(_creatureRoot);
-                
-                Renderer renderer = instance.GetComponent<Renderer>();
-                if (renderer != null)
-                {
-                    Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                    if (mat.shader == null) mat.shader = Shader.Find("Standard");
-                    mat.color = Color.red;
-                    renderer.sharedMaterial = mat;
-                }
             }
 
             instance.name = $"Creature_{entry.CreatureId}";
+
+            // Remove existing movement components from asset pack prefabs to prevent player input interference
+            var moveInput = instance.GetComponent("MovePlayerInput");
+            if (moveInput != null)
+            {
+                if (Application.isPlaying) Destroy(moveInput);
+                else DestroyImmediate(moveInput);
+            }
+
+            var creatureMover = instance.GetComponent("CreatureMover");
+            if (creatureMover != null)
+            {
+                if (Application.isPlaying) Destroy(creatureMover);
+                else DestroyImmediate(creatureMover);
+            }
+
+            // Remove CharacterController if present, as we use NavMeshAgent for movement
+            var cc = instance.GetComponent<CharacterController>();
+            if (cc != null)
+            {
+                if (Application.isPlaying) Destroy(cc);
+                else DestroyImmediate(cc);
+            }
+
+            // Add and configure components
+            var navAgent = instance.GetComponent<UnityEngine.AI.NavMeshAgent>();
+if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAgent>();
+            
+            var adapter = instance.GetComponent<CreatureNavigationAdapter>();
+            if (adapter == null) adapter = instance.AddComponent<CreatureNavigationAdapter>();
+
+            var view = instance.GetComponent<CreatureAgentView>();
+            if (view == null) view = instance.AddComponent<CreatureAgentView>();
+            view.Configure(entry.CreatureId);
+
+            var wander = instance.GetComponent<CreatureWanderBehavior>();
+            if (wander == null) wander = instance.AddComponent<CreatureWanderBehavior>();
+
+            ConfigureCreatureMovement(entry.CreatureId, adapter, wander);
+        }
+
+        private GameObject CreateCreatureFallback(string creatureId, Vector3 position)
+        {
+            GameObject root = new GameObject($"Creature_{creatureId}_Fallback");
+            root.transform.position = position;
+
+            GameObject visual;
+            Color color = Color.white;
+            Vector3 scale = Vector3.one;
+
+            switch (creatureId)
+            {
+                case "small_prey":
+                    visual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    color = new Color(0.9f, 0.9f, 0.9f); // Brighter small sphere
+                    scale = Vector3.one * 0.5f;
+                    break;
+                case "grazer":
+                    visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                    color = new Color(0.6f, 0.4f, 0.2f); // Lighter brown
+                    scale = new Vector3(0.8f, 0.8f, 0.8f);
+                    break;
+                case "varnak":
+                    visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                    color = Color.red;
+                    scale = new Vector3(1.0f, 1.2f, 1.0f);
+                    break;
+                default:
+                    visual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    color = Color.magenta;
+                    break;
+            }
+
+            visual.transform.SetParent(root.transform);
+            visual.transform.localPosition = Vector3.up * (scale.y * 0.5f);
+            visual.transform.localScale = scale;
+
+            Collider coll = visual.GetComponent<Collider>();
+            if (coll != null)
+            {
+                if (Application.isPlaying) Destroy(coll);
+                else DestroyImmediate(coll);
+            }
+            
+            Renderer renderer = visual.GetComponent<Renderer>();
+if (renderer != null)
+            {
+                Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                if (mat.shader == null) mat.shader = Shader.Find("Standard");
+                
+                if (mat.HasProperty("_BaseColor"))
+                    mat.SetColor("_BaseColor", color);
+                else
+                    mat.color = color;
+                
+                renderer.sharedMaterial = mat;
+            }
+
+            return root;
+        }
+
+        private void ConfigureCreatureMovement(string creatureId, CreatureNavigationAdapter adapter, CreatureWanderBehavior wander)
+        {
+            switch (creatureId)
+            {
+                case "small_prey":
+                    adapter.ConfigureMovement(speed: 3.5f, acceleration: 8f, stoppingDistance: 0.5f);
+                    wander.Configure(radius: 8f, minWait: 2f, maxWait: 4f);
+                    break;
+                case "grazer":
+                    adapter.ConfigureMovement(speed: 2f, acceleration: 4f, stoppingDistance: 0.75f);
+                    wander.Configure(radius: 12f, minWait: 4f, maxWait: 8f);
+                    break;
+                case "varnak":
+                    adapter.ConfigureMovement(speed: 5f, acceleration: 12f, stoppingDistance: 1f);
+                    wander.Configure(radius: 15f, minWait: 1f, maxWait: 3f);
+                    break;
+                default:
+                    adapter.ConfigureMovement(speed: 3f, acceleration: 8f, stoppingDistance: 0.5f);
+                    wander.Configure(radius: 10f, minWait: 2f, maxWait: 5f);
+                    break;
+            }
         }
 
         private GameObject GetPrefabForKind(VegetationSpawnKind kind)

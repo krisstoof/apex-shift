@@ -2,10 +2,11 @@
   <Project Path="Unity.Cinemachine.Editor.csproj" />
   <Project Path="ApexShift.Presentation.csproj" />
   <Project Path="Unity.Cinemachine.csproj" />
-  <Project Path="Assembly-CSharp-Editor.csproj" />
+  <Project Path="ApexShift.Editor.csproj" />
   <Project Path="ApexShift.Core.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="ApexShift.Runtime.csproj" />
+  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="ApexShift.Infrastructure.csproj" />
   <Project Path="ApexShift.Tests.csproj" />
   <Project Path="ApexShift.EditorTests.csproj" />

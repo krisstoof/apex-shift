@@ -47,7 +47,7 @@ MonoBehaviour:
     resourceKind: berry_bush
     harvestable: 1
   creatures:
-  - creatureId: rabbit
-    minCount: 2
-    maxCount: 5
+  - creatureId: small_prey
+    minCount: 3
+    maxCount: 6
     weight: 1

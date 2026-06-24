@@ -47,7 +47,7 @@ MonoBehaviour:
     resourceKind: 
     harvestable: 0
   creatures:
-  - creatureId: wolf
+  - creatureId: varnak
     minCount: 1
     maxCount: 3
     weight: 1

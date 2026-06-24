@@ -1,0 +1,15 @@
+{
+  "name": "ApexShift.Editor",
+  "references": [
+    "ApexShift.Runtime",
+    "ApexShift.Core",
+    "ApexShift.Presentation",
+    "ApexShift.Infrastructure",
+    "Unity.AI.Navigation",
+    "Unity.InputSystem",
+    "Unity.Cinemachine"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}

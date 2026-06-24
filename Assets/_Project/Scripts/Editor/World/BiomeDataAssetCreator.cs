@@ -43,6 +43,9 @@ namespace ApexShift.Editor.World
                 new VegetationSpawnEntryAsset(VegetationSpawnKind.GreenBush, 45, 1f, 0.45f, 0.9f, "bush", true),
                 new VegetationSpawnEntryAsset(VegetationSpawnKind.GrassOrFlower, 38, 1f, 0.35f, 0.7f, "", false),
                 new VegetationSpawnEntryAsset(VegetationSpawnKind.BerryBush, 8, 1f, 0.45f, 0.95f, "berry_bush", true)
+            }, new List<CreatureSpawnEntryAsset>
+            {
+                new CreatureSpawnEntryAsset("grazer", 2, 4, 1f)
             }));
 
             assets.Add(CreateOrUpdateBiome("hearth_meadow", "Hearth Meadow", new Color(0.50f, 0.68f, 0.36f), true, new List<VegetationSpawnEntryAsset>
@@ -53,7 +56,7 @@ namespace ApexShift.Editor.World
                 new VegetationSpawnEntryAsset(VegetationSpawnKind.BerryBush, 6, 1f, 0.45f, 0.95f, "berry_bush", true)
             }, new List<CreatureSpawnEntryAsset>
             {
-                new CreatureSpawnEntryAsset("rabbit", 2, 5, 1f)
+                new CreatureSpawnEntryAsset("small_prey", 3, 6, 1f)
             }));
 
             assets.Add(CreateOrUpdateBiome("stoneback_ridge", "Stoneback Ridge", new Color(0.30f, 0.32f, 0.30f), false, new List<VegetationSpawnEntryAsset>
@@ -72,7 +75,7 @@ namespace ApexShift.Editor.World
                 new VegetationSpawnEntryAsset(VegetationSpawnKind.GrassOrFlower, 3, 1f, 0.35f, 0.7f, "", false)
             }, new List<CreatureSpawnEntryAsset>
             {
-                new CreatureSpawnEntryAsset("wolf", 1, 3, 1f)
+                new CreatureSpawnEntryAsset("varnak", 1, 3, 1f)
             }));
 
             CreateOrUpdateCatalog(assets);
