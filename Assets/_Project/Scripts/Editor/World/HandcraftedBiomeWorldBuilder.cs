@@ -1340,6 +1340,25 @@ namespace ApexShift.EditorTools.World
 
             trigger.isTrigger = true;
             trigger.radius = radius;
+
+            if (role == VegetationRole.ConiferTree || role == VegetationRole.LeafyTree || role == VegetationRole.DryTree)
+            {
+                GameObject stump = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                stump.name = "Stump";
+                stump.transform.SetParent(instance.transform, false);
+                stump.transform.localPosition = new Vector3(0, 0.25f, 0);
+                stump.transform.localScale = new Vector3(0.4f, 0.25f, 0.4f);
+                stump.SetActive(false);
+
+                // Use a darker brown and unique material name to prevent color sharing in the material repair utility
+                ApplyTint(stump, new Color(0.25f, 0.15f, 0.08f), instance.name + "_Stump_Material"); 
+
+                // Remove the collider from the stump visual to prevent physics issues
+                Object.DestroyImmediate(stump.GetComponent<Collider>());
+
+                so.FindProperty("depletedVisual").objectReferenceValue = stump;
+                so.ApplyModifiedProperties();
+            }
         }
 
         private static bool IsInsideIsland(float x, float z)
@@ -1522,7 +1541,7 @@ namespace ApexShift.EditorTools.World
             };
         }
 
-        private static void ApplyTint(GameObject target, Color color)
+        private static void ApplyTint(GameObject target, Color color, string materialName = null)
         {
             if (target == null)
             {
@@ -1539,6 +1558,15 @@ namespace ApexShift.EditorTools.World
             if (material.shader == null)
             {
                 material = new Material(Shader.Find("Standard"));
+            }
+
+            if (string.IsNullOrEmpty(materialName))
+            {
+                material.name = target.name + "_Tinted_Material";
+            }
+            else
+            {
+                material.name = materialName;
             }
 
             if (material.HasProperty("_BaseColor"))

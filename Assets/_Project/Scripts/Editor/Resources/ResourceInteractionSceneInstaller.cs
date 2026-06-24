@@ -82,7 +82,7 @@ namespace ApexShift.EditorTools.Resources
                 return taggedPlayer;
             }
 
-            IsometricPlayerController controller = Object.FindObjectOfType<IsometricPlayerController>();
+            IsometricPlayerController controller = Object.FindAnyObjectByType<IsometricPlayerController>();
             if (controller != null)
             {
                 return controller.gameObject;

@@ -10,7 +10,7 @@ namespace ApexShift.EditorTools.World
         [MenuItem("Tools/Apex Shift/World/Bind Existing World Objects As Resources")]
         public static void BindExistingWorldObjects()
         {
-            GameObject[] allObjects = Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
+            GameObject[] allObjects = Object.FindObjectsByType<GameObject>(FindObjectsInactive.Exclude);
             int boundCount = 0;
 
             foreach (GameObject go in allObjects)
@@ -42,11 +42,65 @@ namespace ApexShift.EditorTools.World
 
                 trigger.isTrigger = true;
                 trigger.radius = radius;
+
+                if (resourceKind.Contains("tree"))
+                {
+                    Transform existingStump = go.transform.Find("Stump");
+                    GameObject stump;
+                    if (existingStump == null)
+                    {
+                        stump = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                        stump.name = "Stump";
+                        stump.transform.SetParent(go.transform, false);
+                        stump.transform.localPosition = new Vector3(0, 0.25f, 0);
+                        stump.transform.localScale = new Vector3(0.4f, 0.25f, 0.4f);
+                        Object.DestroyImmediate(stump.GetComponent<Collider>());
+                        
+                        var originalRenderer = go.GetComponentInChildren<Renderer>();
+                        if (originalRenderer != null)
+                        {
+                            stump.GetComponent<Renderer>().sharedMaterial = originalRenderer.sharedMaterial;
+                        }
+                        
+                        ApplyTint(stump, new Color(0.35f, 0.2f, 0.1f));
+                    }
+                    else
+                    {
+                        stump = existingStump.gameObject;
+                    }
+
+                    stump.SetActive(false);
+                    so.FindProperty("depletedVisual").objectReferenceValue = stump;
+                    so.ApplyModifiedProperties();
+                }
                 
                 boundCount++;
             }
 
             Debug.Log($"Successfully bound {boundCount} world objects as resources.");
+        }
+
+        private static void ApplyTint(GameObject target, Color color, string materialName = null)
+        {
+            if (target == null) return;
+            Renderer r = target.GetComponent<Renderer>();
+            if (r != null)
+            {
+                Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                if (material.shader == null)
+                {
+                    material = new Material(Shader.Find("Standard"));
+                }
+                
+                material.name = string.IsNullOrEmpty(materialName) ? "Stump_Material" : materialName;
+                
+                if (material.HasProperty("_BaseColor"))
+                    material.SetColor("_BaseColor", color);
+                else if (material.HasProperty("_Color"))
+                    material.SetColor("_Color", color);
+                
+                r.sharedMaterial = material;
+            }
         }
 
         private static bool IsExcluded(string name)

@@ -30,6 +30,9 @@ namespace ApexShift.Runtime.Resources
         private bool destroyOnHarvest;
 
         [SerializeField]
+        private GameObject depletedVisual;
+
+        [SerializeField]
         private float interactionRadius = 2.25f;
 
         private ResourceDefinition definition;
@@ -124,6 +127,10 @@ namespace ApexShift.Runtime.Resources
             EnsureState();
             state.RestoreToFull();
             SetVisualsEnabled(true);
+            if (depletedVisual != null)
+            {
+                depletedVisual.SetActive(false);
+            }
             EnsureInteractionCollider();
             if (!gameObject.activeSelf)
             {
@@ -175,22 +182,47 @@ namespace ApexShift.Runtime.Resources
 
             if (deactivateOnHarvest)
             {
-                gameObject.SetActive(false);
+                if (depletedVisual != null)
+                {
+                    SetVisualsEnabled(false);
+                    depletedVisual.SetActive(true);
+                }
+                else
+                {
+                    gameObject.SetActive(false);
+                }
                 return;
             }
 
             SetVisualsEnabled(false);
+            if (depletedVisual != null)
+            {
+                depletedVisual.SetActive(true);
+            }
         }
 
         private void SetVisualsEnabled(bool enabled)
         {
             foreach (Renderer rendererComponent in GetComponentsInChildren<Renderer>(true))
             {
+                if (depletedVisual != null && (rendererComponent.gameObject == depletedVisual || rendererComponent.transform.IsChildOf(depletedVisual.transform)))
+                {
+                    continue;
+                }
                 rendererComponent.enabled = enabled;
             }
 
             foreach (Collider colliderComponent in GetComponentsInChildren<Collider>(true))
             {
+                if (depletedVisual != null && (colliderComponent.gameObject == depletedVisual || colliderComponent.transform.IsChildOf(depletedVisual.transform)))
+                {
+                    continue;
+                }
+                // Don't disable the root trigger collider if it's the one we're using for interaction
+                if (colliderComponent == GetComponent<SphereCollider>() && colliderComponent.isTrigger)
+                {
+                    continue;
+                }
                 colliderComponent.enabled = enabled;
             }
         }
