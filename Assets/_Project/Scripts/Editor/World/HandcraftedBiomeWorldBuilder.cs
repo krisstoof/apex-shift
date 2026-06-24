@@ -767,18 +767,27 @@ namespace ApexShift.EditorTools.World
 
         private static string GetRoleId(VegetationRole role)
         {
-            return role switch
+            switch (role)
             {
-                VegetationRole.ConiferTree => "conifer_tree",
-                VegetationRole.LeafyTree => "leafy_tree",
-                VegetationRole.DryTree => "dry_tree",
-                VegetationRole.Rock => "rock",
-                VegetationRole.GreenBush => "green_bush",
-                VegetationRole.DryBush => "dry_bush",
-                VegetationRole.GrassOrFlower => "grass_or_flower",
-                VegetationRole.BerryBush => "berry_bush",
-                _ => role.ToString().ToLowerInvariant()
-            };
+                case VegetationRole.ConiferTree:
+                    return "conifer_tree";
+                case VegetationRole.LeafyTree:
+                    return "leafy_tree";
+                case VegetationRole.DryTree:
+                    return "dry_tree";
+                case VegetationRole.Rock:
+                    return "rock";
+                case VegetationRole.GreenBush:
+                    return "green_bush";
+                case VegetationRole.DryBush:
+                    return "dry_bush";
+                case VegetationRole.GrassOrFlower:
+                    return "grass_or_flower";
+                case VegetationRole.BerryBush:
+                    return "berry_bush";
+                default:
+                    return role.ToString().ToLowerInvariant();
+            }
         }
 
         private static float GetMinScaleForRole(BiomeIdentityProfile profile, VegetationRole role)
