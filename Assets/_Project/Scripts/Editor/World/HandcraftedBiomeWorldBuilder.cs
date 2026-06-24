@@ -10,6 +10,7 @@ using ApexShift.Runtime.PlayerInput;
 using ApexShift.Runtime.World;
 using ApexShift.Runtime.Interaction;
 using ApexShift.Runtime.Resources;
+using ApexShift.Runtime.World.Biomes;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -26,6 +27,7 @@ namespace ApexShift.EditorTools.World
     {
         private const string ScenePath = "Assets/_Project/Scenes/BiomeWorldTest.unity";
         private const string MaterialFolder = "Assets/_Project/Materials/Biomes";
+        private const string CatalogPath = "Assets/_Project/Data/Biomes/BiomeCatalog.asset";
         private const string PlayerPrefabPath = "Assets/StylizedCore/StylizedWoodMonsters/URP/AnimationGallery/Prefab/Player.prefab";
         private const string InputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
         private const string PlayerControllerPath = "Assets/_Project/Animations/Player/PlayerPrototype.controller";
@@ -34,6 +36,8 @@ namespace ApexShift.EditorTools.World
         private const float IslandRadiusZ = 43f;
         private static readonly System.Random Random = new System.Random(1337);
 
+        private static BiomeCatalogAsset _catalog;
+
         [MenuItem("Tools/Apex Shift/World/Create Handcrafted Biome World")]
         public static void CreateHandcraftedBiomeWorld()
         {
@@ -41,6 +45,12 @@ namespace ApexShift.EditorTools.World
             {
                 Debug.LogWarning("Create Handcrafted Biome World can only run in Edit mode.");
                 return;
+            }
+
+            _catalog = AssetDatabase.LoadAssetAtPath<BiomeCatalogAsset>(CatalogPath);
+            if (_catalog == null)
+            {
+                Debug.LogWarning($"Biome Catalog not found at {CatalogPath}. Falling back to hardcoded values.");
             }
 
             EnsureFolders();
@@ -100,6 +110,7 @@ namespace ApexShift.EditorTools.World
             EditorSceneManager.OpenScene(ScenePath);
 
             Debug.Log("Handcrafted biome world created at " + ScenePath);
+            _catalog = null;
         }
 
         private static void CreateBiome(
@@ -756,6 +767,15 @@ namespace ApexShift.EditorTools.World
 
         private static float GetMinScaleForRole(BiomeIdentityProfile profile, VegetationRole role)
         {
+            if (_catalog != null)
+            {
+                var asset = _catalog.GetBiome(profile.Kind.ToString().ToLowerInvariant());
+                if (asset != null)
+                {
+                    return asset.GetMinScale(role.ToString(), GetFallbackMinScale(role));
+                }
+            }
+
             return role switch
             {
                 VegetationRole.ConiferTree => profile.MinTreeScale,
@@ -770,13 +790,54 @@ namespace ApexShift.EditorTools.World
             };
         }
 
+        private static float GetFallbackMinScale(VegetationRole role)
+        {
+            return role switch
+            {
+                VegetationRole.ConiferTree => 0.8f,
+                VegetationRole.LeafyTree => 0.8f,
+                VegetationRole.DryTree => 0.8f,
+                VegetationRole.Rock => 0.8f,
+                VegetationRole.GreenBush => 0.45f,
+                VegetationRole.DryBush => 0.45f,
+                VegetationRole.GrassOrFlower => 0.35f,
+                VegetationRole.BerryBush => 0.45f,
+                _ => 0.5f
+            };
+        }
+
         private static float GetMaxScaleForRole(BiomeIdentityProfile profile, VegetationRole role)
         {
+            if (_catalog != null)
+            {
+                var asset = _catalog.GetBiome(profile.Kind.ToString().ToLowerInvariant());
+                if (asset != null)
+                {
+                    return asset.GetMaxScale(role.ToString(), GetFallbackMaxScale(role));
+                }
+            }
+
             return role switch
             {
                 VegetationRole.ConiferTree => profile.MaxTreeScale,
                 VegetationRole.LeafyTree => profile.MaxTreeScale,
                 VegetationRole.DryTree => profile.MaxTreeScale,
+                VegetationRole.Rock => 1.35f,
+                VegetationRole.GreenBush => 0.9f,
+                VegetationRole.DryBush => 0.85f,
+                VegetationRole.GrassOrFlower => 0.7f,
+                VegetationRole.BerryBush => 0.95f,
+                _ => 1.0f
+            };
+        }
+
+        private static float GetFallbackMaxScale(VegetationRole role)
+        {
+            return role switch
+            {
+                VegetationRole.ConiferTree => 1.2f,
+                VegetationRole.LeafyTree => 1.2f,
+                VegetationRole.DryTree => 1.2f,
                 VegetationRole.Rock => 1.35f,
                 VegetationRole.GreenBush => 0.9f,
                 VegetationRole.DryBush => 0.85f,
@@ -1583,6 +1644,30 @@ namespace ApexShift.EditorTools.World
 
         private static BiomeIdentityProfile GetProfile(BiomeKind biome)
         {
+            if (_catalog != null)
+            {
+                var asset = _catalog.GetBiome(biome.ToString().ToLowerInvariant());
+                if (asset != null)
+                {
+                    return new BiomeIdentityProfile
+                    {
+                        Kind = biome,
+                        DisplayName = asset.DisplayName,
+                        GroundColor = asset.GroundColor,
+                        ConiferTreeCount = asset.GetVegetationCount(nameof(VegetationRole.ConiferTree)),
+                        LeafyTreeCount = asset.GetVegetationCount(nameof(VegetationRole.LeafyTree)),
+                        DryTreeCount = asset.GetVegetationCount(nameof(VegetationRole.DryTree)),
+                        RockCount = asset.GetVegetationCount(nameof(VegetationRole.Rock)),
+                        GreenBushCount = asset.GetVegetationCount(nameof(VegetationRole.GreenBush)),
+                        DryBushCount = asset.GetVegetationCount(nameof(VegetationRole.DryBush)),
+                        GrassOrFlowerCount = asset.GetVegetationCount(nameof(VegetationRole.GrassOrFlower)),
+                        BerryBushCount = asset.GetVegetationCount(nameof(VegetationRole.BerryBush)),
+                        MinTreeScale = asset.GetMinScale(nameof(VegetationRole.LeafyTree), 0.8f),
+                        MaxTreeScale = asset.GetMaxScale(nameof(VegetationRole.LeafyTree), 1.2f)
+                    };
+                }
+            }
+
             return biome switch
             {
                 BiomeKind.Westwood => new BiomeIdentityProfile
