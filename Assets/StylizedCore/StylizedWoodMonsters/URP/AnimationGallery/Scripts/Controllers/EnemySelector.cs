@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using StylizedCore.StylizedWoodMonsters.AnimationGallery.Core;
 
 namespace StylizedCore.StylizedWoodMonsters.AnimationGallery.Controllers
@@ -49,11 +49,22 @@ namespace StylizedCore.StylizedWoodMonsters.AnimationGallery.Controllers
     /// </summary>
     void Update()
     {
+#if ENABLE_INPUT_SYSTEM
+        var keyboard = UnityEngine.InputSystem.Keyboard.current;
+        if (keyboard == null) return;
+
+        if (keyboard.digit1Key.wasPressedThisFrame) { CheckCleanup(); ActivateEnemy(0); }
+        if (keyboard.digit2Key.wasPressedThisFrame) { CheckCleanup(); ActivateEnemy(1); }
+        if (keyboard.digit3Key.wasPressedThisFrame) { CheckCleanup(); ActivateEnemy(2); }
+        if (keyboard.digit4Key.wasPressedThisFrame) { CheckCleanup(); ActivateEnemy(3); }
+        if (keyboard.digit5Key.wasPressedThisFrame) { CheckCleanup(); ActivateEnemy(4); }
+#else
         if (Input.GetKeyDown(KeyCode.Alpha1)) { CheckCleanup(); ActivateEnemy(0); }
         if (Input.GetKeyDown(KeyCode.Alpha2)) { CheckCleanup(); ActivateEnemy(1); }
         if (Input.GetKeyDown(KeyCode.Alpha3)) { CheckCleanup(); ActivateEnemy(2); }
         if (Input.GetKeyDown(KeyCode.Alpha4)) { CheckCleanup(); ActivateEnemy(3); }
         if (Input.GetKeyDown(KeyCode.Alpha5)) { CheckCleanup(); ActivateEnemy(4); }
+#endif
     }
 
     /// <summary>

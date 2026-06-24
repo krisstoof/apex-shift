@@ -57,6 +57,8 @@ namespace ApexShift.Runtime.Debugging
         private bool movementEnabled = true;
         private bool bobbingEnabled = true;
         private bool smoothingEnabled = true;
+        private bool guiShowOverlay;
+        private string[] guiEntries = new string[0];
 
         private const string ShowOverlayPrefKey = "ApexShift.PlayerActionDebugLog.ShowOverlay";
         private const string LogToConsolePrefKey = "ApexShift.PlayerActionDebugLog.LogToConsole";
@@ -126,6 +128,12 @@ namespace ApexShift.Runtime.Debugging
 
         private void OnGUI()
         {
+            if (Event.current.type == EventType.Layout)
+            {
+                guiShowOverlay = showOverlay;
+                guiEntries = entries.ToArray();
+            }
+
             Event currentEvent = Event.current;
             if (currentEvent != null && currentEvent.type == EventType.KeyDown && currentEvent.keyCode == toggleOverlayKey)
             {
@@ -142,7 +150,7 @@ namespace ApexShift.Runtime.Debugging
 
             const float width = 380f;
             const float lineHeight = 18f;
-            float height = Mathf.Max(260f, 180f + entries.Count * lineHeight);
+            float height = Mathf.Max(260f, 180f + guiEntries.Length * lineHeight);
 
             panelRect.width = width;
             panelRect.height = height;
@@ -198,7 +206,7 @@ namespace ApexShift.Runtime.Debugging
                 ResetPanelPosition();
             }
 
-            if (!showOverlay)
+            if (!guiShowOverlay)
             {
                 GUILayout.Label("Overlay hidden.");
                 GUI.DragWindow(new Rect(0f, 0f, 10000f, 24f));
@@ -234,9 +242,9 @@ namespace ApexShift.Runtime.Debugging
                 GUILayout.Label("Cam Last Pos: " + FormatVector(lastSecondaryTargetPosition));
             }
 
-            for (int i = entries.Count - 1; i >= 0; i--)
+            for (int i = guiEntries.Length - 1; i >= 0; i--)
             {
-                GUILayout.Label(entries[i]);
+                GUILayout.Label(guiEntries[i]);
             }
 
             GUI.DragWindow(new Rect(0f, 0f, 10000f, 24f));

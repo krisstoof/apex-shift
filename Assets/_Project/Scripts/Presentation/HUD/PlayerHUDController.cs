@@ -19,7 +19,44 @@ namespace ApexShift.Presentation.HUD
         [Header("Resources")]
         [SerializeField] private List<ResourceCounterUI> resourceCounters;
 
+        public void Configure(
+            PlayerSurvivalRuntime survival,
+            PlayerInventoryRuntime inventory,
+            StatBarUI health,
+            StatBarUI hunger,
+            StatBarUI stamina,
+            StatBarUI rest,
+            List<ResourceCounterUI> counters)
+        {
+            UnsubscribeFromInventory();
+            
+            survivalRuntime = survival;
+            inventoryRuntime = inventory;
+            healthBar = health;
+            hungerBar = hunger;
+            staminaBar = stamina;
+            restBar = rest;
+            resourceCounters = counters;
+
+            Debug.Log("[HUD] Controller Configured.", this);
+            
+            if (inventoryRuntime != null)
+            {
+                inventoryRuntime.EnsureInitialized();
+            }
+
+            // Initial refresh
+            UpdateStats();
+            SubscribeToInventory();
+            RefreshResources();
+        }
+
         private void Awake()
+        {
+            FindReferencesIfNull();
+        }
+
+        private void FindReferencesIfNull()
         {
             if (survivalRuntime == null) survivalRuntime = Object.FindAnyObjectByType<PlayerSurvivalRuntime>();
             if (inventoryRuntime == null) inventoryRuntime = Object.FindAnyObjectByType<PlayerInventoryRuntime>();
@@ -32,6 +69,7 @@ namespace ApexShift.Presentation.HUD
 
         private void OnEnable()
         {
+            FindReferencesIfNull();
             SubscribeToInventory();
         }
 
@@ -42,7 +80,7 @@ namespace ApexShift.Presentation.HUD
 
         private void Start()
         {
-            // Re-check subscription in case inventory was set after OnEnable
+            FindReferencesIfNull();
             SubscribeToInventory();
             RefreshResources();
         }
@@ -52,11 +90,15 @@ namespace ApexShift.Presentation.HUD
         private void SubscribeToInventory()
         {
             if (subscribed) return;
-            if (inventoryRuntime != null && inventoryRuntime.Inventory != null)
+            if (inventoryRuntime != null)
             {
-                inventoryRuntime.Inventory.InventoryChanged += RefreshResources;
-                subscribed = true;
-                Debug.Log($"[HUD] Subscribed to inventory on {inventoryRuntime.gameObject.name}", this);
+                inventoryRuntime.EnsureInitialized();
+                if (inventoryRuntime.Inventory != null)
+                {
+                    inventoryRuntime.Inventory.InventoryChanged += RefreshResources;
+                    subscribed = true;
+                    Debug.Log($"[HUD] Subscribed to inventory on {inventoryRuntime.gameObject.name}", this);
+                }
             }
         }
 
@@ -66,9 +108,8 @@ namespace ApexShift.Presentation.HUD
             if (inventoryRuntime != null && inventoryRuntime.Inventory != null)
             {
                 inventoryRuntime.Inventory.InventoryChanged -= RefreshResources;
-                subscribed = false;
-                Debug.Log($"[HUD] Unsubscribed from inventory on {inventoryRuntime.gameObject.name}", this);
             }
+            subscribed = false;
         }
 
         private void Update()
@@ -76,6 +117,7 @@ namespace ApexShift.Presentation.HUD
             UpdateStats();
         }
 
+        private float statLogTimer;
         private void UpdateStats()
         {
             if (survivalRuntime == null || survivalRuntime.Stats == null) return;
@@ -85,20 +127,30 @@ namespace ApexShift.Presentation.HUD
             if (hungerBar != null) hungerBar.SetValue(stats.Hunger, stats.Rules.MaxHunger);
             if (staminaBar != null) staminaBar.SetValue(stats.Stamina, stats.Rules.MaxStamina);
             if (restBar != null) restBar.SetValue(stats.Rest, stats.Rules.MaxRest);
+
+            statLogTimer += Time.deltaTime;
+            if (statLogTimer >= 5f)
+            {
+                statLogTimer = 0f;
+                Debug.Log($"[HUD] Stats Update: H:{stats.Health:0}, Hu:{stats.Hunger:0}, S:{stats.Stamina:0}, R:{stats.Rest:0}", this);
+            }
         }
 
         private void RefreshResources()
         {
-            if (inventoryRuntime == null || inventoryRuntime.Inventory == null) return;
+            if (inventoryRuntime == null || inventoryRuntime.Inventory == null) 
+            {
+                Debug.LogWarning("[HUD] RefreshResources skipped: inventory null", this);
+                return;
+            }
 
-            Debug.Log("[HUD] Refreshing resources...", this);
+            Debug.Log($"[HUD] Refreshing resources. Counters: {resourceCounters.Count}", this);
             foreach (var counter in resourceCounters)
             {
                 if (counter == null) continue;
                 int amount = inventoryRuntime.Inventory.GetAmount(counter.ItemId);
-                Debug.Log($"[HUD] {counter.ItemId}: {amount}", this);
                 counter.UpdateCount(amount);
             }
         }
-    }
+}
 }

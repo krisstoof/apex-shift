@@ -36,14 +36,21 @@ namespace ApexShift.Runtime.Player
 
             if (visualRenderer != null)
             {
+#if UNITY_EDITOR
+                runtimeMaterial = Application.isPlaying ? visualRenderer.material : visualRenderer.sharedMaterial;
+#else
                 runtimeMaterial = visualRenderer.material;
-                if (runtimeMaterial.HasProperty("_BaseColor"))
+#endif
+                if (runtimeMaterial != null)
                 {
-                    originalColor = runtimeMaterial.GetColor("_BaseColor");
-                }
-                else if (runtimeMaterial.HasProperty("_Color"))
-                {
-                    originalColor = runtimeMaterial.color;
+                    if (runtimeMaterial.HasProperty("_BaseColor"))
+                    {
+                        originalColor = runtimeMaterial.GetColor("_BaseColor");
+                    }
+                    else if (runtimeMaterial.HasProperty("_Color"))
+                    {
+                        originalColor = runtimeMaterial.color;
+                    }
                 }
             }
         }
@@ -81,6 +88,30 @@ namespace ApexShift.Runtime.Player
         public void SetInputReader(PlayerInputReader reader)
         {
             inputReader = reader;
+        }
+
+        public void SetVisualRenderer(Renderer targetRenderer)
+        {
+            visualRenderer = targetRenderer;
+            if (visualRenderer != null)
+            {
+#if UNITY_EDITOR
+                runtimeMaterial = Application.isPlaying ? visualRenderer.material : visualRenderer.sharedMaterial;
+#else
+                runtimeMaterial = visualRenderer.material;
+#endif
+                if (runtimeMaterial != null)
+                {
+                    if (runtimeMaterial.HasProperty("_BaseColor"))
+                    {
+                        originalColor = runtimeMaterial.GetColor("_BaseColor");
+                    }
+                    else if (runtimeMaterial.HasProperty("_Color"))
+                    {
+                        originalColor = runtimeMaterial.color;
+                    }
+                }
+            }
         }
 
         private void OnInteract()

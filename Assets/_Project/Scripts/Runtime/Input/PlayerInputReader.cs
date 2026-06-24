@@ -43,6 +43,12 @@ namespace ApexShift.Runtime.PlayerInput
 
         private void OnEnable()
         {
+            if (inputActions == null)
+            {
+                Debug.LogWarning("PlayerInputReader is missing InputActionAsset. Input will not work until one is assigned.", this);
+                return;
+            }
+
             if (gameplayMap == null)
             {
                 CacheActions();
@@ -71,7 +77,7 @@ namespace ApexShift.Runtime.PlayerInput
 
         private void OnDisable()
         {
-            if (inputActions == null)
+            if (inputActions == null || gameplayMap == null)
             {
                 return;
             }
@@ -95,7 +101,6 @@ namespace ApexShift.Runtime.PlayerInput
         {
             if (inputActions == null)
             {
-                Debug.LogWarning("PlayerInputReader is missing InputActionAsset.", this);
                 return;
             }
 

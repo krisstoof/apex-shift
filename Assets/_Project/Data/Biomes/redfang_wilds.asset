@@ -15,7 +15,7 @@ MonoBehaviour:
   biomeId: redfang_wilds
   displayName: Redfang Wilds
   groundColor: {r: 0.55, g: 0.36, b: 0.16, a: 1}
-  groundMaterial: {fileID: 0}
+  groundMaterial: {fileID: 2100000, guid: cde236655c5c6f94886e804baadde036, type: 2}
   starterBiome: 0
   vegetation:
   - kind: 5
@@ -23,22 +23,22 @@ MonoBehaviour:
     weight: 1
     minScale: 0.45
     maxScale: 0.85
-    resourceKind: 
-    harvestable: 0
+    resourceKind: dry_bush
+    harvestable: 1
   - kind: 2
     count: 45
     weight: 1
     minScale: 0.75
     maxScale: 1.25
-    resourceKind: 
-    harvestable: 0
+    resourceKind: dry_tree
+    harvestable: 1
   - kind: 3
     count: 24
     weight: 1
     minScale: 0.8
     maxScale: 1.35
-    resourceKind: 
-    harvestable: 0
+    resourceKind: rock
+    harvestable: 1
   - kind: 6
     count: 3
     weight: 1
@@ -46,4 +46,8 @@ MonoBehaviour:
     maxScale: 0.7
     resourceKind: 
     harvestable: 0
-  creatures: []
+  creatures:
+  - creatureId: wolf
+    minCount: 1
+    maxCount: 3
+    weight: 1

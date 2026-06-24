@@ -2,6 +2,7 @@
   "name": "ApexShift.Presentation",
   "references": [
     "ApexShift.Core",
-    "ApexShift.Runtime"
+    "ApexShift.Runtime",
+    "Unity.InputSystem"
   ]
 }

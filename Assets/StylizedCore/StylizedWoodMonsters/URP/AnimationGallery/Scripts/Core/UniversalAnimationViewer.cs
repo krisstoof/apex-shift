@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using StylizedCore.StylizedWoodMonsters.AnimationGallery.Controllers;
 using StylizedCore.StylizedWoodMonsters.AnimationGallery.Effects;
 using StylizedCore.StylizedWoodMonsters.AnimationGallery.CameraControllers;
@@ -114,6 +114,30 @@ public class UniversalAnimationViewer : MonoBehaviour
     /// </summary>
     private void HandleInput()
     {
+#if ENABLE_INPUT_SYSTEM
+        var keyboard = UnityEngine.InputSystem.Keyboard.current;
+        if (keyboard == null) return;
+
+        if (keyboard.aKey.wasPressedThisFrame) PreviousAnimation();
+        if (keyboard.dKey.wasPressedThisFrame) NextAnimation();
+        if (keyboard.spaceKey.wasPressedThisFrame) RestartCurrentAnimation();
+
+        if (keyboard.pKey.wasPressedThisFrame)
+        {
+            paused = !paused;
+            if (animator != null) animator.speed = paused ? 0f : 1f;
+        }
+
+        if (textureSetController != null)
+        {
+            if (keyboard.zKey.wasPressedThisFrame) textureSetController.PreviousSet();
+            if (keyboard.xKey.wasPressedThisFrame) textureSetController.NextSet();
+        }
+        if (keyboard.lKey.wasPressedThisFrame)
+        {
+            minimalUI = !minimalUI;
+        }
+#else
         if (Input.GetKeyDown(KeyCode.A)) PreviousAnimation();
         if (Input.GetKeyDown(KeyCode.D)) NextAnimation();
         if (Input.GetKeyDown(KeyCode.Space)) RestartCurrentAnimation();
@@ -133,7 +157,7 @@ public class UniversalAnimationViewer : MonoBehaviour
         {
             minimalUI = !minimalUI;
         }
-
+#endif
     }
 
     /// <summary>

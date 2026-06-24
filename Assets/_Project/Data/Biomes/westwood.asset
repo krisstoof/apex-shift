@@ -15,7 +15,7 @@ MonoBehaviour:
   biomeId: westwood
   displayName: Westwood
   groundColor: {r: 0.055, g: 0.18, b: 0.075, a: 1}
-  groundMaterial: {fileID: 0}
+  groundMaterial: {fileID: 2100000, guid: 6421fe5830882714f9229f70629b28e5, type: 2}
   starterBiome: 0
   vegetation:
   - kind: 0
@@ -23,15 +23,15 @@ MonoBehaviour:
     weight: 1
     minScale: 0.9
     maxScale: 1.35
-    resourceKind: 
-    harvestable: 0
+    resourceKind: conifer_tree
+    harvestable: 1
   - kind: 4
     count: 28
     weight: 1
     minScale: 0.45
     maxScale: 0.9
-    resourceKind: 
-    harvestable: 0
+    resourceKind: bush
+    harvestable: 1
   - kind: 6
     count: 18
     weight: 1
@@ -44,6 +44,6 @@ MonoBehaviour:
     weight: 1
     minScale: 0.45
     maxScale: 0.95
-    resourceKind: 
-    harvestable: 0
+    resourceKind: berry_bush
+    harvestable: 1
   creatures: []

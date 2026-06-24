@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections.Generic;
 using StylizedCore.StylizedWoodMonsters.AnimationGallery.Core;
 using StylizedCore.StylizedWoodMonsters.AnimationGallery.CameraControllers;
@@ -67,6 +67,38 @@ namespace StylizedCore.StylizedWoodMonsters.AnimationGallery.Controllers
 
     void Update()
     {
+#if ENABLE_INPUT_SYSTEM
+        var keyboard = UnityEngine.InputSystem.Keyboard.current;
+        if (keyboard == null) return;
+
+        // Note: groupToggleKey conversion to Key might be needed if it changes, 
+        // but for now we assume defaults or use a simple check.
+        if (keyboard.gKey.wasPressedThisFrame)
+            ToggleGroupMode();
+
+        if (!isGroupModeActive) return;
+
+        if (keyboard.tKey.wasPressedThisFrame) CycleAllSkinsSequentially();
+        if (keyboard.yKey.wasPressedThisFrame) RandomizeAllSkins();
+
+        // Reset skins and camera
+        if (keyboard.jKey.wasPressedThisFrame)
+        {
+            globalSkinIndex = 0;
+            foreach (var ctrl in textureControllers)
+                ctrl.SetTextureSet(0);
+
+            PositionCameraForGroup();
+            Debug.Log("Group view reset.");
+        }
+
+        // Re-center group camera
+        if (keyboard.rKey.wasPressedThisFrame)
+        {
+            PositionCameraForGroup();
+            Debug.Log("Group camera re-centered.");
+        }
+#else
         if (Input.GetKeyDown(groupToggleKey))
             ToggleGroupMode();
 
@@ -92,6 +124,7 @@ namespace StylizedCore.StylizedWoodMonsters.AnimationGallery.Controllers
             PositionCameraForGroup();
             Debug.Log("Group camera re-centered.");
         }
+#endif
     }
 
     /// <summary>

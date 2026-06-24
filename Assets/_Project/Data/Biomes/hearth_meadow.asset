@@ -15,7 +15,7 @@ MonoBehaviour:
   biomeId: hearth_meadow
   displayName: Hearth Meadow
   groundColor: {r: 0.5, g: 0.68, b: 0.36, a: 1}
-  groundMaterial: {fileID: 0}
+  groundMaterial: {fileID: 2100000, guid: 4cd9efe333423d544b7263618950f58d, type: 2}
   starterBiome: 1
   vegetation:
   - kind: 1
@@ -23,15 +23,15 @@ MonoBehaviour:
     weight: 1
     minScale: 0.7
     maxScale: 1.1
-    resourceKind: 
-    harvestable: 0
+    resourceKind: leafy_tree
+    harvestable: 1
   - kind: 4
     count: 10
     weight: 1
     minScale: 0.45
     maxScale: 0.9
-    resourceKind: 
-    harvestable: 0
+    resourceKind: bush
+    harvestable: 1
   - kind: 6
     count: 32
     weight: 1
@@ -44,6 +44,10 @@ MonoBehaviour:
     weight: 1
     minScale: 0.45
     maxScale: 0.95
-    resourceKind: 
-    harvestable: 0
-  creatures: []
+    resourceKind: berry_bush
+    harvestable: 1
+  creatures:
+  - creatureId: rabbit
+    minCount: 2
+    maxCount: 5
+    weight: 1

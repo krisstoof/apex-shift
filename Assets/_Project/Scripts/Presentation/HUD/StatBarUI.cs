@@ -9,8 +9,16 @@ namespace ApexShift.Presentation.HUD
         [SerializeField] private Text label;
         [SerializeField] private string statName;
 
+        public void Configure(Image fill, Text labelComp, string nameValue)
+        {
+            fillImage = fill;
+            label = labelComp;
+            statName = nameValue;
+        }
+
         public void SetValue(float current, float max)
         {
+            if (max <= 0) max = 100f; // Prevent division by zero
             float ratio = Mathf.Clamp01(current / max);
 
             if (fillImage != null)
@@ -21,7 +29,6 @@ namespace ApexShift.Presentation.HUD
                 }
                 else
                 {
-                    // Fallback to updating anchors if not using 'Filled' type
                     RectTransform rt = fillImage.rectTransform;
                     rt.anchorMax = new Vector2(ratio, rt.anchorMax.y);
                 }
@@ -32,6 +39,9 @@ namespace ApexShift.Presentation.HUD
                 string prefix = string.IsNullOrEmpty(statName) ? "" : $"{statName}: ";
                 label.text = $"{prefix}{current:0}/{max:0}";
             }
+
+            // Debug log to verify updates
+            // Debug.Log($"[HUD] {statName} set to {current}/{max} (ratio: {ratio})", this);
         }
-    }
+}
 }

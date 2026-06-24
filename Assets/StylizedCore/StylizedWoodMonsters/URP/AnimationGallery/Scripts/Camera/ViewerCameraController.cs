@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using StylizedCore.StylizedWoodMonsters.AnimationGallery.Core;
 
 namespace StylizedCore.StylizedWoodMonsters.AnimationGallery.CameraControllers
@@ -168,6 +168,63 @@ namespace StylizedCore.StylizedWoodMonsters.AnimationGallery.CameraControllers
         {
             if (presentationMode) return;
 
+#if ENABLE_INPUT_SYSTEM
+            var keyboard = UnityEngine.InputSystem.Keyboard.current;
+            var mouse = UnityEngine.InputSystem.Mouse.current;
+            if (keyboard == null || mouse == null) return;
+
+            // Toggle auto-rotation
+            if (keyboard.cKey.wasPressedThisFrame)
+            {
+                autoRotate = !autoRotate;
+                if (!autoRotate) currentRotation = 0f;
+            }
+
+            // Orbit rotation
+            if (keyboard.qKey.isPressed) currentRotation += rotationSpeed * Time.deltaTime;
+            if (keyboard.eKey.isPressed) currentRotation -= rotationSpeed * Time.deltaTime;
+
+            // Zoom
+            if (keyboard.wKey.isPressed) currentZoom -= zoomSpeed * Time.deltaTime;
+            if (keyboard.sKey.isPressed) currentZoom += zoomSpeed * Time.deltaTime;
+
+            // Vertical pan
+            if (keyboard.upArrowKey.isPressed) cameraHeight += heightSpeed * Time.deltaTime;
+            if (keyboard.downArrowKey.isPressed) cameraHeight -= heightSpeed * Time.deltaTime;
+
+            // Lateral pan
+            if (keyboard.rightArrowKey.isPressed) currentSideOffset -= heightSpeed * Time.deltaTime;
+            if (keyboard.leftArrowKey.isPressed) currentSideOffset += heightSpeed * Time.deltaTime;
+
+            // Pitch control
+            if (keyboard.pageUpKey.isPressed) currentPitch -= pitchSpeed * Time.deltaTime;
+            if (keyboard.pageDownKey.isPressed) currentPitch += pitchSpeed * Time.deltaTime;
+
+            // Toggle UI visibility
+            if (keyboard.hKey.wasPressedThisFrame)
+                UIHiddenGlobal = !UIHiddenGlobal;
+
+            // Reset camera
+            if (keyboard.rKey.wasPressedThisFrame) ResetCamera();
+
+            // Mouse zoom
+            float scroll = mouse.scroll.y.ReadValue();
+            if (Mathf.Abs(scroll) > 0.01f)
+                currentZoom -= scroll * mouseZoomSpeed * 0.01f; // Scale scroll for new system
+
+            // Mouse rotation
+            if (mouse.middleButton.wasPressedThisFrame) rotatingWithMouse = true;
+            if (mouse.middleButton.wasReleasedThisFrame) rotatingWithMouse = false;
+
+            if (rotatingWithMouse)
+            {
+                currentRotation -= mouse.delta.x.ReadValue() * mouseRotateSpeed * 0.5f;
+                currentPitch += mouse.delta.y.ReadValue() * mouseRotateSpeed * 0.5f;
+            }
+
+            // Start presentation
+            if (keyboard.vKey.wasPressedThisFrame) StartPresentation();
+#else
             // Toggle auto-rotation
             if (Input.GetKeyDown(KeyCode.C))
             {
@@ -217,14 +274,15 @@ namespace StylizedCore.StylizedWoodMonsters.AnimationGallery.CameraControllers
                 currentPitch += Input.GetAxis("Mouse Y") * mouseRotateSpeed * 10f;
             }
 
+            // Start presentation
+            if (Input.GetKeyDown(KeyCode.V)) StartPresentation();
+#endif
+
             // Clamp values
             currentZoom = Mathf.Clamp(currentZoom, minZoom, maxZoom);
             currentPitch = Mathf.Clamp(currentPitch, minPitch, maxPitch);
             cameraHeight = Mathf.Clamp(cameraHeight, minHeight, maxHeight);
             currentSideOffset = Mathf.Clamp(currentSideOffset, -10f, 10f);
-
-            // Start presentation
-            if (Input.GetKeyDown(KeyCode.V)) StartPresentation();
         }
 
         /// <summary>

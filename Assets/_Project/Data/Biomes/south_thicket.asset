@@ -15,7 +15,7 @@ MonoBehaviour:
   biomeId: south_thicket
   displayName: South Thicket
   groundColor: {r: 0.2, g: 0.43, b: 0.13, a: 1}
-  groundMaterial: {fileID: 0}
+  groundMaterial: {fileID: 2100000, guid: 644ea2bd34d84d542b279f71af0684b2, type: 2}
   starterBiome: 0
   vegetation:
   - kind: 1
@@ -23,15 +23,15 @@ MonoBehaviour:
     weight: 1
     minScale: 0.75
     maxScale: 1.2
-    resourceKind: 
-    harvestable: 0
+    resourceKind: leafy_tree
+    harvestable: 1
   - kind: 4
     count: 45
     weight: 1
     minScale: 0.45
     maxScale: 0.9
-    resourceKind: 
-    harvestable: 0
+    resourceKind: bush
+    harvestable: 1
   - kind: 6
     count: 38
     weight: 1
@@ -44,6 +44,6 @@ MonoBehaviour:
     weight: 1
     minScale: 0.45
     maxScale: 0.95
-    resourceKind: 
-    harvestable: 0
+    resourceKind: berry_bush
+    harvestable: 1
   creatures: []
