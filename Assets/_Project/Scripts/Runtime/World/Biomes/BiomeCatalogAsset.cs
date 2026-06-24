@@ -17,7 +17,7 @@ namespace ApexShift.Runtime.World.Biomes
         public BiomeDefinitionAsset GetBiome(string id)
         {
             EnsureLookup();
-            string normalized = Core.World.Biomes.BiomeId.NormalizeId(id);
+            string normalized = global::ApexShift.Core.World.Biomes.BiomeId.NormalizeId(id);
             return _lookup.TryGetValue(normalized, out var biome) ? biome : null;
         }
 
@@ -42,7 +42,7 @@ namespace ApexShift.Runtime.World.Biomes
             foreach (var biome in biomes)
             {
                 if (biome == null) continue;
-                string id = Core.World.Biomes.BiomeId.NormalizeId(biome.BiomeId);
+                string id = global::ApexShift.Core.World.Biomes.BiomeId.NormalizeId(biome.BiomeId);
                 _lookup[id] = biome;
             }
         }

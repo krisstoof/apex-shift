@@ -32,7 +32,7 @@ namespace ApexShift.Runtime.World.Biomes
             IEnumerable<CreatureSpawnEntryAsset> creatureEntries = null,
             Material material = null)
         {
-            biomeId = Core.World.Biomes.BiomeId.NormalizeId(id);
+            biomeId = global::ApexShift.Core.World.Biomes.BiomeId.NormalizeId(id);
             displayName = displayNameValue;
             groundColor = color;
             starterBiome = isStarterBiome;
@@ -62,7 +62,7 @@ namespace ApexShift.Runtime.World.Biomes
             }
 
             return new BiomeDefinition(
-                new Core.World.Biomes.BiomeId(biomeId),
+                new global::ApexShift.Core.World.Biomes.BiomeId(biomeId),
                 DisplayName,
                 new BiomeSpawnProfile(vegetationEntries, creatureEntries),
                 starterBiome);
@@ -70,12 +70,12 @@ namespace ApexShift.Runtime.World.Biomes
 
         public int GetVegetationCount(string roleId)
         {
-            string normalized = Core.World.Biomes.BiomeId.NormalizeId(roleId);
+            string normalized = global::ApexShift.Core.World.Biomes.BiomeId.NormalizeId(roleId);
             int total = 0;
 
             foreach (VegetationSpawnEntryAsset entry in vegetation)
             {
-                if (entry != null && Core.World.Biomes.BiomeId.NormalizeId(entry.RoleId) == normalized)
+                if (entry != null && global::ApexShift.Core.World.Biomes.BiomeId.NormalizeId(entry.RoleId) == normalized)
                 {
                     total += entry.Count;
                 }
@@ -86,10 +86,10 @@ namespace ApexShift.Runtime.World.Biomes
 
         public float GetMinScale(string roleId, float fallback)
         {
-            string normalized = Core.World.Biomes.BiomeId.NormalizeId(roleId);
+            string normalized = global::ApexShift.Core.World.Biomes.BiomeId.NormalizeId(roleId);
             foreach (VegetationSpawnEntryAsset entry in vegetation)
             {
-                if (entry != null && Core.World.Biomes.BiomeId.NormalizeId(entry.RoleId) == normalized)
+                if (entry != null && global::ApexShift.Core.World.Biomes.BiomeId.NormalizeId(entry.RoleId) == normalized)
                 {
                     return entry.MinScale;
                 }
@@ -100,10 +100,10 @@ namespace ApexShift.Runtime.World.Biomes
 
         public float GetMaxScale(string roleId, float fallback)
         {
-            string normalized = Core.World.Biomes.BiomeId.NormalizeId(roleId);
+            string normalized = global::ApexShift.Core.World.Biomes.BiomeId.NormalizeId(roleId);
             foreach (VegetationSpawnEntryAsset entry in vegetation)
             {
-                if (entry != null && Core.World.Biomes.BiomeId.NormalizeId(entry.RoleId) == normalized)
+                if (entry != null && global::ApexShift.Core.World.Biomes.BiomeId.NormalizeId(entry.RoleId) == normalized)
                 {
                     return entry.MaxScale;
                 }

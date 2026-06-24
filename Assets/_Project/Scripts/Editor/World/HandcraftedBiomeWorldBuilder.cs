@@ -765,14 +765,30 @@ namespace ApexShift.EditorTools.World
             return Color.clear;
         }
 
+        private static string GetRoleId(VegetationRole role)
+        {
+            return role switch
+            {
+                VegetationRole.ConiferTree => "conifer_tree",
+                VegetationRole.LeafyTree => "leafy_tree",
+                VegetationRole.DryTree => "dry_tree",
+                VegetationRole.Rock => "rock",
+                VegetationRole.GreenBush => "green_bush",
+                VegetationRole.DryBush => "dry_bush",
+                VegetationRole.GrassOrFlower => "grass_or_flower",
+                VegetationRole.BerryBush => "berry_bush",
+                _ => role.ToString().ToLowerInvariant()
+            };
+        }
+
         private static float GetMinScaleForRole(BiomeIdentityProfile profile, VegetationRole role)
         {
             if (_catalog != null)
             {
-                var asset = _catalog.GetBiome(profile.Kind.ToString().ToLowerInvariant());
+                BiomeDefinitionAsset asset = _catalog.GetBiome(GetBiomeId(profile.Kind));
                 if (asset != null)
                 {
-                    return asset.GetMinScale(role.ToString(), GetFallbackMinScale(role));
+                    return asset.GetMinScale(GetRoleId(role), GetFallbackMinScale(role));
                 }
             }
 
@@ -810,10 +826,10 @@ namespace ApexShift.EditorTools.World
         {
             if (_catalog != null)
             {
-                var asset = _catalog.GetBiome(profile.Kind.ToString().ToLowerInvariant());
+                BiomeDefinitionAsset asset = _catalog.GetBiome(GetBiomeId(profile.Kind));
                 if (asset != null)
                 {
-                    return asset.GetMaxScale(role.ToString(), GetFallbackMaxScale(role));
+                    return asset.GetMaxScale(GetRoleId(role), GetFallbackMaxScale(role));
                 }
             }
 
@@ -1642,11 +1658,49 @@ namespace ApexShift.EditorTools.World
             renderer.sharedMaterial = material;
         }
 
+        private static float GetFirstScale(BiomeDefinitionAsset asset, bool min, float fallback)
+        {
+            if (asset == null)
+            {
+                return fallback;
+            }
+
+            string[] treeRoles = { "conifer_tree", "leafy_tree", "dry_tree" };
+            foreach (string role in treeRoles)
+            {
+                if (asset.GetVegetationCount(role) > 0)
+                {
+                    return min ? asset.GetMinScale(role, fallback) : asset.GetMaxScale(role, fallback);
+                }
+            }
+
+            return fallback;
+        }
+
+        private static string GetBiomeId(BiomeKind biome)
+        {
+            switch (biome)
+            {
+                case BiomeKind.Westwood:
+                    return "westwood";
+                case BiomeKind.SouthThicket:
+                    return "south_thicket";
+                case BiomeKind.HearthMeadow:
+                    return "hearth_meadow";
+                case BiomeKind.StonebackRidge:
+                    return "stoneback_ridge";
+                case BiomeKind.RedfangWilds:
+                    return "redfang_wilds";
+                default:
+                    return biome.ToString().ToLowerInvariant();
+            }
+        }
+
         private static BiomeIdentityProfile GetProfile(BiomeKind biome)
         {
             if (_catalog != null)
             {
-                var asset = _catalog.GetBiome(biome.ToString().ToLowerInvariant());
+                BiomeDefinitionAsset asset = _catalog.GetBiome(GetBiomeId(biome));
                 if (asset != null)
                 {
                     return new BiomeIdentityProfile
@@ -1654,16 +1708,16 @@ namespace ApexShift.EditorTools.World
                         Kind = biome,
                         DisplayName = asset.DisplayName,
                         GroundColor = asset.GroundColor,
-                        ConiferTreeCount = asset.GetVegetationCount(nameof(VegetationRole.ConiferTree)),
-                        LeafyTreeCount = asset.GetVegetationCount(nameof(VegetationRole.LeafyTree)),
-                        DryTreeCount = asset.GetVegetationCount(nameof(VegetationRole.DryTree)),
-                        RockCount = asset.GetVegetationCount(nameof(VegetationRole.Rock)),
-                        GreenBushCount = asset.GetVegetationCount(nameof(VegetationRole.GreenBush)),
-                        DryBushCount = asset.GetVegetationCount(nameof(VegetationRole.DryBush)),
-                        GrassOrFlowerCount = asset.GetVegetationCount(nameof(VegetationRole.GrassOrFlower)),
-                        BerryBushCount = asset.GetVegetationCount(nameof(VegetationRole.BerryBush)),
-                        MinTreeScale = asset.GetMinScale(nameof(VegetationRole.LeafyTree), 0.8f),
-                        MaxTreeScale = asset.GetMaxScale(nameof(VegetationRole.LeafyTree), 1.2f)
+                        ConiferTreeCount = asset.GetVegetationCount(GetRoleId(VegetationRole.ConiferTree)),
+                        LeafyTreeCount = asset.GetVegetationCount(GetRoleId(VegetationRole.LeafyTree)),
+                        DryTreeCount = asset.GetVegetationCount(GetRoleId(VegetationRole.DryTree)),
+                        RockCount = asset.GetVegetationCount(GetRoleId(VegetationRole.Rock)),
+                        GreenBushCount = asset.GetVegetationCount(GetRoleId(VegetationRole.GreenBush)),
+                        DryBushCount = asset.GetVegetationCount(GetRoleId(VegetationRole.DryBush)),
+                        GrassOrFlowerCount = asset.GetVegetationCount(GetRoleId(VegetationRole.GrassOrFlower)),
+                        BerryBushCount = asset.GetVegetationCount(GetRoleId(VegetationRole.BerryBush)),
+                        MinTreeScale = GetFirstScale(asset, true, 0.8f),
+                        MaxTreeScale = GetFirstScale(asset, false, 1.2f)
                     };
                 }
             }
