@@ -71,9 +71,7 @@ namespace StylizedCore.StylizedWoodMonsters.AnimationGallery.Controllers
         var keyboard = UnityEngine.InputSystem.Keyboard.current;
         if (keyboard == null) return;
 
-        // Note: groupToggleKey conversion to Key might be needed if it changes, 
-        // but for now we assume defaults or use a simple check.
-        if (keyboard.gKey.wasPressedThisFrame)
+        if (IsKeyPressed(keyboard, groupToggleKey))
             ToggleGroupMode();
 
         if (!isGroupModeActive) return;
@@ -125,6 +123,19 @@ namespace StylizedCore.StylizedWoodMonsters.AnimationGallery.Controllers
             Debug.Log("Group camera re-centered.");
         }
 #endif
+    }
+
+    private static bool IsKeyPressed(UnityEngine.InputSystem.Keyboard keyboard, KeyCode keyCode)
+    {
+        switch (keyCode)
+        {
+            case KeyCode.G: return keyboard.gKey.wasPressedThisFrame;
+            case KeyCode.T: return keyboard.tKey.wasPressedThisFrame;
+            case KeyCode.Y: return keyboard.yKey.wasPressedThisFrame;
+            case KeyCode.J: return keyboard.jKey.wasPressedThisFrame;
+            case KeyCode.R: return keyboard.rKey.wasPressedThisFrame;
+            default: return false;
+        }
     }
 
     /// <summary>

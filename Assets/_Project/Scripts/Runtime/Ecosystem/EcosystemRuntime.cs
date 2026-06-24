@@ -15,7 +15,7 @@ namespace ApexShift.Runtime.Ecosystem
             {
                 if (_instance == null)
                 {
-                    _instance = Object.FindFirstObjectByType<EcosystemRuntime>();
+                    _instance = Object.FindAnyObjectByType<EcosystemRuntime>();
                 }
 
                 return _instance;
@@ -130,6 +130,16 @@ namespace ApexShift.Runtime.Ecosystem
             var filtered = _foodSources.Where(s => s != null && s.Kind == kind).ToList();
             if (filtered.Count == 0) return 0f;
             return filtered.Average(s => s.BiomassRatio);
+        }
+
+        private void OnGUI()
+        {
+            GUI.Box(
+                new Rect(12f, 120f, 270f, 104f),
+                $"Ecosystem Debug\n" +
+                $"food sources: {FoodSourceCount}\n" +
+                $"plants: {PlantFoodSourceCount} avg:{GetAverageBiomassRatio(FoodKind.Plants):0.00}\n" +
+                $"meat: {MeatFoodSourceCount} avg:{GetAverageBiomassRatio(FoodKind.Meat):0.00}");
         }
     }
 }

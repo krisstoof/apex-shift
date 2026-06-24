@@ -29,6 +29,11 @@ namespace ApexShift.Runtime.Camera
                 return;
             }
 
+            if (ApexShift.Runtime.Debugging.DebugUIBounds.IsMouseOverAnyWindow())
+            {
+                return;
+            }
+
             float scrollDelta = 0f;
 #if ENABLE_INPUT_SYSTEM
             if (UnityEngine.InputSystem.Mouse.current != null)

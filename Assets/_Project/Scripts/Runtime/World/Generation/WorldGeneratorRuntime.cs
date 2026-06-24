@@ -15,6 +15,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
+using Unity.AI.Navigation;
 using CameraComponent = UnityEngine.Camera;
 
 namespace ApexShift.Runtime.World.Generation
@@ -70,14 +71,22 @@ namespace ApexShift.Runtime.World.Generation
             _lastResult = new WorldGenerationResult { Seed = seed };
 
             CreateBootstrapper();
+            EnsureEcosystemRuntime();
+            EnsureWorldMapDebugWindow();
             EnsureRoots();
-            GenerateFixedLayout();
-            
+            GenerateIslandLayout();
+
             GameObject player = CreatePlayer();
             GameObject cameraGo = CreateCamera(player.transform);
             CreateWorldBounds();
 
             ConfigurePlayerRuntime(player, cameraGo);
+
+            // Add and build NavMesh
+            NavMeshSurface surface = _terrainRoot.GetComponent<NavMeshSurface>();
+            if (surface == null) surface = _terrainRoot.gameObject.AddComponent<NavMeshSurface>();
+            surface.collectObjects = CollectObjects.Children;
+            surface.BuildNavMesh();
 
             Random.state = oldState;
 
@@ -106,8 +115,9 @@ namespace ApexShift.Runtime.World.Generation
             DestroyAllByName("BuildingRoot");
             DestroyAllByName("GameBootstrapper");
             DestroyAllByName("EcosystemRuntime");
+            DestroyAllByName("WorldMapDebugWindow");
             DestroyAllByName("Player");
-DestroyAllByName("Main Camera");
+            DestroyAllByName("Main Camera");
             DestroyAllByName("PlayerFollowCamera");
             DestroyAllByName("Directional Light");
             DestroyAllByName("UI");
@@ -117,7 +127,7 @@ DestroyAllByName("Main Camera");
 
         private void DestroyAllByName(string name)
         {
-            var objects = GameObject.FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var objects = GameObject.FindObjectsByType<GameObject>(FindObjectsInactive.Include);
             foreach (var go in objects)
             {
                 if (go != null && go.name == name)
@@ -175,24 +185,169 @@ DestroyAllByName("Main Camera");
             go.AddComponent<EcosystemRuntime>();
         }
 
-        private void GenerateFixedLayout()
-{
+        private void EnsureWorldMapDebugWindow()
+        {
+            if (Object.FindAnyObjectByType<WorldMapDebugWindow>() != null)
+            {
+                return;
+            }
+
+            GameObject go = new GameObject("WorldMapDebugWindow");
+            go.transform.SetParent(transform);
+            go.AddComponent<WorldMapDebugWindow>();
+        }
+
+        private bool IsInsideIsland(float x, float z)
+        {
+            const float islandRadiusX = 108f;
+            const float islandRadiusZ = 82f;
+
+            float normalizedX = x / islandRadiusX;
+            float normalizedZ = z / islandRadiusZ;
+            float distance = normalizedX * normalizedX + normalizedZ * normalizedZ;
+
+            float edgeNoiseA = Mathf.PerlinNoise((x + 100f) * 0.035f, (z + 100f) * 0.035f);
+            float edgeNoiseB = Mathf.PerlinNoise((x + 250f) * 0.085f, (z + 250f) * 0.070f);
+            float edgeNoiseC = Mathf.PerlinNoise((x + 510f) * 0.145f, (z + 510f) * 0.120f);
+
+            float radiusModifier = Mathf.Lerp(0.78f, 1.18f, edgeNoiseA);
+            radiusModifier += (edgeNoiseB - 0.5f) * 0.16f;
+            radiusModifier += (edgeNoiseC - 0.5f) * 0.07f;
+
+            // Create larger peninsulas and coves, but keep the world readable.
+            float westPeninsula = Mathf.Exp(-Mathf.Pow((x + 92f) / 34f, 2f) - Mathf.Pow((z + 12f) / 40f, 2f)) * 0.18f;
+            float northBay = Mathf.Exp(-Mathf.Pow(x / 42f, 2f) - Mathf.Pow((z - 74f) / 24f, 2f)) * 0.13f;
+            float southBite = Mathf.Exp(-Mathf.Pow((x - 18f) / 40f, 2f) - Mathf.Pow((z + 72f) / 22f, 2f)) * 0.16f;
+
+            radiusModifier += westPeninsula;
+            radiusModifier -= northBay;
+            radiusModifier -= southBite;
+
+            return distance <= radiusModifier;
+        }
+
+        private string DetermineBiome(Vector3 position)
+        {
+            float borderNoise = Mathf.PerlinNoise((position.x + 200f) * 0.030f, (position.z + 200f) * 0.030f) - 0.5f;
+            float x = position.x + borderNoise * 22f;
+            float z = position.z + borderNoise * 18f;
+
+            float centerDistance = Mathf.Sqrt(x * x + z * z);
+            if (centerDistance < 18f)
+            {
+                return "hearth_meadow";
+            }
+
+            float moisture = Mathf.PerlinNoise((x + 650f) * 0.026f, (z + 870f) * 0.026f);
+            float heat = Mathf.PerlinNoise((x + 125f) * 0.022f, (z + 430f) * 0.022f);
+            float ridge = Mathf.PerlinNoise((x + 910f) * 0.045f, (z + 220f) * 0.032f);
+
+            if (z > 38f || (ridge > 0.66f && z > 8f))
+            {
+                return "stoneback_ridge";
+            }
+
+            if (x < -34f && moisture > 0.35f)
+            {
+                return "westwood";
+            }
+
+            if (x > 42f || (heat > 0.62f && z < -12f))
+            {
+                return "redfang_wilds";
+            }
+
+            if (moisture > 0.58f || (z < -10f && x < 28f))
+            {
+                return "south_thicket";
+            }
+
+            if (x < -22f)
+            {
+                return "westwood";
+            }
+
+            if (heat > 0.55f)
+            {
+                return "redfang_wilds";
+            }
+
+            return "south_thicket";
+        }
+
+        private void GenerateIslandLayout()
+        {
             if (biomeCatalog == null)
             {
                 Debug.LogWarning("No BiomeCatalogAsset assigned to WorldGeneratorRuntime.");
                 return;
             }
 
-            float size = settings?.RegionSize ?? 40f;
+            int gridSize = 38;
+            float tileSize = 8f;
+            
+            bool[,] landGrid = new bool[gridSize, gridSize];
+            Vector3 centerOffset = new Vector3(gridSize * tileSize * 0.5f, 0, gridSize * tileSize * 0.5f);
 
-            AddRegion("hearth_meadow", Vector3.zero, size);
-            AddRegion("westwood", new Vector3(-size, 0, 0), size);
-            AddRegion("stoneback_ridge", new Vector3(size, 0, 0), size);
-            AddRegion("south_thicket", new Vector3(0, 0, -size), size);
-            AddRegion("redfang_wilds", new Vector3(0, 0, size), size);
+            // First pass: Determine Land/Water and Create Tiles.
+            // This is intentionally runtime-specific: large island layout, not handcrafted rectangles.
+            for (int z = 0; z < gridSize; z++)
+            {
+                for (int x = 0; x < gridSize; x++)
+                {
+                    Vector3 pos = new Vector3(x * tileSize, 0, z * tileSize) - centerOffset + new Vector3(tileSize * 0.5f, 0, tileSize * 0.5f);
+                    
+                    bool isLand = IsInsideIsland(pos.x, pos.z);
+                    landGrid[x, z] = isLand;
+
+                    string biomeId;
+                    if (isLand)
+                    {
+                        biomeId = DetermineBiome(pos);
+                        _allTileCenters.Add(pos);
+                    }
+                    else
+                    {
+                        biomeId = "water";
+                    }
+
+                    AddTileRegion(biomeId, pos, tileSize);
+                }
+            }
+
+            // Second pass: Add Hard Boundaries (Invisible Walls)
+            for (int z = 0; z < gridSize; z++)
+            {
+                for (int x = 0; x < gridSize; x++)
+                {
+                    if (!landGrid[x, z]) continue;
+                    Vector3 pos = new Vector3(x * tileSize, 0, z * tileSize) - centerOffset + new Vector3(tileSize * 0.5f, 0, tileSize * 0.5f);
+                    
+                    CheckAndAddWall(x + 1, z, pos, Vector3.right, landGrid, gridSize, tileSize);
+                    CheckAndAddWall(x - 1, z, pos, Vector3.left, landGrid, gridSize, tileSize);
+                    CheckAndAddWall(x, z + 1, pos, Vector3.forward, landGrid, gridSize, tileSize);
+                    CheckAndAddWall(x, z - 1, pos, Vector3.back, landGrid, gridSize, tileSize);
+                }
+            }
         }
 
-        private void AddRegion(string biomeId, Vector3 center, float size)
+        private void CheckAndAddWall(int nx, int nz, Vector3 pos, Vector3 direction, bool[,] landGrid, int gridSize, float tileSize)
+        {
+            bool isWater = false;
+            if (nx < 0 || nx >= gridSize || nz < 0 || nz >= gridSize) isWater = true;
+            else if (!landGrid[nx, nz]) isWater = true;
+
+            if (isWater)
+            {
+                GameObject wall = new GameObject("IslandWall");
+                wall.transform.SetParent(_terrainRoot);
+                wall.transform.position = pos + direction * (tileSize * 0.5f) + Vector3.up * 5f;
+                BoxCollider col = wall.AddComponent<BoxCollider>();
+                col.size = (direction.x != 0) ? new Vector3(0.1f, 10f, tileSize) : new Vector3(tileSize, 10f, 0.1f);
+            }
+        }
+
+        private void AddTileRegion(string biomeId, Vector3 center, float size)
         {
             BiomeDefinitionAsset biome = biomeCatalog.GetBiome(biomeId);
             if (biome == null)
@@ -201,35 +356,62 @@ DestroyAllByName("Main Camera");
                 return;
             }
 
-            Bounds bounds = new Bounds(center, new Vector3(size, 2f, size));
+            float terrainHeight = biomeId == "water" ? -0.30f : GetTerrainHeight(center, biomeId);
+            Vector3 regionCenter = new Vector3(center.x, terrainHeight, center.z);
+            Bounds bounds = new Bounds(regionCenter, new Vector3(size, 3f, size));
             GeneratedBiomeRegion region = new GeneratedBiomeRegion(biome, bounds);
             _lastResult.Regions.Add(region);
             _lastResult.BiomeCount++;
 
-            CreateTerrainPlane(region);
-            SpawnRegionResources(region);
-            SpawnRegionCreatures(region);
-
-            _allTileCenters.Add(center);
-            float halfSize = size * 0.5f;
-            _allTileCenters.Add(center + new Vector3(halfSize, 0, 0));
-            _allTileCenters.Add(center + new Vector3(-halfSize, 0, 0));
-            _allTileCenters.Add(center + new Vector3(0, 0, halfSize));
-            _allTileCenters.Add(center + new Vector3(0, 0, -halfSize));
+            CreateTerrainTile(region);
+            
+            if (biomeId != "water")
+            {
+                SpawnRegionResources(region);
+                SpawnRegionCreatures(region);
+            }
         }
 
-        private void CreateTerrainPlane(GeneratedBiomeRegion region)
+        private float GetTerrainHeight(Vector3 position, string biomeId)
         {
-            GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            plane.name = $"Terrain_{region.Biome.BiomeId}";
-            plane.transform.SetParent(_terrainRoot);
-            plane.transform.position = region.Bounds.center;
-            float scale = region.Bounds.size.x / 10f;
-            plane.transform.localScale = new Vector3(scale, 1f, scale);
+            float broad = Mathf.PerlinNoise((position.x + 300f) * 0.018f, (position.z + 300f) * 0.018f);
+            float detail = Mathf.PerlinNoise((position.x + 900f) * 0.065f, (position.z + 900f) * 0.065f);
+
+            float height = (broad - 0.5f) * 1.15f + (detail - 0.5f) * 0.35f;
+
+            switch (biomeId)
+            {
+                case "stoneback_ridge":
+                    height += 1.15f + Mathf.PerlinNoise((position.x + 30f) * 0.050f, (position.z + 80f) * 0.050f) * 1.05f;
+                    break;
+                case "westwood":
+                    height += 0.35f;
+                    break;
+                case "redfang_wilds":
+                    height += 0.20f;
+                    break;
+                case "south_thicket":
+                    height += 0.10f;
+                    break;
+                case "hearth_meadow":
+                    height = Mathf.Lerp(height, 0.05f, 0.65f);
+                    break;
+            }
+
+            return Mathf.Round(height * 4f) / 4f;
+        }
+
+        private void CreateTerrainTile(GeneratedBiomeRegion region)
+        {
+            GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            tile.name = $"Terrain_{region.Biome.BiomeId}";
+            tile.transform.SetParent(_terrainRoot);
+            tile.transform.position = region.Bounds.center + Vector3.down * 0.08f;
+            tile.transform.localScale = new Vector3(region.Bounds.size.x, 0.16f, region.Bounds.size.z);
 
             if (region.Biome.GroundMaterial != null)
             {
-                plane.GetComponent<Renderer>().sharedMaterial = region.Biome.GroundMaterial;
+                tile.GetComponent<Renderer>().sharedMaterial = region.Biome.GroundMaterial;
             }
             else
             {
@@ -241,7 +423,7 @@ DestroyAllByName("Main Camera");
                 else
                     mat.color = region.Biome.GroundColor;
                 
-                plane.GetComponent<Renderer>().sharedMaterial = mat;
+                tile.GetComponent<Renderer>().sharedMaterial = mat;
             }
         }
 
@@ -249,7 +431,11 @@ DestroyAllByName("Main Camera");
         {
             float padding = settings?.Padding ?? 5f;
             Bounds spawnBounds = region.Bounds;
-            spawnBounds.Expand(new Vector3(-padding * 2, 0, -padding * 2));
+            float actualPadding = Mathf.Min(padding, region.Bounds.size.x * 0.2f);
+            spawnBounds.Expand(new Vector3(-actualPadding * 2, 0, -actualPadding * 2));
+
+            float originalRegionSize = 40f;
+            float spawnProbability = (region.Bounds.size.x * region.Bounds.size.z) / (originalRegionSize * originalRegionSize);
 
             foreach (var entry in region.Biome.Vegetation)
             {
@@ -257,6 +443,8 @@ DestroyAllByName("Main Camera");
 
                 for (int i = 0; i < entry.Count; i++)
                 {
+                    if (Random.value > spawnProbability) continue;
+
                     Vector3 pos = GetRandomPointInBounds(spawnBounds);
                     if (pos.magnitude < clearingRadius) continue;
 
@@ -270,14 +458,27 @@ DestroyAllByName("Main Camera");
         {
             float padding = settings?.Padding ?? 5f;
             Bounds spawnBounds = region.Bounds;
-            spawnBounds.Expand(new Vector3(-padding * 2, 0, -padding * 2));
+            float actualPadding = Mathf.Min(padding, region.Bounds.size.x * 0.2f);
+            spawnBounds.Expand(new Vector3(-actualPadding * 2, 0, -actualPadding * 2));
+
+            float originalRegionSize = 40f;
+            float spawnProbability = (region.Bounds.size.x * region.Bounds.size.z) / (originalRegionSize * originalRegionSize);
 
             foreach (var entry in region.Biome.Creatures)
             {
                 if (entry == null) continue;
 
                 int count = Random.Range(entry.MinCount, entry.MaxCount + 1);
+                int countToSpawn = 0;
                 for (int i = 0; i < count; i++)
+                {
+                    if (Random.value < spawnProbability)
+                    {
+                        countToSpawn++;
+                    }
+                }
+
+                for (int i = 0; i < countToSpawn; i++)
                 {
                     Vector3 pos = GetRandomPointInBounds(spawnBounds);
                     if (pos.magnitude < clearingRadius) continue;
@@ -290,7 +491,7 @@ DestroyAllByName("Main Camera");
         {
             return new Vector3(
                 Random.Range(bounds.min.x, bounds.max.x),
-                0f,
+                bounds.center.y + 0.02f,
                 Random.Range(bounds.min.z, bounds.max.z)
             );
         }
@@ -425,8 +626,22 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             var foodSeeking = instance.GetComponent<CreatureFoodSeekingBehavior>();
             if (foodSeeking == null) foodSeeking = instance.AddComponent<CreatureFoodSeekingBehavior>();
 
+            var debugOverlay = instance.GetComponent<CreatureDebugOverlay>();
+            if (debugOverlay == null) debugOverlay = instance.AddComponent<CreatureDebugOverlay>();
+
+            var playerAwareness = instance.GetComponent<CreaturePlayerAwarenessBehavior>();
+            if (playerAwareness == null) playerAwareness = instance.AddComponent<CreaturePlayerAwarenessBehavior>();
+
+            var animDriver = instance.GetComponent<CreatureAnimationDriver>();
+            if (animDriver == null) animDriver = instance.AddComponent<CreatureAnimationDriver>();
+            float runThreshold = 2.0f;
+            if (entry.CreatureId == "grazer") runThreshold = 1.2f;
+            else if (entry.CreatureId == "small_prey") runThreshold = 2.5f;
+            else if (entry.CreatureId == "varnak") runThreshold = 3.5f;
+            animDriver.Configure(runThreshold);
+
             ConfigureCreatureMovement(entry.CreatureId, adapter, wander);
-}
+        }
 
         private GameObject CreateCreatureFallback(string creatureId, Vector3 position)
         {
@@ -587,17 +802,35 @@ if (renderer != null)
 
         private GameObject CreatePlayer()
         {
+            Vector3 spawnPos = Vector3.up * 0.05f;
+            if (_allTileCenters.Count > 0)
+            {
+                // Find tile center closest to zero
+                Vector3 nearest = _allTileCenters[0];
+                float minDist = nearest.sqrMagnitude;
+                foreach (var center in _allTileCenters)
+                {
+                    float d = center.sqrMagnitude;
+                    if (d < minDist)
+                    {
+                        minDist = d;
+                        nearest = center;
+                    }
+                }
+                spawnPos = nearest + Vector3.up * 0.05f;
+            }
+
             GameObject player;
             if (playerPrefab != null)
             {
-                player = Instantiate(playerPrefab, Vector3.up * 0.05f, Quaternion.Euler(0, 45, 0));
+                player = Instantiate(playerPrefab, spawnPos, Quaternion.Euler(0, 45, 0));
                 player.name = "Player";
             }
             else
             {
                 player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
                 player.name = "Player";
-                player.transform.position = new Vector3(0, 1, 0);
+                player.transform.position = spawnPos + Vector3.up * 1f;
             }
 
             return player;
@@ -763,7 +996,7 @@ if (renderer != null)
             GameObject go = new GameObject("WorldBounds");
             go.transform.SetParent(transform);
             WorldBounds bounds = go.AddComponent<WorldBounds>();
-            bounds.Configure(settings?.RegionSize ?? 40f, _allTileCenters);
+            bounds.Configure(8f, _allTileCenters);
         }
 
         private void OnDrawGizmos()

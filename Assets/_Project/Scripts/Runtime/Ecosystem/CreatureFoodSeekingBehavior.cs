@@ -13,6 +13,11 @@ namespace ApexShift.Runtime.Ecosystem
         private CreatureNeedsRuntime _needs;
         private CreatureAgentView _view;
         private FoodSourceView _currentTarget;
+        private bool _isEating;
+
+        public FoodSourceView CurrentTarget => _currentTarget;
+        public bool HasTarget => _currentTarget != null && !_currentTarget.IsEmpty;
+        public bool IsEating => _isEating;
 
         private void Awake()
         {
@@ -22,6 +27,8 @@ namespace ApexShift.Runtime.Ecosystem
 
         private void Update()
         {
+            _isEating = false;
+
             if (!_needs.State.IsHungry)
             {
                 _currentTarget = null;
@@ -39,6 +46,7 @@ namespace ApexShift.Runtime.Ecosystem
                 if (dist <= interactionRange)
                 {
                     _view.Stop();
+                    _isEating = true;
                     float nutrition = _currentTarget.Consume(consumptionRate * Time.deltaTime);
                     _needs.Eat(_currentTarget.Kind, nutrition);
                 }

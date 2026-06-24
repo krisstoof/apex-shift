@@ -13,8 +13,15 @@ namespace ApexShift.Runtime.Creatures
             _agent = GetComponent<NavMeshAgent>();
         }
 
-        public bool TryMoveTo(Vector3 destination)
+        private void Start()
         {
+            WarpToNearestNavMesh();
+        }
+
+        public bool IsOnNavMesh => _agent != null && _agent.isOnNavMesh;
+
+        public bool TryMoveTo(Vector3 destination)
+{
             if (_agent == null || !_agent.isOnNavMesh) return false;
             _agent.isStopped = false;
             return _agent.SetDestination(destination);

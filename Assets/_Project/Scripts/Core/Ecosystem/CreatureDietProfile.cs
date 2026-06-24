@@ -8,7 +8,7 @@ namespace ApexShift.Core.Ecosystem
         public float MeatPreference { get; }
         public float ScavengerPreference { get; }
 
-        // Compatibility booleans for existing tests / simple runtime checks.
+        // Compatibility booleans for runtime code/tests that only need a yes/no diet check.
         public bool PlantDiet => PlantPreference > 0f;
         public bool MeatDiet => MeatPreference > 0f;
         public bool ScavengerDiet => ScavengerPreference > 0f;

@@ -42,17 +42,26 @@ namespace ApexShift.Runtime.Creatures
             
             while (_isWandering)
             {
-                Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
-                randomDirection += transform.position;
-                
-                if (_view.GetNavigationAdapter().TrySamplePosition(randomDirection, out Vector3 targetPos, wanderRadius))
-                {
-                    _view.MoveTo(targetPos);
+                if (_view == null) _view = GetComponent<CreatureAgentView>();
+                var adapter = _view != null ? _view.GetNavigationAdapter() : null;
 
-                    // Wait until reached or path invalid
-                    while (!_view.GetNavigationAdapter().HasReachedDestination())
+                if (adapter != null && adapter.IsOnNavMesh)
+                {
+                    Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
+                    randomDirection += transform.position;
+                    
+                    if (adapter.TrySamplePosition(randomDirection, out Vector3 targetPos, wanderRadius))
                     {
-                        yield return new WaitForSeconds(0.5f);
+                        Debug.Log($"[Wander] {gameObject.name} moving to {targetPos}");
+                        _view.MoveTo(targetPos);
+
+                        // Wait until reached or path invalid
+                        float timeout = 10f;
+                        while (!adapter.HasReachedDestination() && timeout > 0f)
+                        {
+                            timeout -= 0.5f;
+                            yield return new WaitForSeconds(0.5f);
+                        }
                     }
                 }
 
@@ -60,5 +69,5 @@ namespace ApexShift.Runtime.Creatures
                 yield return new WaitForSeconds(waitTime);
             }
         }
-    }
+}
 }

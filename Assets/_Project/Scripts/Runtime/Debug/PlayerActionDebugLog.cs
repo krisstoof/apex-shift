@@ -59,6 +59,7 @@ namespace ApexShift.Runtime.Debugging
         private bool smoothingEnabled = true;
         private bool guiShowOverlay;
         private string[] guiEntries = new string[0];
+        private bool isResizing = false;
 
         private const string ShowOverlayPrefKey = "ApexShift.PlayerActionDebugLog.ShowOverlay";
         private const string LogToConsolePrefKey = "ApexShift.PlayerActionDebugLog.LogToConsole";
@@ -148,12 +149,18 @@ namespace ApexShift.Runtime.Debugging
                 currentEvent.Use();
             }
 
-            const float width = 380f;
-            const float lineHeight = 18f;
-            float height = Mathf.Max(260f, 180f + guiEntries.Length * lineHeight);
+            if (!showOverlay)
+            {
+                DebugUIBounds.PlayerActionWindowVisible = false;
+                return;
+            }
 
-            panelRect.width = width;
-            panelRect.height = height;
+            DebugUIBounds.PlayerActionWindowVisible = true;
+            DebugUIBounds.PlayerActionWindowRect = panelRect;
+
+            if (panelRect.width < 100f) panelRect.width = 380f;
+            if (panelRect.height < 100f) panelRect.height = 260f;
+
             panelRect = GUI.Window(PanelWindowId, panelRect, DrawWindowContents, "Action Log");
         }
 
@@ -245,6 +252,32 @@ namespace ApexShift.Runtime.Debugging
             for (int i = guiEntries.Length - 1; i >= 0; i--)
             {
                 GUILayout.Label(guiEntries[i]);
+            }
+
+            // Drag handle to resize window
+            Rect resizeHandleRect = new Rect(panelRect.width - 16f, panelRect.height - 16f, 16f, 16f);
+            GUI.Box(resizeHandleRect, "", "label");
+
+            Event currentEvent = Event.current;
+            if (currentEvent.type == EventType.MouseDown && resizeHandleRect.Contains(currentEvent.mousePosition))
+            {
+                isResizing = true;
+                currentEvent.Use();
+            }
+
+            if (isResizing)
+            {
+                if (currentEvent.type == EventType.MouseDrag)
+                {
+                    panelRect.width = Mathf.Max(200f, currentEvent.mousePosition.x + 10f);
+                    panelRect.height = Mathf.Max(200f, currentEvent.mousePosition.y + 10f);
+                    currentEvent.Use();
+                }
+                else if (currentEvent.type == EventType.MouseUp)
+                {
+                    isResizing = false;
+                    currentEvent.Use();
+                }
             }
 
             GUI.DragWindow(new Rect(0f, 0f, 10000f, 24f));

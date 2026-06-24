@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eead67f32d7f51942ac8a3db2428188e, type: 3}
+  m_Name: water
+  m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.World.Biomes.BiomeDefinitionAsset
+  biomeId: water
+  displayName: Water
+  groundColor: {r: 0, g: 0.3, b: 0.8, a: 1}
+  groundMaterial: {fileID: 2100000, guid: eddc93a0bf8b08a43a595cc67b7a1d18, type: 2}
+  starterBiome: 0
+  vegetation: []
+  creatures: []

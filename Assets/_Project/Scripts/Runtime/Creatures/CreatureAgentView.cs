@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace ApexShift.Runtime.Creatures
 {
+    [RequireComponent(typeof(CreatureNavigationAdapter))]
     public class CreatureAgentView : MonoBehaviour
     {
         [SerializeField] private string creatureId;
@@ -11,10 +12,14 @@ namespace ApexShift.Runtime.Creatures
 
         private void Awake()
         {
-            _navigationAdapter = GetComponent<CreatureNavigationAdapter>();
+            EnsureAdapter();
+        }
+
+        private void EnsureAdapter()
+        {
             if (_navigationAdapter == null)
             {
-                _navigationAdapter = gameObject.AddComponent<CreatureNavigationAdapter>();
+                _navigationAdapter = GetComponent<CreatureNavigationAdapter>();
             }
         }
 
@@ -25,14 +30,22 @@ namespace ApexShift.Runtime.Creatures
 
         public void MoveTo(Vector3 position)
         {
-            _navigationAdapter.TryMoveTo(position);
+            EnsureAdapter();
+            if (_navigationAdapter != null)
+                _navigationAdapter.TryMoveTo(position);
         }
 
         public void Stop()
         {
-            _navigationAdapter.Stop();
+            EnsureAdapter();
+            if (_navigationAdapter != null)
+                _navigationAdapter.Stop();
         }
 
-        public CreatureNavigationAdapter GetNavigationAdapter() => _navigationAdapter;
+        public CreatureNavigationAdapter GetNavigationAdapter()
+        {
+            EnsureAdapter();
+            return _navigationAdapter;
+        }
     }
 }

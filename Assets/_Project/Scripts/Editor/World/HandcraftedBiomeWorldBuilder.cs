@@ -284,17 +284,17 @@ namespace ApexShift.EditorTools.World
 
         private static VegetationCatalog BuildVegetationCatalog()
         {
-            LogManualVegetationOverrides();
+            VegetationPrefabSelectionRules.LogManualVegetationOverrides();
             return new VegetationCatalog
             {
-                Conifers = FindPrefabsForRole(VegetationRole.ConiferTree),
-                LeafyTrees = FindPrefabsForRole(VegetationRole.LeafyTree),
-                DryTrees = FindPrefabsForRole(VegetationRole.DryTree),
-                Rocks = FindPrefabsForRole(VegetationRole.Rock),
-                GreenBushes = FindPrefabsForRole(VegetationRole.GreenBush),
-                DryBushes = FindPrefabsForRole(VegetationRole.DryBush),
-                GrassOrFlowers = FindPrefabsForRole(VegetationRole.GrassOrFlower),
-                BerryBushes = FindPrefabsForRole(VegetationRole.BerryBush)
+                Conifers = VegetationPrefabSelectionRules.FindPrefabsForRole(VegetationRole.ConiferTree.ToString()),
+                LeafyTrees = VegetationPrefabSelectionRules.FindPrefabsForRole(VegetationRole.LeafyTree.ToString()),
+                DryTrees = VegetationPrefabSelectionRules.FindPrefabsForRole(VegetationRole.DryTree.ToString()),
+                Rocks = VegetationPrefabSelectionRules.FindPrefabsForRole(VegetationRole.Rock.ToString()),
+                GreenBushes = VegetationPrefabSelectionRules.FindPrefabsForRole(VegetationRole.GreenBush.ToString()),
+                DryBushes = VegetationPrefabSelectionRules.FindPrefabsForRole(VegetationRole.DryBush.ToString()),
+                GrassOrFlowers = VegetationPrefabSelectionRules.FindPrefabsForRole(VegetationRole.GrassOrFlower.ToString()),
+                BerryBushes = VegetationPrefabSelectionRules.FindPrefabsForRole(VegetationRole.BerryBush.ToString())
             };
         }
 
@@ -305,182 +305,19 @@ namespace ApexShift.EditorTools.World
 
         private static IReadOnlyList<GameObject> FindPrefabsForRole(VegetationRole role)
         {
-            List<ScoredPrefab> found = new List<ScoredPrefab>();
-            HashSet<GameObject> seen = new HashSet<GameObject>();
-            string[] exactNames = GetManualOverrideNamesForRole(role);
-
-            if (exactNames.Length > 0)
-            {
-                foreach (string exactName in exactNames)
-                {
-                    string[] guids = AssetDatabase.FindAssets(exactName + " t:Prefab");
-                    foreach (string guid in guids)
-                    {
-                        string path = AssetDatabase.GUIDToAssetPath(guid);
-                        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-                        if (prefab == null || seen.Contains(prefab))
-                        {
-                            continue;
-                        }
-
-                        if (IsSnowVariant(path, prefab.name))
-                        {
-                            continue;
-                        }
-
-                        if (TryGetManualVegetationRole(path, prefab.name, out VegetationRole manualRole) && manualRole == role)
-                        {
-                            found.Add(new ScoredPrefab(prefab, int.MaxValue));
-                            seen.Add(prefab);
-                        }
-                    }
-                }
-            }
-
-            if (found.Count == 0)
-            {
-                string[] keywords = GetRoleKeywords(role);
-
-                foreach (string keyword in keywords)
-                {
-                    string[] guids = AssetDatabase.FindAssets(keyword + " t:Prefab");
-                    foreach (string guid in guids)
-                    {
-                        string path = AssetDatabase.GUIDToAssetPath(guid);
-                        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-                        if (prefab == null || seen.Contains(prefab))
-                        {
-                            continue;
-                        }
-
-                        if (IsSnowVariant(path, prefab.name))
-                        {
-                            continue;
-                        }
-
-                        if (TryGetManualVegetationRole(path, prefab.name, out VegetationRole manualRole))
-                        {
-                            if (manualRole != role)
-                            {
-                                continue;
-                            }
-
-                            found.Add(new ScoredPrefab(prefab, int.MaxValue));
-                            seen.Add(prefab);
-                            continue;
-                        }
-
-                        int score = ScorePrefabForRole(path, prefab, role, keyword);
-                        if (score <= 0)
-                        {
-                            continue;
-                        }
-
-                        seen.Add(prefab);
-                        found.Add(new ScoredPrefab(prefab, score));
-                    }
-                }
-            }
-
-            found.Sort((a, b) => b.Score.CompareTo(a.Score));
-            List<GameObject> result = new List<GameObject>();
-            foreach (ScoredPrefab item in found)
-            {
-                result.Add(item.Prefab);
-            }
-
-            return result;
+            return VegetationPrefabSelectionRules.FindPrefabsForRole(role.ToString());
         }
 
         private static void LogManualVegetationOverrides()
         {
-            string[] knownPaths =
-            {
-                "tree_04.4",
-                "tree_02.1",
-                "tree_04",
-                "stone_01",
-                "bush_02.1",
-                "bush_02.2"
-            };
-
-            foreach (string known in knownPaths)
-            {
-                string[] guids = AssetDatabase.FindAssets(known + " t:Prefab");
-                bool found = false;
-
-                foreach (string guid in guids)
-                {
-                    string path = AssetDatabase.GUIDToAssetPath(guid);
-                    GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-                    if (prefab == null)
-                    {
-                        continue;
-                    }
-
-                    if (IsSnowVariant(path, prefab.name))
-                    {
-                        continue;
-                    }
-
-                    if (TryGetManualVegetationRole(path, prefab.name, out VegetationRole role))
-                    {
-                        Debug.Log($"Manual vegetation override: {prefab.name} -> {role}");
-                        found = true;
-                    }
-                }
-
-                if (!found)
-                {
-                    Debug.LogWarning($"Manual vegetation override missing: {known}");
-                }
-            }
+            VegetationPrefabSelectionRules.LogManualVegetationOverrides();
         }
 
         private static bool TryGetManualVegetationRole(string assetPath, string prefabName, out VegetationRole role)
         {
-            string normalizedPath = NormalizeAssetName(assetPath);
-            string normalizedName = NormalizeAssetName(prefabName);
-
-            if (IsSnowVariant(normalizedPath, normalizedName))
+            if (VegetationPrefabSelectionRules.TryGetManualVegetationRole(assetPath, prefabName, out string roleName) && Enum.TryParse(roleName, out VegetationRole parsedRole))
             {
-                role = default;
-                return false;
-            }
-
-            if (normalizedName == "tree_04_4" || normalizedPath.Contains("/tree_04_4"))
-            {
-                role = VegetationRole.DryTree;
-                return true;
-            }
-
-            if (normalizedName == "tree_02_1" || normalizedPath.Contains("/tree_02_1"))
-            {
-                role = VegetationRole.ConiferTree;
-                return true;
-            }
-
-            if (normalizedName == "tree_04" || normalizedPath.Contains("/tree_04"))
-            {
-                role = VegetationRole.LeafyTree;
-                return true;
-            }
-
-            if (normalizedName == "stone_01" || normalizedPath.Contains("/stone_01"))
-            {
-                role = VegetationRole.Rock;
-                return true;
-            }
-
-            if (normalizedName == "bush_02_2" || normalizedPath.Contains("/bush_02_2"))
-            {
-                role = VegetationRole.DryBush;
-                return true;
-            }
-
-            if (normalizedName == "bush_02_1" || normalizedPath.Contains("/bush_02_1"))
-            {
-                role = VegetationRole.GreenBush;
+                role = parsedRole;
                 return true;
             }
 
@@ -509,67 +346,17 @@ namespace ApexShift.EditorTools.World
 
         private static string[] GetRoleKeywords(VegetationRole role)
         {
-            return role switch
-            {
-                VegetationRole.ConiferTree => new[] { "pine", "conifer", "spruce", "fir" },
-                VegetationRole.LeafyTree => new[] { "oak", "leaf", "broadleaf", "deciduous", "tree" },
-                VegetationRole.DryTree => new[] { "dead", "dry", "bare" },
-                VegetationRole.Rock => new[] { "rock", "stone", "boulder" },
-                VegetationRole.GreenBush => new[] { "bush", "shrub", "plant" },
-                VegetationRole.DryBush => new[] { "dry", "dead", "bush", "shrub" },
-                VegetationRole.GrassOrFlower => new[] { "grass", "flower", "plant" },
-                VegetationRole.BerryBush => new[] { "berry", "berries", "fruit", "bush" },
-                _ => Array.Empty<string>()
-            };
+            return VegetationPrefabSelectionRules.GetRoleKeywords(role.ToString());
         }
 
         private static string[] GetManualOverrideNamesForRole(VegetationRole role)
         {
-            return role switch
-            {
-                VegetationRole.DryTree => new[] { "tree_04.4" },
-                VegetationRole.ConiferTree => new[] { "tree_02.1" },
-                VegetationRole.LeafyTree => new[] { "tree_04" },
-                VegetationRole.Rock => new[] { "stone_01" },
-                VegetationRole.GreenBush => new[] { "bush_02.1" },
-                VegetationRole.DryBush => new[] { "bush_02.2" },
-                _ => Array.Empty<string>()
-            };
+            return VegetationPrefabSelectionRules.GetManualOverrideNamesForRole(role.ToString());
         }
 
         private static int ScorePrefabForRole(string path, GameObject prefab, VegetationRole role, string keyword)
         {
-            string text = (path + " " + prefab.name).ToLowerInvariant();
-
-            if (IsForbiddenForAllNature(text))
-            {
-                return -1000;
-            }
-
-            int score = 0;
-            if (text.Contains(keyword.ToLowerInvariant()))
-            {
-                score += 15;
-            }
-
-            if (text.Contains("low poly"))
-            {
-                score += 25;
-            }
-
-            if (text.Contains("nature"))
-            {
-                score += 25;
-            }
-
-            if (text.Contains("nature pack"))
-            {
-                score += 35;
-            }
-
-            score += ScoreRoleText(text, role);
-            score += ScoreRoleColor(prefab, role);
-            return score;
+            return 0;
         }
 
         private static bool IsForbiddenForAllNature(string text)
@@ -870,6 +657,333 @@ namespace ApexShift.EditorTools.World
                 VegetationRole.BerryBush => 0.95f,
                 _ => 1.0f
             };
+        }
+
+        internal static class VegetationPrefabSelectionRules
+        {
+            internal static IReadOnlyList<GameObject> FindPrefabsForRole(string roleName)
+            {
+                List<ScoredPrefab> found = new List<ScoredPrefab>();
+                HashSet<GameObject> seen = new HashSet<GameObject>();
+
+                foreach (string exactName in GetManualOverrideNamesForRole(roleName))
+                {
+                    string[] guids = AssetDatabase.FindAssets(exactName + " t:Prefab");
+                    foreach (string guid in guids)
+                    {
+                        string path = AssetDatabase.GUIDToAssetPath(guid);
+                        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                        if (prefab == null || seen.Contains(prefab) || IsSnowVariant(path, prefab.name))
+                        {
+                            continue;
+                        }
+
+                        if (TryGetManualVegetationRole(path, prefab.name, out string manualRole) && manualRole == roleName)
+                        {
+                            found.Add(new ScoredPrefab(prefab, int.MaxValue));
+                            seen.Add(prefab);
+                        }
+                    }
+                }
+
+                if (found.Count == 0)
+                {
+                    foreach (string keyword in GetRoleKeywords(roleName))
+                    {
+                        string[] guids = AssetDatabase.FindAssets(keyword + " t:Prefab");
+                        foreach (string guid in guids)
+                        {
+                            string path = AssetDatabase.GUIDToAssetPath(guid);
+                            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                            if (prefab == null || seen.Contains(prefab) || IsSnowVariant(path, prefab.name))
+                            {
+                                continue;
+                            }
+
+                            if (TryGetManualVegetationRole(path, prefab.name, out string manualRole))
+                            {
+                                if (manualRole != roleName)
+                                {
+                                    continue;
+                                }
+
+                                found.Add(new ScoredPrefab(prefab, int.MaxValue));
+                                seen.Add(prefab);
+                                continue;
+                            }
+
+                            int score = ScorePrefabForRole(path, prefab, roleName, keyword);
+                            if (score <= 0)
+                            {
+                                continue;
+                            }
+
+                            seen.Add(prefab);
+                            found.Add(new ScoredPrefab(prefab, score));
+                        }
+                    }
+                }
+
+                found.Sort((a, b) => b.Score.CompareTo(a.Score));
+                List<GameObject> result = new List<GameObject>();
+                foreach (ScoredPrefab item in found)
+                {
+                    result.Add(item.Prefab);
+                }
+
+                return result;
+            }
+
+            internal static void LogManualVegetationOverrides()
+            {
+                string[] knownPaths =
+                {
+                    "tree_04.4",
+                    "tree_02.1",
+                    "tree_04",
+                    "stone_01",
+                    "bush_02.1",
+                    "bush_02.2"
+                };
+
+                foreach (string known in knownPaths)
+                {
+                    bool found = false;
+                    string[] guids = AssetDatabase.FindAssets(known + " t:Prefab");
+
+                    foreach (string guid in guids)
+                    {
+                        string path = AssetDatabase.GUIDToAssetPath(guid);
+                        GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                        if (prefab == null || IsSnowVariant(path, prefab.name))
+                        {
+                            continue;
+                        }
+
+                        if (TryGetManualVegetationRole(path, prefab.name, out string roleName))
+                        {
+                            Debug.Log($"Manual vegetation override: {prefab.name} -> {roleName}");
+                            found = true;
+                        }
+                    }
+
+                    if (!found)
+                    {
+                        Debug.LogWarning($"Manual vegetation override missing: {known}");
+                    }
+                }
+            }
+
+            internal static string[] GetManualOverrideNamesForRole(string roleName)
+            {
+                return roleName switch
+                {
+                    "DryTree" => new[] { "tree_04.4" },
+                    "ConiferTree" => new[] { "tree_02.1" },
+                    "LeafyTree" => new[] { "tree_04" },
+                    "Rock" => new[] { "stone_01" },
+                    "GreenBush" => new[] { "bush_02.1" },
+                    "DryBush" => new[] { "bush_02.2" },
+                    _ => Array.Empty<string>()
+                };
+            }
+
+            internal static string[] GetRoleKeywords(string roleName)
+            {
+                return roleName switch
+                {
+                    "ConiferTree" => new[] { "pine", "conifer", "spruce", "fir" },
+                    "LeafyTree" => new[] { "oak", "leaf", "broadleaf", "deciduous", "tree" },
+                    "DryTree" => new[] { "dead", "dry", "bare" },
+                    "Rock" => new[] { "rock", "stone", "boulder" },
+                    "GreenBush" => new[] { "bush", "shrub", "plant" },
+                    "DryBush" => new[] { "dry", "dead", "bush", "shrub" },
+                    "GrassOrFlower" => new[] { "grass", "flower", "plant" },
+                    "BerryBush" => new[] { "berry", "berries", "fruit", "bush" },
+                    _ => Array.Empty<string>()
+                };
+            }
+
+            internal static bool TryGetManualVegetationRole(string assetPath, string prefabName, out string roleName)
+            {
+                string normalizedPath = NormalizeAssetName(assetPath);
+                string normalizedName = NormalizeAssetName(prefabName);
+
+                if (IsSnowVariant(normalizedPath, normalizedName))
+                {
+                    roleName = string.Empty;
+                    return false;
+                }
+
+                if (normalizedName == "tree_04_4" || normalizedPath.Contains("/tree_04_4"))
+                {
+                    roleName = "DryTree";
+                    return true;
+                }
+
+                if (normalizedName == "tree_02_1" || normalizedPath.Contains("/tree_02_1"))
+                {
+                    roleName = "ConiferTree";
+                    return true;
+                }
+
+                if (normalizedName == "tree_04" || normalizedPath.Contains("/tree_04"))
+                {
+                    roleName = "LeafyTree";
+                    return true;
+                }
+
+                if (normalizedName == "stone_01" || normalizedPath.Contains("/stone_01"))
+                {
+                    roleName = "Rock";
+                    return true;
+                }
+
+                if (normalizedName == "bush_02_2" || normalizedPath.Contains("/bush_02_2"))
+                {
+                    roleName = "DryBush";
+                    return true;
+                }
+
+                if (normalizedName == "bush_02_1" || normalizedPath.Contains("/bush_02_1"))
+                {
+                    roleName = "GreenBush";
+                    return true;
+                }
+
+                roleName = string.Empty;
+                return false;
+            }
+
+            private static int ScorePrefabForRole(string path, GameObject prefab, string roleName, string keyword)
+            {
+                string text = (path + " " + prefab.name).ToLowerInvariant();
+                if (IsForbiddenForAllNature(text)) return -1000;
+                int score = 0;
+                if (text.Contains(keyword.ToLowerInvariant())) score += 15;
+                if (text.Contains("low poly")) score += 25;
+                if (text.Contains("nature")) score += 25;
+                if (text.Contains("nature pack")) score += 35;
+                score += ScoreRoleText(text, roleName);
+                score += ScoreRoleColor(prefab, roleName);
+                return score;
+            }
+
+            private static bool IsForbiddenForAllNature(string text)
+            {
+                return text.Contains("stylizedwoodmonsters")
+                    || text.Contains("animationgallery")
+                    || text.Contains("player")
+                    || text.Contains("character")
+                    || text.Contains("enemy")
+                    || text.Contains("monster")
+                    || text.Contains("vfx")
+                    || text.Contains("effect");
+            }
+
+            private static int ScoreRoleText(string text, string roleName)
+            {
+                switch (roleName)
+                {
+                    case "ConiferTree":
+                        if (text.Contains("pine") || text.Contains("conifer") || text.Contains("spruce") || text.Contains("fir")) return 60;
+                        if (text.Contains("dead") || text.Contains("dry") || text.Contains("bare") || text.Contains("rock") || text.Contains("bush")) return -80;
+                        if (text.Contains("snow") || text.Contains("winter")) return -40;
+                        return text.Contains("tree") ? 10 : -30;
+                    case "LeafyTree":
+                        if (text.Contains("oak") || text.Contains("leaf") || text.Contains("broadleaf") || text.Contains("deciduous")) return 60;
+                        if (text.Contains("pine") || text.Contains("conifer") || text.Contains("spruce") || text.Contains("fir")) return -90;
+                        if (text.Contains("dead") || text.Contains("dry") || text.Contains("bare") || text.Contains("rock")) return -90;
+                        if (text.Contains("snow") || text.Contains("winter")) return -50;
+                        return text.Contains("tree") ? 12 : -30;
+                    case "DryTree":
+                        if (text.Contains("dead") || text.Contains("dry") || text.Contains("bare")) return 80;
+                        if (text.Contains("pine") || text.Contains("conifer") || text.Contains("spruce") || text.Contains("green") || text.Contains("leaf")) return -80;
+                        return text.Contains("tree") ? 10 : -30;
+                    case "Rock":
+                        if (text.Contains("rock") || text.Contains("stone") || text.Contains("boulder")) return 80;
+                        if (text.Contains("tree") || text.Contains("bush") || text.Contains("grass") || text.Contains("flower")) return -100;
+                        return -40;
+                    case "GreenBush":
+                        if (text.Contains("bush") || text.Contains("shrub") || text.Contains("plant")) return 50;
+                        if (text.Contains("dead") || text.Contains("dry") || text.Contains("rock") || text.Contains("tree")) return -60;
+                        return -20;
+                    case "DryBush":
+                        if ((text.Contains("dry") || text.Contains("dead")) && (text.Contains("bush") || text.Contains("shrub") || text.Contains("plant"))) return 80;
+                        if (text.Contains("bush") || text.Contains("shrub")) return 15;
+                        if (text.Contains("green") || text.Contains("flower") || text.Contains("tree")) return -60;
+                        return -20;
+                    case "GrassOrFlower":
+                        if (text.Contains("grass") || text.Contains("flower") || text.Contains("flover")) return 70;
+                        if (text.Contains("tree") || text.Contains("rock")) return -80;
+                        return text.Contains("plant") ? 15 : -30;
+                    case "BerryBush":
+                        if (text.Contains("berry") || text.Contains("berries") || text.Contains("fruit")) return 80;
+                        if (text.Contains("bush")) return 15;
+                        if (text.Contains("tree") || text.Contains("rock") || text.Contains("dead") || text.Contains("dry")) return -80;
+                        return -30;
+                    default:
+                        return 0;
+                }
+            }
+
+            private static int ScoreRoleColor(GameObject prefab, string roleName)
+            {
+                Color color = EstimatePrefabColor(prefab);
+                if (color == Color.clear) return 0;
+                bool greenDominant = color.g > color.r * 1.15f && color.g > color.b * 1.15f;
+                bool grayDominant = Mathf.Abs(color.r - color.g) < 0.08f && Mathf.Abs(color.g - color.b) < 0.08f;
+                bool warmDry = color.r > color.g * 1.15f && color.g >= color.b;
+                return roleName switch
+                {
+                    "ConiferTree" or "LeafyTree" or "GreenBush" or "GrassOrFlower" or "BerryBush" => greenDominant ? 15 : 0,
+                    "Rock" => grayDominant ? 20 : 0,
+                    "DryTree" or "DryBush" => warmDry ? 20 : 0,
+                    _ => 0
+                };
+            }
+
+            private static Color EstimatePrefabColor(GameObject prefab)
+            {
+                Renderer[] renderers = prefab.GetComponentsInChildren<Renderer>(true);
+                foreach (Renderer renderer in renderers)
+                {
+                    foreach (Material material in renderer.sharedMaterials)
+                    {
+                        if (material == null) continue;
+                        if (material.HasProperty("_BaseColor")) return material.GetColor("_BaseColor");
+                        if (material.HasProperty("_Color")) return material.GetColor("_Color");
+                    }
+                }
+                return Color.clear;
+            }
+
+            private static bool IsSnowVariant(string assetPath, string prefabName)
+            {
+                string normalizedPath = NormalizeAssetName(assetPath);
+                string normalizedName = NormalizeAssetName(prefabName);
+                return normalizedPath.Contains("_snow") || normalizedName.Contains("_snow") || normalizedPath.Contains("snow") || normalizedName.Contains("snow");
+            }
+
+            private static string NormalizeAssetName(string value)
+            {
+                if (string.IsNullOrEmpty(value)) return string.Empty;
+                string normalized = value.Replace('\\', '/').ToLowerInvariant();
+                normalized = normalized.Replace('.', '_');
+                return normalized;
+            }
+
+            private readonly struct ScoredPrefab
+            {
+                public ScoredPrefab(GameObject prefab, int score)
+                {
+                    Prefab = prefab;
+                    Score = score;
+                }
+
+                public GameObject Prefab { get; }
+                public int Score { get; }
+            }
         }
 
         private static void CreateBiomeMarker(Transform parent, string name, Vector3 position)
