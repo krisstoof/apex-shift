@@ -16,6 +16,7 @@ namespace ApexShift.Core.Resources
             if (resource == null || growth == null) return;
             
             growth.MarkHarvested();
+            growth.UpdateDaysToNextStage(rules.GetDaysPerStage(growth.ResourceKind, growth.MaxGrowthStage));
             resource.MarkDepleted();
         }
 
@@ -32,13 +33,19 @@ namespace ApexShift.Core.Resources
 
             ResourceGrowthStage oldStage = growth.GrowthStage;
             float daysPerStage = rules.GetDaysPerStage(growth.ResourceKind, growth.MaxGrowthStage);
-            
+            if (daysPerStage <= 0f)
+                return ResourceRegrowthResult.NoChange(growth.GrowthStage);
+
             growth.AdvanceProgress(days, daysPerStage);
 
             bool stageChanged = false;
-            while (growth.GrowthProgressDays >= daysPerStage && growth.GrowthStage < ResourceGrowthStage.Mature)
+            while (growth.GrowthProgressDays >= daysPerStage && (int)growth.GrowthStage < (int)ResourceGrowthStage.Mature)
             {
-                growth.SetGrowthStage(growth.GrowthStage + 1);
+                ResourceGrowthStage nextStage = (ResourceGrowthStage)Math.Min(
+                    (int)ResourceGrowthStage.Mature,
+                    (int)growth.GrowthStage + 1);
+
+                growth.SetGrowthStage(nextStage);
                 growth.ConsumeProgress(daysPerStage);
                 growth.UpdateDaysToNextStage(daysPerStage);
                 stageChanged = true;
