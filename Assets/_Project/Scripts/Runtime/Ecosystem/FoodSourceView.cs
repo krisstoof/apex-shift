@@ -12,42 +12,52 @@ namespace ApexShift.Runtime.Ecosystem
         private FoodSourceState _state;
 
         public FoodKind Kind => kind;
-        public float BiomassRatio => _state != null ? _state.Biomass / _state.MaxBiomass : 0f;
+        public float BiomassRatio => _state != null && _state.MaxBiomass > 0f ? _state.Biomass / _state.MaxBiomass : 0f;
         public bool IsEmpty => _state == null || _state.IsEmpty;
+        public bool IsAvailable => !IsEmpty;
+        public float Biomass => _state != null ? _state.Biomass : 0f;
 
         private void Awake()
         {
-            if (_state == null)
-                _state = new FoodSourceState(maxBiomass, nutritionPerBiomass);
+            EnsureState();
+        }
+
+        private void OnEnable()
+        {
+            EnsureState();
+            EcosystemRuntime.Instance?.RegisterFoodSource(this);
+        }
+
+        private void OnDisable()
+        {
+            EcosystemRuntime.Instance?.UnregisterFoodSource(this);
         }
 
         public void Configure(FoodKind kind, float maxBiomass, float nutritionPerBiomass)
         {
             this.kind = kind;
-            this.maxBiomass = maxBiomass;
-            this.nutritionPerBiomass = nutritionPerBiomass;
-            _state = new FoodSourceState(maxBiomass, nutritionPerBiomass);
-        }
+            this.maxBiomass = Mathf.Max(0.01f, maxBiomass);
+            this.nutritionPerBiomass = Mathf.Max(0f, nutritionPerBiomass);
+            _state = new FoodSourceState(this.maxBiomass, this.nutritionPerBiomass);
 
-        private void Start()
-{
-            if (EcosystemRuntime.Instance != null)
+            if (isActiveAndEnabled)
             {
-                EcosystemRuntime.Instance.RegisterFoodSource(this);
-            }
-        }
-
-        private void OnDestroy()
-        {
-            if (EcosystemRuntime.Instance != null)
-            {
-                EcosystemRuntime.Instance.UnregisterFoodSource(this);
+                EcosystemRuntime.Instance?.RegisterFoodSource(this);
             }
         }
 
         public float Consume(float requestedBiomass)
         {
-            return _state.Consume(requestedBiomass);
+            EnsureState();
+            return _state.Consume(Mathf.Max(0f, requestedBiomass));
+        }
+
+        private void EnsureState()
+        {
+            if (_state == null)
+            {
+                _state = new FoodSourceState(Mathf.Max(0.01f, maxBiomass), Mathf.Max(0f, nutritionPerBiomass));
+            }
         }
     }
 }

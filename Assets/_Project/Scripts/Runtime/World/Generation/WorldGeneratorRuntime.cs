@@ -105,8 +105,9 @@ namespace ApexShift.Runtime.World.Generation
             DestroyAllByName("CreatureRoot");
             DestroyAllByName("BuildingRoot");
             DestroyAllByName("GameBootstrapper");
+            DestroyAllByName("EcosystemRuntime");
             DestroyAllByName("Player");
-            DestroyAllByName("Main Camera");
+DestroyAllByName("Main Camera");
             DestroyAllByName("PlayerFollowCamera");
             DestroyAllByName("Directional Light");
             DestroyAllByName("UI");
@@ -162,8 +163,20 @@ namespace ApexShift.Runtime.World.Generation
             go.AddComponent<GameBootstrapper>();
         }
 
-        private void GenerateFixedLayout()
+        private void EnsureEcosystemRuntime()
         {
+            if (Object.FindAnyObjectByType<EcosystemRuntime>() != null)
+            {
+                return;
+            }
+
+            GameObject go = new GameObject("EcosystemRuntime");
+            go.transform.SetParent(transform);
+            go.AddComponent<EcosystemRuntime>();
+        }
+
+        private void GenerateFixedLayout()
+{
             if (biomeCatalog == null)
             {
                 Debug.LogWarning("No BiomeCatalogAsset assigned to WorldGeneratorRuntime.");

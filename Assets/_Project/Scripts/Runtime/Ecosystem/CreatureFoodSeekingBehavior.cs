@@ -40,7 +40,7 @@ namespace ApexShift.Runtime.Ecosystem
                 {
                     _view.Stop();
                     float nutrition = _currentTarget.Consume(consumptionRate * Time.deltaTime);
-                    _needs.Eat(nutrition);
+                    _needs.Eat(_currentTarget.Kind, nutrition);
                 }
                 else
                 {
@@ -51,14 +51,9 @@ namespace ApexShift.Runtime.Ecosystem
 
         private FoodSourceView FindFood()
         {
-            if (EcosystemRuntime.Instance == null) return null;
-
-            if (_needs.Diet != null && _needs.Diet.PlantDiet)
-            {
-                return EcosystemRuntime.Instance.TryFindNearestFood(transform.position, Core.Ecosystem.FoodKind.Plants);
-            }
-            
-            return null;
+            return _needs != null && _needs.TryFindPreferredFood(EcosystemRuntime.Instance, out FoodSourceView food)
+                ? food
+                : null;
         }
     }
 }
