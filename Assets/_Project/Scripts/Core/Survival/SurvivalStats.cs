@@ -23,6 +23,8 @@ namespace ApexShift.Core.Survival
             Restore(health, hunger, stamina, rest);
         }
 
+        public SurvivalRules Rules => rules;
+
         public float Health { get; private set; }
         public float Hunger { get; private set; }
         public float Stamina { get; private set; }

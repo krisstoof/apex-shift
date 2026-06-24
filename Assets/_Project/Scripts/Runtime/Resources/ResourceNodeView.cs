@@ -106,11 +106,11 @@ namespace ApexShift.Runtime.Resources
             HarvestResult result = harvestSystem.Harvest(state, inventoryRuntime.Inventory);
             if (!result.Success)
             {
-                Debug.Log(result.Message, this);
+                Debug.Log($"[ResourceNode] Harvest failed: {result.Message}", this);
                 return false;
             }
 
-            Debug.Log(result.Message, this);
+            Debug.Log($"[ResourceNode] Harvested: {result.Message}. Total in inventory: {inventoryRuntime.Inventory.GetAmount(state.ItemId)}", this);
             if (result.ShouldRemoveNode)
             {
                 ApplyDepletedVisualState();

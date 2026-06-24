@@ -8,13 +8,17 @@ using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.PlayerInput;
 using ApexShift.Runtime.World;
+using ApexShift.Runtime.Interaction;
+using ApexShift.Runtime.Resources;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
 using CameraComponent = UnityEngine.Camera;
 using Object = UnityEngine.Object;
+using ApexShift.Presentation.HUD;
 
 namespace ApexShift.EditorTools.World
 {
@@ -84,7 +88,7 @@ namespace ApexShift.EditorTools.World
             ConfigurePlayerRuntime(player, cameraObject);
             CreateLight(gameRoot.transform);
 
-            CreateChild(gameRoot.transform, "UI");
+            GameObject uiRoot = CreateHUD(gameRoot.transform, player);
             CreateChild(gameRoot.transform, "DebugRoot");
 
             NatureMaterialRepairUtility.RepairMaterialsUnder(worldRoot.transform);
@@ -1285,8 +1289,57 @@ namespace ApexShift.EditorTools.World
                 instance.transform.position = position;
                 instance.transform.rotation = Quaternion.Euler(0f, RandomRange(0f, 360f), 0f);
                 instance.transform.localScale = Vector3.one * RandomRange(minScale, maxScale);
+                BindAsResource(instance, role);
                 spawned++;
             }
+        }
+
+        private static void BindAsResource(GameObject instance, VegetationRole role)
+        {
+            string resourceKind = role switch
+            {
+                VegetationRole.ConiferTree => "conifer_tree",
+                VegetationRole.LeafyTree => "leafy_tree",
+                VegetationRole.DryTree => "dry_tree",
+                VegetationRole.Rock => "rock",
+                VegetationRole.GreenBush => "bush",
+                VegetationRole.DryBush => "dry_bush",
+                _ => null
+            };
+
+            if (resourceKind == null) return;
+
+            float radius = role switch
+            {
+                VegetationRole.ConiferTree => 2.4f,
+                VegetationRole.LeafyTree => 2.4f,
+                VegetationRole.DryTree => 2.2f,
+                VegetationRole.Rock => 1.8f,
+                VegetationRole.GreenBush => 1.4f,
+                VegetationRole.DryBush => 1.4f,
+                _ => 1.5f
+            };
+
+            ResourceNodeView view = instance.GetComponent<ResourceNodeView>();
+            if (view == null)
+            {
+                view = instance.AddComponent<ResourceNodeView>();
+            }
+
+            view.ConfigureDefault(resourceKind);
+
+            SerializedObject so = new SerializedObject(view);
+            so.FindProperty("interactionRadius").floatValue = radius;
+            so.ApplyModifiedProperties();
+
+            SphereCollider trigger = instance.GetComponent<SphereCollider>();
+            if (trigger == null)
+            {
+                trigger = instance.AddComponent<SphereCollider>();
+            }
+
+            trigger.isTrigger = true;
+            trigger.radius = radius;
         }
 
         private static bool IsInsideIsland(float x, float z)
@@ -1784,6 +1837,26 @@ namespace ApexShift.EditorTools.World
             debugLog.SetMotionFeedback(motionFeedback);
             debugLog.SetCameraFollow(cameraObject != null ? cameraObject.GetComponent<IsometricCameraFollow>() : null);
 
+            PlayerInventoryRuntime inventory = player.GetComponent<PlayerInventoryRuntime>();
+            if (inventory == null)
+            {
+                inventory = player.AddComponent<PlayerInventoryRuntime>();
+            }
+
+            PlayerInteractionController interactionController = player.GetComponent<PlayerInteractionController>();
+            if (interactionController == null)
+            {
+                interactionController = player.AddComponent<PlayerInteractionController>();
+            }
+            interactionController.SetInputReader(inputReader);
+
+            PlayerSurvivalRuntime survival = player.GetComponent<PlayerSurvivalRuntime>();
+            if (survival == null)
+            {
+                survival = player.AddComponent<PlayerSurvivalRuntime>();
+            }
+            survival.SetInputReader(inputReader);
+
             Animator animator = player.GetComponentInChildren<Animator>();
             RuntimeAnimatorController runtimeController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(PlayerControllerPath);
             if (animator != null && runtimeController != null)
@@ -1824,6 +1897,187 @@ namespace ApexShift.EditorTools.World
             EnsureFolder("Assets/_Project/Scripts");
             EnsureFolder("Assets/_Project/Scripts/Editor");
             EnsureFolder("Assets/_Project/Scripts/Editor/World");
+        }
+
+        private static GameObject CreateHUD(Transform parent, GameObject player)
+        {
+            GameObject uiGo = CreateChild(parent, "UI");
+            
+            GameObject hudGo = new GameObject("PlayerHUD");
+            hudGo.transform.SetParent(uiGo.transform, false);
+            
+            Canvas canvas = hudGo.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 100;
+            
+            CanvasScaler scaler = hudGo.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920, 1080);
+            
+            hudGo.AddComponent<GraphicRaycaster>();
+            
+            PlayerHUDController hudController = hudGo.AddComponent<PlayerHUDController>();
+            
+            Font uiFont = UnityEngine.Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
+            // Create Stats Panel (Bottom Left)
+            GameObject statsPanel = CreateUIPanel(hudGo.transform, "StatsPanel", new Vector2(0, 0), new Vector2(0, 0), new Vector2(250, 200), new Vector2(30, 30));
+            
+            StatBarUI healthBar = CreateStatBar(statsPanel.transform, "HealthBar", "Health", Color.red, new Vector2(0, 150), uiFont);
+            StatBarUI hungerBar = CreateStatBar(statsPanel.transform, "HungerBar", "Hunger", new Color(1f, 0.5f, 0f), new Vector2(0, 110), uiFont);
+            StatBarUI staminaBar = CreateStatBar(statsPanel.transform, "StaminaBar", "Stamina", Color.yellow, new Vector2(0, 70), uiFont);
+            StatBarUI restBar = CreateStatBar(statsPanel.transform, "RestBar", "Rest", Color.blue, new Vector2(0, 30), uiFont);
+
+            // Create Resources Panel (Top Right)
+            GameObject resourcePanel = CreateUIPanel(hudGo.transform, "ResourcePanel", new Vector2(1, 1), new Vector2(1, 1), new Vector2(220, 180), new Vector2(-30, -30));
+            
+            ResourceCounterUI woodCounter = CreateResourceCounter(resourcePanel.transform, "WoodCounter", "wood", "Wood", new Vector2(0, 0), uiFont);
+            ResourceCounterUI stoneCounter = CreateResourceCounter(resourcePanel.transform, "StoneCounter", "stone", "Stone", new Vector2(0, -40), uiFont);
+            ResourceCounterUI fiberCounter = CreateResourceCounter(resourcePanel.transform, "FiberCounter", "fiber", "Fiber", new Vector2(0, -80), uiFont);
+
+            // Link to controller
+            SerializedObject so = new SerializedObject(hudController);
+            so.FindProperty("survivalRuntime").objectReferenceValue = player.GetComponent<PlayerSurvivalRuntime>();
+            so.FindProperty("inventoryRuntime").objectReferenceValue = player.GetComponent<PlayerInventoryRuntime>();
+            so.FindProperty("healthBar").objectReferenceValue = healthBar;
+            so.FindProperty("hungerBar").objectReferenceValue = hungerBar;
+            so.FindProperty("staminaBar").objectReferenceValue = staminaBar;
+            so.FindProperty("restBar").objectReferenceValue = restBar;
+            
+            SerializedProperty countersProp = so.FindProperty("resourceCounters");
+            countersProp.ClearArray();
+            countersProp.arraySize = 3;
+            countersProp.GetArrayElementAtIndex(0).objectReferenceValue = woodCounter;
+            countersProp.GetArrayElementAtIndex(1).objectReferenceValue = stoneCounter;
+            countersProp.GetArrayElementAtIndex(2).objectReferenceValue = fiberCounter;
+            so.ApplyModifiedProperties();
+
+            // Add EventSystem
+            GameObject es = new GameObject("EventSystem");
+            es.AddComponent<UnityEngine.EventSystems.EventSystem>();
+            es.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+            es.transform.SetParent(uiGo.transform, false);
+
+            return uiGo;
+        }
+
+        private static GameObject CreateUIPanel(Transform parent, string name, Vector2 anchorMin, Vector2 anchorMax, Vector2 size, Vector2 pos)
+        {
+            GameObject panel = new GameObject(name);
+            panel.transform.SetParent(parent, false);
+            
+            // Add a semi-transparent background
+            UnityEngine.UI.Image bg = panel.AddComponent<UnityEngine.UI.Image>();
+            bg.color = new Color(0, 0, 0, 0.35f);
+            
+            RectTransform rt = panel.GetComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.pivot = anchorMin;
+            rt.sizeDelta = size;
+            rt.anchoredPosition = pos;
+            return panel;
+        }
+
+        private static StatBarUI CreateStatBar(Transform parent, string name, string labelText, Color color, Vector2 pos, Font font)
+        {
+            GameObject bar = new GameObject(name);
+            bar.transform.SetParent(parent, false);
+            RectTransform rt = bar.AddComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.zero;
+            rt.pivot = Vector2.zero;
+            rt.sizeDelta = new Vector2(200, 30);
+            rt.anchoredPosition = pos;
+
+            GameObject bg = new GameObject("Background");
+            bg.transform.SetParent(bar.transform, false);
+            UnityEngine.UI.Image bgImg = bg.AddComponent<UnityEngine.UI.Image>();
+            bgImg.color = new Color(0, 0, 0, 0.6f);
+            RectTransform bgRt = bg.GetComponent<RectTransform>();
+            bgRt.anchorMin = Vector2.zero;
+            bgRt.anchorMax = Vector2.one;
+            bgRt.sizeDelta = Vector2.zero;
+
+            GameObject fill = new GameObject("Fill");
+            fill.transform.SetParent(bar.transform, false);
+            UnityEngine.UI.Image fillImg = fill.AddComponent<UnityEngine.UI.Image>();
+            fillImg.color = color;
+            // Use simple scaling if no sprite is available for 'Filled'
+            RectTransform fillRt = fill.GetComponent<RectTransform>();
+            fillRt.anchorMin = Vector2.zero;
+            fillRt.anchorMax = Vector2.one;
+            fillRt.sizeDelta = Vector2.zero;
+
+            GameObject lbl = new GameObject("Label");
+            lbl.transform.SetParent(bar.transform, false);
+            Text t = lbl.AddComponent<Text>();
+            t.text = labelText;
+            t.font = font;
+            t.fontSize = 18;
+            t.alignment = TextAnchor.MiddleLeft;
+            t.color = Color.white;
+            RectTransform lblRt = lbl.GetComponent<RectTransform>();
+            lblRt.anchorMin = Vector2.zero;
+            lblRt.anchorMax = Vector2.one;
+            lblRt.sizeDelta = new Vector2(-10, 0);
+            lblRt.anchoredPosition = new Vector2(10, 0);
+
+            StatBarUI ui = bar.AddComponent<StatBarUI>();
+            SerializedObject so = new SerializedObject(ui);
+            so.FindProperty("fillImage").objectReferenceValue = fillImg;
+            so.FindProperty("label").objectReferenceValue = t;
+            so.FindProperty("statName").stringValue = labelText;
+            so.ApplyModifiedProperties();
+
+            return ui;
+        }
+
+        private static ResourceCounterUI CreateResourceCounter(Transform parent, string name, string itemId, string labelText, Vector2 pos, Font font)
+        {
+            GameObject counter = new GameObject(name);
+            counter.transform.SetParent(parent, false);
+            RectTransform rt = counter.AddComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(200, 35);
+            rt.anchoredPosition = pos;
+            rt.anchorMin = new Vector2(1, 1);
+            rt.anchorMax = new Vector2(1, 1);
+            rt.pivot = new Vector2(1, 1);
+
+            GameObject lbl = new GameObject("Label");
+            lbl.transform.SetParent(counter.transform, false);
+            Text tL = lbl.AddComponent<Text>();
+            tL.text = labelText + ":";
+            tL.font = font;
+            tL.fontSize = 18;
+            tL.alignment = TextAnchor.MiddleRight;
+            tL.color = Color.white;
+            RectTransform lblRt = lbl.GetComponent<RectTransform>();
+            lblRt.anchorMin = new Vector2(0, 0);
+            lblRt.anchorMax = new Vector2(0.7f, 1);
+            lblRt.sizeDelta = Vector2.zero;
+
+            GameObject val = new GameObject("Value");
+            val.transform.SetParent(counter.transform, false);
+            Text tV = val.AddComponent<Text>();
+            tV.text = "0";
+            tV.font = font;
+            tV.fontSize = 18;
+            tV.fontStyle = FontStyle.Bold;
+            tV.alignment = TextAnchor.MiddleLeft;
+            tV.color = Color.yellow;
+            RectTransform valRt = val.GetComponent<RectTransform>();
+            valRt.anchorMin = new Vector2(0.75f, 0);
+            valRt.anchorMax = new Vector2(1, 1);
+            valRt.sizeDelta = Vector2.zero;
+
+            ResourceCounterUI ui = counter.AddComponent<ResourceCounterUI>();
+            SerializedObject so = new SerializedObject(ui);
+            so.FindProperty("itemId").stringValue = itemId;
+            so.FindProperty("countText").objectReferenceValue = tV;
+            so.ApplyModifiedProperties();
+
+            return ui;
         }
 
         private static void EnsureFolder(string path)
