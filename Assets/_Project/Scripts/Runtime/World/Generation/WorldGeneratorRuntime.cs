@@ -10,6 +10,7 @@ using ApexShift.Runtime.PlayerInput;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.World.Biomes;
 using ApexShift.Runtime.Creatures;
+using ApexShift.Runtime.Ecosystem;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
@@ -323,7 +324,30 @@ namespace ApexShift.Runtime.World.Generation
                 nodeView.ConfigureDefault(rKind);
             }
 
+            AddFoodSourceToResource(entry.Kind, instance);
+
             _lastResult.ResourceCount++;
+        }
+
+        private void AddFoodSourceToResource(VegetationSpawnKind kind, GameObject instance)
+        {
+            FoodSourceView fv = null;
+            switch (kind)
+            {
+                case VegetationSpawnKind.GrassOrFlower:
+                    fv = instance.AddComponent<FoodSourceView>();
+                    fv.Configure(ApexShift.Core.Ecosystem.FoodKind.Plants, 5f, 2f);
+                    break;
+                case VegetationSpawnKind.BerryBush:
+                    fv = instance.AddComponent<FoodSourceView>();
+                    fv.Configure(ApexShift.Core.Ecosystem.FoodKind.Plants, 15f, 8f);
+                    break;
+                case VegetationSpawnKind.GreenBush:
+                case VegetationSpawnKind.DryBush:
+                    fv = instance.AddComponent<FoodSourceView>();
+                    fv.Configure(ApexShift.Core.Ecosystem.FoodKind.Plants, 10f, 4f);
+                    break;
+            }
         }
 
         private void SpawnCreature(CreatureSpawnEntryAsset entry, Vector3 position)
@@ -381,8 +405,15 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             var wander = instance.GetComponent<CreatureWanderBehavior>();
             if (wander == null) wander = instance.AddComponent<CreatureWanderBehavior>();
 
+            var needs = instance.GetComponent<CreatureNeedsRuntime>();
+            if (needs == null) needs = instance.AddComponent<CreatureNeedsRuntime>();
+            needs.Configure(entry.CreatureId);
+
+            var foodSeeking = instance.GetComponent<CreatureFoodSeekingBehavior>();
+            if (foodSeeking == null) foodSeeking = instance.AddComponent<CreatureFoodSeekingBehavior>();
+
             ConfigureCreatureMovement(entry.CreatureId, adapter, wander);
-        }
+}
 
         private GameObject CreateCreatureFallback(string creatureId, Vector3 position)
         {
