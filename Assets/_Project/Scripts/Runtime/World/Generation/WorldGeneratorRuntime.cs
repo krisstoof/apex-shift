@@ -304,7 +304,6 @@ namespace ApexShift.Runtime.World.Generation
                     if (isLand)
                     {
                         biomeId = DetermineBiome(pos);
-                        _allTileCenters.Add(pos);
                     }
                     else
                     {
@@ -356,9 +355,9 @@ namespace ApexShift.Runtime.World.Generation
                 return;
             }
 
-            float terrainHeight = biomeId == "water" ? -0.30f : GetTerrainHeight(center, biomeId);
+            float terrainHeight = biomeId == "water" ? -0.35f : GetTerrainHeight(center, biomeId);
             Vector3 regionCenter = new Vector3(center.x, terrainHeight, center.z);
-            Bounds bounds = new Bounds(regionCenter, new Vector3(size, 3f, size));
+            Bounds bounds = new Bounds(regionCenter, new Vector3(size, 2f, size));
             GeneratedBiomeRegion region = new GeneratedBiomeRegion(biome, bounds);
             _lastResult.Regions.Add(region);
             _lastResult.BiomeCount++;
@@ -367,6 +366,10 @@ namespace ApexShift.Runtime.World.Generation
             
             if (biomeId != "water")
             {
+                // Store the actual terrain surface height, not the original flat y=0 center.
+                // Player/creature/resource spawning relies on these centers.
+                _allTileCenters.Add(regionCenter);
+
                 SpawnRegionResources(region);
                 SpawnRegionCreatures(region);
             }
@@ -374,40 +377,47 @@ namespace ApexShift.Runtime.World.Generation
 
         private float GetTerrainHeight(Vector3 position, string biomeId)
         {
-            float broad = Mathf.PerlinNoise((position.x + 300f) * 0.018f, (position.z + 300f) * 0.018f);
-            float detail = Mathf.PerlinNoise((position.x + 900f) * 0.065f, (position.z + 900f) * 0.065f);
+            float broad = Mathf.PerlinNoise((position.x + 300f) * 0.014f, (position.z + 300f) * 0.014f);
+            float detail = Mathf.PerlinNoise((position.x + 900f) * 0.045f, (position.z + 900f) * 0.045f);
 
-            float height = (broad - 0.5f) * 1.15f + (detail - 0.5f) * 0.35f;
+            float height = (broad - 0.5f) * 0.45f + (detail - 0.5f) * 0.16f;
 
             switch (biomeId)
             {
                 case "stoneback_ridge":
-                    height += 1.15f + Mathf.PerlinNoise((position.x + 30f) * 0.050f, (position.z + 80f) * 0.050f) * 1.05f;
+                    height += 0.45f + Mathf.PerlinNoise((position.x + 30f) * 0.035f, (position.z + 80f) * 0.035f) * 0.35f;
                     break;
                 case "westwood":
-                    height += 0.35f;
+                    height += 0.18f;
                     break;
                 case "redfang_wilds":
-                    height += 0.20f;
-                    break;
-                case "south_thicket":
                     height += 0.10f;
                     break;
+                case "south_thicket":
+                    height += 0.06f;
+                    break;
                 case "hearth_meadow":
-                    height = Mathf.Lerp(height, 0.05f, 0.65f);
+                    height = Mathf.Lerp(height, 0.03f, 0.75f);
                     break;
             }
 
-            return Mathf.Round(height * 4f) / 4f;
+            height = Mathf.Clamp(height, -0.20f, biomeId == "stoneback_ridge" ? 0.95f : 0.45f);
+            return Mathf.Round(height * 10f) / 10f;
         }
 
         private void CreateTerrainTile(GeneratedBiomeRegion region)
         {
+            const float overlap = 0.08f;
+            const float thickness = 0.42f;
+
             GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
             tile.name = $"Terrain_{region.Biome.BiomeId}";
             tile.transform.SetParent(_terrainRoot);
-            tile.transform.position = region.Bounds.center + Vector3.down * 0.08f;
-            tile.transform.localScale = new Vector3(region.Bounds.size.x, 0.16f, region.Bounds.size.z);
+
+            // Keep the top surface at region.Bounds.center.y while making the tile thick enough
+            // to hide vertical seams between tiles with slightly different heights.
+            tile.transform.position = region.Bounds.center + Vector3.down * (thickness * 0.5f);
+            tile.transform.localScale = new Vector3(region.Bounds.size.x + overlap, thickness, region.Bounds.size.z + overlap);
 
             if (region.Biome.GroundMaterial != null)
             {
@@ -802,22 +812,23 @@ if (renderer != null)
 
         private GameObject CreatePlayer()
         {
-            Vector3 spawnPos = Vector3.up * 0.05f;
+            Vector3 spawnPos = Vector3.up * 0.10f;
             if (_allTileCenters.Count > 0)
             {
-                // Find tile center closest to zero
+                // Find actual terrain-surface tile center closest to zero.
                 Vector3 nearest = _allTileCenters[0];
-                float minDist = nearest.sqrMagnitude;
+                float minDist = new Vector2(nearest.x, nearest.z).sqrMagnitude;
                 foreach (var center in _allTileCenters)
                 {
-                    float d = center.sqrMagnitude;
+                    float d = new Vector2(center.x, center.z).sqrMagnitude;
                     if (d < minDist)
                     {
                         minDist = d;
                         nearest = center;
                     }
                 }
-                spawnPos = nearest + Vector3.up * 0.05f;
+
+                spawnPos = nearest + Vector3.up * 0.10f;
             }
 
             GameObject player;
@@ -830,10 +841,25 @@ if (renderer != null)
             {
                 player = GameObject.CreatePrimitive(PrimitiveType.Capsule);
                 player.name = "Player";
-                player.transform.position = spawnPos + Vector3.up * 1f;
+                player.transform.position = spawnPos;
             }
 
+            SnapObjectToTerrainSurface(player, 0.10f);
             return player;
+        }
+
+        private void SnapObjectToTerrainSurface(GameObject target, float surfaceOffset)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            Vector3 origin = target.transform.position + Vector3.up * 20f;
+            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 60f))
+            {
+                target.transform.position = hit.point + Vector3.up * Mathf.Max(0.02f, surfaceOffset);
+            }
         }
 
         private void ConfigurePlayerRuntime(GameObject player, GameObject cameraGo)
@@ -842,9 +868,13 @@ if (renderer != null)
             if (cc == null)
             {
                 cc = player.AddComponent<CharacterController>();
-                cc.center = new Vector3(0, 0, 0);
                 cc.height = 2f;
                 cc.radius = 0.5f;
+                cc.center = Vector3.up * (cc.height * 0.5f);
+            }
+            else
+            {
+                cc.center = Vector3.up * (cc.height * 0.5f);
             }
 
             PlayerInputReader inputReader = player.GetComponent<PlayerInputReader>();

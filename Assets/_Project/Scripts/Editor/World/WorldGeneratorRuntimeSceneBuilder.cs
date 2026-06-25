@@ -99,8 +99,17 @@ GameObject player = GameObject.Find("Player");
                 }
             }
 
+            const string scenePath = "Assets/_Project/Scenes/RuntimeWorld.unity";
+            EditorSceneManager.SetActiveScene(newScene);
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath) != null)
+            {
+                AssetDatabase.DeleteAsset(scenePath);
+            }
+            AssetDatabase.Refresh();
+
             EditorSceneManager.MarkSceneDirty(newScene);
-            EditorSceneManager.SaveScene(newScene, "Assets/_Project/Scenes/RuntimeWorld.unity");
+            EditorSceneManager.SaveScene(newScene, scenePath);
+            EditorSceneManager.OpenScene(scenePath);
             Debug.Log("Runtime World Generator scene created and saved at Assets/_Project/Scenes/RuntimeWorld.unity");
         }
 
