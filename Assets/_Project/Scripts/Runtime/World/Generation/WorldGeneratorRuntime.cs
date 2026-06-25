@@ -372,6 +372,7 @@ namespace ApexShift.Runtime.World.Generation
 
                 SpawnRegionResources(region);
                 SpawnRegionCreatures(region);
+                TrySpawnInitialMeatFoodSource(region, region.Bounds);
             }
         }
 
@@ -495,6 +496,29 @@ namespace ApexShift.Runtime.World.Generation
                     SpawnCreature(entry, pos);
                 }
             }
+        }
+
+        private void TrySpawnInitialMeatFoodSource(GeneratedBiomeRegion region, Bounds spawnBounds)
+        {
+            // Foundation-only meat source for #21.
+            // Full "creature death creates meat drop" belongs to the later death/hunting issue.
+            if (region == null || region.Biome == null || region.Biome.BiomeId != "redfang_wilds")
+            {
+                return;
+            }
+
+            if (Random.value > 0.08f)
+            {
+                return;
+            }
+
+            Vector3 pos = GetRandomPointInBounds(spawnBounds);
+            if (pos.magnitude < clearingRadius)
+            {
+                return;
+            }
+
+            CreateMeatFoodSource(pos);
         }
 
         private Vector3 GetRandomPointInBounds(Bounds bounds)
@@ -711,6 +735,46 @@ if (renderer != null)
             }
 
             return root;
+        }
+
+        private void CreateMeatFoodSource(Vector3 position)
+        {
+            GameObject meat = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            meat.name = $"MeatDrop_{_lastResult.ResourceCount}";
+            meat.transform.SetParent(_resourceRoot);
+            meat.transform.position = position + Vector3.up * 0.10f;
+            meat.transform.localScale = new Vector3(0.45f, 0.20f, 0.45f);
+
+            Renderer renderer = meat.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                if (mat.shader == null) mat.shader = Shader.Find("Standard");
+
+                Color meatColor = new Color(0.55f, 0.08f, 0.06f);
+                if (mat.HasProperty("_BaseColor"))
+                    mat.SetColor("_BaseColor", meatColor);
+                else
+                    mat.color = meatColor;
+
+                renderer.sharedMaterial = mat;
+            }
+
+            ResourceNodeView nodeView = meat.GetComponent<ResourceNodeView>();
+            if (nodeView == null)
+            {
+                nodeView = meat.AddComponent<ResourceNodeView>();
+            }
+            nodeView.ConfigureDefault("meat_drop");
+
+            FoodSourceView food = meat.GetComponent<FoodSourceView>();
+            if (food == null)
+            {
+                food = meat.AddComponent<FoodSourceView>();
+            }
+            food.Configure(ApexShift.Core.Ecosystem.FoodKind.Meat, 20f, 10f);
+
+            _lastResult.ResourceCount++;
         }
 
         private void ConfigureCreatureMovement(string creatureId, CreatureNavigationAdapter adapter, CreatureWanderBehavior wander)

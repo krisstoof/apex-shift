@@ -37,5 +37,17 @@ namespace ApexShift.Tests.Unit.Ecosystem
             state.Restore(100f);
             Assert.AreEqual(100f, state.Biomass);
         }
+
+        [Test]
+        public void MeatFoodSourceCanProvideNutrition()
+        {
+            var state = new FoodSourceState(20f, 10f);
+
+            float nutrition = state.Consume(2f);
+
+            Assert.AreEqual(18f, state.Biomass);
+            Assert.AreEqual(20f, nutrition);
+            Assert.IsFalse(state.IsEmpty);
+        }
     }
 }
