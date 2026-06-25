@@ -10,10 +10,10 @@ namespace ApexShift.Presentation.Interaction
         private PlayerInteractionController interactionController;
 
         [SerializeField]
-        private bool showOverlay = true;
+        private bool showOverlay = false;
 
         [SerializeField]
-        private Rect panelRect = new Rect(12f, 348f, 380f, 120f);
+        private Rect panelRect = new Rect(320f, 352f, 400f, 120f);
 
         private const int PanelWindowId = 431074;
 

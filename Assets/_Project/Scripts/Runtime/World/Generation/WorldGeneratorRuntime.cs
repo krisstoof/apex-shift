@@ -657,14 +657,21 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             if (needs == null) needs = instance.AddComponent<CreatureNeedsRuntime>();
             needs.Configure(entry.CreatureId);
 
-            var foodSeeking = instance.GetComponent<CreatureFoodSeekingBehavior>();
-            if (foodSeeking == null) foodSeeking = instance.AddComponent<CreatureFoodSeekingBehavior>();
+            var health = instance.GetComponent<CreatureHealthRuntime>();
+            if (health == null) health = instance.AddComponent<CreatureHealthRuntime>();
+            health.Configure(entry.CreatureId);
+
+            var oldFoodSeeking = instance.GetComponent<CreatureFoodSeekingBehavior>();
+            if (oldFoodSeeking != null) oldFoodSeeking.enabled = false;
+
+            var oldAwareness = instance.GetComponent<CreaturePlayerAwarenessBehavior>();
+            if (oldAwareness != null) oldAwareness.enabled = false;
+
+            var behavior = instance.GetComponent<CreatureBehaviorRuntime>();
+            if (behavior == null) behavior = instance.AddComponent<CreatureBehaviorRuntime>();
 
             var debugOverlay = instance.GetComponent<CreatureDebugOverlay>();
             if (debugOverlay == null) debugOverlay = instance.AddComponent<CreatureDebugOverlay>();
-
-            var playerAwareness = instance.GetComponent<CreaturePlayerAwarenessBehavior>();
-            if (playerAwareness == null) playerAwareness = instance.AddComponent<CreaturePlayerAwarenessBehavior>();
 
             var animDriver = instance.GetComponent<CreatureAnimationDriver>();
             if (animDriver == null) animDriver = instance.AddComponent<CreatureAnimationDriver>();
@@ -675,6 +682,9 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             animDriver.Configure(runThreshold);
 
             ConfigureCreatureMovement(entry.CreatureId, adapter, wander);
+
+            var ecosystem = EcosystemRuntime.Instance;
+            ecosystem?.RegisterCreature(view);
         }
 
         private GameObject CreateCreatureFallback(string creatureId, Vector3 position)

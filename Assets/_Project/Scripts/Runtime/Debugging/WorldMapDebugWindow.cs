@@ -14,11 +14,11 @@ namespace ApexShift.Runtime.Debugging
     [DisallowMultipleComponent]
     public sealed class WorldMapDebugWindow : MonoBehaviour
     {
-        [SerializeField] private bool visible = true;
+        [SerializeField] private bool visible = false;
         [SerializeField] private KeyCode toggleKey = KeyCode.F4;
         [SerializeField] private float refreshIntervalSeconds = 0.5f;
 
-        private Rect windowRect = new Rect(12f, 230f, 520f, 520f);
+        private Rect windowRect = new Rect(720f, 140f, 520f, 520f);
         private Vector2 scroll;
         private float refreshTimer;
         private string cachedText = "World debug loading...";
@@ -125,8 +125,8 @@ namespace ApexShift.Runtime.Debugging
             {
                 if (currentEvent.type == EventType.MouseDrag)
                 {
-                    windowRect.width = Mathf.Max(250f, currentEvent.mousePosition.x + 10f);
-                    windowRect.height = Mathf.Max(250f, currentEvent.mousePosition.y + 10f);
+                    windowRect.width = Mathf.Max(230f, currentEvent.mousePosition.x + 10f);
+                    windowRect.height = Mathf.Max(230f, currentEvent.mousePosition.y + 10f);
                     currentEvent.Use();
                 }
                 else if (currentEvent.type == EventType.MouseUp)
@@ -149,12 +149,13 @@ namespace ApexShift.Runtime.Debugging
             ResourceNodeView[] resources = Object.FindObjectsByType<ResourceNodeView>(FindObjectsInactive.Exclude);
             NavMeshAgent[] agents = Object.FindObjectsByType<NavMeshAgent>(FindObjectsInactive.Exclude);
             Transform player = FindPlayer();
+            EcosystemRuntime ecosystem = EcosystemRuntime.Instance;
 
             builder.AppendLine("=== WORLD ===");
-            builder.AppendLine($"time: {Time.time:0.0}s");
-            builder.AppendLine($"player: {(player != null ? player.position.ToString("F1") : "missing")}");
-            builder.AppendLine($"resources: {resources.Length}");
-            builder.AppendLine($"food sources: {foods.Length}");
+            builder.AppendLine($"t: {Time.time:0.0}s");
+            builder.AppendLine($"ply: {(player != null ? player.position.ToString("F1") : "miss")}");
+            builder.AppendLine($"res: {resources.Length}");
+            builder.AppendLine($"food: {foods.Length}");
             builder.AppendLine();
 
             AppendEcosystem(builder, foods);
@@ -177,15 +178,16 @@ namespace ApexShift.Runtime.Debugging
 
             EcosystemRuntime ecosystem = EcosystemRuntime.Instance;
 
-            builder.AppendLine("=== ECOSYSTEM ===");
-            builder.AppendLine($"registry: {(ecosystem != null ? "ok" : "missing")}");
+            builder.AppendLine("=== ECOSYS ===");
+            builder.AppendLine($"reg: {(ecosystem != null ? "ok" : "miss")}");
             if (ecosystem != null)
             {
-                builder.AppendLine($"registered all/plants/meat: {ecosystem.FoodSourceCount}/{ecosystem.PlantFoodSourceCount}/{ecosystem.MeatFoodSourceCount}");
+                builder.AppendLine($"reg food all/pl/me: {ecosystem.FoodSourceCount}/{ecosystem.PlantFoodSourceCount}/{ecosystem.MeatFoodSourceCount}");
+                builder.AppendLine($"reg creatures: {ecosystem.CreatureCount}");
             }
 
-            builder.AppendLine($"scene foods all/plants/meat/scavenger/empty: {foods.Length}/{plants}/{meat}/{scavenger}/{empty}");
-            builder.AppendLine($"avg biomass plants/meat: {avgPlants:0.00}/{avgMeat:0.00}");
+            builder.AppendLine($"scene food a/pl/me/sc/em: {foods.Length}/{plants}/{meat}/{scavenger}/{empty}");
+            builder.AppendLine($"avg bio pl/me: {avgPlants:0.00}/{avgMeat:0.00}");
             builder.AppendLine();
         }
 
@@ -202,11 +204,11 @@ namespace ApexShift.Runtime.Debugging
             float avgEnergy = needs.Length == 0 ? 0f : needs.Average(n => n.State.Energy);
 
             builder.AppendLine("=== CREATURES ===");
-            builder.AppendLine($"creatures: {creatures.Length}");
-            builder.AppendLine($"nav agents on/off: {onNavMesh}/{offNavMesh}");
-            builder.AppendLine($"moving/with path: {moving}/{withPath}");
-            builder.AppendLine($"hungry/starving/desperate: {hungry}/{starving}/{desperate}");
-            builder.AppendLine($"avg hunger ratio: {avgHunger:0.00}");
+            builder.AppendLine($"count: {creatures.Length}");
+            builder.AppendLine($"nav on/off: {onNavMesh}/{offNavMesh}");
+            builder.AppendLine($"move/path: {moving}/{withPath}");
+            builder.AppendLine($"hun/star/des: {hungry}/{starving}/{desperate}");
+            builder.AppendLine($"avg hunger: {avgHunger:0.00}");
             builder.AppendLine($"avg energy: {avgEnergy:0.0}");
             builder.AppendLine();
         }
@@ -235,7 +237,7 @@ namespace ApexShift.Runtime.Debugging
                     ? -1f
                     : group.Min(c => Vector3.Distance(c.transform.position, player.position));
 
-                builder.AppendLine($"{group.Key}: count={count} moving={moving} hungry={hungry} nearestPlayer={(nearestPlayer >= 0f ? nearestPlayer.ToString("0.0") : "n/a")}");
+                builder.AppendLine($"{group.Key}: c={count} m={moving} h={hungry} ply={(nearestPlayer >= 0f ? nearestPlayer.ToString("0.0") : "n/a")}");
             }
 
             builder.AppendLine();
@@ -243,7 +245,7 @@ namespace ApexShift.Runtime.Debugging
 
         private static void AppendCreatureRows(StringBuilder builder, CreatureAgentView[] creatures, Transform player)
         {
-            builder.AppendLine("=== CREATURE DETAILS ===");
+            builder.AppendLine("=== CREATURES ===");
 
             foreach (CreatureAgentView creature in creatures.Where(c => c != null).OrderBy(c => c.CreatureId).Take(32))
             {
@@ -251,14 +253,15 @@ namespace ApexShift.Runtime.Debugging
                 CreatureFoodSeekingBehavior food = creature.GetComponent<CreatureFoodSeekingBehavior>();
                 NavMeshAgent agent = creature.GetComponent<NavMeshAgent>();
 
-                string id = string.IsNullOrWhiteSpace(creature.CreatureId) ? "unknown" : creature.CreatureId;
-                string stage = needs != null ? needs.State.Stage.ToString() : "no-needs";
+                string id = string.IsNullOrWhiteSpace(creature.CreatureId) ? "unk" : creature.CreatureId;
+                string stage = needs != null ? needs.State.Stage.ToString().Substring(0, Mathf.Min(3, needs.State.Stage.ToString().Length)).ToLowerInvariant() : "non";
                 string hunger = needs != null ? $"{needs.State.Hunger:0}/{needs.State.MaxHunger:0}" : "n/a";
-                string nav = agent == null ? "no-agent" : agent.isOnNavMesh ? $"on rem:{agent.remainingDistance:0.0} vel:{agent.velocity.magnitude:0.0}" : "off";
+                string nav = agent == null ? "noa" : agent.isOnNavMesh ? $"on r:{agent.remainingDistance:0.0} v:{agent.velocity.magnitude:0.0}" : "off";
                 string target = food != null && food.CurrentTarget != null ? $"{food.CurrentTarget.Kind} {Vector3.Distance(creature.transform.position, food.CurrentTarget.transform.position):0.0}m" : "none";
                 string playerDistance = player != null ? $"{Vector3.Distance(creature.transform.position, player.position):0.0}m" : "n/a";
+                CreatureBehaviorRuntime behavior = creature.GetComponent<CreatureBehaviorRuntime>();
 
-                builder.AppendLine($"{id,-10} stage={stage,-10} hunger={hunger,-8} nav={nav,-18} food={target,-14} player={playerDistance}");
+                builder.AppendLine($"{id,-10} st={stage,-3} bh={(behavior != null ? behavior.State.ToString().ToLowerInvariant() : "leg"),-8} hu={hunger,-8} nv={nav,-14} tgt={target,-12} ply={playerDistance}");
             }
 
             if (creatures.Length > 32)

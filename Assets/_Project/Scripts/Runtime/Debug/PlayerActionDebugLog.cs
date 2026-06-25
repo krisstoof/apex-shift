@@ -12,7 +12,7 @@ namespace ApexShift.Runtime.Debugging
         private PlayerInputReader inputReader;
 
         [SerializeField]
-        private bool showOverlay = true;
+        private bool showOverlay = false;
 
         [SerializeField]
         private bool logToConsole = true;
@@ -24,7 +24,7 @@ namespace ApexShift.Runtime.Debugging
         private KeyCode toggleOverlayKey = KeyCode.F1;
 
         [SerializeField]
-        private Rect panelRect = new Rect(12f, 12f, 380f, 260f);
+        private Rect panelRect = new Rect(12f, 12f, 360f, 220f);
 
         [SerializeField]
         private Transform watchedTarget;
@@ -66,7 +66,7 @@ namespace ApexShift.Runtime.Debugging
         private const string PanelPositionXPrefKey = "ApexShift.PlayerActionDebugLog.PanelPositionX";
         private const string PanelPositionYPrefKey = "ApexShift.PlayerActionDebugLog.PanelPositionY";
         private const int PanelWindowId = 431072;
-        private static readonly Rect DefaultPanelRect = new Rect(12f, 12f, 380f, 260f);
+        private static readonly Rect DefaultPanelRect = new Rect(12f, 12f, 360f, 220f);
 
         private void Awake()
         {

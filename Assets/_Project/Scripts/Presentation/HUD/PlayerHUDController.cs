@@ -19,6 +19,9 @@ namespace ApexShift.Presentation.HUD
         [Header("Resources")]
         [SerializeField] private List<ResourceCounterUI> resourceCounters;
 
+        [Header("Inventory")]
+        [SerializeField] private List<InventorySlotUI> inventorySlots;
+
         public void Configure(
             PlayerSurvivalRuntime survival,
             PlayerInventoryRuntime inventory,
@@ -49,6 +52,13 @@ namespace ApexShift.Presentation.HUD
             UpdateStats();
             SubscribeToInventory();
             RefreshResources();
+            RefreshInventorySlots();
+        }
+
+        public void ConfigureInventorySlots(List<InventorySlotUI> slots)
+        {
+            inventorySlots = slots;
+            RefreshInventorySlots();
         }
 
         private void Awake()
@@ -96,6 +106,7 @@ namespace ApexShift.Presentation.HUD
                 if (inventoryRuntime.Inventory != null)
                 {
                     inventoryRuntime.Inventory.InventoryChanged += RefreshResources;
+                    inventoryRuntime.Inventory.InventoryChanged += RefreshInventorySlots;
                     subscribed = true;
                     Debug.Log($"[HUD] Subscribed to inventory on {inventoryRuntime.gameObject.name}", this);
                 }
@@ -108,6 +119,7 @@ namespace ApexShift.Presentation.HUD
             if (inventoryRuntime != null && inventoryRuntime.Inventory != null)
             {
                 inventoryRuntime.Inventory.InventoryChanged -= RefreshResources;
+                inventoryRuntime.Inventory.InventoryChanged -= RefreshInventorySlots;
             }
             subscribed = false;
         }
@@ -150,6 +162,38 @@ namespace ApexShift.Presentation.HUD
                 if (counter == null) continue;
                 int amount = inventoryRuntime.Inventory.GetAmount(counter.ItemId);
                 counter.UpdateCount(amount);
+            }
+        }
+
+        private void RefreshInventorySlots()
+        {
+            if (inventoryRuntime == null || inventoryRuntime.Inventory == null)
+            {
+                return;
+            }
+
+            if (inventorySlots == null || inventorySlots.Count == 0)
+            {
+                return;
+            }
+
+            int slotCount = inventoryRuntime.Inventory.SlotCount;
+            for (int i = 0; i < inventorySlots.Count; i++)
+            {
+                InventorySlotUI slotUi = inventorySlots[i];
+                if (slotUi == null)
+                {
+                    continue;
+                }
+
+                if (i >= slotCount)
+                {
+                    slotUi.UpdateSlot(i, string.Empty, 0);
+                    continue;
+                }
+
+                var snapshot = inventoryRuntime.Inventory.PeekSlotStack(i);
+                slotUi.UpdateSlot(i, snapshot.ItemId, snapshot.Amount);
             }
         }
 }

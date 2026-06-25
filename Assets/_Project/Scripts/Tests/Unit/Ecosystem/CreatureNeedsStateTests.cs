@@ -53,5 +53,50 @@ namespace ApexShift.Tests.Unit.Ecosystem
             Assert.IsFalse(varnak.PlantDiet);
             Assert.IsTrue(varnak.MeatDiet);
         }
+
+        [Test]
+        public void SetHungerCanSeedCreatureAsHungry()
+        {
+            var state = new CreatureNeedsState(100f, 1f, 30f, 60f, 90f);
+
+            state.SetHunger(40f);
+
+            Assert.AreEqual(HungerStage.Hungry, state.Stage);
+            Assert.IsTrue(state.IsHungry);
+        }
+
+        [Test]
+        public void SetHungerClampsToMaximum()
+        {
+            var state = new CreatureNeedsState(100f, 1f, 30f, 60f, 90f);
+
+            state.SetHunger(999f);
+
+            Assert.AreEqual(100f, state.Hunger);
+            Assert.AreEqual(HungerStage.Desperate, state.Stage);
+        }
+
+        [Test]
+        public void TickWithMovementConsumesEnergy()
+        {
+            var state = new CreatureNeedsState(100f, 1f, 30f, 60f, 90f);
+            float initialEnergy = state.Energy;
+
+            state.Tick(10f, 1f);
+
+            Assert.Less(state.Energy, initialEnergy);
+            Assert.Greater(state.Hunger, 0f);
+        }
+
+        [Test]
+        public void SetHungerCanSeedAboveHungryThreshold()
+        {
+            var state = new CreatureNeedsState(100f, 1f, 30f, 60f, 90f);
+
+            state.SetHunger(32f);
+
+            Assert.IsTrue(state.IsHungry);
+            Assert.AreEqual(HungerStage.Hungry, state.Stage);
+        }
     }
 }

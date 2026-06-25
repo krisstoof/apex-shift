@@ -1,0 +1,256 @@
+{
+  "pack": "Apex Shift 2D - Unity Icon Pack",
+  "version": "0.1.0",
+  "icon_size": 128,
+  "style": "flat survival icons, transparent PNG",
+  "items": [
+    {
+      "id": "resource_wood_log",
+      "name_pl": "Drewno",
+      "category": "resource",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Resources/resource_wood_log.png",
+      "size": "128x128",
+      "description": "Podstawowy surowiec do craftingu i budowy."
+    },
+    {
+      "id": "resource_stone",
+      "name_pl": "Kamień",
+      "category": "resource",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Resources/resource_stone.png",
+      "size": "128x128",
+      "description": "Podstawowy surowiec do craftingu narzędzi."
+    },
+    {
+      "id": "resource_flint",
+      "name_pl": "Krzemień",
+      "category": "resource",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Resources/resource_flint.png",
+      "size": "128x128",
+      "description": "Ostry minerał do prostych ostrzy i grotów."
+    },
+    {
+      "id": "resource_berries",
+      "name_pl": "Maliny / jagody",
+      "category": "food",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Resources/resource_berries.png",
+      "size": "128x128",
+      "description": "Zbierane jedzenie z krzaków."
+    },
+    {
+      "id": "resource_raw_meat",
+      "name_pl": "Surowe mięso",
+      "category": "food",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Resources/resource_raw_meat.png",
+      "size": "128x128",
+      "description": "Drop po śmierci zwierzęcia."
+    },
+    {
+      "id": "resource_cooked_meat",
+      "name_pl": "Pieczone mięso",
+      "category": "food",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Resources/resource_cooked_meat.png",
+      "size": "128x128",
+      "description": "Lepsze jedzenie po obróbce przy ognisku."
+    },
+    {
+      "id": "resource_bone",
+      "name_pl": "Kość",
+      "category": "resource",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Resources/resource_bone.png",
+      "size": "128x128",
+      "description": "Materiał do narzędzi, grotów lub ozdób."
+    },
+    {
+      "id": "resource_hide",
+      "name_pl": "Skóra",
+      "category": "resource",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Resources/resource_hide.png",
+      "size": "128x128",
+      "description": "Materiał po polowaniu."
+    },
+    {
+      "id": "resource_fiber",
+      "name_pl": "Włókno",
+      "category": "resource",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Resources/resource_fiber.png",
+      "size": "128x128",
+      "description": "Roślinne włókno do lin i bandaży."
+    },
+    {
+      "id": "resource_leaf",
+      "name_pl": "Liść",
+      "category": "resource",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Resources/resource_leaf.png",
+      "size": "128x128",
+      "description": "Lekki materiał roślinny."
+    },
+    {
+      "id": "resource_resin",
+      "name_pl": "Żywica",
+      "category": "resource",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Resources/resource_resin.png",
+      "size": "128x128",
+      "description": "Materiał do pochodni, kleju i craftingu."
+    },
+    {
+      "id": "resource_water_drop",
+      "name_pl": "Kropla wody",
+      "category": "resource",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Resources/resource_water_drop.png",
+      "size": "128x128",
+      "description": "Ikona wody lub nawodnienia."
+    },
+    {
+      "id": "resource_mushroom",
+      "name_pl": "Grzyb",
+      "category": "food",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Resources/resource_mushroom.png",
+      "size": "128x128",
+      "description": "Zbieralne jedzenie / komponent alchemiczny."
+    },
+    {
+      "id": "resource_herb",
+      "name_pl": "Zioło",
+      "category": "resource",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Resources/resource_herb.png",
+      "size": "128x128",
+      "description": "Roślina lecznicza lub craftingowa."
+    },
+    {
+      "id": "item_backpack",
+      "name_pl": "Plecak",
+      "category": "item",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Items/item_backpack.png",
+      "size": "128x128",
+      "description": "Przedmiot zwiększający pojemność ekwipunku."
+    },
+    {
+      "id": "item_storage_box",
+      "name_pl": "Skrzynia",
+      "category": "item",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Items/item_storage_box.png",
+      "size": "128x128",
+      "description": "Pojemnik do przechowywania zasobów."
+    },
+    {
+      "id": "item_bandage",
+      "name_pl": "Bandaż",
+      "category": "consumable",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Items/item_bandage.png",
+      "size": "128x128",
+      "description": "Przedmiot leczniczy."
+    },
+    {
+      "id": "item_map",
+      "name_pl": "Mapa",
+      "category": "item",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Items/item_map.png",
+      "size": "128x128",
+      "description": "Przedmiot lub ikona ekranu mapy."
+    },
+    {
+      "id": "item_campfire",
+      "name_pl": "Ognisko",
+      "category": "buildable",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Items/item_campfire.png",
+      "size": "128x128",
+      "description": "Obiekt do gotowania i światła."
+    },
+    {
+      "id": "item_torch",
+      "name_pl": "Pochodnia",
+      "category": "tool",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Items/item_torch.png",
+      "size": "128x128",
+      "description": "Źródło światła i craftingu z żywicy/drewna."
+    },
+    {
+      "id": "item_coin",
+      "name_pl": "Moneta",
+      "category": "currency",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Items/item_coin.png",
+      "size": "128x128",
+      "description": "Placeholder waluty / wartości."
+    },
+    {
+      "id": "item_key",
+      "name_pl": "Klucz",
+      "category": "quest",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Items/item_key.png",
+      "size": "128x128",
+      "description": "Przedmiot do interakcji z zamkami/ruinami."
+    },
+    {
+      "id": "item_day_token",
+      "name_pl": "Żeton dnia",
+      "category": "ui",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Items/item_day_token.png",
+      "size": "128x128",
+      "description": "Ikona dnia / progresji czasu."
+    },
+    {
+      "id": "item_unknown",
+      "name_pl": "Nieznany przedmiot",
+      "category": "ui",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Items/item_unknown.png",
+      "size": "128x128",
+      "description": "Fallback dla brakującej ikony."
+    },
+    {
+      "id": "tool_axe",
+      "name_pl": "Siekiera",
+      "category": "tool",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Tools/tool_axe.png",
+      "size": "128x128",
+      "description": "Narzędzie do ścinania drzew."
+    },
+    {
+      "id": "tool_pickaxe",
+      "name_pl": "Kilof",
+      "category": "tool",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Tools/tool_pickaxe.png",
+      "size": "128x128",
+      "description": "Narzędzie do rozbijania skał."
+    },
+    {
+      "id": "tool_spear",
+      "name_pl": "Włócznia",
+      "category": "weapon",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Tools/tool_spear.png",
+      "size": "128x128",
+      "description": "Prosta broń dystansowo-bliska."
+    },
+    {
+      "id": "tool_knife",
+      "name_pl": "Nóż",
+      "category": "tool",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Tools/tool_knife.png",
+      "size": "128x128",
+      "description": "Proste ostrze do craftingu i walki."
+    },
+    {
+      "id": "tool_hammer",
+      "name_pl": "Młotek",
+      "category": "tool",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Tools/tool_hammer.png",
+      "size": "128x128",
+      "description": "Narzędzie budowlane."
+    },
+    {
+      "id": "tool_bow",
+      "name_pl": "Łuk",
+      "category": "weapon",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Tools/tool_bow.png",
+      "size": "128x128",
+      "description": "Broń dystansowa."
+    },
+    {
+      "id": "tool_arrow",
+      "name_pl": "Strzała",
+      "category": "ammo",
+      "unity_path": "Assets/ApexShift2D/Art/Icons/Tools/tool_arrow.png",
+      "size": "128x128",
+      "description": "Amunicja do łuku."
+    }
+  ]
+}

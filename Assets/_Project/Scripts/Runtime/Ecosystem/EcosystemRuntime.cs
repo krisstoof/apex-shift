@@ -1,12 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using ApexShift.Core.Ecosystem;
+using ApexShift.Runtime.Creatures;
 using UnityEngine;
 
 namespace ApexShift.Runtime.Ecosystem
 {
     public class EcosystemRuntime : MonoBehaviour
     {
+        [SerializeField] private bool showDebugOverlay = true;
         private static EcosystemRuntime _instance;
 
         public static EcosystemRuntime Instance
@@ -25,8 +27,10 @@ namespace ApexShift.Runtime.Ecosystem
         public static EcosystemRuntime Active => Instance;
 
         private readonly List<FoodSourceView> _foodSources = new List<FoodSourceView>();
+        private readonly List<CreatureAgentView> _creatures = new List<CreatureAgentView>();
 
         public int FoodSourceCount => _foodSources.Count;
+        public int CreatureCount => _creatures.Count;
         public int PlantFoodSourceCount => GetFoodSourceCount(FoodKind.Plants);
         public int MeatFoodSourceCount => GetFoodSourceCount(FoodKind.Meat);
 
@@ -67,6 +71,26 @@ namespace ApexShift.Runtime.Ecosystem
             }
 
             _foodSources.Remove(source);
+        }
+
+        public void RegisterCreature(CreatureAgentView creature)
+        {
+            if (creature == null || _creatures.Contains(creature))
+            {
+                return;
+            }
+
+            _creatures.Add(creature);
+        }
+
+        public void UnregisterCreature(CreatureAgentView creature)
+        {
+            if (creature == null)
+            {
+                return;
+            }
+
+            _creatures.Remove(creature);
         }
 
         public bool TryFindNearestPlantFood(Vector3 position, float maxDistance, out FoodSourceView source)
@@ -120,9 +144,105 @@ namespace ApexShift.Runtime.Ecosystem
             return source != null;
         }
 
+        public CreatureAgentView TryFindNearestPrey(Vector3 position, string hunterCreatureId, float maxDistance = 40f)
+        {
+            CreatureAgentView prey = null;
+            float minSqrDist = Mathf.Max(0f, maxDistance) * Mathf.Max(0f, maxDistance);
+
+            for (int i = _creatures.Count - 1; i >= 0; i--)
+            {
+                CreatureAgentView candidate = _creatures[i];
+                if (candidate == null)
+                {
+                    _creatures.RemoveAt(i);
+                    continue;
+                }
+
+                if (!candidate.isActiveAndEnabled || candidate.gameObject == null)
+                {
+                    continue;
+                }
+
+                string candidateId = (candidate.CreatureId ?? string.Empty).Trim().ToLowerInvariant();
+                if (string.Equals(candidateId, hunterCreatureId, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                // In this slice Varnak should hunt prey animals, not other predators.
+                if (candidateId != "small_prey" && candidateId != "grazer")
+                {
+                    continue;
+                }
+
+                CreatureHealthRuntime health = candidate.GetComponent<CreatureHealthRuntime>();
+                if (health != null && health.IsDead)
+                {
+                    continue;
+                }
+
+                float sqrDist = (candidate.transform.position - position).sqrMagnitude;
+                if (sqrDist < minSqrDist)
+                {
+                    minSqrDist = sqrDist;
+                    prey = candidate;
+                }
+            }
+
+            return prey;
+        }
+
+        public CreatureAgentView TryFindNearestCreatureById(Vector3 position, string creatureId, float maxDistance = 40f)
+        {
+            CreatureAgentView found = null;
+            float minSqrDist = Mathf.Max(0f, maxDistance) * Mathf.Max(0f, maxDistance);
+            string expectedId = (creatureId ?? string.Empty).Trim().ToLowerInvariant();
+
+            for (int i = _creatures.Count - 1; i >= 0; i--)
+            {
+                CreatureAgentView candidate = _creatures[i];
+                if (candidate == null)
+                {
+                    _creatures.RemoveAt(i);
+                    continue;
+                }
+
+                if (!candidate.isActiveAndEnabled)
+                {
+                    continue;
+                }
+
+                string candidateId = (candidate.CreatureId ?? string.Empty).Trim().ToLowerInvariant();
+                if (candidateId != expectedId)
+                {
+                    continue;
+                }
+
+                CreatureHealthRuntime health = candidate.GetComponent<CreatureHealthRuntime>();
+                if (health != null && health.IsDead)
+                {
+                    continue;
+                }
+
+                float sqrDist = (candidate.transform.position - position).sqrMagnitude;
+                if (sqrDist < minSqrDist)
+                {
+                    minSqrDist = sqrDist;
+                    found = candidate;
+                }
+            }
+
+            return found;
+        }
+
         public int GetFoodSourceCount(FoodKind kind)
         {
             return _foodSources.Count(s => s != null && s.Kind == kind);
+        }
+
+        public int GetCreatureCount(string creatureId)
+        {
+            return _creatures.Count(c => c != null && string.Equals(c.CreatureId, creatureId, System.StringComparison.OrdinalIgnoreCase));
         }
 
         public float GetAverageBiomassRatio(FoodKind kind)
@@ -134,10 +254,16 @@ namespace ApexShift.Runtime.Ecosystem
 
         private void OnGUI()
         {
+            if (!showDebugOverlay)
+            {
+                return;
+            }
+
             GUI.Box(
                 new Rect(12f, 120f, 270f, 104f),
                 $"Ecosystem Debug\n" +
                 $"food sources: {FoodSourceCount}\n" +
+                $"creatures: {CreatureCount}\n" +
                 $"plants: {PlantFoodSourceCount} avg:{GetAverageBiomassRatio(FoodKind.Plants):0.00}\n" +
                 $"meat: {MeatFoodSourceCount} avg:{GetAverageBiomassRatio(FoodKind.Meat):0.00}");
         }

@@ -10,13 +10,13 @@ namespace ApexShift.Presentation.HUD
         private PlayerSurvivalRuntime survivalRuntime;
 
         [SerializeField]
-        private bool showOverlay = true;
+        private bool showOverlay = false;
 
         [SerializeField]
         private KeyCode toggleOverlayKey = KeyCode.F3;
 
         [SerializeField]
-        private Rect panelRect = new Rect(12f, 164f, 260f, 176f);
+        private Rect panelRect = new Rect(320f, 164f, 280f, 176f);
 
         private const int PanelWindowId = 431073;
 

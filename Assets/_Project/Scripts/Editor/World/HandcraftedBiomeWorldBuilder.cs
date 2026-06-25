@@ -2203,6 +2203,7 @@ namespace ApexShift.EditorTools.World
             CanvasScaler scaler = hudGo.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.matchWidthOrHeight = 1f;
             
             hudGo.AddComponent<GraphicRaycaster>();
             
@@ -2210,20 +2211,24 @@ namespace ApexShift.EditorTools.World
             
             Font uiFont = UnityEngine.Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
-            // Create Stats Panel (Bottom Left)
-            GameObject statsPanel = CreateUIPanel(hudGo.transform, "StatsPanel", new Vector2(0, 0), new Vector2(0, 0), new Vector2(250, 200), new Vector2(30, 30));
+            // Create Stats Panel (Top Left)
+            GameObject statsPanel = CreateUIPanel(hudGo.transform, "StatsPanel", new Vector2(0, 1), new Vector2(0, 1), new Vector2(320, 228), new Vector2(24, -24));
             
-            StatBarUI healthBar = CreateStatBar(statsPanel.transform, "HealthBar", "Health", Color.red, new Vector2(0, 150), uiFont);
-            StatBarUI hungerBar = CreateStatBar(statsPanel.transform, "HungerBar", "Hunger", new Color(1f, 0.5f, 0f), new Vector2(0, 110), uiFont);
-            StatBarUI staminaBar = CreateStatBar(statsPanel.transform, "StaminaBar", "Stamina", Color.yellow, new Vector2(0, 70), uiFont);
-            StatBarUI restBar = CreateStatBar(statsPanel.transform, "RestBar", "Rest", Color.blue, new Vector2(0, 30), uiFont);
+            StatBarUI healthBar = CreateStatBar(statsPanel.transform, "HealthBar", "Health", Color.red, new Vector2(16, 168), uiFont);
+            StatBarUI hungerBar = CreateStatBar(statsPanel.transform, "HungerBar", "Hunger", new Color(1f, 0.5f, 0f), new Vector2(16, 124), uiFont);
+            StatBarUI staminaBar = CreateStatBar(statsPanel.transform, "StaminaBar", "Stamina", Color.yellow, new Vector2(16, 80), uiFont);
+            StatBarUI restBar = CreateStatBar(statsPanel.transform, "RestBar", "Rest", Color.blue, new Vector2(16, 36), uiFont);
 
             // Create Resources Panel (Top Right)
-            GameObject resourcePanel = CreateUIPanel(hudGo.transform, "ResourcePanel", new Vector2(1, 1), new Vector2(1, 1), new Vector2(220, 180), new Vector2(-30, -30));
+            GameObject resourcePanel = CreateUIPanel(hudGo.transform, "ResourcePanel", new Vector2(1, 1), new Vector2(1, 1), new Vector2(240, 220), new Vector2(-24, -24));
             
             ResourceCounterUI woodCounter = CreateResourceCounter(resourcePanel.transform, "WoodCounter", "wood", "Wood", new Vector2(0, 0), uiFont);
-            ResourceCounterUI stoneCounter = CreateResourceCounter(resourcePanel.transform, "StoneCounter", "stone", "Stone", new Vector2(0, -40), uiFont);
-            ResourceCounterUI fiberCounter = CreateResourceCounter(resourcePanel.transform, "FiberCounter", "fiber", "Fiber", new Vector2(0, -80), uiFont);
+            ResourceCounterUI stoneCounter = CreateResourceCounter(resourcePanel.transform, "StoneCounter", "stone", "Stone", new Vector2(0, -46), uiFont);
+            ResourceCounterUI fiberCounter = CreateResourceCounter(resourcePanel.transform, "FiberCounter", "fiber", "Fiber", new Vector2(0, -92), uiFont);
+
+            GameObject minimapPanel = CreateUIPanel(hudGo.transform, "MiniMapPanel", new Vector2(1, 1), new Vector2(1, 1), new Vector2(180, 180), new Vector2(-24, -252));
+            var minimapGo = minimapPanel.AddComponent<MiniMapUI>();
+            minimapGo.Configure(player.transform, 140f);
 
             // Link to controller
             SerializedObject so = new SerializedObject(hudController);
@@ -2258,7 +2263,7 @@ namespace ApexShift.EditorTools.World
             
             // Add a semi-transparent background
             UnityEngine.UI.Image bg = panel.AddComponent<UnityEngine.UI.Image>();
-            bg.color = new Color(0, 0, 0, 0.35f);
+            bg.color = new Color(0, 0, 0, 0.24f);
             
             RectTransform rt = panel.GetComponent<RectTransform>();
             rt.anchorMin = anchorMin;
@@ -2277,7 +2282,7 @@ namespace ApexShift.EditorTools.World
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.zero;
             rt.pivot = Vector2.zero;
-            rt.sizeDelta = new Vector2(200, 30);
+            rt.sizeDelta = new Vector2(276, 34);
             rt.anchoredPosition = pos;
 
             GameObject bg = new GameObject("Background");
@@ -2304,14 +2309,14 @@ namespace ApexShift.EditorTools.World
             Text t = lbl.AddComponent<Text>();
             t.text = labelText;
             t.font = font;
-            t.fontSize = 18;
+            t.fontSize = 17;
             t.alignment = TextAnchor.MiddleLeft;
             t.color = Color.white;
             RectTransform lblRt = lbl.GetComponent<RectTransform>();
             lblRt.anchorMin = Vector2.zero;
             lblRt.anchorMax = Vector2.one;
-            lblRt.sizeDelta = new Vector2(-10, 0);
-            lblRt.anchoredPosition = new Vector2(10, 0);
+            lblRt.sizeDelta = new Vector2(-40, 0);
+            lblRt.anchoredPosition = new Vector2(30, 0);
 
             StatBarUI ui = bar.AddComponent<StatBarUI>();
             SerializedObject so = new SerializedObject(ui);
@@ -2328,7 +2333,7 @@ namespace ApexShift.EditorTools.World
             GameObject counter = new GameObject(name);
             counter.transform.SetParent(parent, false);
             RectTransform rt = counter.AddComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(200, 35);
+            rt.sizeDelta = new Vector2(168, 44);
             rt.anchoredPosition = pos;
             rt.anchorMin = new Vector2(1, 1);
             rt.anchorMax = new Vector2(1, 1);
@@ -2339,7 +2344,7 @@ namespace ApexShift.EditorTools.World
             Text tL = lbl.AddComponent<Text>();
             tL.text = labelText + ":";
             tL.font = font;
-            tL.fontSize = 18;
+            tL.fontSize = 17;
             tL.alignment = TextAnchor.MiddleRight;
             tL.color = Color.white;
             RectTransform lblRt = lbl.GetComponent<RectTransform>();
@@ -2352,7 +2357,7 @@ namespace ApexShift.EditorTools.World
             Text tV = val.AddComponent<Text>();
             tV.text = "0";
             tV.font = font;
-            tV.fontSize = 18;
+            tV.fontSize = 17;
             tV.fontStyle = FontStyle.Bold;
             tV.alignment = TextAnchor.MiddleLeft;
             tV.color = Color.yellow;

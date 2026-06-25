@@ -2,6 +2,24 @@ using UnityEngine;
 
 namespace ApexShift.Runtime.Creatures
 {
+    public enum CreatureBehaviorState
+    {
+        Idle,
+        Wander,
+        Stalk,
+        Chase,
+        Attack,
+        SeekFood,
+        EatPlants,
+        Scavenge,
+        HuntSmallPrey,
+        HuntPrey,
+        EatMeat,
+        Flee,
+        Eat,
+        Dead
+    }
+
     [RequireComponent(typeof(CreatureNavigationAdapter))]
     public class CreatureAgentView : MonoBehaviour
     {

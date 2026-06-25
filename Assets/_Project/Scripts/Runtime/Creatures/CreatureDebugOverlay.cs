@@ -12,13 +12,15 @@ namespace ApexShift.Runtime.Creatures
         [SerializeField] private bool showDebugFrame = true;
         [SerializeField] private float maxDrawDistance = 90f;
         [SerializeField] private float verticalOffset = 2.25f;
-        [SerializeField] private int width = 220;
-        [SerializeField] private int height = 118;
+        [SerializeField] private int width = 232;
+        [SerializeField] private int height = 122;
 
         private CreatureAgentView agentView;
         private CreatureNeedsRuntime needs;
         private CreatureFoodSeekingBehavior foodSeeking;
+        private CreatureBehaviorBrain behaviorRuntime;
         private NavMeshAgent navAgent;
+        private CreatureBehaviorState behaviorState = CreatureBehaviorState.Idle;
 
         private void Awake()
         {
@@ -35,7 +37,21 @@ namespace ApexShift.Runtime.Creatures
             agentView = GetComponent<CreatureAgentView>();
             needs = GetComponent<CreatureNeedsRuntime>();
             foodSeeking = GetComponent<CreatureFoodSeekingBehavior>();
+            behaviorRuntime = GetComponent<CreatureBehaviorBrain>();
             navAgent = GetComponent<NavMeshAgent>();
+        }
+
+        private void EnsureRuntimeReferences()
+        {
+            if (agentView == null) agentView = GetComponent<CreatureAgentView>();
+            if (needs == null) needs = GetComponent<CreatureNeedsRuntime>();
+            if (behaviorRuntime == null) behaviorRuntime = GetComponent<CreatureBehaviorBrain>();
+            if (navAgent == null) navAgent = GetComponent<NavMeshAgent>();
+        }
+
+        public void SetBehaviorState(CreatureBehaviorState state)
+        {
+            behaviorState = state;
         }
 
         private void OnGUI()
@@ -64,17 +80,26 @@ namespace ApexShift.Runtime.Creatures
                 return;
             }
 
+            string text = BuildDebugText();
+            int lineCount = text.Split('\n').Length;
+            int dynamicHeight = Mathf.Max(height, 18 + lineCount * 16);
+
             Rect rect = new Rect(
                 screenPosition.x - width * 0.5f,
                 Screen.height - screenPosition.y,
                 width,
-                height);
+                dynamicHeight);
 
-            GUI.Box(rect, BuildDebugText());
+            Color oldColor = GUI.color;
+            GUI.color = GetFrameColor();
+            GUI.Box(rect, text);
+            GUI.color = oldColor;
         }
 
         private string BuildDebugText()
         {
+            EnsureRuntimeReferences();
+
             string creatureId = agentView != null ? agentView.CreatureId : gameObject.name;
             string behavior = GetBehaviorLabel();
             string nav = GetNavigationLabel();
@@ -83,25 +108,41 @@ namespace ApexShift.Runtime.Creatures
             string hunger = "n/a";
             string energy = "n/a";
             string diet = "n/a";
+            string hungry = "n/a";
+            string lastFood = "n/a";
 
             if (needs != null)
             {
                 hunger = $"{needs.State.Stage} {needs.State.Hunger:0}/{needs.State.MaxHunger:0}";
                 energy = $"{needs.State.Energy:0}";
                 diet = $"P:{needs.Diet.PlantPreference:0.00} M:{needs.Diet.MeatPreference:0.00} S:{needs.Diet.ScavengerPreference:0.00}";
+                hungry = needs.IsHungry ? "true" : "false";
+            }
+
+            string extra = "";
+            if (behaviorRuntime != null)
+            {
+                lastFood = ShortenLastFoodSource(behaviorRuntime.LastFoodSource);
+                extra =
+                    $"\nwhy: {ShortenDecisionReason(behaviorRuntime.DecisionReason)}" +
+                    $"\nlast: {lastFood}" +
+                    $"\ndec: {behaviorRuntime.DecisionCount} atk:{behaviorRuntime.AttackCooldown:0.0}";
             }
 
             return
                 $"{creatureId}\n" +
-                $"behavior: {behavior}\n" +
-                $"hunger: {hunger}  energy: {energy}\n" +
+                $"beh: {behavior}\n" +
+                $"hun: {hunger} hungry:{hungry} en:{energy}\n" +
                 $"diet: {diet}\n" +
                 $"nav: {nav}\n" +
-                $"target: {target}";
+                $"tgt: {target}" +
+                extra;
         }
 
         private string GetBehaviorLabel()
         {
+            EnsureRuntimeReferences();
+
             if (navAgent == null)
             {
                 return "no_nav_agent";
@@ -110,6 +151,12 @@ namespace ApexShift.Runtime.Creatures
             if (!navAgent.isOnNavMesh)
             {
                 return "off_navmesh";
+            }
+
+            if (behaviorRuntime != null)
+            {
+                behaviorState = behaviorRuntime.State;
+                return behaviorRuntime.State.ToString().ToLowerInvariant();
             }
 
             if (foodSeeking != null && foodSeeking.HasTarget)
@@ -144,6 +191,20 @@ namespace ApexShift.Runtime.Creatures
 
         private string GetTargetLabel()
         {
+            EnsureRuntimeReferences();
+
+            if (behaviorRuntime != null)
+            {
+                string label = behaviorRuntime.CurrentTargetLabel;
+                if (behaviorRuntime.CurrentTargetTransform != null)
+                {
+                    float targetDistance = Vector3.Distance(transform.position, behaviorRuntime.CurrentTargetTransform.position);
+                    return $"{label} {targetDistance:0.0}m";
+                }
+
+                return label;
+            }
+
             if (foodSeeking == null || foodSeeking.CurrentTarget == null)
             {
                 return "none";
@@ -151,7 +212,155 @@ namespace ApexShift.Runtime.Creatures
 
             FoodSourceView target = foodSeeking.CurrentTarget;
             float distance = Vector3.Distance(transform.position, target.transform.position);
-            return $"{target.Kind} d:{distance:0.0} biomass:{target.BiomassRatio:0.00}";
+            return $"{target.Kind} {distance:0.0}m {target.SourceId}";
+        }
+
+        private Color GetFrameColor()
+        {
+            if (behaviorRuntime != null)
+            {
+                Color feedColor = GetLastFoodColor();
+                if (feedColor.a > 0f)
+                {
+                    return feedColor;
+                }
+            }
+
+            switch (behaviorState)
+            {
+                case CreatureBehaviorState.HuntPrey:
+                    return new Color(0.95f, 0.38f, 0.28f, 0.92f);
+                case CreatureBehaviorState.Flee:
+                    return new Color(0.98f, 0.82f, 0.22f, 0.92f);
+                case CreatureBehaviorState.SeekFood:
+                    return new Color(0.38f, 0.82f, 0.42f, 0.92f);
+                case CreatureBehaviorState.Eat:
+                    return new Color(0.45f, 0.92f, 0.70f, 0.92f);
+                case CreatureBehaviorState.Dead:
+                    return new Color(0.60f, 0.60f, 0.60f, 0.85f);
+                case CreatureBehaviorState.Wander:
+                    return new Color(0.52f, 0.76f, 0.98f, 0.88f);
+                default:
+                    return new Color(0.82f, 0.82f, 0.82f, 0.88f);
+            }
+        }
+
+        private Color GetLastFoodColor()
+        {
+            if (behaviorRuntime == null)
+            {
+                return new Color(0f, 0f, 0f, 0f);
+            }
+
+            string lastFood = (behaviorRuntime.LastFoodSource ?? string.Empty).Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(lastFood) || lastFood == "none")
+            {
+                return new Color(0f, 0f, 0f, 0f);
+            }
+
+            if (lastFood.Contains("meat") || lastFood.Contains("hunted") || lastFood.Contains("scaven"))
+            {
+                return new Color(0.92f, 0.36f, 0.24f, 0.92f);
+            }
+
+            if (lastFood.Contains("plant") || lastFood.Contains("berry") || lastFood.Contains("bush") || lastFood.Contains("grass"))
+            {
+                return new Color(0.34f, 0.76f, 0.36f, 0.92f);
+            }
+
+            return new Color(0.48f, 0.68f, 0.96f, 0.88f);
+        }
+
+        private static string ShortenLastFoodSource(string source)
+        {
+            string value = (source ?? string.Empty).Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(value) || value == "none")
+            {
+                return "none";
+            }
+
+            if (value.Contains("hunted") || value.Contains("meat") || value.Contains("scaven"))
+            {
+                return "meat";
+            }
+
+            if (value.Contains("plant") || value.Contains("berry") || value.Contains("bush") || value.Contains("grass") || value.Contains("leaf"))
+            {
+                return "plant";
+            }
+
+            if (value.Contains("hunt"))
+            {
+                return "hunt";
+            }
+
+            if (value.Contains("scaven"))
+            {
+                return "scavenge";
+            }
+
+            return value.Length > 12 ? value.Substring(0, 12) : value;
+        }
+
+        private static string ShortenDecisionReason(string reason)
+        {
+            string value = (reason ?? string.Empty).Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return "none";
+            }
+
+            if (value.Contains("hungry_no_meat_or_prey"))
+            {
+                return "need_food";
+            }
+
+            if (value.Contains("varnak_not_hungry"))
+            {
+                return "idle";
+            }
+
+            if (value.Contains("attack_cooldown"))
+            {
+                return "atk_cd";
+            }
+
+            if (value.Contains("eat_cooldown"))
+            {
+                return "eat_cd";
+            }
+
+            if (value.Contains("flee_varnak"))
+            {
+                return "flee_v";
+            }
+
+            if (value.Contains("flee_player"))
+            {
+                return "flee_p";
+            }
+
+            if (value.Contains("hunt_prey"))
+            {
+                return "hunt";
+            }
+
+            if (value.Contains("seek_food"))
+            {
+                return "seek";
+            }
+
+            if (value.Contains("eat_food"))
+            {
+                return "eat";
+            }
+
+            if (value.Length > 12)
+            {
+                return value.Substring(0, 12);
+            }
+
+            return value;
         }
     }
 }
