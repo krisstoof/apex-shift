@@ -34,7 +34,7 @@ namespace ApexShift.Runtime.World.Generation
         [SerializeField] private GameObject playerPrefab;
 
         [Header("Settings")]
-        [SerializeField] private bool generateOnStart = true;
+        [SerializeField] private bool generateOnStart = false;
         [SerializeField] private int seed = 12345;
         [SerializeField] private bool useCinemachine = true;
         [SerializeField] private float clearingRadius = 8f;
@@ -50,6 +50,7 @@ namespace ApexShift.Runtime.World.Generation
         private const string DefaultInputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
 
         public event System.Action<GameObject> OnGenerationComplete;
+        public int Seed => seed;
 
         private void Start()
         {
@@ -57,6 +58,16 @@ namespace ApexShift.Runtime.World.Generation
             {
                 Generate();
             }
+        }
+
+        private void Awake()
+        {
+            generateOnStart = false;
+        }
+
+        public void SetGenerateOnStart(bool value)
+        {
+            generateOnStart = value;
         }
 
         [ContextMenu("Generate World")]
@@ -98,6 +109,16 @@ namespace ApexShift.Runtime.World.Generation
         public void SetBiomeCatalog(BiomeCatalogAsset catalog)
         {
             biomeCatalog = catalog;
+        }
+
+        public void SetSeed(int value)
+        {
+            seed = value;
+        }
+
+        public WorldGenerationResult GetLastResult()
+        {
+            return _lastResult;
         }
 
         private void Clear()

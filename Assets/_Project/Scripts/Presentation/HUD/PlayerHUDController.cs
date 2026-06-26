@@ -42,17 +42,9 @@ namespace ApexShift.Presentation.HUD
             resourceCounters = counters;
 
             Debug.Log("[HUD] Controller Configured.", this);
-            
-            if (inventoryRuntime != null)
-            {
-                inventoryRuntime.EnsureInitialized();
-            }
 
-            // Initial refresh
             UpdateStats();
-            SubscribeToInventory();
-            RefreshResources();
-            RefreshInventorySlots();
+            TryAttachInventory();
         }
 
         public void ConfigureInventorySlots(List<InventorySlotUI> slots)
@@ -80,7 +72,7 @@ namespace ApexShift.Presentation.HUD
         private void OnEnable()
         {
             FindReferencesIfNull();
-            SubscribeToInventory();
+            TryAttachInventory();
         }
 
         private void OnDisable()
@@ -91,26 +83,28 @@ namespace ApexShift.Presentation.HUD
         private void Start()
         {
             FindReferencesIfNull();
-            SubscribeToInventory();
-            RefreshResources();
+            TryAttachInventory();
         }
 
         private bool subscribed;
 
-        private void SubscribeToInventory()
+        private void TryAttachInventory()
         {
-            if (subscribed) return;
-            if (inventoryRuntime != null)
+            if (inventoryRuntime == null)
             {
-                inventoryRuntime.EnsureInitialized();
-                if (inventoryRuntime.Inventory != null)
-                {
-                    inventoryRuntime.Inventory.InventoryChanged += RefreshResources;
-                    inventoryRuntime.Inventory.InventoryChanged += RefreshInventorySlots;
-                    subscribed = true;
-                    Debug.Log($"[HUD] Subscribed to inventory on {inventoryRuntime.gameObject.name}", this);
-                }
+                return;
             }
+
+            inventoryRuntime.EnsureInitialized();
+            if (inventoryRuntime.Inventory == null || subscribed)
+            {
+                return;
+            }
+
+            inventoryRuntime.Inventory.InventoryChanged += RefreshResources;
+            inventoryRuntime.Inventory.InventoryChanged += RefreshInventorySlots;
+            subscribed = true;
+            Debug.Log($"[HUD] Subscribed to inventory on {inventoryRuntime.gameObject.name}", this);
         }
 
         private void UnsubscribeFromInventory()
@@ -126,6 +120,12 @@ namespace ApexShift.Presentation.HUD
 
         private void Update()
         {
+            if (!subscribed)
+            {
+                FindReferencesIfNull();
+                TryAttachInventory();
+            }
+
             UpdateStats();
         }
 
@@ -152,7 +152,6 @@ namespace ApexShift.Presentation.HUD
         {
             if (inventoryRuntime == null || inventoryRuntime.Inventory == null) 
             {
-                Debug.LogWarning("[HUD] RefreshResources skipped: inventory null", this);
                 return;
             }
 

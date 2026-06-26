@@ -1,4 +1,5 @@
 using ApexShift.Core.Survival;
+using ApexShift.Core.Save;
 using ApexShift.Runtime.PlayerInput;
 using UnityEngine;
 
@@ -114,6 +115,18 @@ namespace ApexShift.Runtime.Player
         {
             EnsureInitialized();
             stats.SetGodMode(enabled);
+        }
+
+        public SurvivalSaveData ToSaveData()
+        {
+            EnsureInitialized();
+            return stats.ToSaveData();
+        }
+
+        public void LoadFromSaveData(SurvivalSaveData data)
+        {
+            EnsureInitialized();
+            stats.LoadFromSaveData(data);
         }
 
         private void InitializeCore()

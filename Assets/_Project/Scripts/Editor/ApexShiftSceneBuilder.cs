@@ -79,7 +79,8 @@ namespace ApexShift.EditorTools
             Light light = lightObject.AddComponent<Light>();
             light.type = LightType.Directional;
 
-            CreateChild(gameRoot.transform, "UI");
+            GameObject uiRoot = CreateChild(gameRoot.transform, "UI");
+            uiRoot.AddComponent<RuntimeHUDProvisioner>();
             CreateChild(gameRoot.transform, "DebugRoot");
 
             EditorSceneManager.MarkSceneDirty(scene);

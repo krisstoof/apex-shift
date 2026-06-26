@@ -1,4 +1,5 @@
 using ApexShift.Core.Inventory;
+using ApexShift.Core.Save;
 using UnityEngine;
 
 namespace ApexShift.Runtime.Player
@@ -21,6 +22,18 @@ namespace ApexShift.Runtime.Player
         {
             if (inventory != null) return;
             inventory = new InventoryState(Core.Items.ItemDatabase.CreateDefault(), slotCount);
+        }
+
+        public InventorySaveData ToSaveData()
+        {
+            EnsureInitialized();
+            return inventory.ToSaveData();
+        }
+
+        public void LoadFromSaveData(InventorySaveData data)
+        {
+            EnsureInitialized();
+            inventory.LoadFromSaveData(data);
         }
     }
 }

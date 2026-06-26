@@ -2,6 +2,7 @@
   "name": "ApexShift.Runtime",
   "references": [
     "ApexShift.Core",
+    "ApexShift.Infrastructure",
     "Unity.InputSystem",
     "Unity.Cinemachine",
     "Unity.AI.Navigation"
