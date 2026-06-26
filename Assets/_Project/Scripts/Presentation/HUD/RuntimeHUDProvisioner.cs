@@ -2,8 +2,11 @@ using System.Collections.Generic;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.PlayerInput;
 using ApexShift.Runtime.World.Generation;
+using ApexShift.Runtime.Flow;
 using ApexShift.Presentation.Icons;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace ApexShift.Presentation.HUD
@@ -152,47 +155,55 @@ namespace ApexShift.Presentation.HUD
             menuScaler.matchWidthOrHeight = GetCanvasMatchWeight();
 
             GameObject startMenu = CreateMenuPanel(menuGo.transform, "StartMenu", new Vector2(0.5f, 0.5f), new Vector2(980f, 620f), true);
+            CreateMenuBackdropFrame(startMenu.transform);
             AddMenuBackdrop(startMenu.transform);
             AddMenuFrame(startMenu.transform);
             AddMenuGradient(startMenu.transform);
+            CreateMenuTitlePlate(startMenu.transform);
             CreateMenuHeroArt(startMenu.transform);
-            CreateMenuText(startMenu.transform, "Eyebrow", "SURVIVAL  ISOMETRIC  WORLD", 14, TextAnchor.UpperLeft, new Vector2(44, -38), new Vector2(-44, -74), new Color(0.74f, 0.9f, 0.74f, 0.95f));
-            GameObject startTitle = CreateMenuText(startMenu.transform, "Title", "Apex Shift", 56, TextAnchor.UpperLeft, new Vector2(42, -74), new Vector2(-42, -142), new Color(0.97f, 0.97f, 0.92f, 1f));
-            CreateMenuText(startMenu.transform, "Subtitle", "A low-poly survival sandbox", 20, TextAnchor.UpperLeft, new Vector2(46, -140), new Vector2(-46, -176), new Color(1f, 0.86f, 0.5f, 0.96f));
-            GameObject startStatus = CreateMenuText(startMenu.transform, "Status", "Press Continue or start a new run.", 18, TextAnchor.UpperLeft, new Vector2(46, -188), new Vector2(-46, -228), new Color(1f, 0.94f, 0.48f, 1f));
-            CreateMenuText(startMenu.transform, "Hint", "Esc opens the pause menu. F1/F4 still expose debug tools.", 14, TextAnchor.UpperLeft, new Vector2(46, -232), new Vector2(-46, -260), new Color(0.88f, 0.92f, 0.88f, 0.95f));
-            Button continueButton = CreateMenuButton(startMenu.transform, "ContinueButton", "Continue", new Vector2(52, 330), new Vector2(260, 376));
-            Button newGameButton = CreateMenuButton(startMenu.transform, "NewGameButton", "New Game", new Vector2(52, 386), new Vector2(260, 432));
-            Button optionsButton = CreateMenuButton(startMenu.transform, "OptionsButton", "Options", new Vector2(52, 442), new Vector2(260, 488));
-            Button quitButton = CreateMenuButton(startMenu.transform, "QuitButton", "Quit", new Vector2(52, 498), new Vector2(260, 544));
+            CreateMenuText(startMenu.transform, "Eyebrow", "SURVIVAL  ISOMETRIC  WORLD", 14, TextAnchor.UpperLeft, new Vector2(44, -38), new Color(0.74f, 0.9f, 0.74f, 0.95f));
+            GameObject startTitle = CreateMenuText(startMenu.transform, "Title", "Apex Shift", 58, TextAnchor.UpperLeft, new Vector2(42, -82), new Color(0.98f, 0.98f, 0.93f, 1f));
+            startTitle.AddComponent<Outline>().effectColor = new Color(0f, 0f, 0f, 0.8f);
+            CreateMenuText(startMenu.transform, "Subtitle", "A low-poly survival sandbox", 22, TextAnchor.UpperLeft, new Vector2(46, -146), new Color(1f, 0.88f, 0.54f, 0.98f));
+            GameObject startStatus = CreateMenuText(startMenu.transform, "Status", "Press Continue or start a new run.", 18, TextAnchor.UpperLeft, new Vector2(46, -194), new Color(1f, 0.94f, 0.48f, 1f));
+            startStatus.AddComponent<Outline>().effectColor = new Color(0f, 0f, 0f, 0.8f);
+            CreateMenuText(startMenu.transform, "Hint", "Esc opens the pause menu. F1/F4 still expose debug tools.", 14, TextAnchor.UpperLeft, new Vector2(46, -234), new Color(0.88f, 0.92f, 0.88f, 0.95f));
+            Button continueButton = CreateMenuButton(startMenu.transform, "ContinueButton", "Continue", new Vector2(40, -330));
+            Button newGameButton = CreateMenuButton(startMenu.transform, "NewGameButton", "New Game", new Vector2(40, -386));
+            Button optionsButton = CreateMenuButton(startMenu.transform, "OptionsButton", "Options", new Vector2(40, -442));
+            Button quitButton = CreateMenuButton(startMenu.transform, "QuitButton", "Quit", new Vector2(40, -498));
 
             GameObject pauseMenu = CreateMenuPanel(menuGo.transform, "PauseMenu", new Vector2(0.5f, 0.5f), new Vector2(900f, 560f), false);
             pauseMenu.SetActive(false);
+            CreateMenuBackdropFrame(pauseMenu.transform);
             AddMenuBackdrop(pauseMenu.transform);
             AddMenuFrame(pauseMenu.transform);
             AddMenuGradient(pauseMenu.transform);
             CreateMenuHeroArt(pauseMenu.transform);
-            CreateMenuText(pauseMenu.transform, "Eyebrow", "GAME MENU", 14, TextAnchor.UpperLeft, new Vector2(44, -38), new Vector2(-44, -74), new Color(0.74f, 0.9f, 0.74f, 0.95f));
-            CreateMenuText(pauseMenu.transform, "Title", "Game Paused", 52, TextAnchor.UpperLeft, new Vector2(42, -74), new Vector2(-42, -140), new Color(0.97f, 0.97f, 0.92f, 1f));
-            CreateMenuText(pauseMenu.transform, "Hint", "Press Esc to resume", 18, TextAnchor.UpperLeft, new Vector2(46, -140), new Vector2(-46, -172), new Color(0.92f, 0.92f, 0.92f));
-            CreateMenuText(pauseMenu.transform, "Hint2", "Save, load, or adjust settings before returning.", 14, TextAnchor.UpperLeft, new Vector2(46, -176), new Vector2(-46, -206), new Color(0.84f, 0.86f, 0.84f, 0.9f));
-            Button resumeButton = CreateMenuButton(pauseMenu.transform, "ResumeButton", "Resume", new Vector2(52, 286), new Vector2(260, 332));
-            Button saveButton = CreateMenuButton(pauseMenu.transform, "SaveButton", "Save Game", new Vector2(52, 342), new Vector2(260, 388));
-            Button loadButton = CreateMenuButton(pauseMenu.transform, "LoadButton", "Load Game", new Vector2(52, 398), new Vector2(260, 444));
-            Button pauseOptionsButton = CreateMenuButton(pauseMenu.transform, "OptionsButton", "Options", new Vector2(52, 454), new Vector2(260, 500));
-            Button pauseQuitButton = CreateMenuButton(pauseMenu.transform, "QuitButton", "Quit", new Vector2(52, 510), new Vector2(260, 556));
+            CreateMenuText(pauseMenu.transform, "Eyebrow", "GAME MENU", 14, TextAnchor.UpperLeft, new Vector2(44, -38), new Color(0.74f, 0.9f, 0.74f, 0.95f));
+            GameObject pauseTitle = CreateMenuText(pauseMenu.transform, "Title", "Game Paused", 54, TextAnchor.UpperLeft, new Vector2(42, -82), new Color(0.98f, 0.98f, 0.93f, 1f));
+            pauseTitle.AddComponent<Outline>().effectColor = new Color(0f, 0f, 0f, 0.8f);
+            CreateMenuText(pauseMenu.transform, "Hint", "Press Esc to resume", 18, TextAnchor.UpperLeft, new Vector2(46, -144), new Color(0.92f, 0.92f, 0.92f));
+            CreateMenuText(pauseMenu.transform, "Hint2", "Save, load, or adjust settings before returning.", 14, TextAnchor.UpperLeft, new Vector2(46, -180), new Color(0.84f, 0.86f, 0.84f, 0.9f));
+            Button resumeButton = CreateMenuButton(pauseMenu.transform, "ResumeButton", "Resume", new Vector2(40, -286));
+            Button saveButton = CreateMenuButton(pauseMenu.transform, "SaveButton", "Save Game", new Vector2(40, -342));
+            Button loadButton = CreateMenuButton(pauseMenu.transform, "LoadButton", "Load Game", new Vector2(40, -398));
+            Button pauseOptionsButton = CreateMenuButton(pauseMenu.transform, "OptionsButton", "Options", new Vector2(40, -454));
+            Button pauseQuitButton = CreateMenuButton(pauseMenu.transform, "QuitButton", "Quit", new Vector2(40, -510));
 
             GameObject optionsMenu = CreateMenuPanel(menuGo.transform, "OptionsMenu", new Vector2(0.5f, 0.5f), new Vector2(860f, 520f), false);
             optionsMenu.SetActive(false);
+            CreateMenuBackdropFrame(optionsMenu.transform);
             AddMenuBackdrop(optionsMenu.transform);
             AddMenuFrame(optionsMenu.transform);
             AddMenuGradient(optionsMenu.transform);
             CreateMenuHeroArt(optionsMenu.transform);
-            CreateMenuText(optionsMenu.transform, "Eyebrow", "OPTIONS", 14, TextAnchor.UpperLeft, new Vector2(44, -38), new Vector2(-44, -74), new Color(0.74f, 0.9f, 0.74f, 0.95f));
-            CreateMenuText(optionsMenu.transform, "Title", "Settings", 50, TextAnchor.UpperLeft, new Vector2(42, -74), new Vector2(-42, -140), new Color(0.97f, 0.97f, 0.92f, 1f));
-            CreateMenuText(optionsMenu.transform, "Hint", "Basic menu page for future settings.", 18, TextAnchor.UpperLeft, new Vector2(46, -140), new Vector2(-46, -172), new Color(0.92f, 0.92f, 0.92f));
-            CreateMenuText(optionsMenu.transform, "Hint2", "Use Back to return to the previous menu.", 14, TextAnchor.UpperLeft, new Vector2(46, -176), new Vector2(-46, -206), new Color(0.84f, 0.86f, 0.84f, 0.9f));
-            Button backButton = CreateMenuButton(optionsMenu.transform, "BackButton", "Back", new Vector2(52, 438), new Vector2(260, 484));
+            CreateMenuText(optionsMenu.transform, "Eyebrow", "OPTIONS", 14, TextAnchor.UpperLeft, new Vector2(44, -38), new Color(0.74f, 0.9f, 0.74f, 0.95f));
+            GameObject optionsTitle = CreateMenuText(optionsMenu.transform, "Title", "Settings", 52, TextAnchor.UpperLeft, new Vector2(42, -82), new Color(0.98f, 0.98f, 0.93f, 1f));
+            optionsTitle.AddComponent<Outline>().effectColor = new Color(0f, 0f, 0f, 0.8f);
+            CreateMenuText(optionsMenu.transform, "Hint", "Basic menu page for future settings.", 18, TextAnchor.UpperLeft, new Vector2(46, -144), new Color(0.92f, 0.92f, 0.92f));
+            CreateMenuText(optionsMenu.transform, "Hint2", "Use Back to return to the previous menu.", 14, TextAnchor.UpperLeft, new Vector2(46, -180), new Color(0.84f, 0.86f, 0.84f, 0.9f));
+            Button backButton = CreateMenuButton(optionsMenu.transform, "BackButton", "Back", new Vector2(40, -438));
 
             CanvasGroup startGroup = startMenu.AddComponent<CanvasGroup>();
             CanvasGroup pauseGroup = pauseMenu.AddComponent<CanvasGroup>();
@@ -213,38 +224,46 @@ namespace ApexShift.Presentation.HUD
             );
             hudController.ConfigureInventorySlots(inventorySlots);
 
-            GameMenuController menuController = uiRoot.AddComponent<GameMenuController>();
-            menuController.Configure(
-                hudGo,
-                startMenu,
-                pauseMenu,
-                null,
-                continueButton,
-                newGameButton,
-                optionsButton,
-                resumeButton,
-                quitButton,
-                saveButton,
-                loadButton,
-                backButton,
-                startTitle.GetComponent<Text>(),
-                startStatus.GetComponent<Text>(),
-                startGroup,
-                pauseGroup,
-                optionsMenu,
-                optionsGroup,
-                generator,
-                player.GetComponent<PlayerInputReader>(),
-                FindAnyObjectByType<ApexShift.Runtime.Save.GameSaveService>());
-
-            menuController.ShowStartMenu();
-            pauseOptionsButton.onClick.AddListener(() => menuController.ShowOptions());
-            pauseQuitButton.onClick.AddListener(() => menuController.QuitToDesktop());
+            GameStartupController startupController = uiRoot.AddComponent<GameStartupController>();
+            startupController.Configure(generator, menuGo, pauseMenu, hudGo, optionsMenu, startGroup, pauseGroup, optionsGroup);
+            startupController.ShowMainMenu();
+            continueButton.onClick.AddListener(() => LogMenuClick("Continue"));
+            newGameButton.onClick.AddListener(() => LogMenuClick("New Game"));
+            resumeButton.onClick.AddListener(() => LogMenuClick("Resume"));
+            quitButton.onClick.AddListener(() => LogMenuClick("Quit"));
+            pauseOptionsButton.onClick.AddListener(() => LogMenuClick("Options"));
+            pauseQuitButton.onClick.AddListener(() => LogMenuClick("Pause Quit"));
+            backButton.onClick.AddListener(() => LogMenuClick("Back"));
+            continueButton.onClick.AddListener(() => startupController.ContinueOrLoadGame());
+            newGameButton.onClick.AddListener(() => startupController.StartNewGame());
+            resumeButton.onClick.AddListener(() => startupController.ResumeGame());
+            quitButton.onClick.AddListener(() => startupController.QuitGame());
+            pauseOptionsButton.onClick.AddListener(() => startupController.OpenPauseMenu());
+            pauseQuitButton.onClick.AddListener(() => startupController.QuitGame());
+            backButton.onClick.AddListener(() => startupController.ShowMainMenu());
 
             GameObject es = new GameObject("EventSystem");
             es.AddComponent<UnityEngine.EventSystems.EventSystem>();
-            es.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+            UnityEngine.InputSystem.UI.InputSystemUIInputModule uiModule = es.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+            if (generator != null && generator.InputActions != null)
+            {
+                uiModule.actionsAsset = generator.InputActions;
+                uiModule.point = UnityEngine.InputSystem.InputActionReference.Create(generator.InputActions.FindAction("Look", true));
+                uiModule.leftClick = UnityEngine.InputSystem.InputActionReference.Create(generator.InputActions.FindAction("Attack", true));
+                uiModule.move = UnityEngine.InputSystem.InputActionReference.Create(generator.InputActions.FindAction("Navigate", true));
+                uiModule.submit = UnityEngine.InputSystem.InputActionReference.Create(generator.InputActions.FindAction("Submit", true));
+            uiModule.cancel = UnityEngine.InputSystem.InputActionReference.Create(generator.InputActions.FindAction("Cancel", true));
+            }
             es.transform.SetParent(uiRoot.transform, false);
+            EventSystem eventSystem = es.GetComponent<EventSystem>();
+            eventSystem.firstSelectedGameObject = continueButton.gameObject;
+            eventSystem.SetSelectedGameObject(continueButton.gameObject);
+
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
+            menuGo.AddComponent<MenuPointerBridge>();
+            menuGo.AddComponent<MenuRaycastDebugProbe>();
 
             Debug.Log("[HUD] Runtime HUD Provisioned.");
         }
@@ -270,6 +289,7 @@ namespace ApexShift.Presentation.HUD
             panel.transform.SetParent(parent, false);
             Image bg = panel.AddComponent<Image>();
             bg.color = startScreen ? new Color(0.035f, 0.05f, 0.035f, 0.93f) : new Color(0.025f, 0.035f, 0.03f, 0.92f);
+            bg.raycastTarget = false;
             RectTransform rt = panel.GetComponent<RectTransform>();
             rt.anchorMin = anchor;
             rt.anchorMax = anchor;
@@ -285,9 +305,38 @@ namespace ApexShift.Presentation.HUD
             backdrop.transform.SetParent(parent, false);
             Image bg = backdrop.AddComponent<Image>();
             bg.color = new Color(0f, 0f, 0f, 0.22f);
+            bg.raycastTarget = false;
             RectTransform rt = backdrop.GetComponent<RectTransform>();
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
+        }
+
+        private void CreateMenuBackdropFrame(Transform parent)
+        {
+            GameObject frame = new GameObject("BackdropFrame");
+            frame.transform.SetParent(parent, false);
+            Image bg = frame.AddComponent<Image>();
+            bg.color = new Color(0.14f, 0.20f, 0.13f, 1f);
+            bg.raycastTarget = false;
+            RectTransform rt = frame.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = new Vector2(18f, 18f);
+            rt.offsetMax = new Vector2(-18f, -18f);
+        }
+
+        private void CreateMenuTitlePlate(Transform parent)
+        {
+            GameObject plate = new GameObject("TitlePlate");
+            plate.transform.SetParent(parent, false);
+            Image img = plate.AddComponent<Image>();
+            img.color = new Color(0.16f, 0.24f, 0.15f, 0.52f);
+            img.raycastTarget = false;
+            RectTransform rt = plate.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.03f, 0.60f);
+            rt.anchorMax = new Vector2(0.63f, 0.94f);
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
         }
@@ -298,6 +347,7 @@ namespace ApexShift.Presentation.HUD
             gradient.transform.SetParent(parent, false);
             Image img = gradient.AddComponent<Image>();
             img.color = new Color(0.46f, 0.68f, 0.36f, 0.12f);
+            img.raycastTarget = false;
             RectTransform rt = gradient.GetComponent<RectTransform>();
             rt.anchorMin = new Vector2(0f, 0.45f);
             rt.anchorMax = new Vector2(1f, 1f);
@@ -308,6 +358,7 @@ namespace ApexShift.Presentation.HUD
             glow.transform.SetParent(parent, false);
             Image glowImg = glow.AddComponent<Image>();
             glowImg.color = new Color(0.74f, 0.88f, 0.52f, 0.08f);
+            glowImg.raycastTarget = false;
             RectTransform glowRt = glow.GetComponent<RectTransform>();
             glowRt.anchorMin = new Vector2(0.12f, 0.66f);
             glowRt.anchorMax = new Vector2(0.88f, 0.96f);
@@ -321,6 +372,7 @@ namespace ApexShift.Presentation.HUD
             frame.transform.SetParent(parent, false);
             Image img = frame.AddComponent<Image>();
             img.color = new Color(0.2f, 0.28f, 0.2f, 0.95f);
+            img.raycastTarget = false;
             RectTransform rt = frame.GetComponent<RectTransform>();
             rt.anchorMin = new Vector2(0f, 0f);
             rt.anchorMax = new Vector2(1f, 1f);
@@ -331,6 +383,7 @@ namespace ApexShift.Presentation.HUD
             inner.transform.SetParent(parent, false);
             Image innerImg = inner.AddComponent<Image>();
             innerImg.color = new Color(0.03f, 0.05f, 0.03f, 0.94f);
+            innerImg.raycastTarget = false;
             RectTransform innerRt = inner.GetComponent<RectTransform>();
             innerRt.anchorMin = new Vector2(0f, 0f);
             innerRt.anchorMax = new Vector2(1f, 1f);
@@ -359,6 +412,7 @@ namespace ApexShift.Presentation.HUD
             go.transform.SetParent(parent, false);
             Image img = go.AddComponent<Image>();
             img.color = color;
+            img.raycastTarget = false;
             RectTransform rt = go.GetComponent<RectTransform>();
             rt.anchorMin = anchorMin;
             rt.anchorMax = anchorMax;
@@ -366,7 +420,7 @@ namespace ApexShift.Presentation.HUD
             rt.offsetMax = Vector2.zero;
         }
 
-        private GameObject CreateMenuText(Transform parent, string name, string text, int size, TextAnchor alignment, Vector2 offsetMin, Vector2 offsetMax, Color? color = null)
+        private GameObject CreateMenuText(Transform parent, string name, string text, int size, TextAnchor alignment, Vector2 anchoredPosition, Color? color = null)
         {
             GameObject go = new GameObject(name);
             go.transform.SetParent(parent, false);
@@ -381,28 +435,31 @@ namespace ApexShift.Presentation.HUD
             }
 
             RectTransform rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.one;
-            rt.offsetMin = offsetMin;
-            rt.offsetMax = offsetMax;
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.sizeDelta = new Vector2(740f, size + 10f);
+            rt.anchoredPosition = anchoredPosition;
             return go;
         }
 
-        private Button CreateMenuButton(Transform parent, string name, string text, Vector2 offsetMin, Vector2 offsetMax)
+        private Button CreateMenuButton(Transform parent, string name, string text, Vector2 anchoredPosition)
         {
             GameObject go = new GameObject(name);
             go.transform.SetParent(parent, false);
             Image bg = go.AddComponent<Image>();
             bg.color = new Color(0.11f, 0.13f, 0.11f, 1f);
             Button button = go.AddComponent<Button>();
+            button.targetGraphic = bg;
             ColorBlock colors = button.colors;
-            colors.normalColor = new Color(0.12f, 0.15f, 0.12f, 1f);
-            colors.highlightedColor = new Color(0.24f, 0.28f, 0.22f, 1f);
-            colors.pressedColor = new Color(0.07f, 0.08f, 0.07f, 1f);
-            colors.selectedColor = new Color(0.28f, 0.34f, 0.26f, 1f);
+            colors.normalColor = new Color(0.14f, 0.17f, 0.14f, 1f);
+            colors.highlightedColor = new Color(0.34f, 0.40f, 0.28f, 1f);
+            colors.pressedColor = new Color(0.09f, 0.11f, 0.09f, 1f);
+            colors.selectedColor = new Color(0.42f, 0.48f, 0.34f, 1f);
             colors.colorMultiplier = 1f;
-            colors.fadeDuration = 0.08f;
+            colors.fadeDuration = 0.06f;
             button.colors = colors;
+            button.transition = Selectable.Transition.ColorTint;
 
             GameObject labelGo = new GameObject("Label");
             labelGo.transform.SetParent(go.transform, false);
@@ -415,6 +472,9 @@ namespace ApexShift.Presentation.HUD
             {
                 label.font = uiFont;
             }
+            Outline labelOutline = labelGo.AddComponent<Outline>();
+            labelOutline.effectColor = new Color(0f, 0f, 0f, 0.85f);
+            labelOutline.effectDistance = new Vector2(1f, -1f);
 
             RectTransform labelRt = labelGo.GetComponent<RectTransform>();
             labelRt.anchorMin = Vector2.zero;
@@ -423,22 +483,30 @@ namespace ApexShift.Presentation.HUD
             labelRt.offsetMax = Vector2.zero;
 
             RectTransform rt = go.GetComponent<RectTransform>();
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.one;
-            rt.offsetMin = offsetMin;
-            rt.offsetMax = offsetMax;
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.sizeDelta = new Vector2(270f, 48f);
+            rt.anchoredPosition = anchoredPosition;
 
             GameObject border = new GameObject("Border");
             border.transform.SetParent(go.transform, false);
             Image borderImg = border.AddComponent<Image>();
-            borderImg.color = new Color(0.56f, 0.72f, 0.45f, 0.36f);
+            borderImg.color = new Color(0.78f, 0.92f, 0.54f, 0.48f);
+            borderImg.raycastTarget = false;
             RectTransform borderRt = border.GetComponent<RectTransform>();
             borderRt.anchorMin = Vector2.zero;
             borderRt.anchorMax = Vector2.one;
             borderRt.offsetMin = new Vector2(-2f, -2f);
             borderRt.offsetMax = new Vector2(2f, 2f);
             border.transform.SetAsFirstSibling();
+            go.AddComponent<MenuButtonClickProxy>().Configure(button);
             return button;
+        }
+
+        private static void LogMenuClick(string buttonName)
+        {
+            Debug.Log("[HUD] Menu clicked: " + buttonName);
         }
 
         private float GetCanvasMatchWeight()
@@ -619,43 +687,4 @@ namespace ApexShift.Presentation.HUD
         }
     }
 
-    public sealed class MenuAmbientMotion : MonoBehaviour
-    {
-        private RectTransform rectTransform;
-        private Vector2 basePosition;
-        private float amplitudeX;
-        private float amplitudeY;
-        private float speedX;
-        private float speedY;
-
-        public void Configure(float amplitudeX, float amplitudeY, float speedX, float speedY)
-        {
-            this.amplitudeX = amplitudeX;
-            this.amplitudeY = amplitudeY;
-            this.speedX = speedX;
-            this.speedY = speedY;
-        }
-
-        private void Awake()
-        {
-            rectTransform = GetComponent<RectTransform>();
-            if (rectTransform != null)
-            {
-                basePosition = rectTransform.anchoredPosition;
-            }
-        }
-
-        private void Update()
-        {
-            if (rectTransform == null)
-            {
-                return;
-            }
-
-            float t = Time.unscaledTime;
-            rectTransform.anchoredPosition = basePosition + new Vector2(
-                Mathf.Sin(t * speedX) * amplitudeX,
-                Mathf.Cos(t * speedY) * amplitudeY);
-        }
-    }
 }

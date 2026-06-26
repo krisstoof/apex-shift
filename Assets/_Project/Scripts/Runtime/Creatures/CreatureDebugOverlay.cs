@@ -1,4 +1,5 @@
 using ApexShift.Runtime.Ecosystem;
+using ApexShift.Runtime.Flow;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -56,7 +57,7 @@ namespace ApexShift.Runtime.Creatures
 
         private void OnGUI()
         {
-            if (HideAllDebugFrames || !showDebugFrame)
+            if (!GameSessionState.IsGameplayActive || HideAllDebugFrames || !showDebugFrame)
             {
                 return;
             }

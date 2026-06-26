@@ -51,6 +51,7 @@ namespace ApexShift.Runtime.World.Generation
 
         public event System.Action<GameObject> OnGenerationComplete;
         public int Seed => seed;
+        public InputActionAsset InputActions => inputActions;
 
         private void Start()
         {
@@ -60,14 +61,14 @@ namespace ApexShift.Runtime.World.Generation
             }
         }
 
-        private void Awake()
-        {
-            generateOnStart = false;
-        }
-
         public void SetGenerateOnStart(bool value)
         {
             generateOnStart = value;
+        }
+
+        public void ClearGeneratedWorld()
+        {
+            Clear();
         }
 
         [ContextMenu("Generate World")]
@@ -141,9 +142,10 @@ namespace ApexShift.Runtime.World.Generation
             DestroyAllByName("Main Camera");
             DestroyAllByName("PlayerFollowCamera");
             DestroyAllByName("Directional Light");
-            DestroyAllByName("UI");
             DestroyAllByName("WorldBounds");
-            DestroyAllByName("EventSystem");
+
+            // Do not destroy generic menu objects here. Main menu / start screen
+            // often uses roots named "UI" and a shared EventSystem.
         }
 
         private void DestroyAllByName(string name)

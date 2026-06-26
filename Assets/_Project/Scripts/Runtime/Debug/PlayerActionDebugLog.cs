@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ApexShift.Runtime.Camera;
+using ApexShift.Runtime.Flow;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.PlayerInput;
 using UnityEngine;
@@ -129,6 +130,12 @@ namespace ApexShift.Runtime.Debugging
 
         private void OnGUI()
         {
+            if (!GameSessionState.IsGameplayActive)
+            {
+                DebugUIBounds.PlayerActionWindowVisible = false;
+                return;
+            }
+
             if (Event.current.type == EventType.Layout)
             {
                 guiShowOverlay = showOverlay;

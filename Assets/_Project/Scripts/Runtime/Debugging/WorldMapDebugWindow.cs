@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using ApexShift.Core.Ecosystem;
 using ApexShift.Runtime.Creatures;
+using ApexShift.Runtime.Flow;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Resources;
 using UnityEngine;
@@ -27,6 +28,13 @@ namespace ApexShift.Runtime.Debugging
 
         private void Update()
         {
+            if (!GameSessionState.IsGameplayActive)
+            {
+                visible = false;
+                DebugUIBounds.WorldMapWindowVisible = false;
+                return;
+            }
+
             bool togglePressed = false;
             if (Keyboard.current != null)
             {
@@ -52,7 +60,7 @@ namespace ApexShift.Runtime.Debugging
 
         private void OnGUI()
         {
-            if (!visible)
+            if (!GameSessionState.IsGameplayActive || !visible)
             {
                 DebugUIBounds.WorldMapWindowVisible = false;
                 return;
