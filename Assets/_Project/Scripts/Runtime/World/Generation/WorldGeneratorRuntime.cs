@@ -84,6 +84,8 @@ namespace ApexShift.Runtime.World.Generation
 
             CreateBootstrapper();
             EnsureEcosystemRuntime();
+            EnsureGameSnapshotProvider();
+            EnsureDebugPanelPresenter();
             EnsureWorldMapDebugWindow();
             EnsureRoots();
             GenerateIslandLayout();
@@ -218,6 +220,30 @@ namespace ApexShift.Runtime.World.Generation
             GameObject go = new GameObject("WorldMapDebugWindow");
             go.transform.SetParent(transform);
             go.AddComponent<WorldMapDebugWindow>();
+        }
+
+        private void EnsureGameSnapshotProvider()
+        {
+            if (Object.FindAnyObjectByType<ApexShift.Runtime.UI.Snapshots.GameSnapshotProvider>() != null)
+            {
+                return;
+            }
+
+            GameObject go = new GameObject("GameSnapshotProvider");
+            go.transform.SetParent(transform);
+            go.AddComponent<ApexShift.Runtime.UI.Snapshots.GameSnapshotProvider>();
+        }
+
+        private void EnsureDebugPanelPresenter()
+        {
+            if (Object.FindAnyObjectByType<ApexShift.Runtime.UI.Debugging.DebugPanelPresenter>() != null)
+            {
+                return;
+            }
+
+            GameObject go = new GameObject("DebugPanelPresenter");
+            go.transform.SetParent(transform);
+            go.AddComponent<ApexShift.Runtime.UI.Debugging.DebugPanelPresenter>();
         }
 
         private bool IsInsideIsland(float x, float z)
