@@ -25,6 +25,9 @@ namespace ApexShift.Runtime.World.Generation
         [Header("Data")]
         [SerializeField] private BiomeCatalogAsset biomeCatalog;
         [SerializeField] private WorldGenerationSettings settings;
+        [SerializeField] private PrefabRegistry prefabRegistry;
+
+        [Header("Legacy Prefab Lists - prefer PrefabRegistry")]
         [SerializeField] private List<ResourcePrefabEntry> resourcePrefabs = new List<ResourcePrefabEntry>();
         [SerializeField] private List<CreaturePrefabEntry> creaturePrefabs = new List<CreaturePrefabEntry>();
 
@@ -649,8 +652,7 @@ namespace ApexShift.Runtime.World.Generation
 
         private void SpawnCreature(CreatureSpawnEntryAsset entry, Vector3 position)
         {
-            var matches = creaturePrefabs.Where(p => p.CreatureId == entry.CreatureId).ToList();
-            GameObject prefab = matches.Count > 0 ? matches[Random.Range(0, matches.Count)].Prefab : null;
+            GameObject prefab = GetPrefabForCreature(entry.CreatureId);
             GameObject instance;
 
             if (prefab != null)
@@ -861,7 +863,29 @@ if (renderer != null)
 
         private GameObject GetPrefabForKind(VegetationSpawnKind kind)
         {
-            var matches = resourcePrefabs.Where(p => p.Kind == kind).ToList();
+            if (prefabRegistry != null && prefabRegistry.TryGetResourcePrefab(kind, out GameObject registryPrefab))
+            {
+                return registryPrefab;
+            }
+
+            var matches = resourcePrefabs.Where(p => p != null && p.Prefab != null && p.Kind == kind).ToList();
+            if (matches.Count == 0) return null;
+            return matches[Random.Range(0, matches.Count)].Prefab;
+        }
+
+        private GameObject GetPrefabForCreature(string creatureId)
+        {
+            if (prefabRegistry != null && prefabRegistry.TryGetCreaturePrefab(creatureId, out GameObject registryPrefab))
+            {
+                return registryPrefab;
+            }
+
+            var matches = creaturePrefabs
+                .Where(p => p != null
+                            && p.Prefab != null
+                            && string.Equals(p.CreatureId.Trim(), (creatureId ?? string.Empty).Trim(), System.StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
             if (matches.Count == 0) return null;
             return matches[Random.Range(0, matches.Count)].Prefab;
         }
