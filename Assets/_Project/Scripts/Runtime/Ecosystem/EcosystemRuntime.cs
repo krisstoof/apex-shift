@@ -259,13 +259,14 @@ namespace ApexShift.Runtime.Ecosystem
                 return;
             }
 
+            // Move lower to avoid overlapping with player stats and action log
             GUI.Box(
-                new Rect(12f, 120f, 270f, 104f),
+                new Rect(12f, Screen.height * 0.55f, 270f, 104f),
                 $"Ecosystem Debug\n" +
                 $"food sources: {FoodSourceCount}\n" +
                 $"creatures: {CreatureCount}\n" +
                 $"plants: {PlantFoodSourceCount} avg:{GetAverageBiomassRatio(FoodKind.Plants):0.00}\n" +
                 $"meat: {MeatFoodSourceCount} avg:{GetAverageBiomassRatio(FoodKind.Meat):0.00}");
         }
-    }
+}
 }

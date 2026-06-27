@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.PlayerInput;
+using ApexShift.Runtime.UI;
 using UnityEngine;
 
 namespace ApexShift.Runtime.Interaction
@@ -13,9 +14,15 @@ namespace ApexShift.Runtime.Interaction
         [SerializeField] private float interactionRadius = 2.25f;
         [SerializeField] private LayerMask interactionMask = Physics.DefaultRaycastLayers;
         [SerializeField] private int maxOverlapResults = 16;
+        
         private readonly List<IInteractable> nearbyInteractables = new List<IInteractable>();
         private Collider[] overlapResults;
         private bool subscribed;
+        
+        private float interactionTimer = 0f;
+        private float currentInteractionDuration = 1f;
+        private bool isInteracting = false;
+        private InteractionProgressUI progressUI;
 
         public IInteractable CurrentInteractable { get; private set; }
         public string CurrentPrompt { get; private set; } = string.Empty;
@@ -33,6 +40,9 @@ namespace ApexShift.Runtime.Interaction
             }
 
             overlapResults = new Collider[Mathf.Max(1, maxOverlapResults)];
+            
+            // Create the progress UI
+            progressUI = InteractionProgressUI.Create(transform);
         }
 
         private void OnEnable()
@@ -48,6 +58,7 @@ namespace ApexShift.Runtime.Interaction
         private void OnDisable()
         {
             UnsubscribeInput();
+            CancelInteraction();
             nearbyInteractables.Clear();
             CurrentInteractable = null;
             CurrentPrompt = string.Empty;
@@ -55,8 +66,41 @@ namespace ApexShift.Runtime.Interaction
 
         private void Update()
         {
+            if (isInteracting)
+            {
+                UpdateInteraction();
+                return;
+            }
+
             RefreshNearbyInteractables();
             UpdateCurrentInteractable();
+        }
+
+        private void UpdateInteraction()
+        {
+            if (CurrentInteractable == null || !CurrentInteractable.CanInteract(gameObject))
+            {
+                CancelInteraction();
+                return;
+            }
+
+            // Check if player moved
+            if (inputReader != null && inputReader.Move.sqrMagnitude > 0.01f)
+            {
+                CancelInteraction();
+                return;
+            }
+
+            interactionTimer += Time.deltaTime;
+            if (progressUI != null)
+            {
+                progressUI.UpdateProgress(interactionTimer / currentInteractionDuration);
+            }
+
+            if (interactionTimer >= currentInteractionDuration)
+            {
+                CompleteInteraction();
+            }
         }
 
         public void SetInputReader(PlayerInputReader reader)
@@ -81,17 +125,64 @@ namespace ApexShift.Runtime.Interaction
 
         public void TryInteract()
         {
+            if (isInteracting) return;
+
             RefreshNearbyInteractables();
             UpdateCurrentInteractable();
+            
             if (CurrentInteractable != null && CurrentInteractable.CanInteract(gameObject))
             {
-                CurrentInteractable.Interact(gameObject);
-                RefreshNearbyInteractables();
-                UpdateCurrentInteractable();
-                return;
+                StartInteraction();
             }
+            else
+            {
+                Debug.Log("No interactable resource in range or interaction conditions not met.", this);
+            }
+        }
 
-            Debug.Log("No interactable resource in range.", this);
+        private void StartInteraction()
+        {
+            if (CurrentInteractable == null) return;
+
+            isInteracting = true;
+            interactionTimer = 0f;
+            currentInteractionDuration = Mathf.Max(0.1f, CurrentInteractable.InteractionDuration);
+
+            if (progressUI != null)
+            {
+                progressUI.Show(transform, CurrentPrompt);
+            }
+            Debug.Log($"[Interaction] Starting interaction with: {CurrentPrompt} (Duration: {currentInteractionDuration}s)");
+        }
+
+        private void CompleteInteraction()
+        {
+            if (CurrentInteractable != null)
+            {
+                Debug.Log($"[Interaction] Completed interaction with: {CurrentPrompt}");
+                CurrentInteractable.Interact(gameObject);
+            }
+            
+            isInteracting = false;
+            if (progressUI != null)
+            {
+                progressUI.Hide();
+            }
+            
+            RefreshNearbyInteractables();
+            UpdateCurrentInteractable();
+        }
+
+        private void CancelInteraction()
+        {
+            if (!isInteracting) return;
+            
+            isInteracting = false;
+            if (progressUI != null)
+            {
+                progressUI.Hide();
+            }
+            Debug.Log("[Interaction] Interaction cancelled.");
         }
 
         private void SubscribeInput()

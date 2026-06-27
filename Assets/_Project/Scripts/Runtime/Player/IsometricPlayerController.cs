@@ -54,6 +54,13 @@ namespace ApexShift.Runtime.Player
                 return;
             }
 
+            if (Time.timeScale < 0.01f)
+            {
+                // Log once per second to avoid spam
+                if (Time.frameCount % 60 == 0) Debug.LogWarning("[Controller] Time.timeScale is 0. Movement blocked.");
+                return;
+            }
+
             if (!movementEnabled)
             {
                 RotateTowardLookPosition(inputReader.LookScreenPosition);
@@ -61,8 +68,12 @@ namespace ApexShift.Runtime.Player
             }
 
             Vector2 input = inputReader.Move;
+            if (input.sqrMagnitude > 0.01f)
+            {
+                Debug.Log($"[Controller] Movement Input: {input}");
+            }
             Vector3 movement = CalculateCameraRelativeMovement(input);
-            if (movement.sqrMagnitude > 1f)
+if (movement.sqrMagnitude > 1f)
             {
                 movement.Normalize();
             }
@@ -139,6 +150,7 @@ namespace ApexShift.Runtime.Player
             CameraComponent mainCamera = CameraComponent.main;
             if (mainCamera == null)
             {
+                if (Time.frameCount % 120 == 0) Debug.LogWarning("[Controller] Main Camera not found for rotation!");
                 return;
             }
 
@@ -160,6 +172,11 @@ namespace ApexShift.Runtime.Player
             if (direction.sqrMagnitude < 0.0001f)
             {
                 return;
+            }
+
+            if (Time.frameCount % 60 == 0)
+            {
+                Debug.Log($"[Controller] Rotating toward direction: {direction.normalized}");
             }
 
             Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);

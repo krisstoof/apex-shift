@@ -6,6 +6,7 @@ namespace ApexShift.Runtime.Interaction
     {
         string Prompt { get; }
         int Priority { get; }
+        float InteractionDuration { get; }
         bool CanInteract(GameObject actor);
         bool Interact(GameObject actor);
     }

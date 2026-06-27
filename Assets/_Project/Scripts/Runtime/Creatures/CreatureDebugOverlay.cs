@@ -11,10 +11,10 @@ namespace ApexShift.Runtime.Creatures
         public static bool HideAllDebugFrames { get; set; } = false;
 
         [SerializeField] private bool showDebugFrame = true;
-        [SerializeField] private float maxDrawDistance = 90f;
-        [SerializeField] private float verticalOffset = 2.25f;
-        [SerializeField] private int width = 232;
-        [SerializeField] private int height = 122;
+        [SerializeField] private float maxDrawDistance = 50f;
+        [SerializeField] private float verticalOffset = 1.8f;
+        [SerializeField] private int width = 160;
+        [SerializeField] private int height = 80;
 
         private CreatureAgentView agentView;
         private CreatureNeedsRuntime needs;

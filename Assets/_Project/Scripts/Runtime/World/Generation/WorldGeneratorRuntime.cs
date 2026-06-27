@@ -47,7 +47,7 @@ namespace ApexShift.Runtime.World.Generation
         private Transform _buildingRoot;
         private List<Vector3> _allTileCenters = new List<Vector3>();
 
-        private const string DefaultInputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
+        private const string DefaultInputActionsPath = "Assets/InputSystem_Actions.inputactions";
 
         public event System.Action<GameObject> OnGenerationComplete;
         public int Seed => seed;
@@ -1056,6 +1056,13 @@ if (renderer != null)
             CameraComponent cam = go.AddComponent<CameraComponent>();
             cam.orthographic = true;
             cam.orthographicSize = 14f;
+            
+            System.Type cameraDataType = System.Type.GetType("UnityEngine.Rendering.Universal.UniversalAdditionalCameraData, Unity.RenderPipelines.Universal.Runtime");
+            if (cameraDataType != null) {
+                var data = go.AddComponent(cameraDataType);
+                var prop = cameraDataType.GetProperty("renderType");
+                if (prop != null) prop.SetValue(data, 0);
+            }
 
             IsometricCameraFollow follow = go.AddComponent<IsometricCameraFollow>();
             follow.SetTarget(target);
@@ -1087,6 +1094,15 @@ if (renderer != null)
             CameraComponent camera = cameraObject.AddComponent<CameraComponent>();
             camera.orthographic = true;
             camera.orthographicSize = orthographicSize;
+            
+            // Add URP data safely via reflection
+            System.Type cameraDataType = System.Type.GetType("UnityEngine.Rendering.Universal.UniversalAdditionalCameraData, Unity.RenderPipelines.Universal.Runtime");
+            if (cameraDataType != null) {
+                var data = cameraObject.AddComponent(cameraDataType);
+                var prop = cameraDataType.GetProperty("renderType");
+                if (prop != null) prop.SetValue(data, 0);
+            }
+
             cameraObject.AddComponent<CinemachineBrain>();
 
             GameObject followCamera = new GameObject("PlayerFollowCamera");
@@ -1142,12 +1158,13 @@ if (renderer != null)
             if (_lastResult == null) return;
 
             GUI.color = Color.black;
-            GUILayout.BeginArea(new Rect(10, 10, 300, 200));
+            // Move lower to avoid overlapping with resources panel
+            GUILayout.BeginArea(new Rect(Screen.width - 310, 450, 300, 200));
             GUILayout.Label($"Seed: {_lastResult.Seed}");
             GUILayout.Label($"Biomes: {_lastResult.BiomeCount}");
             GUILayout.Label($"Resources: {_lastResult.ResourceCount}");
             GUILayout.Label($"Spawn Attempts: {_lastResult.SpawnAttempts}");
             GUILayout.EndArea();
         }
-    }
+}
 }

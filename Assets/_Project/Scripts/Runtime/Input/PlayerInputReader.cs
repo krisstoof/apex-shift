@@ -38,6 +38,11 @@ namespace ApexShift.Runtime.PlayerInput
 
         private void Awake()
         {
+            if (inputActions == null)
+            {
+                inputActions = InputSystem.actions;
+                if (inputActions != null) Debug.Log("[Input] Fallback to InputSystem.actions", this);
+            }
             CacheActions();
         }
 
@@ -104,7 +109,7 @@ namespace ApexShift.Runtime.PlayerInput
                 return;
             }
 
-            gameplayMap = inputActions.FindActionMap("Gameplay", true);
+            gameplayMap = inputActions.FindActionMap("Player", true);
             moveAction = gameplayMap.FindAction("Move", true);
             lookAction = gameplayMap.FindAction("Look", true);
             interactAction = gameplayMap.FindAction("Interact", true);
@@ -117,10 +122,21 @@ namespace ApexShift.Runtime.PlayerInput
         }
 
         private void OnMove(InputAction.CallbackContext context) => Move = context.ReadValue<Vector2>();
-        private void OnLook(InputAction.CallbackContext context) => LookScreenPosition = context.ReadValue<Vector2>();
+        private void OnLook(InputAction.CallbackContext context)
+        {
+            LookScreenPosition = context.ReadValue<Vector2>();
+            if (Time.frameCount % 60 == 0)
+            {
+                Debug.Log($"[Input] Look Position: {LookScreenPosition}");
+            }
+        }
         private void OnSprint(InputAction.CallbackContext context) => SprintHeld = context.ReadValueAsButton();
-        private void OnInteract(InputAction.CallbackContext context) => InteractPressed?.Invoke();
-        private void OnAttack(InputAction.CallbackContext context) => AttackPressed?.Invoke();
+        private void OnInteract(InputAction.CallbackContext context)
+        {
+            Debug.Log("[Input] Interact Key Pressed!");
+            InteractPressed?.Invoke();
+        }
+private void OnAttack(InputAction.CallbackContext context) => AttackPressed?.Invoke();
         private void OnOpenInventory(InputAction.CallbackContext context) => OpenInventoryPressed?.Invoke();
         private void OnOpenCrafting(InputAction.CallbackContext context) => OpenCraftingPressed?.Invoke();
         private void OnToggleMap(InputAction.CallbackContext context) => ToggleMapPressed?.Invoke();

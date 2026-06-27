@@ -31,12 +31,12 @@ namespace ApexShift.Presentation.HUD
             {
                 if (currentHover != null)
                 {
-                    ExecuteEvents.Execute(currentHover, eventData, ExecuteEvents.pointerExitHandler);
+                    ExecuteEvents.ExecuteHierarchy(currentHover, eventData, ExecuteEvents.pointerExitHandler);
                 }
 
                 if (nextHover != null)
                 {
-                    ExecuteEvents.Execute(nextHover, eventData, ExecuteEvents.pointerEnterHandler);
+                    ExecuteEvents.ExecuteHierarchy(nextHover, eventData, ExecuteEvents.pointerEnterHandler);
                 }
 
                 currentHover = nextHover;
@@ -44,7 +44,7 @@ namespace ApexShift.Presentation.HUD
 
             if (Mouse.current.leftButton.wasPressedThisFrame && nextHover != null)
             {
-                ExecuteEvents.Execute(nextHover, eventData, ExecuteEvents.pointerClickHandler);
+                ExecuteEvents.ExecuteHierarchy(nextHover, eventData, ExecuteEvents.pointerClickHandler);
             }
         }
     }

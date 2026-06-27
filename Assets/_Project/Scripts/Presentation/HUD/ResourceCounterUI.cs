@@ -15,6 +15,7 @@ namespace ApexShift.Presentation.HUD
             itemId = id;
             iconImage = iconComp;
             countText = textComp;
+            RefreshIcon();
         }
 
         public string ItemId => itemId;

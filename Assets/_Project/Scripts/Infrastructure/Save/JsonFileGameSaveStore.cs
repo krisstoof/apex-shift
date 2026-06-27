@@ -33,9 +33,18 @@ namespace ApexShift.Infrastructure.Save
 
         public void Save(string slotName, GameSaveData data)
         {
-            Directory.CreateDirectory(directoryPath);
-            string payload = serializer.Serialize(data ?? new GameSaveData());
-            File.WriteAllText(GetPath(slotName), payload);
+            try
+            {
+                Directory.CreateDirectory(directoryPath);
+                string path = GetPath(slotName);
+                string payload = serializer.Serialize(data ?? new GameSaveData());
+                File.WriteAllText(path, payload);
+                Debug.Log($"[IO] Successfully wrote save file to: {path} ({payload.Length} bytes)");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[IO] Failed to save game to {slotName}: {ex.Message}");
+            }
         }
 
         public GameSaveData Load(string slotName)
@@ -43,11 +52,21 @@ namespace ApexShift.Infrastructure.Save
             string path = GetPath(slotName);
             if (!File.Exists(path))
             {
-                return new GameSaveData();
+                Debug.LogWarning($"[IO] Load failed: File not found at {path}");
+                return null;
             }
 
-            string payload = File.ReadAllText(path);
-            return serializer.Deserialize(payload);
+            try
+            {
+                string payload = File.ReadAllText(path);
+                Debug.Log($"[IO] Successfully read save file from: {path} ({payload.Length} bytes)");
+                return serializer.Deserialize(payload);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[IO] Failed to load game from {slotName}: {ex.Message}");
+                return null;
+            }
         }
 
         public void Delete(string slotName)

@@ -3,10 +3,13 @@ using ApexShift.Runtime.Player;
 using ApexShift.Runtime.PlayerInput;
 using ApexShift.Runtime.World.Generation;
 using ApexShift.Runtime.Flow;
+using ApexShift.Runtime.UI;
 using ApexShift.Presentation.Icons;
+using ApexShift.Runtime.Debugging;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
 namespace ApexShift.Presentation.HUD
@@ -18,143 +21,140 @@ namespace ApexShift.Presentation.HUD
 
         private void Awake()
         {
-            if (generator == null)
-            {
-                generator = FindAnyObjectByType<WorldGeneratorRuntime>();
-            }
-
+            if (generator == null) generator = FindAnyObjectByType<WorldGeneratorRuntime>();
             if (generator != null)
             {
                 generator.SetGenerateOnStart(false);
                 generator.OnGenerationComplete += HandleGenerationComplete;
             }
-
-            if (uiFont == null)
-            {
-                uiFont = (Font)Resources.GetBuiltinResource(typeof(Font), "LegacyRuntime.ttf");
-            }
+            if (uiFont == null) uiFont = (Font)Resources.GetBuiltinResource(typeof(Font), "LegacyRuntime.ttf");
         }
 
         private void Start()
         {
-            Debug.Log("[HUD] RuntimeHUDProvisioner Start. Playing: " + Application.isPlaying);
-            if (!Application.isPlaying)
-            {
-                return;
-            }
-
-            GameObject player = GameObject.Find("Player");
-            if (player != null)
-            {
-                if (Object.FindAnyObjectByType<PlayerHUDController>() == null)
-                {
-                    Debug.Log("[HUD] Player found in Start, provisioning HUD.");
-                    CreateHUD(player);
-                }
-                else
-                {
-                    Debug.Log("[HUD] PlayerHUD already exists (found via Controller).");
-                }
-            }
-            else
-            {
-                Debug.Log("[HUD] Player not found in Start. Waiting for GenerationComplete event.");
-            }
+            if (!Application.isPlaying) return;
+            CreateHUD(null);
         }
 
         private void OnDestroy()
         {
-            if (generator != null)
-            {
-                generator.OnGenerationComplete -= HandleGenerationComplete;
-            }
+            if (generator != null) generator.OnGenerationComplete -= HandleGenerationComplete;
         }
 
-        private void HandleGenerationComplete(GameObject player)
-        {
-            CreateHUD(player);
-        }
+        private void HandleGenerationComplete(GameObject player) => CreateHUD(player);
 
         public void CreateHUD(GameObject player)
         {
-            GameObject existingUI = GameObject.Find("UI");
-            if (existingUI != null)
+            GameObject uiRoot = GameObject.Find("UI");
+            if (uiRoot == null)
             {
-                if (Application.isPlaying) Destroy(existingUI);
-                else DestroyImmediate(existingUI);
+                uiRoot = new GameObject("UI");
+                uiRoot.transform.position = Vector3.zero;
+                uiRoot.transform.rotation = Quaternion.identity;
+                uiRoot.transform.localScale = Vector3.one;
             }
 
-            GameObject uiRoot = new GameObject("UI");
-            uiRoot.SetActive(true);
-
-            GameObject hudGo = new GameObject("PlayerHUD");
-            hudGo.transform.SetParent(uiRoot.transform, false);
-
-            Canvas canvas = hudGo.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 100;
-
-            CanvasScaler scaler = hudGo.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
-            scaler.matchWidthOrHeight = GetCanvasMatchWeight();
-
-            hudGo.AddComponent<GraphicRaycaster>();
-
-            PlayerHUDController hudController = hudGo.AddComponent<PlayerHUDController>();
-
-            GameObject statsPanel = CreateUIPanel(hudGo.transform, "StatsPanel", new Vector2(0, 1), new Vector2(0, 1), new Vector2(340, 224), new Vector2(24, -24));
-            StatBarUI healthBar = CreateStatBar(statsPanel.transform, "HealthBar", "Health", "health", Color.red, new Vector2(16, 164));
-            StatBarUI hungerBar = CreateStatBar(statsPanel.transform, "HungerBar", "Hunger", "hunger", new Color(1f, 0.5f, 0f), new Vector2(16, 122));
-            StatBarUI staminaBar = CreateStatBar(statsPanel.transform, "StaminaBar", "Stamina", "stamina", Color.yellow, new Vector2(16, 80));
-            StatBarUI restBar = CreateStatBar(statsPanel.transform, "RestBar", "Rest", "rest", Color.blue, new Vector2(16, 38));
-
-            GameObject resourcePanel = CreateUIPanel(hudGo.transform, "ResourcePanel", new Vector2(1, 1), new Vector2(1, 1), new Vector2(240, 220), new Vector2(-24, -24));
-            ResourceCounterUI woodCounter = CreateResourceCounter(resourcePanel.transform, "WoodCounter", "wood", "Wood", "resource_wood", new Vector2(-16, -16));
-            ResourceCounterUI stoneCounter = CreateResourceCounter(resourcePanel.transform, "StoneCounter", "stone", "Stone", "resource_stone", new Vector2(-16, -62));
-            ResourceCounterUI fiberCounter = CreateResourceCounter(resourcePanel.transform, "FiberCounter", "fiber", "Fiber", "resource_fiber", new Vector2(-16, -108));
-            ResourceCounterUI meatCounter = CreateResourceCounter(resourcePanel.transform, "MeatCounter", "meat", "Meat", "resource_raw_meat", new Vector2(-16, -154));
-
-            GameObject minimapPanel = CreateUIPanel(hudGo.transform, "MiniMapPanel", new Vector2(1, 1), new Vector2(1, 1), new Vector2(180, 180), new Vector2(-24, -252));
-            MiniMapUI minimap = minimapPanel.AddComponent<MiniMapUI>();
-            minimap.Configure(player.transform, 140f);
-
-            GameObject fpsPanel = CreateUIPanel(hudGo.transform, "FpsPanel", new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(104, 30), new Vector2(0, -16));
-            GameObject fpsLabelGo = new GameObject("FpsLabel");
-            fpsLabelGo.transform.SetParent(fpsPanel.transform, false);
-            Text fpsText = fpsLabelGo.AddComponent<Text>();
-            fpsText.text = "FPS 0";
-            fpsText.alignment = TextAnchor.MiddleCenter;
-            fpsText.fontSize = 16;
-            fpsText.color = new Color(1f, 0.92f, 0.42f);
-            if (uiFont != null) fpsText.font = uiFont;
-            RectTransform fpsLabelRt = fpsLabelGo.GetComponent<RectTransform>();
-            fpsLabelRt.anchorMin = Vector2.zero;
-            fpsLabelRt.anchorMax = Vector2.one;
-            fpsLabelRt.offsetMin = new Vector2(4, 2);
-            fpsLabelRt.offsetMax = new Vector2(-4, -2);
-            fpsLabelGo.AddComponent<Outline>().effectColor = new Color(0f, 0f, 0f, 0.9f);
-            fpsLabelGo.AddComponent<FpsCounterUI>();
-
-            GameObject inventoryPanel = CreateUIPanel(hudGo.transform, "InventoryPanel", new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(332, 44), new Vector2(0, 14));
-            List<InventorySlotUI> inventorySlots = new List<InventorySlotUI>();
-            for (int i = 0; i < 9; i++)
+            GameObject hudGo = uiRoot.transform.Find("PlayerHUD")?.gameObject;
+            if (hudGo == null)
             {
-                inventorySlots.Add(CreateInventorySlot(inventoryPanel.transform, $"Slot{i + 1}", i, new Vector2(12 + i * 35, 5)));
+                hudGo = new GameObject("PlayerHUD");
+                hudGo.transform.SetParent(uiRoot.transform, false);
+                RectTransform rt = hudGo.AddComponent<RectTransform>();
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.anchoredPosition = Vector2.zero;
+                rt.sizeDelta = Vector2.zero;
+                rt.pivot = new Vector2(0.5f, 0.5f);
+                hudGo.AddComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+                hudGo.GetComponent<Canvas>().sortingOrder = 100;
+                hudGo.AddComponent<GraphicRaycaster>();
             }
+            
+            CanvasScaler hudScaler = hudGo.GetComponent<CanvasScaler>() ?? hudGo.AddComponent<CanvasScaler>();
+            hudScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            hudScaler.referenceResolution = new Vector2(1920, 1080);
+            hudScaler.matchWidthOrHeight = 0.5f;
 
-            GameObject menuGo = new GameObject("GameMenu");
-            menuGo.transform.SetParent(uiRoot.transform, false);
-            Canvas menuCanvas = menuGo.AddComponent<Canvas>();
-            menuCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            menuCanvas.sortingOrder = 200;
-            menuGo.AddComponent<GraphicRaycaster>();
-            CanvasScaler menuScaler = menuGo.AddComponent<CanvasScaler>();
+            GameObject menuGo = uiRoot.transform.Find("GameMenu")?.gameObject;
+            if (menuGo == null)
+            {
+                menuGo = new GameObject("GameMenu");
+                menuGo.transform.SetParent(uiRoot.transform, false);
+                RectTransform rt = menuGo.AddComponent<RectTransform>();
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.anchoredPosition = Vector2.zero;
+                rt.sizeDelta = Vector2.zero;
+                rt.pivot = new Vector2(0.5f, 0.5f);
+                menuGo.AddComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+                menuGo.GetComponent<Canvas>().sortingOrder = 200;
+                menuGo.AddComponent<GraphicRaycaster>();
+            }
+            
+            CanvasScaler menuScaler = menuGo.GetComponent<CanvasScaler>() ?? menuGo.AddComponent<CanvasScaler>();
             menuScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             menuScaler.referenceResolution = new Vector2(1920, 1080);
-            menuScaler.matchWidthOrHeight = GetCanvasMatchWeight();
+            menuScaler.matchWidthOrHeight = 0.5f;
 
+            // CLEANUP
+            foreach (Transform t in hudGo.transform) 
+                if (t.name.EndsWith("Panel")) DestroyImmediate(t.gameObject);
+            foreach (Transform t in menuGo.transform) 
+                DestroyImmediate(t.gameObject);
+
+            PlayerHUDController hudController = hudGo.GetComponent<PlayerHUDController>() ?? hudGo.AddComponent<PlayerHUDController>();
+
+            // Group 1: Stats (Top Left) - LARGER
+            GameObject statsPanel = CreateUIPanel(hudGo.transform, "StatsPanel", new Vector2(0, 1), new Vector2(0, 1), new Vector2(240, 150), new Vector2(40, -40));
+            StatBarUI healthBar = CreateStatBar(statsPanel.transform, "HealthBar", "Health", "health", Color.red, new Vector2(12, -15));
+            StatBarUI hungerBar = CreateStatBar(statsPanel.transform, "HungerBar", "Hunger", "hunger", new Color(1f, 0.5f, 0f), new Vector2(12, -47));
+            StatBarUI staminaBar = CreateStatBar(statsPanel.transform, "StaminaBar", "Stamina", "stamina", Color.yellow, new Vector2(12, -79));
+            StatBarUI restBar = CreateStatBar(statsPanel.transform, "RestBar", "Rest", "rest", Color.blue, new Vector2(12, -111));
+
+            // Group 2: Resources (Top Right) - LARGER
+            GameObject resourcePanel = CreateUIPanel(hudGo.transform, "ResourcePanel", new Vector2(1, 1), new Vector2(1, 1), new Vector2(180, 155), new Vector2(-40, -40));
+            ResourceCounterUI woodCounter = CreateResourceCounter(resourcePanel.transform, "WoodCounter", "wood", "Wood", "resource_wood", new Vector2(-12, -12));
+            ResourceCounterUI stoneCounter = CreateResourceCounter(resourcePanel.transform, "StoneCounter", "stone", "Stone", "resource_stone", new Vector2(-12, -46));
+            ResourceCounterUI fiberCounter = CreateResourceCounter(resourcePanel.transform, "FiberCounter", "fiber", "Fiber", "resource_fiber", new Vector2(-12, -80));
+            ResourceCounterUI meatCounter = CreateResourceCounter(resourcePanel.transform, "MeatCounter", "meat", "Meat", "resource_raw_meat", new Vector2(-12, -114));
+
+            // Group 3: Minimap (Bottom Right)
+            GameObject minimapPanel = CreateUIPanel(hudGo.transform, "MiniMapPanel", new Vector2(1, 0), new Vector2(1, 0), new Vector2(165, 165), new Vector2(-40, 40));
+            if (player != null)
+            {
+                MiniMapUI minimap = minimapPanel.AddComponent<MiniMapUI>();
+                minimap.Configure(player.transform, 110f);
+            }
+            else minimapPanel.SetActive(false);
+
+            // Group 4: FPS (Bottom Left)
+            GameObject fpsPanel = CreateUIPanel(hudGo.transform, "FpsPanel", new Vector2(0, 0), new Vector2(0, 0), new Vector2(100, 30), new Vector2(20, 20));
+            GameObject fpsLabelGo = CreateMenuText(fpsPanel.transform, "FpsLabel", "FPS 0", 12, TextAnchor.MiddleCenter, Vector2.zero, new Color(1f, 0.92f, 0.42f));
+            RectTransform fpsRt = fpsLabelGo.GetComponent<RectTransform>();
+            fpsRt.anchorMin = Vector2.zero; fpsRt.anchorMax = Vector2.one; 
+            fpsRt.pivot = new Vector2(0.5f, 0.5f);
+            fpsRt.offsetMin = Vector2.zero; fpsRt.offsetMax = Vector2.zero;
+            fpsRt.anchoredPosition = Vector2.zero;
+            fpsLabelGo.AddComponent<FpsCounterUI>();
+
+            // Group 5: Inventory (Bottom Center)
+            GameObject inventoryPanel = CreateUIPanel(hudGo.transform, "InventoryPanel", new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(380, 50), new Vector2(0, 40));
+            HorizontalLayoutGroup hlg = inventoryPanel.AddComponent<HorizontalLayoutGroup>();
+            hlg.padding = new RectOffset(10, 10, 5, 5);
+            hlg.spacing = 8;
+            hlg.childAlignment = TextAnchor.MiddleCenter;
+            hlg.childControlWidth = false;
+            hlg.childControlHeight = false;
+            hlg.childForceExpandWidth = false;
+            hlg.childForceExpandHeight = false;
+
+            List<InventorySlotUI> inventorySlots = new List<InventorySlotUI>();
+            for (int i = 0; i < 9; i++) 
+                inventorySlots.Add(CreateInventorySlot(inventoryPanel.transform, $"Slot{i + 1}", i));
+
+            // Menus setup remains similar but scaled
             GameObject startMenu = CreateMenuPanel(menuGo.transform, "StartMenu", new Vector2(0.5f, 0.5f), new Vector2(980f, 620f), true);
+            startMenu.SetActive(false); // Ensure starts hidden
             CreateMenuBackdropFrame(startMenu.transform);
             AddMenuBackdrop(startMenu.transform);
             AddMenuFrame(startMenu.transform);
@@ -174,7 +174,7 @@ namespace ApexShift.Presentation.HUD
             Button quitButton = CreateMenuButton(startMenu.transform, "QuitButton", "Quit", new Vector2(40, -498));
 
             GameObject pauseMenu = CreateMenuPanel(menuGo.transform, "PauseMenu", new Vector2(0.5f, 0.5f), new Vector2(900f, 560f), false);
-            pauseMenu.SetActive(false);
+            pauseMenu.SetActive(false); // Ensure starts hidden
             CreateMenuBackdropFrame(pauseMenu.transform);
             AddMenuBackdrop(pauseMenu.transform);
             AddMenuFrame(pauseMenu.transform);
@@ -192,8 +192,8 @@ namespace ApexShift.Presentation.HUD
             Button pauseQuitButton = CreateMenuButton(pauseMenu.transform, "QuitButton", "Quit", new Vector2(40, -510));
 
             GameObject optionsMenu = CreateMenuPanel(menuGo.transform, "OptionsMenu", new Vector2(0.5f, 0.5f), new Vector2(860f, 520f), false);
-            optionsMenu.SetActive(false);
-            CreateMenuBackdropFrame(optionsMenu.transform);
+            optionsMenu.SetActive(false); // Ensure starts hidden
+CreateMenuBackdropFrame(optionsMenu.transform);
             AddMenuBackdrop(optionsMenu.transform);
             AddMenuFrame(optionsMenu.transform);
             AddMenuGradient(optionsMenu.transform);
@@ -205,67 +205,88 @@ namespace ApexShift.Presentation.HUD
             CreateMenuText(optionsMenu.transform, "Hint2", "Use Back to return to the previous menu.", 14, TextAnchor.UpperLeft, new Vector2(46, -180), new Color(0.84f, 0.86f, 0.84f, 0.9f));
             Button backButton = CreateMenuButton(optionsMenu.transform, "BackButton", "Back", new Vector2(40, -438));
 
-            CanvasGroup startGroup = startMenu.AddComponent<CanvasGroup>();
-            CanvasGroup pauseGroup = pauseMenu.AddComponent<CanvasGroup>();
-            CanvasGroup optionsGroup = optionsMenu.AddComponent<CanvasGroup>();
-            startGroup.alpha = 0f;
-            pauseGroup.alpha = 0f;
-            optionsGroup.alpha = 0f;
+            CanvasGroup startGrp = startMenu.AddComponent<CanvasGroup>();
+            CanvasGroup pauseGrp = pauseMenu.AddComponent<CanvasGroup>();
+            CanvasGroup optionsGrp = optionsMenu.AddComponent<CanvasGroup>();
 
-            startMenu.AddComponent<MenuAmbientMotion>().Configure(18f, 8f, 0.08f, 0.05f);
-            pauseMenu.AddComponent<MenuAmbientMotion>().Configure(14f, 7f, 0.06f, 0.04f);
-            optionsMenu.AddComponent<MenuAmbientMotion>().Configure(12f, 6f, 0.05f, 0.04f);
-
-            hudController.Configure(
-                player.GetComponent<PlayerSurvivalRuntime>(),
-                player.GetComponent<PlayerInventoryRuntime>(),
-                healthBar, hungerBar, staminaBar, restBar,
-                new List<ResourceCounterUI> { woodCounter, stoneCounter, fiberCounter, meatCounter }
-            );
-            hudController.ConfigureInventorySlots(inventorySlots);
-
-            GameStartupController startupController = uiRoot.AddComponent<GameStartupController>();
-            startupController.Configure(generator, menuGo, pauseMenu, hudGo, optionsMenu, startGroup, pauseGroup, optionsGroup);
-            startupController.ShowMainMenu();
-            continueButton.onClick.AddListener(() => LogMenuClick("Continue"));
-            newGameButton.onClick.AddListener(() => LogMenuClick("New Game"));
-            resumeButton.onClick.AddListener(() => LogMenuClick("Resume"));
-            quitButton.onClick.AddListener(() => LogMenuClick("Quit"));
-            pauseOptionsButton.onClick.AddListener(() => LogMenuClick("Options"));
-            pauseQuitButton.onClick.AddListener(() => LogMenuClick("Pause Quit"));
-            backButton.onClick.AddListener(() => LogMenuClick("Back"));
-            continueButton.onClick.AddListener(() => startupController.ContinueOrLoadGame());
-            newGameButton.onClick.AddListener(() => startupController.StartNewGame());
-            resumeButton.onClick.AddListener(() => startupController.ResumeGame());
-            quitButton.onClick.AddListener(() => startupController.QuitGame());
-            pauseOptionsButton.onClick.AddListener(() => startupController.OpenPauseMenu());
-            pauseQuitButton.onClick.AddListener(() => startupController.QuitGame());
-            backButton.onClick.AddListener(() => startupController.ShowMainMenu());
-
-            GameObject es = new GameObject("EventSystem");
-            es.AddComponent<UnityEngine.EventSystems.EventSystem>();
-            UnityEngine.InputSystem.UI.InputSystemUIInputModule uiModule = es.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
-            if (generator != null && generator.InputActions != null)
+            if (player != null)
             {
-                uiModule.actionsAsset = generator.InputActions;
-                uiModule.point = UnityEngine.InputSystem.InputActionReference.Create(generator.InputActions.FindAction("Look", true));
-                uiModule.leftClick = UnityEngine.InputSystem.InputActionReference.Create(generator.InputActions.FindAction("Attack", true));
-                uiModule.move = UnityEngine.InputSystem.InputActionReference.Create(generator.InputActions.FindAction("Navigate", true));
-                uiModule.submit = UnityEngine.InputSystem.InputActionReference.Create(generator.InputActions.FindAction("Submit", true));
-            uiModule.cancel = UnityEngine.InputSystem.InputActionReference.Create(generator.InputActions.FindAction("Cancel", true));
+                hudController.Configure(player.GetComponent<PlayerSurvivalRuntime>(), player.GetComponent<PlayerInventoryRuntime>(), healthBar, hungerBar, staminaBar, restBar,
+                    new List<ResourceCounterUI> { woodCounter, stoneCounter, fiberCounter, meatCounter });
+                hudController.ConfigureInventorySlots(inventorySlots);
+                hudGo.SetActive(true);
             }
-            es.transform.SetParent(uiRoot.transform, false);
-            EventSystem eventSystem = es.GetComponent<EventSystem>();
-            eventSystem.firstSelectedGameObject = continueButton.gameObject;
-            eventSystem.SetSelectedGameObject(continueButton.gameObject);
+            else hudGo.SetActive(false);
+
+            GameObject esGo = uiRoot.transform.Find("EventSystem")?.gameObject ?? new GameObject("EventSystem");
+            esGo.transform.SetParent(uiRoot.transform, false);
+            esGo.transform.localPosition = Vector3.zero;
+            EventSystem es = esGo.GetComponent<EventSystem>() ?? esGo.AddComponent<EventSystem>();
+            InputSystemUIInputModule uiInput = esGo.GetComponent<InputSystemUIInputModule>() ?? esGo.AddComponent<InputSystemUIInputModule>();
+
+            InputActionAsset actions = (generator != null && generator.InputActions != null) ? generator.InputActions : InputSystem.actions;
+            if (actions != null)
+            {
+                actions.Enable();
+                uiInput.actionsAsset = actions;
+                var p = actions.FindAction("UI/Point") ?? actions.FindAction("Point");
+                var c = actions.FindAction("UI/Click") ?? actions.FindAction("Click");
+                var n = actions.FindAction("UI/Navigate") ?? actions.FindAction("Navigate");
+                var s = actions.FindAction("UI/Submit") ?? actions.FindAction("Submit");
+                var x = actions.FindAction("UI/Cancel") ?? actions.FindAction("Cancel");
+                if (p != null) uiInput.point = InputActionReference.Create(p);
+                if (c != null) uiInput.leftClick = InputActionReference.Create(c);
+                if (n != null) uiInput.move = InputActionReference.Create(n);
+                if (s != null) uiInput.submit = InputActionReference.Create(s);
+                if (x != null) uiInput.cancel = InputActionReference.Create(x);
+            }
+
+            GameStartupController startup = uiRoot.GetComponent<GameStartupController>() ?? uiRoot.AddComponent<GameStartupController>();
+            if (uiRoot.GetComponent<InputEnabler>() == null) uiRoot.AddComponent<InputEnabler>();
+            if (uiRoot.GetComponent<UIDebugger>() == null) uiRoot.AddComponent<UIDebugger>();
+
+            menuGo.SetActive(true);
+            startup.Configure(generator, startMenu, pauseMenu, hudGo, optionsMenu, startGrp, pauseGrp, optionsGrp);
+
+            continueButton.onClick.AddListener(() => { LogMenuClick("Continue"); startup.ContinueOrLoadGame(); });
+            newGameButton.onClick.AddListener(() => { LogMenuClick("New Game"); startup.StartNewGame(); });
+            optionsButton.onClick.AddListener(() => { LogMenuClick("Options"); startup.OpenOptionsMenu(); });
+            resumeButton.onClick.AddListener(() => { LogMenuClick("Resume"); startup.ResumeGame(); });
+            saveButton.onClick.AddListener(() => { 
+                LogMenuClick("Save"); 
+                Debug.Log("[HUD] Triggering startup.SaveGame()");
+                startup.SaveGame(); 
+            });
+            loadButton.onClick.AddListener(() => { 
+                LogMenuClick("Load"); 
+                Debug.Log("[HUD] Triggering startup.LoadGame()");
+                startup.LoadGame(); 
+            });
+            quitButton.onClick.AddListener(() => { LogMenuClick("Quit"); startup.QuitGame(); });
+pauseOptionsButton.onClick.AddListener(() => { LogMenuClick("Pause Options"); startup.OpenOptionsMenu(); });
+            pauseQuitButton.onClick.AddListener(() => { LogMenuClick("Pause Quit"); startup.QuitGame(); });
+            backButton.onClick.AddListener(() => { LogMenuClick("Back"); startup.ShowMainMenu(); });
+
+            if (player == null)
+            {
+                // During the initial boot flow we want the start screen visible.
+                // If HUD gets rebuilt while gameplay is already active, keep the
+                // gameplay state intact instead of reopening the main menu.
+                if (GameSessionState.IsGameplayActive)
+                {
+                    startup.ResumeGame();
+                }
+                else
+                {
+                    startup.ShowMainMenu();
+                    es.firstSelectedGameObject = continueButton.gameObject;
+                    es.SetSelectedGameObject(continueButton.gameObject);
+                }
+            }
+            else startup.ResumeGame();
 
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-
-            menuGo.AddComponent<MenuPointerBridge>();
-            menuGo.AddComponent<MenuRaycastDebugProbe>();
-
-            Debug.Log("[HUD] Runtime HUD Provisioned.");
         }
 
         private GameObject CreateUIPanel(Transform parent, string name, Vector2 anchorMin, Vector2 anchorMax, Vector2 size, Vector2 pos)
@@ -429,11 +450,8 @@ namespace ApexShift.Presentation.HUD
             label.alignment = alignment;
             label.fontSize = size;
             label.color = color ?? Color.white;
-            if (uiFont != null)
-            {
-                label.font = uiFont;
-            }
-
+            label.raycastTarget = false;
+            if (uiFont != null) label.font = uiFont;
             RectTransform rt = go.GetComponent<RectTransform>();
             rt.anchorMin = new Vector2(0f, 1f);
             rt.anchorMax = new Vector2(0f, 1f);
@@ -451,14 +469,14 @@ namespace ApexShift.Presentation.HUD
             bg.color = new Color(0.11f, 0.13f, 0.11f, 1f);
             Button button = go.AddComponent<Button>();
             button.targetGraphic = bg;
-            ColorBlock colors = button.colors;
-            colors.normalColor = new Color(0.14f, 0.17f, 0.14f, 1f);
-            colors.highlightedColor = new Color(0.34f, 0.40f, 0.28f, 1f);
-            colors.pressedColor = new Color(0.09f, 0.11f, 0.09f, 1f);
-            colors.selectedColor = new Color(0.42f, 0.48f, 0.34f, 1f);
-            colors.colorMultiplier = 1f;
-            colors.fadeDuration = 0.06f;
-            button.colors = colors;
+            ColorBlock cb = button.colors;
+            cb.normalColor = new Color(0.14f, 0.17f, 0.14f, 1f);
+            cb.highlightedColor = new Color(0.34f, 0.40f, 0.28f, 1f);
+            cb.pressedColor = new Color(0.09f, 0.11f, 0.09f, 1f);
+            cb.selectedColor = new Color(0.42f, 0.48f, 0.34f, 1f);
+            cb.colorMultiplier = 1f;
+            cb.fadeDuration = 0f;
+            button.colors = cb;
             button.transition = Selectable.Transition.ColorTint;
 
             GameObject labelGo = new GameObject("Label");
@@ -468,19 +486,17 @@ namespace ApexShift.Presentation.HUD
             label.alignment = TextAnchor.MiddleCenter;
             label.fontSize = 18;
             label.color = new Color(0.98f, 0.98f, 0.95f, 1f);
-            if (uiFont != null)
-            {
-                label.font = uiFont;
-            }
-            Outline labelOutline = labelGo.AddComponent<Outline>();
-            labelOutline.effectColor = new Color(0f, 0f, 0f, 0.85f);
-            labelOutline.effectDistance = new Vector2(1f, -1f);
+            label.raycastTarget = false;
+            if (uiFont != null) label.font = uiFont;
+            Outline outline = labelGo.AddComponent<Outline>();
+            outline.effectColor = new Color(0f, 0f, 0f, 0.85f);
+            outline.effectDistance = new Vector2(1f, -1f);
 
-            RectTransform labelRt = labelGo.GetComponent<RectTransform>();
-            labelRt.anchorMin = Vector2.zero;
-            labelRt.anchorMax = Vector2.one;
-            labelRt.offsetMin = Vector2.zero;
-            labelRt.offsetMax = Vector2.zero;
+            RectTransform lrt = labelGo.GetComponent<RectTransform>();
+            lrt.anchorMin = Vector2.zero;
+            lrt.anchorMax = Vector2.one;
+            lrt.offsetMin = Vector2.zero;
+            lrt.offsetMax = Vector2.zero;
 
             RectTransform rt = go.GetComponent<RectTransform>();
             rt.anchorMin = new Vector2(0f, 1f);
@@ -491,93 +507,63 @@ namespace ApexShift.Presentation.HUD
 
             GameObject border = new GameObject("Border");
             border.transform.SetParent(go.transform, false);
-            Image borderImg = border.AddComponent<Image>();
-            borderImg.color = new Color(0.78f, 0.92f, 0.54f, 0.48f);
-            borderImg.raycastTarget = false;
-            RectTransform borderRt = border.GetComponent<RectTransform>();
-            borderRt.anchorMin = Vector2.zero;
-            borderRt.anchorMax = Vector2.one;
-            borderRt.offsetMin = new Vector2(-2f, -2f);
-            borderRt.offsetMax = new Vector2(2f, 2f);
+            Image bimg = border.AddComponent<Image>();
+            bimg.color = new Color(0.78f, 0.92f, 0.54f, 0.48f);
+            bimg.raycastTarget = false;
+            RectTransform brt = border.GetComponent<RectTransform>();
+            brt.anchorMin = Vector2.zero;
+            brt.anchorMax = Vector2.one;
+            brt.offsetMin = new Vector2(-2f, -2f);
+            brt.offsetMax = new Vector2(2f, 2f);
             border.transform.SetAsFirstSibling();
-            go.AddComponent<MenuButtonClickProxy>().Configure(button);
             return button;
         }
 
-        private static void LogMenuClick(string buttonName)
-        {
-            Debug.Log("[HUD] Menu clicked: " + buttonName);
-        }
-
-        private float GetCanvasMatchWeight()
-        {
-            float aspect = (float)Screen.width / Mathf.Max(1f, Screen.height);
-            if (aspect >= 2.0f)
-            {
-                return 0.7f;
-            }
-
-            if (aspect <= 1.5f)
-            {
-                return 1f;
-            }
-
-            return 0.85f;
-        }
+        public static void LogMenuClick(string buttonName) => Debug.Log("[HUD] Menu clicked: " + buttonName);
 
         private StatBarUI CreateStatBar(Transform parent, string name, string labelText, string iconId, Color color, Vector2 pos)
         {
             GameObject bar = new GameObject(name);
             bar.transform.SetParent(parent, false);
             RectTransform rt = bar.AddComponent<RectTransform>();
-            rt.anchorMin = Vector2.zero;
-            rt.anchorMax = Vector2.zero;
-            rt.pivot = Vector2.zero;
-            rt.sizeDelta = new Vector2(296, 36);
+            rt.anchorMin = new Vector2(0, 1); rt.anchorMax = new Vector2(0, 1); rt.pivot = new Vector2(0, 1);
+            rt.sizeDelta = new Vector2(215, 24);
             rt.anchoredPosition = pos;
 
             GameObject icon = new GameObject("Icon");
             icon.transform.SetParent(bar.transform, false);
             Image iconImg = icon.AddComponent<Image>();
             iconImg.color = Color.white;
-            RectTransform iconRt = icon.GetComponent<RectTransform>();
-            iconRt.anchorMin = new Vector2(0, 0.5f);
-            iconRt.anchorMax = new Vector2(0, 0.5f);
-            iconRt.pivot = new Vector2(0, 0.5f);
-            iconRt.sizeDelta = new Vector2(22, 22);
-            iconRt.anchoredPosition = new Vector2(10, 0);
+            RectTransform irt = icon.GetComponent<RectTransform>();
+            irt.anchorMin = new Vector2(0, 0.5f); irt.anchorMax = new Vector2(0, 0.5f); irt.pivot = new Vector2(0, 0.5f);
+            irt.sizeDelta = new Vector2(18, 18);
+            irt.anchoredPosition = new Vector2(8, 0);
 
-            GameObject bg = new GameObject("Background");
-            bg.transform.SetParent(bar.transform, false);
-            Image bgImg = bg.AddComponent<Image>();
-            bgImg.color = new Color(0.08f, 0.1f, 0.08f, 0.78f);
-            RectTransform bgRt = bg.GetComponent<RectTransform>();
-            bgRt.anchorMin = new Vector2(0, 0);
-            bgRt.anchorMax = new Vector2(1, 1);
-            bgRt.sizeDelta = Vector2.zero;
+            GameObject bgGo = new GameObject("Background");
+            bgGo.transform.SetParent(bar.transform, false);
+            bgGo.AddComponent<Image>().color = new Color(0.08f, 0.1f, 0.08f, 0.78f);
+            RectTransform bgrt = bgGo.GetComponent<RectTransform>();
+            bgrt.anchorMin = Vector2.zero; bgrt.anchorMax = Vector2.one; bgrt.sizeDelta = Vector2.zero;
 
-            GameObject fill = new GameObject("Fill");
-            fill.transform.SetParent(bar.transform, false);
-            Image fillImg = fill.AddComponent<Image>();
+            GameObject fillGo = new GameObject("Fill");
+            fillGo.transform.SetParent(bar.transform, false);
+            Image fillImg = fillGo.AddComponent<Image>();
             fillImg.color = color;
-            RectTransform fillRt = fill.GetComponent<RectTransform>();
-            fillRt.anchorMin = new Vector2(0, 0);
-            fillRt.anchorMax = new Vector2(1, 1);
-            fillRt.sizeDelta = Vector2.zero;
+            RectTransform fillrt = fillGo.GetComponent<RectTransform>();
+            fillrt.anchorMin = Vector2.zero; fillrt.anchorMax = Vector2.one; fillrt.sizeDelta = Vector2.zero;
 
-            GameObject lbl = new GameObject("Label");
-            lbl.transform.SetParent(bar.transform, false);
-            Text t = lbl.AddComponent<Text>();
+            GameObject lblGo = new GameObject("Label");
+            lblGo.transform.SetParent(bar.transform, false);
+            Text t = lblGo.AddComponent<Text>();
             t.text = labelText;
             if (uiFont != null) t.font = uiFont;
-            t.fontSize = 16;
+            t.fontSize = 13;
             t.alignment = TextAnchor.MiddleLeft;
             t.color = Color.white;
-            RectTransform lblRt = lbl.GetComponent<RectTransform>();
-            lblRt.anchorMin = new Vector2(0, 0);
-            lblRt.anchorMax = new Vector2(1, 1);
-            lblRt.sizeDelta = new Vector2(-42, 0);
-            lblRt.anchoredPosition = new Vector2(32, 0);
+            RectTransform lblrt = lblGo.GetComponent<RectTransform>();
+            lblrt.anchorMin = Vector2.zero; lblrt.anchorMax = Vector2.one;
+            lblrt.sizeDelta = new Vector2(-40, 0);
+            lblrt.anchoredPosition = new Vector2(32, 0);
 
             StatBarUI ui = bar.AddComponent<StatBarUI>();
             ui.Configure(fillImg, t, labelText, iconImg);
@@ -590,101 +576,80 @@ namespace ApexShift.Presentation.HUD
             GameObject counter = new GameObject(name);
             counter.transform.SetParent(parent, false);
             RectTransform rt = counter.AddComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(168, 44);
+            rt.sizeDelta = new Vector2(155, 32);
+            rt.anchorMin = new Vector2(1, 1); rt.anchorMax = new Vector2(1, 1); rt.pivot = new Vector2(1, 1);
             rt.anchoredPosition = pos;
-            rt.anchorMin = new Vector2(1, 1);
-            rt.anchorMax = new Vector2(1, 1);
-            rt.pivot = new Vector2(1, 1);
 
-            GameObject icon = new GameObject("Icon");
-            icon.transform.SetParent(counter.transform, false);
-            Image iconImg = icon.AddComponent<Image>();
-            iconImg.color = new Color(0.92f, 0.98f, 0.95f, 1f);
+            GameObject iconGo = new GameObject("Icon");
+            iconGo.transform.SetParent(counter.transform, false);
+            Image iconImg = iconGo.AddComponent<Image>();
             iconImg.preserveAspect = true;
-            RectTransform iconRt = icon.GetComponent<RectTransform>();
-            iconRt.anchorMin = new Vector2(0, 0);
-            iconRt.anchorMax = new Vector2(0, 1);
-            iconRt.pivot = new Vector2(0, 0.5f);
-            iconRt.sizeDelta = new Vector2(22, 22);
-            iconRt.anchoredPosition = new Vector2(8, 0);
+            RectTransform irt = iconGo.GetComponent<RectTransform>();
+            irt.anchorMin = new Vector2(0, 0.5f); irt.anchorMax = new Vector2(0, 0.5f); irt.pivot = new Vector2(0, 0.5f);
+            irt.sizeDelta = new Vector2(24, 24);
+            irt.anchoredPosition = new Vector2(8, 0);
 
-            GameObject val = new GameObject("Value");
-            val.transform.SetParent(counter.transform, false);
-            Text tV = val.AddComponent<Text>();
+            GameObject valGo = new GameObject("Value");
+            valGo.transform.SetParent(counter.transform, false);
+            Text tV = valGo.AddComponent<Text>();
             tV.text = "0";
             if (uiFont != null) tV.font = uiFont;
-            tV.fontSize = 16;
+            tV.fontSize = 14;
             tV.fontStyle = FontStyle.Bold;
-            tV.alignment = TextAnchor.MiddleLeft;
+            tV.alignment = TextAnchor.MiddleRight;
             tV.color = new Color(1f, 0.92f, 0.42f);
-            tV.supportRichText = false;
-            Outline valueOutline = val.AddComponent<Outline>();
-            valueOutline.effectColor = new Color(0f, 0f, 0f, 0.9f);
-            valueOutline.effectDistance = new Vector2(1f, -1f);
-            RectTransform valRt = val.GetComponent<RectTransform>();
-            valRt.anchorMin = new Vector2(1, 0);
-            valRt.anchorMax = new Vector2(1, 1);
-            valRt.pivot = new Vector2(1, 0.5f);
-            valRt.sizeDelta = new Vector2(52, 24);
-            valRt.anchoredPosition = new Vector2(-8, 0);
+            valGo.AddComponent<Outline>().effectColor = new Color(0f, 0f, 0f, 0.9f);
+            RectTransform vrt = valGo.GetComponent<RectTransform>();
+            vrt.anchorMin = Vector2.zero; vrt.anchorMax = Vector2.one; vrt.pivot = new Vector2(1, 0.5f);
+            vrt.offsetMin = new Vector2(40, 0);
+            vrt.offsetMax = new Vector2(-8, 0);
 
             ResourceCounterUI ui = counter.AddComponent<ResourceCounterUI>();
             ui.Configure(itemId, iconImg, tV);
             return ui;
         }
 
-        private InventorySlotUI CreateInventorySlot(Transform parent, string name, int slotIndex, Vector2 pos)
+        private InventorySlotUI CreateInventorySlot(Transform parent, string name, int slotIndex)
         {
             GameObject slot = new GameObject(name);
             slot.transform.SetParent(parent, false);
             RectTransform rt = slot.AddComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(32, 32);
-            rt.anchoredPosition = pos;
+            rt.sizeDelta = new Vector2(36, 36);
 
-            Image bg = slot.AddComponent<Image>();
-            bg.color = new Color(0.05f, 0.06f, 0.05f, 0.78f);
+            slot.AddComponent<Image>().color = new Color(0.05f, 0.06f, 0.05f, 0.78f);
 
-            GameObject icon = new GameObject("Icon");
-            icon.transform.SetParent(slot.transform, false);
-            Image iconImg = icon.AddComponent<Image>();
-            iconImg.color = Color.white;
-            RectTransform iconRt = icon.GetComponent<RectTransform>();
-            iconRt.anchorMin = Vector2.zero;
-            iconRt.anchorMax = Vector2.one;
-            iconRt.offsetMin = new Vector2(4, 4);
-            iconRt.offsetMax = new Vector2(-4, -4);
+            GameObject iconGo = new GameObject("Icon");
+            iconGo.transform.SetParent(slot.transform, false);
+            Image iconImg = iconGo.AddComponent<Image>();
+            RectTransform irt = iconGo.GetComponent<RectTransform>();
+            irt.anchorMin = Vector2.zero; irt.anchorMax = Vector2.one;
+            irt.offsetMin = new Vector2(4, 4); irt.offsetMax = new Vector2(-4, -4);
 
-            GameObject amount = new GameObject("Amount");
-            amount.transform.SetParent(slot.transform, false);
-            Text amountText = amount.AddComponent<Text>();
+            GameObject amGo = new GameObject("Amount");
+            amGo.transform.SetParent(slot.transform, false);
+            Text amountText = amGo.AddComponent<Text>();
             amountText.alignment = TextAnchor.LowerRight;
-            amountText.fontSize = 14;
-            amountText.color = Color.white;
+            amountText.fontSize = 11;
             if (uiFont != null) amountText.font = uiFont;
-            RectTransform amountRt = amount.GetComponent<RectTransform>();
-            amountRt.anchorMin = Vector2.zero;
-            amountRt.anchorMax = Vector2.one;
-            amountRt.offsetMin = new Vector2(0, 0);
-            amountRt.offsetMax = new Vector2(-3, -1);
+            RectTransform art = amGo.GetComponent<RectTransform>();
+            art.anchorMin = Vector2.zero; art.anchorMax = Vector2.one;
+            art.offsetMax = new Vector2(-2, 0);
 
-            GameObject index = new GameObject("Index");
-            index.transform.SetParent(slot.transform, false);
-            Text indexText = index.AddComponent<Text>();
+            GameObject idxGo = new GameObject("Index");
+            idxGo.transform.SetParent(slot.transform, false);
+            Text indexText = idxGo.AddComponent<Text>();
             indexText.alignment = TextAnchor.UpperLeft;
-            indexText.fontSize = 11;
+            indexText.fontSize = 9;
             indexText.color = new Color(0.9f, 0.94f, 0.88f, 0.9f);
             if (uiFont != null) indexText.font = uiFont;
             indexText.text = (slotIndex + 1).ToString();
-            RectTransform indexRt = index.GetComponent<RectTransform>();
-            indexRt.anchorMin = Vector2.zero;
-            indexRt.anchorMax = Vector2.one;
-            indexRt.offsetMin = new Vector2(4, 4);
-            indexRt.offsetMax = new Vector2(-4, -4);
+            RectTransform idxrt = idxGo.GetComponent<RectTransform>();
+            idxrt.anchorMin = Vector2.zero; idxrt.anchorMax = Vector2.one;
+            idxrt.offsetMin = new Vector2(3, 3); idxrt.offsetMax = new Vector2(-3, -3);
 
             InventorySlotUI ui = slot.AddComponent<InventorySlotUI>();
             ui.Configure(iconImg, amountText, indexText);
             return ui;
         }
-    }
-
+}
 }

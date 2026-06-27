@@ -49,8 +49,10 @@ namespace ApexShift.Runtime.Resources
         }
 
         public int Priority => 0;
+        public float InteractionDuration => 1.5f;
+
         public ResourceState State
-        {
+{
             get
             {
                 EnsureState();
@@ -122,19 +124,19 @@ namespace ApexShift.Runtime.Resources
             return true;
         }
 
-        public void ResetResource()
+        public void LoadState(int currentAmount, bool depleted)
         {
             EnsureState();
-            state.RestoreToFull();
-            SetVisualsEnabled(true);
-            if (depletedVisual != null)
+            state.SetAmount(currentAmount);
+            if (depleted || currentAmount <= 0)
             {
-                depletedVisual.SetActive(false);
+                state.MarkDepleted();
+                ApplyDepletedVisualState();
             }
-            EnsureInteractionCollider();
-            if (!gameObject.activeSelf)
+            else
             {
-                gameObject.SetActive(true);
+                SetVisualsEnabled(true);
+                if (depletedVisual != null) depletedVisual.SetActive(false);
             }
         }
 

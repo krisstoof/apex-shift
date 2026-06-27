@@ -19,8 +19,8 @@ namespace ApexShift.Runtime.Debugging
         [SerializeField] private KeyCode toggleKey = KeyCode.F4;
         [SerializeField] private float refreshIntervalSeconds = 0.5f;
 
-        private Rect windowRect = new Rect(720f, 140f, 520f, 520f);
-        private Vector2 scroll;
+        private Rect windowRect = new Rect(720f, 140f, 400f, 400f);
+private Vector2 scroll;
         private float refreshTimer;
         private string cachedText = "World debug loading...";
         private bool showDebugControls = false;

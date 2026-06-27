@@ -12,6 +12,10 @@ namespace ApexShift.Core.Save
         public bool campfireRegenActive;
         public float campfireRegenDistance = -1f;
         public bool godMode;
+        public float posX;
+        public float posY;
+        public float posZ;
+        public bool hasPosition;
 
         public float Health => health;
         public float Hunger => hunger;
@@ -43,6 +47,15 @@ namespace ApexShift.Core.Save
             this.campfireRegenActive = campfireRegenActive;
             this.campfireRegenDistance = campfireRegenActive ? campfireRegenDistance : -1f;
             this.godMode = godMode;
+            this.hasPosition = false;
+        }
+
+        public void SetPosition(float x, float y, float z)
+        {
+            this.posX = x;
+            this.posY = y;
+            this.posZ = z;
+            this.hasPosition = true;
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ApexShift.Core.Inventory;
 using ApexShift.Core.Save;
 using ApexShift.Infrastructure.Save;
@@ -14,7 +15,16 @@ namespace ApexShift.Runtime.Save
         [SerializeField] private PlayerInventoryRuntime playerInventory;
         [SerializeField] private PlayerSurvivalRuntime playerSurvival;
 
-        private readonly IGameSaveStore saveStore = new JsonFileGameSaveStore();
+        private IGameSaveStore saveStore;
+
+        private IGameSaveStore GetSaveStore()
+        {
+            if (saveStore == null)
+            {
+                saveStore = new JsonFileGameSaveStore();
+            }
+            return saveStore;
+        }
 
         private void Awake()
         {
@@ -22,7 +32,7 @@ namespace ApexShift.Runtime.Save
         }
 
         public void ResolveReferences()
-        {
+{
             if (worldGenerator == null)
             {
                 worldGenerator = FindAnyObjectByType<WorldGeneratorRuntime>();
@@ -62,35 +72,74 @@ namespace ApexShift.Runtime.Save
 
             InventorySaveData inventory = playerInventory != null ? playerInventory.ToSaveData() : InventorySaveData.Empty;
             SurvivalSaveData survival = playerSurvival != null ? playerSurvival.ToSaveData() : SurvivalSaveData.Default;
-            int seed = worldGenerator != null ? worldGenerator.Seed : 0;
-            WorldSaveData world = new WorldSaveData(seed, 1, 0f, System.Array.Empty<ResourceSaveData>());
+            
+            if (playerSurvival != null)
+            {
+                Vector3 pos = playerSurvival.transform.position;
+                survival.SetPosition(pos.x, pos.y, pos.z);
+            }
 
+            int seed = worldGenerator != null ? worldGenerator.Seed : 0;
+            
+            // Capture Resources
+            List<ResourceSaveData> resources = new List<ResourceSaveData>();
+            foreach (var node in FindObjectsByType<ApexShift.Runtime.Resources.ResourceNodeView>())
+            {
+                Vector3 p = node.transform.position;
+var s = node.State;
+                resources.Add(new ResourceSaveData(
+                    s.ResourceId,
+                    node.gameObject.name,
+                    p.x, p.y, p.z,
+                    s.Amount, s.MaxAmount, s.IsDepleted));
+            }
+            Debug.Log($"[Save] Captured {resources.Count} resource nodes.");
+
+            WorldSaveData world = new WorldSaveData(seed, 1, 0f, resources);
             return new GameSaveData(inventory, survival, world);
         }
 
         public void SaveGame(string slotName)
         {
-            saveStore.Save(slotName, CaptureCurrentState());
+            Debug.Log($"[Save] SaveGame requested for slot: {slotName}");
+            GameSaveData state = CaptureCurrentState();
+            IGameSaveStore store = GetSaveStore();
+            store.Save(slotName, state);
+            Debug.Log($"[Save] Game saved successfully. Path: {(store is JsonFileGameSaveStore jss ? jss.GetPath(slotName) : slotName)}");
         }
 
         public bool LoadGame(string slotName)
         {
+            Debug.Log($"[Save] LoadGame requested for slot: {slotName}");
             ResolveReferences();
 
-            GameSaveData saveData = saveStore.Load(slotName);
-            if (saveData == null)
+            IGameSaveStore store = GetSaveStore();
+            if (!store.Exists(slotName))
             {
+                Debug.LogWarning($"[Save] Load failed: Slot '{slotName}' does not exist.");
+                return false;
+            }
+
+            GameSaveData saveData = store.Load(slotName);
+if (saveData == null)
+            {
+                Debug.LogError($"[Save] Load failed: Could not deserialize save data for slot '{slotName}'.");
                 return false;
             }
 
             saveData.EnsureDefaults();
+            Debug.Log($"[Save] Loaded save data. Seed: {saveData.World.Seed}, Resources in save: {saveData.World.Resources.Count}");
 
             if (worldGenerator != null)
             {
-                worldGenerator.SetSeed(saveData.World != null ? saveData.World.Seed : 0);
+                Debug.Log($"[Save] Regenerating world with seed: {saveData.World.Seed}");
+                worldGenerator.SetSeed(saveData.World.Seed);
                 worldGenerator.Generate();
                 ResolveReferences();
             }
+
+            // Restore Resources
+            RestoreResourceStates(saveData.World.Resources);
 
             if (playerInventory != null)
             {
@@ -100,14 +149,53 @@ namespace ApexShift.Runtime.Save
             if (playerSurvival != null)
             {
                 playerSurvival.LoadFromSaveData(saveData.Survival);
+                if (saveData.Survival.hasPosition)
+                {
+                    Vector3 targetPos = new Vector3(saveData.Survival.posX, saveData.Survival.posY, saveData.Survival.posZ);
+                    CharacterController cc = playerSurvival.GetComponent<CharacterController>();
+                    if (cc != null) cc.enabled = false;
+                    playerSurvival.transform.position = targetPos;
+                    if (cc != null) cc.enabled = true;
+                    Debug.Log($"[Save] Restored player position to: {targetPos}");
+                }
             }
 
+            Debug.Log("[Save] Load complete.");
             return true;
+        }
+
+        private void RestoreResourceStates(IReadOnlyList<ResourceSaveData> savedResources)
+        {
+            if (savedResources == null || savedResources.Count == 0) return;
+
+            var nodes = FindObjectsByType<ApexShift.Runtime.Resources.ResourceNodeView>();
+            Debug.Log($"[Save] Restoring state for {savedResources.Count} saved resources among {nodes.Length} active nodes.");
+
+            // Create a spatial lookup for faster matching
+            Dictionary<Vector3Int, ApexShift.Runtime.Resources.ResourceNodeView> lookup = new Dictionary<Vector3Int, ApexShift.Runtime.Resources.ResourceNodeView>();
+            foreach (var node in nodes)
+            {
+                Vector3 p = node.transform.position;
+                Vector3Int key = new Vector3Int(Mathf.RoundToInt(p.x * 100), Mathf.RoundToInt(p.y * 100), Mathf.RoundToInt(p.z * 100));
+                if (!lookup.ContainsKey(key)) lookup[key] = node;
+            }
+
+            int restoredCount = 0;
+            foreach (var resData in savedResources)
+            {
+                Vector3Int key = new Vector3Int(Mathf.RoundToInt(resData.x * 100), Mathf.RoundToInt(resData.y * 100), Mathf.RoundToInt(resData.z * 100));
+                if (lookup.TryGetValue(key, out var node))
+                {
+                    node.LoadState(resData.Amount, resData.Depleted);
+                    restoredCount++;
+                }
+            }
+            Debug.Log($"[Save] Restored {restoredCount} resource nodes matching saved positions.");
         }
 
         public void DeleteGame(string slotName)
         {
-            saveStore.Delete(slotName);
+            GetSaveStore().Delete(slotName);
         }
-    }
+}
 }
