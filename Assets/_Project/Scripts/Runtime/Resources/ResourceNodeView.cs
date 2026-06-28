@@ -172,15 +172,16 @@ namespace ApexShift.Runtime.Resources
         public void LoadState(int currentAmount, bool depleted, float growthProgress)
         {
             EnsureState();
-            state.SetAmount(currentAmount);
-            state.SetGrowthProgress(growthProgress);
             if (depleted || currentAmount <= 0)
             {
                 state.MarkDepleted();
+                state.SetGrowthProgress(growthProgress);
                 ApplyDepletedVisualState();
             }
             else
             {
+                state.SetAmount(currentAmount);
+                state.SetGrowthProgress(growthProgress);
                 SetVisualsEnabled(true);
                 if (depletedVisual != null) depletedVisual.SetActive(false);
             }

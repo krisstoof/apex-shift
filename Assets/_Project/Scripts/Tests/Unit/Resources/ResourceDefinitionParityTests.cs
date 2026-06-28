@@ -1,5 +1,7 @@
 using ApexShift.Core.Resources;
+using ApexShift.Runtime.Resources;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace ApexShift.Tests.Unit.Resources
 {
@@ -53,6 +55,26 @@ namespace ApexShift.Tests.Unit.Resources
             Assert.IsTrue(state.AdvanceGrowthDays(definition.RegrowthDays));
             Assert.IsFalse(state.IsDepleted);
             Assert.AreEqual(1f, state.GrowthProgress, 0.001f);
+        }
+
+        [Test]
+        public void ResourceNodeLoadStatePreservesPartialGrowthForDepletedResource()
+        {
+            GameObject nodeObject = new GameObject("BerryBush");
+            try
+            {
+                ResourceNodeView node = nodeObject.AddComponent<ResourceNodeView>();
+                node.ConfigureDefault("berry_bush");
+
+                node.LoadState(0, depleted: true, growthProgress: 0.5f);
+
+                Assert.IsTrue(node.State.IsDepleted);
+                Assert.AreEqual(0.5f, node.State.GrowthProgress, 0.001f);
+            }
+            finally
+            {
+                Object.DestroyImmediate(nodeObject);
+            }
         }
 
         [Test]
