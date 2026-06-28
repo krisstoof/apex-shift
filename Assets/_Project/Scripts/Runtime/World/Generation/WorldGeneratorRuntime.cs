@@ -11,6 +11,7 @@ using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.World.Biomes;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
+using ApexShift.Runtime.World.Query;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
@@ -98,6 +99,7 @@ namespace ApexShift.Runtime.World.Generation
             CreateWorldBounds();
 
             ConfigurePlayerRuntime(player, cameraGo);
+            InitializeEcosystemDirector();
 
             // Add and build NavMesh
             NavMeshSurface surface = _terrainRoot.GetComponent<NavMeshSurface>();
@@ -205,14 +207,51 @@ namespace ApexShift.Runtime.World.Generation
 
         private void EnsureEcosystemRuntime()
         {
-            if (Object.FindAnyObjectByType<EcosystemRuntime>() != null)
+            EcosystemRuntime existing = Object.FindAnyObjectByType<EcosystemRuntime>();
+            if (existing != null)
             {
+                EnsureEcosystemComponents(existing);
                 return;
             }
 
             GameObject go = new GameObject("EcosystemRuntime");
             go.transform.SetParent(transform);
-            go.AddComponent<EcosystemRuntime>();
+            EcosystemRuntime runtime = go.AddComponent<EcosystemRuntime>();
+            EnsureEcosystemComponents(runtime);
+        }
+
+        private void EnsureEcosystemComponents(EcosystemRuntime runtime)
+        {
+            if (runtime == null) return;
+            if (runtime.GetComponent<WorldQueryRuntime>() == null) runtime.gameObject.AddComponent<WorldQueryRuntime>();
+        }
+
+        private void InitializeEcosystemDirector()
+        {
+            MonoBehaviour director = FindDirectorActive();
+            if (director != null && _lastResult != null)
+            {
+                System.Reflection.MethodInfo method = director.GetType().GetMethod("InitializeFromRegions");
+                if (method != null)
+                {
+                    method.Invoke(director, new object[] { _lastResult.Regions });
+                }
+            }
+        }
+
+        private static MonoBehaviour FindDirectorActive()
+        {
+            MonoBehaviour[] behaviours = Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude);
+            for (int i = 0; i < behaviours.Length; i++)
+            {
+                MonoBehaviour behaviour = behaviours[i];
+                if (behaviour != null && behaviour.GetType().Name == "EcosystemDirectorRuntime")
+                {
+                    return behaviour;
+                }
+            }
+
+            return null;
         }
 
         private void EnsureWorldMapDebugWindow()

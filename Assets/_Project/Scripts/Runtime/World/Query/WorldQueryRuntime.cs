@@ -17,6 +17,7 @@ namespace ApexShift.Runtime.World.Query
     {
         [SerializeField] private EcosystemRuntime ecosystem;
         [SerializeField] private string defaultBiomeId = "default";
+        [SerializeField] private MonoBehaviour ecosystemDirector;
 
         private static WorldQueryRuntime _instance;
 
@@ -70,6 +71,7 @@ namespace ApexShift.Runtime.World.Query
                 {
                     _instance.ecosystem = ecosystemRuntime;
                 }
+                _instance.ResolveDirector();
 
                 return _instance;
             }
@@ -81,6 +83,7 @@ namespace ApexShift.Runtime.World.Query
                 {
                     found.ecosystem = ecosystemRuntime;
                 }
+                found.ResolveDirector();
 
                 return found;
             }
@@ -98,6 +101,7 @@ namespace ApexShift.Runtime.World.Query
 
             created.ecosystem = ecosystemRuntime;
             _instance = created;
+            created.ResolveDirector();
             return created;
         }
 
@@ -150,6 +154,19 @@ namespace ApexShift.Runtime.World.Query
 
         public string GetBiomeIdForPosition(Vector3 position)
         {
+            ResolveDirector();
+            if (ecosystemDirector != null)
+            {
+                System.Reflection.MethodInfo method = ecosystemDirector.GetType().GetMethod("GetBiomeIdForPosition");
+                if (method != null)
+                {
+                    object result = method.Invoke(ecosystemDirector, new object[] { position });
+                    if (result is string biomeId && !string.IsNullOrWhiteSpace(biomeId))
+                    {
+                        return biomeId;
+                    }
+                }
+            }
             // Placeholder parity API for the Godot world query service.
             // A later biome-index issue can replace this without changing creature AI callers.
             return string.IsNullOrWhiteSpace(defaultBiomeId) ? "default" : defaultBiomeId;
@@ -161,6 +178,39 @@ namespace ApexShift.Runtime.World.Query
             {
                 ecosystem = EcosystemRuntime.Instance;
             }
+        }
+
+        private void ResolveDirector()
+        {
+            if (ecosystemDirector != null)
+            {
+                return;
+            }
+
+            if (ecosystem != null)
+            {
+                ecosystemDirector = ecosystem.GetComponent<MonoBehaviour>();
+            }
+
+            if (ecosystemDirector == null)
+            {
+                ecosystemDirector = FindDirectorActive();
+            }
+        }
+
+        private static MonoBehaviour FindDirectorActive()
+        {
+            MonoBehaviour[] behaviours = Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude);
+            for (int i = 0; i < behaviours.Length; i++)
+            {
+                MonoBehaviour behaviour = behaviours[i];
+                if (behaviour != null && behaviour.GetType().Name == "EcosystemDirectorRuntime")
+                {
+                    return behaviour;
+                }
+            }
+
+            return null;
         }
     }
 }

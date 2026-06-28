@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using ApexShift.Core.Inventory;
 using ApexShift.Core.Save;
 using ApexShift.Infrastructure.Save;
+using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.World.Generation;
 using UnityEngine;
@@ -14,6 +15,7 @@ namespace ApexShift.Runtime.Save
         [SerializeField] private WorldGeneratorRuntime worldGenerator;
         [SerializeField] private PlayerInventoryRuntime playerInventory;
         [SerializeField] private PlayerSurvivalRuntime playerSurvival;
+        [SerializeField] private MonoBehaviour ecosystemDirector;
 
         private IGameSaveStore saveStore;
 
@@ -64,6 +66,11 @@ namespace ApexShift.Runtime.Save
             {
                 playerSurvival = FindAnyObjectByType<PlayerSurvivalRuntime>();
             }
+
+            if (ecosystemDirector == null)
+            {
+                ecosystemDirector = FindAnyObjectByType<MonoBehaviour>();
+            }
         }
 
         public GameSaveData CaptureCurrentState()
@@ -103,7 +110,9 @@ namespace ApexShift.Runtime.Save
             }
             Debug.Log($"[Save] Captured {resources.Count} resource nodes.");
 
-            WorldSaveData world = new WorldSaveData(seed, 1, 0f, resources);
+            List<BiomeEcosystemSaveData> biomeStates = CaptureBiomeStates();
+
+            WorldSaveData world = new WorldSaveData(seed, 1, 0f, resources, biomeStates);
             return new GameSaveData(inventory, survival, world);
         }
 
@@ -148,6 +157,8 @@ if (saveData == null)
 
             // Restore Resources
             RestoreResourceStates(saveData.World.Resources);
+
+            ApplyBiomeStates(saveData.World.BiomeStates);
 
             if (playerInventory != null)
             {
@@ -204,6 +215,39 @@ if (saveData == null)
         public void DeleteGame(string slotName)
         {
             GetSaveStore().Delete(slotName);
+        }
+
+        private List<BiomeEcosystemSaveData> CaptureBiomeStates()
+        {
+            if (ecosystemDirector == null)
+            {
+                return new List<BiomeEcosystemSaveData>();
+            }
+
+            System.Reflection.MethodInfo method = ecosystemDirector.GetType().GetMethod("CaptureSaveData");
+            if (method == null)
+            {
+                return new List<BiomeEcosystemSaveData>();
+            }
+
+            object result = method.Invoke(ecosystemDirector, null);
+            return result as List<BiomeEcosystemSaveData> ?? new List<BiomeEcosystemSaveData>();
+        }
+
+        private void ApplyBiomeStates(IReadOnlyList<BiomeEcosystemSaveData> biomeStates)
+        {
+            if (ecosystemDirector == null || biomeStates == null || biomeStates.Count == 0)
+            {
+                return;
+            }
+
+            System.Reflection.MethodInfo method = ecosystemDirector.GetType().GetMethod("LoadSaveData");
+            if (method == null)
+            {
+                return;
+            }
+
+            method.Invoke(ecosystemDirector, new object[] { biomeStates });
         }
 }
 }
