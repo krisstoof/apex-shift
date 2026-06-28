@@ -89,6 +89,7 @@ namespace ApexShift.Runtime.Player
 
             if (inventoryRuntime == null)
             {
+                Debug.LogWarning("[Crafting] Could not craft because PlayerInventoryRuntime is missing.", this);
                 LastResult = CraftingResult.Failed(CraftingResultStatus.InvalidRecipe, normalizedRecipeId);
                 LogCraftingResult(LastResult);
                 return LastResult;

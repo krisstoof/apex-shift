@@ -65,10 +65,8 @@ namespace ApexShift.Tests.Regression
                 Assert.IsNotNull(stateField);
 
                 float currentState = 0f;
-                float timeout = 1f;
-                while (timeout > 0f)
+                for (int i = 0; i < 120; i++)
                 {
-                    timeout -= Time.deltaTime;
                     yield return null;
 
                     currentState = (float)stateField.GetValue(driver);
