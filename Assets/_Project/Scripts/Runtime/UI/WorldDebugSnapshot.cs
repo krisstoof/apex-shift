@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace ApexShift.Runtime.UI.Snapshots
@@ -19,10 +21,16 @@ namespace ApexShift.Runtime.UI.Snapshots
         public int hungryCreatureCount;
         public float fps;
         public float realtimeSinceStartup;
+        public string[] recentEvents = Array.Empty<string>();
 
         public static WorldDebugSnapshot Empty => new WorldDebugSnapshot();
         public WorldDebugSnapshot() { }
         public WorldDebugSnapshot(int seed, Vector3 playerPosition, bool hasPlayer, int resourceCount, int creatureCount, int foodSourceCount, int plantFoodSourceCount, int meatFoodSourceCount, int navAgentsOnMesh, int navAgentsOffMesh, int hungryCreatureCount, float fps, float realtimeSinceStartup)
+            : this(seed, playerPosition, hasPlayer, resourceCount, creatureCount, foodSourceCount, plantFoodSourceCount, meatFoodSourceCount, navAgentsOnMesh, navAgentsOffMesh, hungryCreatureCount, fps, realtimeSinceStartup, Array.Empty<string>())
+        {
+        }
+
+        public WorldDebugSnapshot(int seed, Vector3 playerPosition, bool hasPlayer, int resourceCount, int creatureCount, int foodSourceCount, int plantFoodSourceCount, int meatFoodSourceCount, int navAgentsOnMesh, int navAgentsOffMesh, int hungryCreatureCount, float fps, float realtimeSinceStartup, IReadOnlyList<string> recentEvents)
         {
             this.seed = seed;
             this.playerPosition = playerPosition;
@@ -37,6 +45,7 @@ namespace ApexShift.Runtime.UI.Snapshots
             this.hungryCreatureCount = Math.Max(0, hungryCreatureCount);
             this.fps = Mathf.Max(0f, fps);
             this.realtimeSinceStartup = Mathf.Max(0f, realtimeSinceStartup);
+            this.recentEvents = recentEvents != null ? recentEvents.Where(line => !string.IsNullOrWhiteSpace(line)).ToArray() : Array.Empty<string>();
         }
     }
 }

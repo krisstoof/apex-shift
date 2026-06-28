@@ -4,6 +4,7 @@ using System.Text;
 using ApexShift.Core.Ecosystem;
 using ApexShift.Core.Save;
 using ApexShift.Runtime.Debugging;
+using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.World.Generation;
 using UnityEngine;
@@ -167,6 +168,7 @@ namespace ApexShift.Runtime.Ecosystem
             if (biomeStates.TryGetValue(biomeId, out BiomeEcosystemState state))
             {
                 state.ApplyPlantConsumption(amount);
+                GameEventBus.PublishBiomassChanged(position, biomeId, Mathf.Max(0f, amount), state.PlantBiomass);
             }
         }
 
@@ -176,6 +178,8 @@ namespace ApexShift.Runtime.Ecosystem
             foreach (BiomeEcosystemState state in biomeStates.Values)
             {
                 state.TickDays(safeDays);
+                GameEventBus.PublishEcosystemTickAdvanced(state.BiomeId, safeDays, "day_tick_advanced");
+                GameEventBus.PublishPopulationChanged(Vector3.zero, state.BiomeId, state.PopulationCount);
             }
 
             AdvanceResourceRegrowth(safeDays);
@@ -236,6 +240,8 @@ namespace ApexShift.Runtime.Ecosystem
             if (biomeStates.TryGetValue(biomeId, out BiomeEcosystemState state))
             {
                 state.TickDays(1);
+                GameEventBus.PublishEcosystemTickAdvanced(biomeId, 1f, "runtime_biome_tick_advanced");
+                GameEventBus.PublishPopulationChanged(Vector3.zero, biomeId, state.PopulationCount);
             }
         }
 

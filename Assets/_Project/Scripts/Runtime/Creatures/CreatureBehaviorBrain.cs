@@ -2,6 +2,7 @@ using UnityEngine;
 using ApexShift.Core.Ecosystem;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.World.Query;
+using ApexShift.Runtime.Events;
 
 namespace ApexShift.Runtime.Creatures
 {
@@ -157,7 +158,15 @@ namespace ApexShift.Runtime.Creatures
             {
                 float distance = HorizontalDistance(transform.position, prey.transform.position);
                 SetState(distance <= varnakPlayerAttackRange ? CreatureBehaviorState.Attack : distance <= varnakPlayerCloseChaseRange ? CreatureBehaviorState.Chase : CreatureBehaviorState.Stalk, $"prey d:{distance:0.0}");
-                if (distance > varnakPlayerAttackRange) MoveToTarget(prey.transform.position); else _agentView.Stop();
+                if (distance > varnakPlayerAttackRange)
+                {
+                    MoveToTarget(prey.transform.position);
+                }
+                else
+                {
+                    _agentView.Stop();
+                    PublishCreatureGameplayEvent(GetVarnakHuntEventKind(prey.CreatureId), prey.CreatureId, 1f, 0f, 0f, $"varnak_hunted_{prey.CreatureId}");
+                }
                 return;
             }
             if (_player != null)
@@ -166,7 +175,15 @@ namespace ApexShift.Runtime.Creatures
                 if (distance <= varnakPlayerDetectRange)
                 {
                     SetState(CreatureBehaviorState.Chase, $"player d:{distance:0.0}");
-                    if (distance > varnakPlayerAttackRange) MoveToTarget(_player.position); else _agentView.Stop();
+                    if (distance > varnakPlayerAttackRange)
+                    {
+                        MoveToTarget(_player.position);
+                    }
+                    else
+                    {
+                        _agentView.Stop();
+                        PublishCreatureGameplayEvent(GameplayEventKind.VarnakAttackedPlayer, "player", 1f, 0f, 0f, "varnak_attacked_player");
+                    }
                     return;
                 }
             }
@@ -207,6 +224,7 @@ namespace ApexShift.Runtime.Creatures
                 if (distance <= grazerSmallPreyAttackRange)
                 {
                     _agentView.Stop();
+                    PublishCreatureGameplayEvent(GameplayEventKind.GrazerHuntedSmallPrey, "small_prey", 1f, 0f, 0f, "grazer_hunted_small_prey");
                 }
                 else
                 {
@@ -303,6 +321,7 @@ namespace ApexShift.Runtime.Creatures
             _needs.Eat(food.Kind, Mathf.Max(8f, nutrition));
             LastFoodSource = string.IsNullOrWhiteSpace(food.SourceId) ? "plants" : food.SourceId;
             EcosystemDirectorRuntime.Active?.DebugReducePlantBiomass(transform.position, requestedBiomass);
+            PublishCreatureGameplayEvent(GameplayEventKind.GrazerConsumedPlants, "plants", requestedBiomass, nutrition, requestedBiomass, "grazer_consumed_plants");
         }
 
         private void ConsumeGrazerMeat(FoodSourceView food)
@@ -324,6 +343,7 @@ namespace ApexShift.Runtime.Creatures
             }
 
             LastFoodSource = string.IsNullOrWhiteSpace(food.SourceId) ? "meat_drop" : food.SourceId;
+            PublishCreatureGameplayEvent(GameplayEventKind.GrazerScavengedMeat, "meat_drop", requestedBiomass, requestedNutrition, 0f, "grazer_scavenged_meat");
             if (_needs.State.Hunger >= before)
             {
                 _needs.Eat(minimumReduction);
@@ -399,6 +419,7 @@ namespace ApexShift.Runtime.Creatures
             _needs.Eat(food.Kind, Mathf.Max(0.5f, nutrition));
             LastFoodSource = string.IsNullOrWhiteSpace(food.SourceId) ? "plants" : food.SourceId;
             EcosystemDirectorRuntime.Active?.DebugReducePlantBiomass(transform.position, requestedBiomass);
+            PublishCreatureGameplayEvent(GameplayEventKind.SmallPreyConsumedPlants, "plants", requestedBiomass, nutrition, requestedBiomass, "small_prey_consumed_plants");
         }
 
         private void TickReducedSimulation(float elapsedSeconds, string mode)
@@ -520,6 +541,23 @@ namespace ApexShift.Runtime.Creatures
         private void ResolvePlayer() { if (_player != null && _player.gameObject.activeInHierarchy) return; GameObject playerObject = null; try { playerObject = GameObject.FindWithTag("Player"); } catch (UnityException) { } if (playerObject == null) playerObject = GameObject.Find("Player"); if (playerObject == null) { var controller = Object.FindAnyObjectByType<ApexShift.Runtime.Player.IsometricPlayerController>(); if (controller != null) playerObject = controller.gameObject; } _player = playerObject != null ? playerObject.transform : null; }
         private void SetState(CreatureBehaviorState next) => SetState(next, DecisionReason);
         private void SetState(CreatureBehaviorState next, string reason) { _state = next; DecisionReason = string.IsNullOrWhiteSpace(reason) ? next.ToString() : reason; if (_debugOverlay != null) _debugOverlay.SetBehaviorState(next); }
+        private GameplayEventKind GetVarnakHuntEventKind(string targetCreatureId)
+        {
+            string target = (targetCreatureId ?? string.Empty).Trim().ToLowerInvariant();
+            return target == "grazer" ? GameplayEventKind.VarnakHuntedGrazer : GameplayEventKind.VarnakHuntedSmallPrey;
+        }
+
+        private void PublishCreatureGameplayEvent(GameplayEventKind kind, string targetKind, float amount, float nutrition, float biomassImpact, string message)
+        {
+            string actor = _agentView != null && !string.IsNullOrWhiteSpace(_agentView.CreatureId) ? _agentView.CreatureId : gameObject.name;
+            GameEventBus.PublishCreatureEvent(kind, transform.position, ResolveEventBiomeId(), actor, targetKind, amount, nutrition, biomassImpact, message);
+        }
+
+        private string ResolveEventBiomeId()
+        {
+            if (!string.IsNullOrWhiteSpace(CurrentBiomeId) && CurrentBiomeId != "default") return CurrentBiomeId;
+            return _worldQuery != null ? _worldQuery.GetBiomeIdForPosition(transform.position) : "default";
+        }
         private void SetWanderEnabled(bool enabled) { if (_wander != null) _wander.enabled = enabled; }
         public void SetBehaviorStateForTests(CreatureBehaviorState state, string reason = "test") => SetState(state, reason);
         public void RestoreSaveState(string behaviorState, string decisionReason, string lastFoodSource, string currentBiomeId, string homeBiomeId, string populationBiomeId, float attackCooldown, string currentNiche, float huntDrive)

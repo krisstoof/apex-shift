@@ -3,6 +3,7 @@ using ApexShift.Core.Ecosystem;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Interaction;
 using ApexShift.Runtime.Player;
+using ApexShift.Runtime.Events;
 using UnityEngine;
 
 namespace ApexShift.Runtime.Resources
@@ -155,6 +156,13 @@ namespace ApexShift.Runtime.Resources
             }
 
             Debug.Log($"[ResourceNode] Harvested: {result.Message}. Total in inventory: {inventoryRuntime.Inventory.GetAmount(state.ItemId)}", this);
+            GameEventBus.PublishResourceHarvested(
+                transform.position,
+                ResolveEventBiomeId(),
+                result.ResourceId,
+                result.ItemId,
+                result.AddedAmount,
+                result.Message);
             RefreshFoodSourceBridge();
             if (result.ShouldRemoveNode)
             {
@@ -206,6 +214,18 @@ namespace ApexShift.Runtime.Resources
 
             RefreshFoodSourceBridge();
             return true;
+        }
+
+        private string ResolveEventBiomeId()
+        {
+            EcosystemDirectorRuntime director = EcosystemDirectorRuntime.Active;
+            if (director == null)
+            {
+                return "default";
+            }
+
+            string biomeId = director.GetBiomeIdForPosition(transform.position);
+            return string.IsNullOrWhiteSpace(biomeId) ? "default" : biomeId;
         }
 
         private void EnsureState()

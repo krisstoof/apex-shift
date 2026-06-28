@@ -49,15 +49,6 @@ namespace ApexShift.Runtime.Creatures
             simulationLod = GetComponent<CreatureSimulationLodRuntime>();
         }
 
-        private void EnsureRuntimeReferences()
-        {
-            if (agentView == null) agentView = GetComponent<CreatureAgentView>();
-            if (needs == null) needs = GetComponent<CreatureNeedsRuntime>();
-            if (behaviorRuntime == null) behaviorRuntime = GetComponent<CreatureBehaviorBrain>();
-            if (navAgent == null) navAgent = GetComponent<NavMeshAgent>();
-            if (simulationLod == null) simulationLod = GetComponent<CreatureSimulationLodRuntime>();
-        }
-
         public void SetBehaviorState(CreatureBehaviorState state)
         {
             behaviorState = state;
@@ -124,82 +115,6 @@ namespace ApexShift.Runtime.Creatures
             }
 
             return cachedDebugText;
-        }
-
-        private string GetBehaviorLabel()
-        {
-            EnsureRuntimeReferences();
-
-            if (navAgent == null)
-            {
-                return "no_nav_agent";
-            }
-
-            if (!navAgent.isOnNavMesh)
-            {
-                return "off_navmesh";
-            }
-
-            if (behaviorRuntime != null)
-            {
-                behaviorState = behaviorRuntime.State;
-                return behaviorRuntime.State.ToString().ToLowerInvariant();
-            }
-
-            if (foodSeeking != null && foodSeeking.HasTarget)
-            {
-                return foodSeeking.IsEating ? "eat_food" : "seek_food";
-            }
-
-            if (navAgent.hasPath && navAgent.remainingDistance > navAgent.stoppingDistance + 0.1f)
-            {
-                return "move/wander";
-            }
-
-            if (needs != null && needs.IsHungry)
-            {
-                return "hungry_idle";
-            }
-
-            return "idle";
-        }
-
-        private string GetNavigationLabel()
-        {
-            if (navAgent == null)
-            {
-                return "missing";
-            }
-
-            return navAgent.isOnNavMesh
-                ? $"on path:{navAgent.hasPath} rem:{navAgent.remainingDistance:0.0} vel:{navAgent.velocity.magnitude:0.0}"
-                : "off navmesh";
-        }
-
-        private string GetTargetLabel()
-        {
-            EnsureRuntimeReferences();
-
-            if (behaviorRuntime != null)
-            {
-                string label = behaviorRuntime.CurrentTargetLabel;
-                if (behaviorRuntime.CurrentTargetTransform != null)
-                {
-                    float targetDistance = Vector3.Distance(transform.position, behaviorRuntime.CurrentTargetTransform.position);
-                    return $"{label} {targetDistance:0.0}m";
-                }
-
-                return label;
-            }
-
-            if (foodSeeking == null || foodSeeking.CurrentTarget == null)
-            {
-                return "none";
-            }
-
-            FoodSourceView target = foodSeeking.CurrentTarget;
-            float distance = Vector3.Distance(transform.position, target.transform.position);
-            return $"{target.Kind} {distance:0.0}m {target.SourceId}";
         }
 
         private Color GetFrameColor()

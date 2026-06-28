@@ -21,7 +21,7 @@ namespace ApexShift.Tests.Regression
                 Assert.AreEqual("small_prey", data.speciesId);
                 Assert.AreEqual("none", data.currentTarget);
                 Assert.AreEqual("none", data.targetDetails);
-                Assert.AreEqual("missing", data.navStatus);
+                Assert.AreEqual("off", data.navStatus);
                 Assert.DoesNotThrow(() => data.ToOverlayText());
             }
             finally
@@ -41,9 +41,9 @@ namespace ApexShift.Tests.Regression
                 CreatureNeedsRuntime needs = creature.AddComponent<CreatureNeedsRuntime>();
                 needs.Configure("grazer");
                 needs.State.SetHunger(70f);
-                creature.AddComponent<CreatureHealthRuntime>().Configure("grazer");
                 creature.AddComponent<CreatureSimulationLodRuntime>();
                 creature.AddComponent<CreatureBehaviorBrain>();
+                creature.GetComponent<CreatureHealthRuntime>()?.Configure("grazer");
 
                 CreatureDebugData data = CreatureDebugData.Capture(creature);
 
@@ -71,7 +71,7 @@ namespace ApexShift.Tests.Regression
                 CreatureNeedsRuntime needs = creature.AddComponent<CreatureNeedsRuntime>();
                 needs.Configure("varnak");
                 CreatureBehaviorBrain brain = creature.AddComponent<CreatureBehaviorBrain>();
-                creature.AddComponent<CreatureHealthRuntime>().Configure("varnak");
+                creature.GetComponent<CreatureHealthRuntime>()?.Configure("varnak");
                 creature.AddComponent<CreatureSimulationLodRuntime>();
 
                 meat.transform.position = new Vector3(2f, 0f, 0f);
