@@ -1,3 +1,4 @@
+using System.Collections;
 using ApexShift.Core.Ecosystem;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
@@ -7,6 +8,7 @@ using ApexShift.Runtime.World.Query;
 using NUnit.Framework;
 using UnityEngine.AI;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace ApexShift.Tests.Unit.World
 {
@@ -68,16 +70,13 @@ namespace ApexShift.Tests.Unit.World
             }
         }
 
-        [Test]
-        public void TryFindNearestCreatureByIdUsesRegisteredCreatures()
+        [UnityTest]
+        public IEnumerator TryFindNearestCreatureByIdUsesRegisteredCreatures()
         {
             GameObject ecosystemObject = new GameObject("Ecosystem");
             GameObject navMeshRoot = null;
             GameObject farCreature = new GameObject("FarSmallPrey");
             GameObject nearCreature = new GameObject("NearSmallPrey");
-            NavMeshData navMeshData = null;
-            NavMeshDataInstance navMeshInstance = default;
-
             try
             {
                 EcosystemRuntime ecosystem = ecosystemObject.AddComponent<EcosystemRuntime>();
@@ -86,8 +85,14 @@ namespace ApexShift.Tests.Unit.World
                 navMeshRoot = GameObject.CreatePrimitive(PrimitiveType.Plane);
                 navMeshRoot.name = "NavMeshRoot";
                 navMeshRoot.transform.position = Vector3.zero;
-                navMeshData = BuildNavMeshFor(navMeshRoot);
-                navMeshInstance = NavMesh.AddNavMeshData(navMeshData);
+                System.Type navMeshSurfaceType = System.Type.GetType("Unity.AI.Navigation.NavMeshSurface, Unity.AI.Navigation");
+                Assert.IsNotNull(navMeshSurfaceType, "Could not resolve NavMeshSurface.");
+                Component surface = navMeshRoot.AddComponent(navMeshSurfaceType);
+                System.Type collectObjectsType = navMeshSurfaceType.Assembly.GetType("Unity.AI.Navigation.CollectObjects");
+                Assert.IsNotNull(collectObjectsType, "Could not resolve CollectObjects.");
+                navMeshSurfaceType.GetProperty("collectObjects")?.SetValue(surface, System.Enum.Parse(collectObjectsType, "Children"));
+                navMeshSurfaceType.GetMethod("BuildNavMesh")?.Invoke(surface, null);
+                yield return null;
 
                 farCreature.transform.position = new Vector3(20f, 0f, 0f);
                 CreatureAgentView far = farCreature.AddComponent<CreatureAgentView>();
@@ -106,12 +111,6 @@ namespace ApexShift.Tests.Unit.World
             }
             finally
             {
-                if (navMeshInstance.valid)
-                {
-                    navMeshInstance.Remove();
-                }
-
-                Object.DestroyImmediate(navMeshData);
                 Object.DestroyImmediate(navMeshRoot);
                 Object.DestroyImmediate(nearCreature);
                 Object.DestroyImmediate(farCreature);
@@ -119,16 +118,13 @@ namespace ApexShift.Tests.Unit.World
             }
         }
 
-        [Test]
-        public void TryFindNearestPreyIgnoresPredatorsAndDeadCreatures()
+        [UnityTest]
+        public IEnumerator TryFindNearestPreyIgnoresPredatorsAndDeadCreatures()
         {
             GameObject ecosystemObject = new GameObject("Ecosystem");
             GameObject navMeshRoot = null;
             GameObject predatorObject = new GameObject("Varnak");
             GameObject preyObject = new GameObject("SmallPrey");
-            NavMeshData navMeshData = null;
-            NavMeshDataInstance navMeshInstance = default;
-
             try
             {
                 EcosystemRuntime ecosystem = ecosystemObject.AddComponent<EcosystemRuntime>();
@@ -137,8 +133,14 @@ namespace ApexShift.Tests.Unit.World
                 navMeshRoot = GameObject.CreatePrimitive(PrimitiveType.Plane);
                 navMeshRoot.name = "NavMeshRoot";
                 navMeshRoot.transform.position = Vector3.zero;
-                navMeshData = BuildNavMeshFor(navMeshRoot);
-                navMeshInstance = NavMesh.AddNavMeshData(navMeshData);
+                System.Type navMeshSurfaceType = System.Type.GetType("Unity.AI.Navigation.NavMeshSurface, Unity.AI.Navigation");
+                Assert.IsNotNull(navMeshSurfaceType, "Could not resolve NavMeshSurface.");
+                Component surface = navMeshRoot.AddComponent(navMeshSurfaceType);
+                System.Type collectObjectsType = navMeshSurfaceType.Assembly.GetType("Unity.AI.Navigation.CollectObjects");
+                Assert.IsNotNull(collectObjectsType, "Could not resolve CollectObjects.");
+                navMeshSurfaceType.GetProperty("collectObjects")?.SetValue(surface, System.Enum.Parse(collectObjectsType, "Children"));
+                navMeshSurfaceType.GetMethod("BuildNavMesh")?.Invoke(surface, null);
+                yield return null;
 
                 predatorObject.transform.position = new Vector3(1f, 0f, 0f);
                 CreatureAgentView predator = predatorObject.AddComponent<CreatureAgentView>();
@@ -157,12 +159,6 @@ namespace ApexShift.Tests.Unit.World
             }
             finally
             {
-                if (navMeshInstance.valid)
-                {
-                    navMeshInstance.Remove();
-                }
-
-                Object.DestroyImmediate(navMeshData);
                 Object.DestroyImmediate(navMeshRoot);
                 Object.DestroyImmediate(preyObject);
                 Object.DestroyImmediate(predatorObject);
@@ -211,28 +207,5 @@ namespace ApexShift.Tests.Unit.World
             }
         }
 
-        private static NavMeshData BuildNavMeshFor(GameObject root)
-        {
-            MeshFilter meshFilter = root.GetComponent<MeshFilter>();
-            MeshRenderer meshRenderer = root.GetComponent<MeshRenderer>();
-            if (meshFilter == null || meshRenderer == null)
-            {
-                return new NavMeshData();
-            }
-
-            NavMeshBuildSettings settings = NavMesh.GetSettingsByID(0);
-            System.Collections.Generic.List<NavMeshBuildSource> sources = new System.Collections.Generic.List<NavMeshBuildSource>();
-            NavMeshBuildSource source = new NavMeshBuildSource
-            {
-                shape = NavMeshBuildSourceShape.Mesh,
-                sourceObject = meshFilter.sharedMesh,
-                transform = root.transform.localToWorldMatrix,
-                area = 0
-            };
-            sources.Add(source);
-
-            Bounds bounds = new Bounds(root.transform.position, new Vector3(50f, 2f, 50f));
-            return NavMeshBuilder.BuildNavMeshData(settings, sources, bounds, root.transform.position, root.transform.rotation);
-        }
     }
 }

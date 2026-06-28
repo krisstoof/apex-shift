@@ -67,5 +67,69 @@ namespace ApexShift.Tests.Regression
                 Object.DestroyImmediate(ecosystemObject);
             }
         }
+
+        [UnityTest]
+        public IEnumerator GrazerCanTargetSmallPreyWithoutBreakingFallbackBehavior()
+        {
+            GameObject ecosystemObject = new GameObject("Ecosystem");
+            GameObject navMeshRoot = null;
+            GameObject preyObject = null;
+            GameObject creatureObject = null;
+            try
+            {
+                ecosystemObject.AddComponent<EcosystemRuntime>();
+
+                navMeshRoot = new GameObject("NavMeshRoot");
+                GameObject navMeshFloor = GameObject.CreatePrimitive(PrimitiveType.Plane);
+                navMeshFloor.name = "NavMeshFloor";
+                navMeshFloor.transform.SetParent(navMeshRoot.transform);
+                navMeshFloor.transform.position = Vector3.zero;
+                navMeshFloor.transform.localScale = new Vector3(2f, 1f, 2f);
+
+                System.Type navMeshSurfaceType = System.Type.GetType("Unity.AI.Navigation.NavMeshSurface, Unity.AI.Navigation");
+                Assert.IsNotNull(navMeshSurfaceType, "Could not resolve NavMeshSurface.");
+                Component surface = navMeshRoot.AddComponent(navMeshSurfaceType);
+                System.Type collectObjectsType = navMeshSurfaceType.Assembly.GetType("Unity.AI.Navigation.CollectObjects");
+                Assert.IsNotNull(collectObjectsType, "Could not resolve CollectObjects.");
+                navMeshSurfaceType.GetProperty("collectObjects")?.SetValue(surface, System.Enum.Parse(collectObjectsType, "Children"));
+                navMeshSurfaceType.GetMethod("BuildNavMesh")?.Invoke(surface, null);
+
+                preyObject = new GameObject("Creature_small_prey");
+                preyObject.AddComponent<CreatureNavigationAdapter>();
+                preyObject.AddComponent<CreatureAgentView>().Configure("small_prey");
+                preyObject.AddComponent<CreatureNeedsRuntime>().Configure("small_prey");
+                preyObject.AddComponent<CreatureHealthRuntime>().Configure("small_prey");
+                preyObject.AddComponent<CreatureBehaviorBrain>();
+                preyObject.AddComponent<CreatureBehaviorRuntime>();
+                preyObject.transform.position = new Vector3(2f, 0f, 0f);
+
+                creatureObject = new GameObject("Creature_grazer");
+                creatureObject.AddComponent<CreatureNavigationAdapter>();
+                creatureObject.AddComponent<CreatureAgentView>().Configure("grazer");
+                creatureObject.AddComponent<CreatureNeedsRuntime>().Configure("grazer");
+                creatureObject.AddComponent<CreatureHealthRuntime>().Configure("grazer");
+                CreatureBehaviorBrain brain = creatureObject.AddComponent<CreatureBehaviorBrain>();
+                creatureObject.AddComponent<CreatureBehaviorRuntime>();
+
+                creatureObject.transform.position = Vector3.zero;
+
+                for (int i = 0; i < 2; i++)
+                {
+                    yield return null;
+                }
+
+                Assert.That(
+                    brain.CurrentTargetLabel.Contains("small_prey") || brain.State == CreatureBehaviorState.Flee,
+                    Is.True,
+                    "Grazer should still recognize nearby small prey or preserve its existing fallback state.");
+            }
+            finally
+            {
+                if (creatureObject != null) Object.DestroyImmediate(creatureObject);
+                if (preyObject != null) Object.DestroyImmediate(preyObject);
+                if (navMeshRoot != null) Object.DestroyImmediate(navMeshRoot);
+                Object.DestroyImmediate(ecosystemObject);
+            }
+        }
     }
 }
