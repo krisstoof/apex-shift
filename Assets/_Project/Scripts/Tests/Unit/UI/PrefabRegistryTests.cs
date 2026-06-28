@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ApexShift.Runtime.World.Biomes;
 using ApexShift.Runtime.World.Generation;
 using NUnit.Framework;
@@ -14,7 +15,7 @@ namespace ApexShift.Tests.Unit.UI
             GameObject coniferA = new GameObject("ConiferA");
             GameObject coniferB = new GameObject("ConiferB");
 
-            SetField(registry, "resourcePrefabs", new[]
+            SetField(registry, "resourcePrefabs", new List<ResourcePrefabEntry>
             {
                 CreateResourceEntry(VegetationSpawnKind.ConiferTree, coniferA),
                 CreateResourceEntry(VegetationSpawnKind.ConiferTree, coniferB)
@@ -32,7 +33,7 @@ namespace ApexShift.Tests.Unit.UI
             PrefabRegistry registry = ScriptableObject.CreateInstance<PrefabRegistry>();
             GameObject grazer = new GameObject("Grazer");
 
-            SetField(registry, "creaturePrefabs", new[]
+            SetField(registry, "creaturePrefabs", new List<CreaturePrefabEntry>
             {
                 CreateCreatureEntry("Grazer", grazer)
             });
@@ -48,7 +49,7 @@ namespace ApexShift.Tests.Unit.UI
         {
             PrefabRegistry registry = ScriptableObject.CreateInstance<PrefabRegistry>();
 
-            SetField(registry, "buildingPrefabs", new BuildingPrefabEntry[0]);
+            SetField(registry, "buildingPrefabs", new List<BuildingPrefabEntry>());
 
             bool found = registry.TryGetBuildingPrefab("campfire", out GameObject prefab);
 

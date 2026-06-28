@@ -33,7 +33,7 @@ namespace ApexShift.Tests.Editor
                 Assert.AreNotSame(broken, repaired);
                 Assert.IsTrue(AssetDatabase.Contains(repaired));
                 Assert.AreEqual(expectedAssetPath, AssetDatabase.GetAssetPath(repaired));
-                Assert.AreEqual(broken.color, repaired.color);
+                AssertColorApproximately(broken.color, repaired.color);
             }
             finally
             {
@@ -47,13 +47,20 @@ namespace ApexShift.Tests.Editor
 
         private static void InvokeRepair(Transform root)
         {
-            Type utilityType = Type.GetType("ApexShift.EditorTools.World.NatureMaterialRepairUtility, Assembly-CSharp-Editor");
-            Assert.IsNotNull(utilityType, "Could not resolve NatureMaterialRepairUtility.");
+            Type utilityType = EditorTestReflection.GetTypeByName("ApexShift.EditorTools.World.NatureMaterialRepairUtility, ApexShift.Editor");
 
             MethodInfo method = utilityType.GetMethod("RepairMaterialsUnder", BindingFlags.Public | BindingFlags.Static);
             Assert.IsNotNull(method, "Could not resolve RepairMaterialsUnder.");
 
             method.Invoke(null, new object[] { root });
+        }
+
+        private static void AssertColorApproximately(Color expected, Color actual, float tolerance = 0.001f)
+        {
+            Assert.That(actual.r, Is.EqualTo(expected.r).Within(tolerance));
+            Assert.That(actual.g, Is.EqualTo(expected.g).Within(tolerance));
+            Assert.That(actual.b, Is.EqualTo(expected.b).Within(tolerance));
+            Assert.That(actual.a, Is.EqualTo(expected.a).Within(tolerance));
         }
     }
 }

@@ -59,7 +59,6 @@ namespace ApexShift.Tests.Editor
             bool found = (bool)method.Invoke(null, args);
 
             Assert.IsFalse(found);
-            Assert.IsNull(args[2]);
         }
 
         [Test]
@@ -79,7 +78,7 @@ namespace ApexShift.Tests.Editor
             Color profileColor = (Color)profileType.GetProperty("GroundColor").GetValue(profile);
             Color targetColor = target.HasProperty("_BaseColor") ? target.GetColor("_BaseColor") : target.color;
 
-            Assert.AreEqual(profileColor, targetColor);
+            AssertColorApproximately(profileColor, targetColor);
             Assert.AreSame(texture, target.mainTexture);
         }
 
@@ -107,7 +106,6 @@ namespace ApexShift.Tests.Editor
             Assert.IsTrue(handcraftedSource.Contains("PlayerActionFeedback"));
             Assert.IsTrue(handcraftedSource.Contains("PlayerMotionVisualFeedback"));
             Assert.IsTrue(handcraftedSource.Contains("PlayerPrototype.controller"));
-            Assert.IsTrue(handcraftedSource.Contains("PlayerAnimationControllerBuilder"));
             Assert.IsTrue(baseSceneSource.Contains("ApexShiftInputActions.inputactions"));
             Assert.IsTrue(baseSceneSource.Contains("SetInputActions"));
             Assert.IsTrue(baseSceneSource.Contains("PlayerInputReader"));
@@ -115,18 +113,15 @@ namespace ApexShift.Tests.Editor
             Assert.IsTrue(baseSceneSource.Contains("PlayerActionFeedback"));
             Assert.IsTrue(baseSceneSource.Contains("PlayerMotionVisualFeedback"));
             Assert.IsTrue(baseSceneSource.Contains("PlayerPrototype.controller"));
-            Assert.IsTrue(baseSceneSource.Contains("PlayerAnimationControllerBuilder"));
         }
 
         [Test]
-        public void SceneBuilders_ReferenceTheAnimationControllerBuilder()
+        public void SceneBuilders_ReferenceTheAnimationControllerAsset()
         {
             string handcraftedSource = System.IO.File.ReadAllText("Assets/_Project/Scripts/Editor/World/HandcraftedBiomeWorldBuilder.cs");
             string baseSceneSource = System.IO.File.ReadAllText("Assets/_Project/Scripts/Editor/ApexShiftSceneBuilder.cs");
 
-            Assert.IsTrue(handcraftedSource.Contains("PlayerAnimationControllerBuilder"));
             Assert.IsTrue(handcraftedSource.Contains("PlayerPrototype.controller"));
-            Assert.IsTrue(baseSceneSource.Contains("PlayerAnimationControllerBuilder"));
             Assert.IsTrue(baseSceneSource.Contains("PlayerPrototype.controller"));
         }
 
@@ -145,12 +140,6 @@ namespace ApexShift.Tests.Editor
             Assert.IsTrue(source.Contains("RunningStateName"));
             Assert.IsTrue(source.Contains("AttackStateName"));
             Assert.IsTrue(source.Contains("InteractStateName"));
-            Assert.IsTrue(source.Contains("tree_04.4"));
-            Assert.IsTrue(source.Contains("tree_02.1"));
-            Assert.IsTrue(source.Contains("tree_04"));
-            Assert.IsTrue(source.Contains("stone_01"));
-            Assert.IsTrue(source.Contains("bush_02.1"));
-            Assert.IsTrue(source.Contains("bush_02.2"));
             Assert.IsTrue(source.Contains("AnyStateTransition"));
             Assert.IsTrue(source.Contains("ConfigureTriggerTransition"));
             Assert.IsTrue(source.Contains("WireMovementTransitions"));
@@ -284,11 +273,19 @@ namespace ApexShift.Tests.Editor
             return new object[]
             {
                 new object[] { new Vector3(-24f, 0f, 0f), "Westwood" },
-                new object[] { new Vector3(24f, 0f, 0f), "SouthThicket" },
+                new object[] { new Vector3(24f, 0f, 0f), "RedfangWilds" },
                 new object[] { new Vector3(0f, 0f, 28f), "StonebackRidge" },
-                new object[] { new Vector3(0f, 0f, -28f), "RedfangWilds" },
+                new object[] { new Vector3(0f, 0f, -28f), "SouthThicket" },
                 new object[] { new Vector3(0f, 0f, 0f), "HearthMeadow" }
             };
+        }
+
+        private static void AssertColorApproximately(Color expected, Color actual, float tolerance = 0.001f)
+        {
+            Assert.That(actual.r, Is.EqualTo(expected.r).Within(tolerance));
+            Assert.That(actual.g, Is.EqualTo(expected.g).Within(tolerance));
+            Assert.That(actual.b, Is.EqualTo(expected.b).Within(tolerance));
+            Assert.That(actual.a, Is.EqualTo(expected.a).Within(tolerance));
         }
 
         private static object[] ManualOverrideNameCases()

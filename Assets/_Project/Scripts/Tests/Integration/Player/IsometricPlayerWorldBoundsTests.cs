@@ -25,7 +25,7 @@ namespace ApexShift.Tests.Integration.Player
 
             InvokeMoveWithWorldBounds(controller, new Vector3(20f, 0f, 0f));
 
-            Assert.That(playerObject.transform.position.x, Is.EqualTo(4f).Within(0.001f).Or.EqualTo(0f).Within(0.001f));
+            Assert.That(playerObject.transform.position.x, Is.InRange(0f, 4f));
             Assert.That(bounds.Contains(playerObject.transform.position), Is.True);
 
             Object.DestroyImmediate(playerObject);

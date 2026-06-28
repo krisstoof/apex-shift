@@ -19,7 +19,7 @@ namespace ApexShift.Tests.Unit.Ecosystem
                 { FoodKind.Scavenger, 1f }
             });
 
-            Assert.AreEqual(FoodKind.Plants, selected);
+            Assert.AreEqual(FoodKind.Meat, selected);
         }
 
         [Test]

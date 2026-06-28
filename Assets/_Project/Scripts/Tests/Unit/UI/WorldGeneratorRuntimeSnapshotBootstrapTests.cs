@@ -13,17 +13,29 @@ namespace ApexShift.Tests.Unit.UI
         public void EnsureMethods_CreateSnapshotRuntimeComponents()
         {
             GameObject root = new GameObject("GeneratorRoot");
-            WorldGeneratorRuntime generator = root.AddComponent<WorldGeneratorRuntime>();
+            try
+            {
+                WorldGeneratorRuntime generator = root.AddComponent<WorldGeneratorRuntime>();
 
-            InvokePrivate(generator, "EnsureGameSnapshotProvider");
-            InvokePrivate(generator, "EnsureDebugPanelPresenter");
+                InvokePrivate(generator, "EnsureGameSnapshotProvider");
+                InvokePrivate(generator, "EnsureDebugPanelPresenter");
 
-            Assert.IsNotNull(Object.FindAnyObjectByType<GameSnapshotProvider>());
-            Assert.IsNotNull(Object.FindAnyObjectByType<DebugPanelPresenter>());
+                Assert.That(Object.FindObjectsByType<GameSnapshotProvider>(FindObjectsInactive.Include, FindObjectsSortMode.None), Is.Not.Empty);
+                Assert.That(Object.FindObjectsByType<DebugPanelPresenter>(FindObjectsInactive.Include, FindObjectsSortMode.None), Is.Not.Empty);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                foreach (GameSnapshotProvider provider in Object.FindObjectsByType<GameSnapshotProvider>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                {
+                    Object.DestroyImmediate(provider.gameObject);
+                }
 
-            Object.DestroyImmediate(root);
-            Object.DestroyImmediate(Object.FindAnyObjectByType<GameSnapshotProvider>()?.gameObject);
-            Object.DestroyImmediate(Object.FindAnyObjectByType<DebugPanelPresenter>()?.gameObject);
+                foreach (DebugPanelPresenter presenter in Object.FindObjectsByType<DebugPanelPresenter>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                {
+                    Object.DestroyImmediate(presenter.gameObject);
+                }
+            }
         }
 
         private static void InvokePrivate(object target, string methodName)

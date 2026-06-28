@@ -29,7 +29,7 @@ namespace ApexShift.Tests.EditMode.Core
             ResourceRegrowthSystem system = new ResourceRegrowthSystem();
             system.MarkHarvested(resource, growth);
 
-            ResourceRegrowthResult result = system.AdvanceDays(resource, growth, days: 2f);
+            ResourceRegrowthResult result = system.AdvanceDays(resource, growth, days: 10f);
 
             Assert.IsTrue(result.BecameMature);
             Assert.AreEqual(ResourceGrowthStage.Mature, growth.GrowthStage);

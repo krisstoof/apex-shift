@@ -1,4 +1,5 @@
 using System.Text;
+using System.Linq;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Flow;
 using ApexShift.Runtime.UI.Snapshots;
@@ -60,7 +61,10 @@ namespace ApexShift.Runtime.UI.Debugging
             builder.AppendLine();
             builder.AppendLine("=== INVENTORY ===");
             builder.AppendLine($"slots: {inventory.occupiedSlotCount}/{inventory.slotCount}  empty: {inventory.emptySlotCount}");
-            foreach (InventoryItemSnapshot item in inventory.items) builder.AppendLine($"- {item.itemId}: {item.amount}");
+            foreach (InventoryItemSnapshot item in inventory.items.OrderBy(item => item.itemId, System.StringComparer.Ordinal))
+            {
+                builder.AppendLine($"- {item.itemId}: {item.amount}");
+            }
             return builder.ToString();
         }
         private bool WasTogglePressed()

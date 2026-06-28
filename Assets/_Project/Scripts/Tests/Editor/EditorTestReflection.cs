@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 
@@ -9,6 +10,23 @@ namespace ApexShift.Tests.Editor
         public static Type GetTypeByName(string typeName)
         {
             Type type = Type.GetType(typeName);
+            if (type != null)
+            {
+                return type;
+            }
+
+            string fullName = typeName;
+            int assemblySeparator = typeName.IndexOf(',');
+            if (assemblySeparator >= 0)
+            {
+                fullName = typeName.Substring(0, assemblySeparator).Trim();
+            }
+
+            type = AppDomain.CurrentDomain
+                .GetAssemblies()
+                .Select(assembly => assembly.GetType(fullName))
+                .FirstOrDefault(candidate => candidate != null);
+
             Assert.IsNotNull(type, "Could not resolve " + typeName + ".");
             return type;
         }

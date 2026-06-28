@@ -59,8 +59,9 @@ namespace ApexShift.Runtime.PlayerInput
                 CacheActions();
             }
 
-            if (gameplayMap == null)
+            if (!HasRequiredActions())
             {
+                Debug.LogWarning("PlayerInputReader is missing required Player action map/actions. Input will not work until a complete InputActionAsset is assigned.", this);
                 return;
             }
 
@@ -88,18 +89,18 @@ namespace ApexShift.Runtime.PlayerInput
             }
 
             inputActions.Disable();
-            moveAction.performed -= OnMove;
-            moveAction.canceled -= OnMove;
-            lookAction.performed -= OnLook;
-            lookAction.canceled -= OnLook;
-            sprintAction.performed -= OnSprint;
-            sprintAction.canceled -= OnSprint;
-            interactAction.performed -= OnInteract;
-            attackAction.performed -= OnAttack;
-            openInventoryAction.performed -= OnOpenInventory;
-            openCraftingAction.performed -= OnOpenCrafting;
-            toggleMapAction.performed -= OnToggleMap;
-            pauseAction.performed -= OnPause;
+            if (moveAction != null) moveAction.performed -= OnMove;
+            if (moveAction != null) moveAction.canceled -= OnMove;
+            if (lookAction != null) lookAction.performed -= OnLook;
+            if (lookAction != null) lookAction.canceled -= OnLook;
+            if (sprintAction != null) sprintAction.performed -= OnSprint;
+            if (sprintAction != null) sprintAction.canceled -= OnSprint;
+            if (interactAction != null) interactAction.performed -= OnInteract;
+            if (attackAction != null) attackAction.performed -= OnAttack;
+            if (openInventoryAction != null) openInventoryAction.performed -= OnOpenInventory;
+            if (openCraftingAction != null) openCraftingAction.performed -= OnOpenCrafting;
+            if (toggleMapAction != null) toggleMapAction.performed -= OnToggleMap;
+            if (pauseAction != null) pauseAction.performed -= OnPause;
         }
 
         private void CacheActions()
@@ -109,16 +110,30 @@ namespace ApexShift.Runtime.PlayerInput
                 return;
             }
 
-            gameplayMap = inputActions.FindActionMap("Player", true);
-            moveAction = gameplayMap.FindAction("Move", true);
-            lookAction = gameplayMap.FindAction("Look", true);
-            interactAction = gameplayMap.FindAction("Interact", true);
-            attackAction = gameplayMap.FindAction("Attack", true);
-            sprintAction = gameplayMap.FindAction("Sprint", true);
-            openInventoryAction = gameplayMap.FindAction("OpenInventory", true);
-            openCraftingAction = gameplayMap.FindAction("OpenCrafting", true);
-            toggleMapAction = gameplayMap.FindAction("ToggleMap", true);
-            pauseAction = gameplayMap.FindAction("Pause", true);
+            gameplayMap = inputActions.FindActionMap("Player", false);
+            moveAction = gameplayMap?.FindAction("Move", false);
+            lookAction = gameplayMap?.FindAction("Look", false);
+            interactAction = gameplayMap?.FindAction("Interact", false);
+            attackAction = gameplayMap?.FindAction("Attack", false);
+            sprintAction = gameplayMap?.FindAction("Sprint", false);
+            openInventoryAction = gameplayMap?.FindAction("OpenInventory", false);
+            openCraftingAction = gameplayMap?.FindAction("OpenCrafting", false);
+            toggleMapAction = gameplayMap?.FindAction("ToggleMap", false);
+            pauseAction = gameplayMap?.FindAction("Pause", false);
+        }
+
+        private bool HasRequiredActions()
+        {
+            return gameplayMap != null
+                   && moveAction != null
+                   && lookAction != null
+                   && interactAction != null
+                   && attackAction != null
+                   && sprintAction != null
+                   && openInventoryAction != null
+                   && openCraftingAction != null
+                   && toggleMapAction != null
+                   && pauseAction != null;
         }
 
         private void OnMove(InputAction.CallbackContext context) => Move = context.ReadValue<Vector2>();
