@@ -179,10 +179,10 @@ namespace ApexShift.Runtime.Ecosystem
                     break;
 
                 default:
-                    hungerGrowthRate = 1.5f;
-                    hungryThreshold = 20f;
+                    hungerGrowthRate = 20f;
+                    hungryThreshold = 35f;
                     starvingThreshold = 60f;
-                    desperateThreshold = 85f;
+                    desperateThreshold = 82f;
                     preySeekHungerThreshold = 42f;
                     fleeHungerThreshold = 28f;
                     foodSearchRadius = 50f;
