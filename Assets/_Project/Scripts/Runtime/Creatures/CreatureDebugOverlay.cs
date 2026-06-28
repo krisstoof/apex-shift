@@ -144,6 +144,7 @@ namespace ApexShift.Runtime.Creatures
                 extra =
                     $"\nwhy: {ShortenDecisionReason(behaviorRuntime.DecisionReason)}" +
                     $"\nlast: {lastFood}" +
+                    $"\nniche: {behaviorRuntime.CurrentNiche}" +
                     $"\ndec: {behaviorRuntime.DecisionCount} atk:{behaviorRuntime.AttackCooldown:0.0}";
                 extra += lod;
             }

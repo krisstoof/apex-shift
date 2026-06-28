@@ -1,4 +1,5 @@
 using UnityEngine;
+using ApexShift.Core.Ecosystem;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.World.Query;
 
@@ -34,6 +35,14 @@ namespace ApexShift.Runtime.Creatures
         [SerializeField] private float grazerScavengeRange = 72f;
         [SerializeField] private float grazerSmallPreyDetectRange = 16f;
         [SerializeField] private float grazerSmallPreyAttackRange = 2.2f;
+        [Header("Grazer parity AI")]
+        [SerializeField] private float grazerPlantSearchRange = 120f;
+        [SerializeField] private float grazerPlantBiomassImpact = 1.2f;
+        [SerializeField] private float grazerMeatBiomassRequest = 1f;
+        [SerializeField] private float grazerMeatMinimumNutritionRatio = 0.38f;
+        [SerializeField] private float grazerLowBiomassPercent = 35f;
+        [SerializeField] private float grazerPredationRiskThreshold = 0.82f;
+        [SerializeField] private float grazerAggression = 0.15f;
         [Header("Small prey parity AI")]
         [SerializeField] private float smallPreyFoodSearchRange = 110f;
         [SerializeField] private float smallPreyPlantBiomassImpact = 0.4f;
@@ -62,6 +71,7 @@ namespace ApexShift.Runtime.Creatures
         public string CurrentBiomeId { get; private set; } = "default";
         public string HomeBiomeId { get; private set; } = "default";
         public string PopulationBiomeId { get; private set; } = "default";
+        public string CurrentNiche { get; private set; } = "HERBIVORE";
         public float AttackCooldown => _varnakCombatCooldownTimer;
         public CreatureBehaviorState State => _state;
         public Transform CurrentTargetTransform => _currentPrey != null ? _currentPrey.transform : _currentFood != null ? _currentFood.transform : _player;
@@ -165,28 +175,158 @@ namespace ApexShift.Runtime.Creatures
         private void HandleGrazerBrain(WorldQueryRuntime query)
         {
             if (_panicTimer > 0f) { SetState(CreatureBehaviorState.Flee, "panic"); return; }
-            CreatureAgentView prey = FindNearestSceneCreatureById("small_prey", grazerSmallPreyDetectRange);
-            if (prey != null) { float d = HorizontalDistance(transform.position, prey.transform.position); SetState(d <= grazerSmallPreyAttackRange ? CreatureBehaviorState.Attack : CreatureBehaviorState.HuntSmallPrey, $"small_prey d:{d:0.0}"); if (d > grazerSmallPreyAttackRange) MoveToTarget(prey.transform.position); else _agentView.Stop(); return; }
-            FoodSourceView food = _currentFood;
-            if (food == null || !food.isActiveAndEnabled || food.IsEmpty)
+
+            UpdateGrazerNiche();
+
+            HungerStage hungerStage = _needs.State.Stage;
+            bool isHungry = _needs.IsHungry;
+            float riskDrive = _needs.State.RiskDrive;
+            float biomassPercent = GetCurrentBiomePlantBiomassPercent();
+
+            FoodSourceView plantFood = null;
+            query.TryFindNearestPlantFood(transform.position, grazerPlantSearchRange, out plantFood);
+
+            // Godot grazer.gd strongly prefers plants whenever a valid plant target exists,
+            // even while starving. Meat and predation are fallback risk choices.
+            if (isHungry && plantFood != null)
             {
-                FoodSourceView meatFood = null; FoodSourceView plantFood = null;
-                query.TryFindNearestMeatFood(transform.position, grazerScavengeRange, out meatFood);
-                query.TryFindNearestPlantFood(transform.position, grazerScavengeRange, out plantFood);
-                food = meatFood ?? plantFood; _currentFood = food;
+                _currentPrey = null;
+                HandleGrazerPlantTarget(plantFood, hungerStage == HungerStage.Starving || hungerStage == HungerStage.Desperate ? "starving_still_prefers_plant" : "hungry_prefer_plants");
+                return;
             }
-            if (food != null)
+
+            CreatureAgentView prey = null;
+            bool canHuntSmallPrey = CanGrazerHuntSmallPrey(plantFood, hungerStage, riskDrive, biomassPercent, query, out prey);
+            if (canHuntSmallPrey && prey != null)
             {
-                float d = HorizontalDistance(transform.position, food.transform.position);
-                if (d <= eatDistance) { SetState(CreatureBehaviorState.Eat, $"food d:{d:0.0}"); if (_eatCooldownTimer <= 0f) { _eatCooldownTimer = eatCooldownSeconds; _needs.Eat(food.Kind, 8f); food.Consume(8f); } _agentView.Stop(); _currentFood = null; return; }
-                SetState(CreatureBehaviorState.Scavenge, $"food d:{d:0.0}"); MoveToTarget(food.transform.position); return;
+                _currentFood = null;
+                _currentPrey = prey;
+                float distance = HorizontalDistance(transform.position, prey.transform.position);
+                SetState(distance <= grazerSmallPreyAttackRange ? CreatureBehaviorState.Attack : CreatureBehaviorState.HuntSmallPrey, $"grazer_predation d:{distance:0.0}");
+                if (distance <= grazerSmallPreyAttackRange)
+                {
+                    _agentView.Stop();
+                }
+                else
+                {
+                    MoveToTarget(prey.transform.position);
+                }
+                return;
             }
-            if (_player != null)
+
+            FoodSourceView meatFood = null;
+            bool canScavenge = CanGrazerScavenge(plantFood, hungerStage, biomassPercent);
+            if (canScavenge && query.TryFindNearestMeatFood(transform.position, grazerScavengeRange, out meatFood))
             {
-                float d = HorizontalDistance(transform.position, _player.position);
-                if (d <= fleeRangeGrazer) { Vector3 away = transform.position - _player.position; away.y = 0f; if (away.sqrMagnitude < 0.001f) { away = Random.insideUnitSphere; away.y = 0f; } SetState(CreatureBehaviorState.Flee, $"player d:{d:0.0}"); MoveToTarget(transform.position + away.normalized * fleeDistanceGrazer); return; }
+                _currentPrey = null;
+                HandleGrazerMeatTarget(meatFood, hungerStage == HungerStage.Starving || hungerStage == HungerStage.Desperate ? "starving_scavenge" : "hungry_scavenge_no_plants");
+                return;
             }
+
+            if (isHungry)
+            {
+                SetState(CreatureBehaviorState.Wander, hungerStage == HungerStage.Starving || hungerStage == HungerStage.Desperate ? "starving_no_food" : "hungry_no_food_wander");
+                return;
+            }
+
             SetState(CreatureBehaviorState.Wander, "graze");
+        }
+
+        private void HandleGrazerPlantTarget(FoodSourceView food, string reason)
+        {
+            if (food == null || food.IsEmpty)
+            {
+                _currentFood = null;
+                SetState(CreatureBehaviorState.Wander, "plant_target_lost");
+                return;
+            }
+
+            _currentFood = food;
+            float distance = HorizontalDistance(transform.position, food.transform.position);
+            if (distance <= eatDistance)
+            {
+                SetState(CreatureBehaviorState.EatPlants, $"plant d:{distance:0.0}");
+                if (_eatCooldownTimer <= 0f)
+                {
+                    _eatCooldownTimer = eatCooldownSeconds;
+                    ConsumeGrazerPlant(food);
+                }
+
+                _agentView.Stop();
+                _currentFood = food != null && !food.IsEmpty ? food : null;
+                return;
+            }
+
+            SetState(CreatureBehaviorState.SeekFood, $"{reason} d:{distance:0.0}");
+            MoveToTarget(food.transform.position);
+        }
+
+        private void HandleGrazerMeatTarget(FoodSourceView food, string reason)
+        {
+            if (food == null || food.IsEmpty)
+            {
+                _currentFood = null;
+                SetState(CreatureBehaviorState.Wander, "meat_target_lost");
+                return;
+            }
+
+            _currentFood = food;
+            float distance = HorizontalDistance(transform.position, food.transform.position);
+            if (distance <= eatDistance)
+            {
+                SetState(CreatureBehaviorState.EatMeat, $"meat d:{distance:0.0}");
+                if (_eatCooldownTimer <= 0f)
+                {
+                    _eatCooldownTimer = eatCooldownSeconds;
+                    ConsumeGrazerMeat(food);
+                }
+
+                _agentView.Stop();
+                _currentFood = food != null && !food.IsEmpty ? food : null;
+                return;
+            }
+
+            SetState(CreatureBehaviorState.Scavenge, $"{reason} d:{distance:0.0}");
+            MoveToTarget(food.transform.position);
+        }
+
+        private void ConsumeGrazerPlant(FoodSourceView food)
+        {
+            float requestedBiomass = Mathf.Max(0.01f, grazerPlantBiomassImpact);
+            float nutrition = food.Consume(requestedBiomass);
+            if (nutrition <= 0f)
+            {
+                return;
+            }
+
+            _needs.Eat(food.Kind, Mathf.Max(8f, nutrition));
+            LastFoodSource = string.IsNullOrWhiteSpace(food.SourceId) ? "plants" : food.SourceId;
+            EcosystemDirectorRuntime.Active?.DebugReducePlantBiomass(transform.position, requestedBiomass);
+        }
+
+        private void ConsumeGrazerMeat(FoodSourceView food)
+        {
+            float requestedBiomass = Mathf.Max(0.01f, grazerMeatBiomassRequest);
+            float nutrition = food.Consume(requestedBiomass);
+            if (nutrition <= 0f)
+            {
+                return;
+            }
+
+            float before = _needs.State.Hunger;
+            float requestedNutrition = Mathf.Max(8f, nutrition);
+            float weightedReduction = _needs.Eat(food.Kind, requestedNutrition);
+            float minimumReduction = requestedNutrition * Mathf.Clamp01(grazerMeatMinimumNutritionRatio);
+            if (weightedReduction < minimumReduction)
+            {
+                _needs.Eat(Mathf.Max(0f, minimumReduction - weightedReduction));
+            }
+
+            LastFoodSource = string.IsNullOrWhiteSpace(food.SourceId) ? "meat_drop" : food.SourceId;
+            if (_needs.State.Hunger >= before)
+            {
+                _needs.Eat(minimumReduction);
+            }
         }
 
         private void HandleSmallPreyBrain(WorldQueryRuntime query)
@@ -298,7 +438,7 @@ namespace ApexShift.Runtime.Creatures
         private static float HorizontalSqrDistance(Vector3 a, Vector3 b) { float dx = a.x - b.x; float dz = a.z - b.z; return dx * dx + dz * dz; }
         private void UpdateBiomeMemory(string creatureId)
         {
-            if (creatureId != "small_prey")
+            if (creatureId != "small_prey" && creatureId != "grazer")
             {
                 return;
             }
@@ -312,6 +452,65 @@ namespace ApexShift.Runtime.Creatures
             CurrentBiomeId = biomeId;
             if (HomeBiomeId == "default") HomeBiomeId = biomeId;
             if (PopulationBiomeId == "default") PopulationBiomeId = biomeId;
+        }
+        private void UpdateGrazerNiche()
+        {
+            float biomassPercent = GetCurrentBiomePlantBiomassPercent();
+            HungerStage stage = _needs.State.Stage;
+            bool highRisk = stage == HungerStage.Desperate || biomassPercent <= grazerLowBiomassPercent;
+            CurrentNiche = highRisk ? "OMNIVORE" : "HERBIVORE";
+        }
+
+        private float GetCurrentBiomePlantBiomassPercent()
+        {
+            EcosystemDirectorRuntime director = EcosystemDirectorRuntime.Active;
+            if (director == null)
+            {
+                return 100f;
+            }
+
+            BiomeEcosystemState state = director.GetBiomeState(CurrentBiomeId);
+            return state != null ? state.PlantBiomassPercent : 100f;
+        }
+
+        private bool CanGrazerScavenge(FoodSourceView plantFood, HungerStage hungerStage, float biomassPercent)
+        {
+            if (plantFood != null)
+            {
+                return false;
+            }
+
+            if (!_needs.IsHungry)
+            {
+                return false;
+            }
+
+            return hungerStage == HungerStage.Hungry
+                   || hungerStage == HungerStage.Starving
+                   || hungerStage == HungerStage.Desperate
+                   || biomassPercent <= grazerLowBiomassPercent;
+        }
+
+        private bool CanGrazerHuntSmallPrey(FoodSourceView plantFood, HungerStage hungerStage, float riskDrive, float biomassPercent, WorldQueryRuntime query, out CreatureAgentView prey)
+        {
+            prey = null;
+            if (plantFood != null || query == null)
+            {
+                return false;
+            }
+
+            if (!query.TryFindNearestCreatureById(transform.position, "small_prey", grazerSmallPreyDetectRange, out prey) || prey == null)
+            {
+                return false;
+            }
+
+            if (hungerStage == HungerStage.Desperate)
+            {
+                return true;
+            }
+
+            return hungerStage == HungerStage.Starving
+                   && (biomassPercent <= grazerLowBiomassPercent || (CurrentNiche == "OMNIVORE" && riskDrive >= grazerPredationRiskThreshold && grazerAggression + _needs.Diet.MeatPreference >= 0.18f));
         }
         private void UpdateTargetMemory(string creatureId) { if (_currentPrey != null && (!_currentPrey.isActiveAndEnabled || HorizontalDistance(transform.position, _currentPrey.transform.position) > preySightRange * 1.25f)) _currentPrey = null; if (_currentFood != null && (!_currentFood.isActiveAndEnabled || _currentFood.IsEmpty)) _currentFood = null; }
         private bool TryFleePredator(WorldQueryRuntime query, string creatureId) { float fleeRange = creatureId == "small_prey" ? fleeRangeSmallPrey * 1.5f : fleeRangeGrazer * 1.25f; float fleeDistance = creatureId == "small_prey" ? fleeDistanceSmallPrey * 1.25f : fleeDistanceGrazer * 1.15f; float scanRange = Mathf.Max(fleeRange, threatFallbackScanRadius); CreatureAgentView predator = query != null && query.TryFindNearestCreatureById(transform.position, "varnak", scanRange, out CreatureAgentView foundPredator) ? foundPredator : null; if (predator == null) return false; float distance = HorizontalDistance(transform.position, predator.transform.position); if (distance > scanRange) return false; Vector3 away = transform.position - predator.transform.position; away.y = 0f; if (away.sqrMagnitude < 0.001f) { away = Random.insideUnitSphere; away.y = 0f; } _currentPrey = null; _currentFood = null; _player = null; SetState(CreatureBehaviorState.Flee, $"flee_varnak d:{distance:0.0}"); SetWanderEnabled(false); MoveToTarget(transform.position + away.normalized * Mathf.Max(4f, fleeDistance)); return true; }
