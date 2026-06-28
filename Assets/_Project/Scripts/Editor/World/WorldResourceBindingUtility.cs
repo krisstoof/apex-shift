@@ -86,8 +86,9 @@ namespace ApexShift.EditorTools.World
             Renderer r = target.GetComponent<Renderer>();
             if (r != null)
             {
-                Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                if (material.shader == null)
+                Material sourceMaterial = r.sharedMaterial;
+                Material material = sourceMaterial != null ? new Material(sourceMaterial) : new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                if (material == null || material.shader == null)
                 {
                     material = new Material(Shader.Find("Standard"));
                 }
@@ -98,6 +99,8 @@ namespace ApexShift.EditorTools.World
                     material.SetColor("_BaseColor", color);
                 else if (material.HasProperty("_Color"))
                     material.SetColor("_Color", color);
+                else
+                    material.color = color;
                 
                 r.sharedMaterial = material;
             }

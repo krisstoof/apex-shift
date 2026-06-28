@@ -294,6 +294,8 @@ namespace ApexShift.EditorTools.World
 
             score += ScoreRoleText(text, roleName);
             score += ScoreRoleColor(prefab, roleName);
+            score += ScoreRoleMaterialPresence(prefab, roleName);
+            score += ScorePineTreeSpecialCase(text, roleName);
             return score;
         }
 
@@ -415,6 +417,62 @@ namespace ApexShift.EditorTools.World
             }
         }
 
+        private static int ScoreRoleMaterialPresence(GameObject prefab, string roleName)
+        {
+            if (prefab == null)
+            {
+                return -1000;
+            }
+
+            Renderer[] renderers = prefab.GetComponentsInChildren<Renderer>(true);
+            if (renderers == null || renderers.Length == 0)
+            {
+                return -200;
+            }
+
+            bool hasTexture = false;
+            bool hasSuspiciousTint = false;
+
+            foreach (Renderer renderer in renderers)
+            {
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                foreach (Material material in renderer.sharedMaterials)
+                {
+                    if (material == null)
+                    {
+                        continue;
+                    }
+
+                    if (HasAnyBaseTexture(material))
+                    {
+                        hasTexture = true;
+                    }
+
+                    if (LooksSuspiciousTint(material))
+                    {
+                        hasSuspiciousTint = true;
+                    }
+                }
+            }
+
+            int score = hasTexture ? 35 : -140;
+            if (hasSuspiciousTint)
+            {
+                score -= 35;
+            }
+
+            if (roleName == "ConiferTree" && HasKnownPineName(prefab))
+            {
+                score += 20;
+            }
+
+            return score;
+        }
+
         private static Color EstimatePrefabColor(GameObject prefab)
         {
             Renderer[] renderers = prefab.GetComponentsInChildren<Renderer>(true);
@@ -429,6 +487,85 @@ namespace ApexShift.EditorTools.World
             }
 
             return Color.clear;
+        }
+
+        private static bool HasAnyBaseTexture(Material material)
+        {
+            if (material == null)
+            {
+                return false;
+            }
+
+            if (material.HasProperty("_BaseMap") && material.GetTexture("_BaseMap") != null) return true;
+            if (material.HasProperty("_BaseColorMap") && material.GetTexture("_BaseColorMap") != null) return true;
+            if (material.HasProperty("_MainTex") && material.GetTexture("_MainTex") != null) return true;
+            if (material.HasProperty("_Albedo") && material.GetTexture("_Albedo") != null) return true;
+            return material.mainTexture != null;
+        }
+
+        private static bool LooksSuspiciousTint(Material material)
+        {
+            if (material == null)
+            {
+                return false;
+            }
+
+            Color color = material.HasProperty("_BaseColor")
+                ? material.GetColor("_BaseColor")
+                : material.HasProperty("_Color")
+                    ? material.GetColor("_Color")
+                    : material.color;
+
+            Color.RGBToHSV(color, out float hue, out float saturation, out float value);
+            bool cyanBlue = hue >= 0.45f && hue <= 0.72f && saturation >= 0.18f && value >= 0.45f;
+            bool pink = (hue <= 0.05f || hue >= 0.88f) && saturation >= 0.18f && value >= 0.45f;
+            return cyanBlue || pink;
+        }
+
+        private static bool HasKnownPineName(GameObject prefab)
+        {
+            return prefab != null && prefab.name.ToLowerInvariant().Contains("pine tree");
+        }
+
+        private static int ScorePineTreeSpecialCase(string text, string roleName)
+        {
+            if (roleName != "ConiferTree")
+            {
+                return 0;
+            }
+
+            if (!text.Contains("/prefabs/trees/pine tree/") && !text.Contains("pine tree"))
+            {
+                return 0;
+            }
+
+            if (text.Contains("pine tree .017"))
+            {
+                return 120;
+            }
+
+            if (text.Contains("pine tree .024")
+                || text.Contains("pine tree .025")
+                || text.Contains("pine tree .026")
+                || text.Contains("pine tree .027")
+                || text.Contains("pine tree .028")
+                || text.Contains("pine tree .029")
+                || text.Contains("pine tree .030")
+                || text.Contains("pine tree .031")
+                || text.Contains("pine tree .032")
+                || text.Contains("pine tree .033")
+                || text.Contains("pine tree .034")
+                || text.Contains("pine tree .035")
+                || text.Contains("pine tree .036")
+                || text.Contains("pine tree .037")
+                || text.Contains("pine tree .038")
+                || text.Contains("pine tree .039")
+                || text.Contains("pine tree .040"))
+            {
+                return -200;
+            }
+
+            return 0;
         }
 
         private static bool IsSnowVariant(string assetPath, string prefabName)

@@ -1318,14 +1318,7 @@ namespace ApexShift.EditorTools.World
 
             if (texture != null)
             {
-                if (target.HasProperty("_BaseMap"))
-                {
-                    target.SetTexture("_BaseMap", texture);
-                }
-                else if (target.HasProperty("_MainTex"))
-                {
-                    target.SetTexture("_MainTex", texture);
-                }
+                SetFirstTexture(target, texture, "_BaseMap", "_BaseColorMap", "_MainTex", "_Albedo");
             }
         }
 
@@ -1443,15 +1436,48 @@ namespace ApexShift.EditorTools.World
 
             if (material.HasProperty("_BaseMap"))
             {
-                return material.GetTexture("_BaseMap");
+                Texture texture = material.GetTexture("_BaseMap");
+                if (texture != null) return texture;
+            }
+
+            if (material.HasProperty("_BaseColorMap"))
+            {
+                Texture texture = material.GetTexture("_BaseColorMap");
+                if (texture != null) return texture;
             }
 
             if (material.HasProperty("_MainTex"))
             {
-                return material.GetTexture("_MainTex");
+                Texture texture = material.GetTexture("_MainTex");
+                if (texture != null) return texture;
+            }
+
+            if (material.HasProperty("_Albedo"))
+            {
+                Texture texture = material.GetTexture("_Albedo");
+                if (texture != null) return texture;
             }
 
             return null;
+        }
+
+        private static void SetFirstTexture(Material target, Texture texture, params string[] propertyNames)
+        {
+            if (target == null || texture == null || propertyNames == null)
+            {
+                return;
+            }
+
+            foreach (string property in propertyNames)
+            {
+                if (string.IsNullOrWhiteSpace(property) || !target.HasProperty(property))
+                {
+                    continue;
+                }
+
+                target.SetTexture(property, texture);
+                return;
+            }
         }
 
         private static void SpawnBiomeVegetation(Transform vegetationRoot, Dictionary<BiomeKind, List<Vector3>> tilesByBiome)
@@ -1841,8 +1867,9 @@ namespace ApexShift.EditorTools.World
                 return;
             }
 
-            Material material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            if (material.shader == null)
+            Material sourceMaterial = renderer.sharedMaterial;
+            Material material = sourceMaterial != null ? new Material(sourceMaterial) : new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            if (material == null || material.shader == null)
             {
                 material = new Material(Shader.Find("Standard"));
             }
@@ -1859,6 +1886,10 @@ namespace ApexShift.EditorTools.World
             if (material.HasProperty("_BaseColor"))
             {
                 material.SetColor("_BaseColor", color);
+            }
+            else if (material.HasProperty("_Color"))
+            {
+                material.SetColor("_Color", color);
             }
             else
             {

@@ -20,7 +20,6 @@ namespace ApexShift.Runtime.Creatures
         Dead
     }
 
-    [RequireComponent(typeof(CreatureNavigationAdapter))]
     public class CreatureAgentView : MonoBehaviour
     {
         [SerializeField] private string creatureId;

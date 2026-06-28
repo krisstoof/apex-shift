@@ -21,8 +21,27 @@ namespace ApexShift.Tests.Regression
                 Assert.AreEqual("small_prey", data.speciesId);
                 Assert.AreEqual("none", data.currentTarget);
                 Assert.AreEqual("none", data.targetDetails);
-                Assert.AreEqual("off", data.navStatus);
+                Assert.AreEqual("missing", data.navStatus);
                 Assert.DoesNotThrow(() => data.ToOverlayText());
+            }
+            finally
+            {
+                Object.DestroyImmediate(creature);
+            }
+        }
+
+        [Test]
+        public void CreatureDebugDataReportsOffWhenAdapterExistsWithoutNavMesh()
+        {
+            GameObject creature = new GameObject("Creature_small_prey");
+            try
+            {
+                creature.AddComponent<CreatureNavigationAdapter>();
+                creature.AddComponent<CreatureAgentView>().Configure("small_prey");
+
+                CreatureDebugData data = CreatureDebugData.Capture(creature);
+
+                Assert.AreEqual("off", data.navStatus);
             }
             finally
             {

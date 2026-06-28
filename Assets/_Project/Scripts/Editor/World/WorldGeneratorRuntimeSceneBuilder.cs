@@ -505,9 +505,6 @@ GameObject player = GameObject.Find("Player");
         {
             if (urpLit == null) return;
 
-            // Use the EmbersStorm palette texture as fallback for older materials.
-            Texture2D naturePalette = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/EmbersStorm -  Free Nature Pack/Texture/Texture.png");
-
             Renderer[] renderers = prefab.GetComponentsInChildren<Renderer>(true);
             foreach (var r in renderers)
             {
@@ -523,18 +520,15 @@ GameObject player = GameObject.Find("Player");
                         {
                             Undo.RecordObject(mat, "Upgrade to URP Lit");
                             
-                            Texture mainTex = mat.HasProperty("_MainTex") ? mat.GetTexture("_MainTex") : null;
+                            Texture mainTex = null;
+                            if (mat.HasProperty("_MainTex"))
+                                mainTex = mat.GetTexture("_MainTex");
                             if (mainTex == null && mat.HasProperty("_BaseMap"))
                                 mainTex = mat.GetTexture("_BaseMap");
-
-                            // If nature prefab/material and no texture, assign palette
-                            bool isNature = prefab.name.ToLower().Contains("tree") || prefab.name.ToLower().Contains("bush") || 
-                                           prefab.name.ToLower().Contains("stone") || mat.name.ToLower().Contains("standard");
-                            
-                            if (mainTex == null && isNature)
-                            {
-                                mainTex = naturePalette;
-                            }
+                            if (mainTex == null && mat.HasProperty("_BaseColorMap"))
+                                mainTex = mat.GetTexture("_BaseColorMap");
+                            if (mainTex == null && mat.HasProperty("_Albedo"))
+                                mainTex = mat.GetTexture("_Albedo");
 
                             Color mainColor = mat.HasProperty("_Color") ? mat.GetColor("_Color") : Color.white;
                             if (mainColor == Color.white && mat.HasProperty("_BaseColor"))
@@ -548,14 +542,9 @@ GameObject player = GameObject.Find("Player");
                             if (mainTex != null)
                             {
                                 if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", mainTex);
+                                if (mat.HasProperty("_BaseColorMap")) mat.SetTexture("_BaseColorMap", mainTex);
                                 if (mat.HasProperty("_MainTex")) mat.SetTexture("_MainTex", mainTex);
-
-                                if (isNature)
-                                {
-                                    Vector2 tiled = mainTex == naturePalette ? new Vector2(0.65f, 0.65f) : new Vector2(0.55f, 0.55f);
-                                    if (mat.HasProperty("_BaseMap")) mat.SetTextureScale("_BaseMap", tiled);
-                                    if (mat.HasProperty("_MainTex")) mat.SetTextureScale("_MainTex", tiled);
-                                }
+                                if (mat.HasProperty("_Albedo")) mat.SetTexture("_Albedo", mainTex);
                             }
                             
                             if (mat.HasProperty("_BaseColor"))
