@@ -15,7 +15,7 @@ namespace ApexShift.Runtime.Save
         [SerializeField] private WorldGeneratorRuntime worldGenerator;
         [SerializeField] private PlayerInventoryRuntime playerInventory;
         [SerializeField] private PlayerSurvivalRuntime playerSurvival;
-        [SerializeField] private MonoBehaviour ecosystemDirector;
+        [SerializeField] private EcosystemDirectorRuntime ecosystemDirector;
 
         private IGameSaveStore saveStore;
 
@@ -69,7 +69,7 @@ namespace ApexShift.Runtime.Save
 
             if (ecosystemDirector == null)
             {
-                ecosystemDirector = FindAnyObjectByType<MonoBehaviour>();
+                ecosystemDirector = FindAnyObjectByType<EcosystemDirectorRuntime>();
             }
         }
 
@@ -224,14 +224,7 @@ if (saveData == null)
                 return new List<BiomeEcosystemSaveData>();
             }
 
-            System.Reflection.MethodInfo method = ecosystemDirector.GetType().GetMethod("CaptureSaveData");
-            if (method == null)
-            {
-                return new List<BiomeEcosystemSaveData>();
-            }
-
-            object result = method.Invoke(ecosystemDirector, null);
-            return result as List<BiomeEcosystemSaveData> ?? new List<BiomeEcosystemSaveData>();
+            return ecosystemDirector.CaptureSaveData();
         }
 
         private void ApplyBiomeStates(IReadOnlyList<BiomeEcosystemSaveData> biomeStates)
@@ -241,13 +234,7 @@ if (saveData == null)
                 return;
             }
 
-            System.Reflection.MethodInfo method = ecosystemDirector.GetType().GetMethod("LoadSaveData");
-            if (method == null)
-            {
-                return;
-            }
-
-            method.Invoke(ecosystemDirector, new object[] { biomeStates });
+            ecosystemDirector.LoadSaveData(biomeStates);
         }
 }
 }

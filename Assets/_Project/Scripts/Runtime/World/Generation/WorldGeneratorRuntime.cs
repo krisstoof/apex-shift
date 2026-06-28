@@ -223,35 +223,17 @@ namespace ApexShift.Runtime.World.Generation
         private void EnsureEcosystemComponents(EcosystemRuntime runtime)
         {
             if (runtime == null) return;
+            if (runtime.GetComponent<EcosystemDirectorRuntime>() == null) runtime.gameObject.AddComponent<EcosystemDirectorRuntime>();
             if (runtime.GetComponent<WorldQueryRuntime>() == null) runtime.gameObject.AddComponent<WorldQueryRuntime>();
         }
 
         private void InitializeEcosystemDirector()
         {
-            MonoBehaviour director = FindDirectorActive();
+            EcosystemDirectorRuntime director = Object.FindAnyObjectByType<EcosystemDirectorRuntime>();
             if (director != null && _lastResult != null)
             {
-                System.Reflection.MethodInfo method = director.GetType().GetMethod("InitializeFromRegions");
-                if (method != null)
-                {
-                    method.Invoke(director, new object[] { _lastResult.Regions });
-                }
+                director.InitializeFromRegions(_lastResult.Regions);
             }
-        }
-
-        private static MonoBehaviour FindDirectorActive()
-        {
-            MonoBehaviour[] behaviours = Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude);
-            for (int i = 0; i < behaviours.Length; i++)
-            {
-                MonoBehaviour behaviour = behaviours[i];
-                if (behaviour != null && behaviour.GetType().Name == "EcosystemDirectorRuntime")
-                {
-                    return behaviour;
-                }
-            }
-
-            return null;
         }
 
         private void EnsureWorldMapDebugWindow()
