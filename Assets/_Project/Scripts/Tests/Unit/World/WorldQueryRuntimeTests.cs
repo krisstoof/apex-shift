@@ -93,6 +93,7 @@ namespace ApexShift.Tests.Unit.World
                 navMeshSurfaceType.GetProperty("collectObjects")?.SetValue(surface, System.Enum.Parse(collectObjectsType, "Children"));
                 navMeshSurfaceType.GetMethod("BuildNavMesh")?.Invoke(surface, null);
                 yield return null;
+                yield return null;
 
                 farCreature.transform.position = new Vector3(20f, 0f, 0f);
                 CreatureAgentView far = farCreature.AddComponent<CreatureAgentView>();
@@ -140,6 +141,7 @@ namespace ApexShift.Tests.Unit.World
                 Assert.IsNotNull(collectObjectsType, "Could not resolve CollectObjects.");
                 navMeshSurfaceType.GetProperty("collectObjects")?.SetValue(surface, System.Enum.Parse(collectObjectsType, "Children"));
                 navMeshSurfaceType.GetMethod("BuildNavMesh")?.Invoke(surface, null);
+                yield return null;
                 yield return null;
 
                 predatorObject.transform.position = new Vector3(1f, 0f, 0f);
