@@ -131,5 +131,29 @@ namespace ApexShift.Tests.Regression
             Assert.AreEqual("b", GameEventBus.RecentEvents[0].biomeId);
             Assert.AreEqual("c", GameEventBus.RecentEvents[1].biomeId);
         }
+
+        [Test]
+        public void CampfireRegenPublishesFireScareEvent()
+        {
+            GameObject playerObject = new GameObject("Player");
+            List<GameplayEvent> received = new List<GameplayEvent>();
+            try
+            {
+                PlayerSurvivalRuntime survival = playerObject.AddComponent<PlayerSurvivalRuntime>();
+                using (GameEventBus.Subscribe(received.Add))
+                {
+                    survival.SetCampfireRegen(true, 4.5f);
+                }
+
+                Assert.AreEqual(1, received.Count);
+                Assert.AreEqual(GameplayEventKind.VarnakScaredByFire, received[0].kind);
+                Assert.AreEqual("campfire", received[0].targetKind);
+                Assert.AreEqual(4.5f, received[0].amount, 0.001f);
+            }
+            finally
+            {
+                Object.DestroyImmediate(playerObject);
+            }
+        }
     }
 }

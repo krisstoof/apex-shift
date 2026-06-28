@@ -1,5 +1,6 @@
 using ApexShift.Core.Survival;
 using ApexShift.Core.Save;
+using ApexShift.Runtime.Events;
 using ApexShift.Runtime.PlayerInput;
 using UnityEngine;
 
@@ -109,6 +110,17 @@ namespace ApexShift.Runtime.Player
         {
             EnsureInitialized();
             stats.SetCampfireRegen(active, nearestDistance);
+            if (active)
+            {
+                GameEventBus.PublishCreatureEvent(
+                    GameplayEventKind.VarnakScaredByFire,
+                    transform.position,
+                    "default",
+                    "player",
+                    "campfire",
+                    amount: Mathf.Max(0f, nearestDistance),
+                    message: "varnak_scared_by_fire");
+            }
         }
 
         public void SetGodMode(bool enabled)

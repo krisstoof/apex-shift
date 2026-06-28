@@ -28,7 +28,7 @@ namespace ApexShift.Tests.Regression
                     new BiomeEcosystemSaveData("default", "Default", 40f, 100f, 6f, 2f, 1f, 15f, 4f, 3f, 1f, 2, 2, 1, "HERBIVORE", "stressed")
                 });
 
-                creature = CreateCreature("small_prey", new Vector3(3f, 0f, 4f), 62f);
+                creature = CreateCreature("small_prey", new Vector3(3f, 0f, 4f), 62f, includeNavigationAdapter: false);
                 ecosystem.RegisterCreature(creature.GetComponent<CreatureAgentView>());
 
                 serviceObject = new GameObject("SaveService");
@@ -60,7 +60,7 @@ namespace ApexShift.Tests.Regression
             {
                 EcosystemRuntime ecosystem = ecosystemObject.AddComponent<EcosystemRuntime>();
                 ecosystemObject.AddComponent<WorldQueryRuntime>();
-                creature = CreateCreature("grazer", Vector3.zero, 20f);
+                creature = CreateCreature("grazer", Vector3.zero, 20f, includeNavigationAdapter: false);
                 ecosystem.RegisterCreature(creature.GetComponent<CreatureAgentView>());
 
                 serviceObject = new GameObject("SaveService");
@@ -129,7 +129,7 @@ namespace ApexShift.Tests.Regression
             {
                 EcosystemRuntime ecosystem = ecosystemObject.AddComponent<EcosystemRuntime>();
                 ecosystemObject.AddComponent<WorldQueryRuntime>();
-                creature = CreateCreature("small_prey", Vector3.zero, 10f);
+                creature = CreateCreature("small_prey", Vector3.zero, 10f, includeNavigationAdapter: false);
                 ecosystem.RegisterCreature(creature.GetComponent<CreatureAgentView>());
 
                 serviceObject = new GameObject("SaveService");
@@ -161,11 +161,14 @@ namespace ApexShift.Tests.Regression
             }
         }
 
-        private static GameObject CreateCreature(string creatureId, Vector3 position, float hunger)
+        private static GameObject CreateCreature(string creatureId, Vector3 position, float hunger, bool includeNavigationAdapter = true)
         {
             GameObject creature = new GameObject($"Creature_{creatureId}");
             creature.transform.position = position;
-            creature.AddComponent<CreatureNavigationAdapter>();
+            if (includeNavigationAdapter)
+            {
+                creature.AddComponent<CreatureNavigationAdapter>();
+            }
             creature.AddComponent<CreatureAgentView>().Configure(creatureId);
             CreatureNeedsRuntime needs = creature.AddComponent<CreatureNeedsRuntime>();
             needs.Configure(creatureId);

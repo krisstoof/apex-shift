@@ -165,7 +165,7 @@ namespace ApexShift.Runtime.Creatures
                 else
                 {
                     _agentView.Stop();
-                    PublishCreatureGameplayEvent(GetVarnakHuntEventKind(prey.CreatureId), prey.CreatureId, 1f, 0f, 0f, $"varnak_hunted_{prey.CreatureId}");
+                    TryPublishVarnakCombatEvent(GetVarnakHuntEventKind(prey.CreatureId), prey.CreatureId, $"varnak_hunted_{prey.CreatureId}");
                 }
                 return;
             }
@@ -182,7 +182,7 @@ namespace ApexShift.Runtime.Creatures
                     else
                     {
                         _agentView.Stop();
-                        PublishCreatureGameplayEvent(GameplayEventKind.VarnakAttackedPlayer, "player", 1f, 0f, 0f, "varnak_attacked_player");
+                        TryPublishVarnakCombatEvent(GameplayEventKind.VarnakAttackedPlayer, "player", "varnak_attacked_player");
                     }
                     return;
                 }
@@ -551,6 +551,17 @@ namespace ApexShift.Runtime.Creatures
         {
             string actor = _agentView != null && !string.IsNullOrWhiteSpace(_agentView.CreatureId) ? _agentView.CreatureId : gameObject.name;
             GameEventBus.PublishCreatureEvent(kind, transform.position, ResolveEventBiomeId(), actor, targetKind, amount, nutrition, biomassImpact, message);
+        }
+
+        private void TryPublishVarnakCombatEvent(GameplayEventKind kind, string targetKind, string message)
+        {
+            if (_varnakCombatCooldownTimer > 0f)
+            {
+                return;
+            }
+
+            PublishCreatureGameplayEvent(kind, targetKind, 1f, 0f, 0f, message);
+            _varnakCombatCooldownTimer = 1.25f;
         }
 
         private string ResolveEventBiomeId()
