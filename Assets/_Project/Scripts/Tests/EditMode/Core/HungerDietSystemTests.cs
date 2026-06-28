@@ -7,20 +7,35 @@ namespace ApexShift.Tests.EditMode.Core
     public sealed class HungerDietSystemTests
     {
         [Test]
-        public void Tick_IncreasesHungerAndUpdatesStage()
+        public void Tick_UsesGodotBaseHungerTimeScale()
         {
             CreatureNeedsState needs = new CreatureNeedsState(
-                maxHunger: 100f,
-                hungerGrowthRate: 10f,
-                hungryThreshold: 25f,
-                starvingThreshold: 60f,
-                desperateThreshold: 90f);
+                maxHunger: 1f,
+                hungerGrowthRate: 0.2f,
+                hungryThreshold: 0.35f,
+                starvingThreshold: 0.60f,
+                desperateThreshold: 0.82f);
             HungerDietSystem system = new HungerDietSystem();
 
-            system.Tick(needs, deltaSeconds: 3f);
+            system.Tick(needs, deltaSeconds: 1f);
 
-            Assert.AreEqual(30f, needs.Hunger);
-            Assert.AreEqual(HungerStage.Hungry, needs.Stage);
+            Assert.AreEqual(0.01f, needs.Hunger, 0.0001f);
+            Assert.AreEqual(HungerStage.Satisfied, needs.Stage);
+        }
+
+        [Test]
+        public void Tick_WithMovementIncreasesHungerFasterAndDrainsEnergy()
+        {
+            CreatureNeedsState idle = new CreatureNeedsState(1f, 0.2f, 0.35f, 0.60f, 0.82f);
+            CreatureNeedsState moving = new CreatureNeedsState(1f, 0.2f, 0.35f, 0.60f, 0.82f);
+            HungerDietSystem system = new HungerDietSystem();
+
+            system.Tick(idle, deltaSeconds: 1f, movementIntensity: 0f);
+            system.Tick(moving, deltaSeconds: 1f, movementIntensity: 1f);
+
+            Assert.AreEqual(0.01f, idle.Hunger, 0.0001f);
+            Assert.AreEqual(0.022f, moving.Hunger, 0.0001f);
+            Assert.Less(moving.Energy, idle.Energy);
         }
 
         [Test]
@@ -44,37 +59,38 @@ namespace ApexShift.Tests.EditMode.Core
         public void Eat_ReducesHungerByWeightedNutrition()
         {
             CreatureNeedsState needs = new CreatureNeedsState(
-                maxHunger: 100f,
+                maxHunger: 1f,
                 hungerGrowthRate: 0f,
-                hungryThreshold: 25f,
-                starvingThreshold: 60f,
-                desperateThreshold: 90f);
-            needs.SetHunger(50f);
+                hungryThreshold: 0.35f,
+                starvingThreshold: 0.60f,
+                desperateThreshold: 0.82f);
+            needs.SetHunger(0.50f);
             HungerDietSystem system = new HungerDietSystem();
             CreatureDietProfile diet = new CreatureDietProfile(plant: 0.5f, meat: 1f, scavenger: 0f);
 
-            float applied = system.Eat(needs, diet, FoodKind.Plants, nutrition: 20f);
+            float applied = system.Eat(needs, diet, FoodKind.Plants, nutrition: 0.20f);
 
-            Assert.AreEqual(10f, applied);
-            Assert.AreEqual(40f, needs.Hunger);
+            Assert.AreEqual(0.10f, applied, 0.0001f);
+            Assert.AreEqual(0.40f, needs.Hunger, 0.0001f);
         }
 
         [Test]
-        public void GetBehaviorParameters_IncreasesRiskWhenDesperate()
+        public void GetBehaviorParameters_UsesContinuousGodotRiskDrive()
         {
             CreatureNeedsState needs = new CreatureNeedsState(
-                maxHunger: 100f,
+                maxHunger: 1f,
                 hungerGrowthRate: 0f,
-                hungryThreshold: 25f,
-                starvingThreshold: 60f,
-                desperateThreshold: 90f);
-            needs.SetHunger(95f);
+                hungryThreshold: 0.35f,
+                starvingThreshold: 0.60f,
+                desperateThreshold: 0.82f);
+            needs.SetHunger(0.80f);
+            needs.SetEnergy(0.25f);
             HungerDietSystem system = new HungerDietSystem();
 
             HungerBehaviorParameters parameters = system.GetBehaviorParameters(needs);
 
             Assert.IsTrue(parameters.ShouldSeekFood);
-            Assert.AreEqual(1f, parameters.RiskTolerance);
+            Assert.AreEqual(0.7875f, parameters.RiskTolerance, 0.0001f);
         }
     }
 }

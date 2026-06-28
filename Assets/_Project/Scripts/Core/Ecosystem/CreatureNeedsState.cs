@@ -10,6 +10,13 @@ namespace ApexShift.Core.Ecosystem
 
     public class CreatureNeedsState
     {
+        // Ported from apex-shift-2d/scripts/core/survival/hunger_diet.gd.
+        public const float BaseHungerTimeScale = 0.05f;
+        public const float MovementHungerTimeScale = 0.06f;
+        public const float BaseEnergyDrainRate = 0.015f;
+        public const float MovementEnergyDrainRate = 0.035f;
+        public const float HungerRecoveryEnergyRate = 0.02f;
+
         public float Hunger { get; private set; }
         public float MaxHunger { get; }
         public float HungerGrowthRate { get; }
@@ -27,53 +34,68 @@ namespace ApexShift.Core.Ecosystem
             float hungryThreshold, 
             float starvingThreshold, 
             float desperateThreshold,
-            float maxEnergy = 100f)
+            float maxEnergy = 1f)
         {
-            MaxHunger = maxHunger;
-            HungerGrowthRate = hungerGrowthRate;
-            HungryThreshold = hungryThreshold;
-            StarvingThreshold = starvingThreshold;
-            DesperateThreshold = desperateThreshold;
-            MaxEnergy = maxEnergy;
-            Energy = maxEnergy;
+            MaxHunger = maxHunger <= 0.01f ? 0.01f : maxHunger;
+            HungerGrowthRate = hungerGrowthRate < 0f ? 0f : hungerGrowthRate;
+            HungryThreshold = Clamp(hungryThreshold, 0.01f, MaxHunger * 0.98f);
+            StarvingThreshold = Clamp(
+                starvingThreshold < HungryThreshold + 0.01f ? HungryThreshold + 0.01f : starvingThreshold,
+                0.02f,
+                MaxHunger * 0.99f);
+            DesperateThreshold = Clamp(
+                desperateThreshold < StarvingThreshold + 0.01f ? StarvingThreshold + 0.01f : desperateThreshold,
+                0.03f,
+                MaxHunger);
+            MaxEnergy = maxEnergy <= 0.01f ? 0.01f : maxEnergy;
+            Energy = MaxEnergy;
             Hunger = 0f;
         }
 
+        public float HungerRatio => Clamp01(Hunger / MaxHunger);
+        public float EnergyRatio => Clamp01(Energy / MaxEnergy);
+
         public void Tick(float deltaTime)
         {
-            Hunger += HungerGrowthRate * deltaTime;
-            if (Hunger > MaxHunger) Hunger = MaxHunger;
+            Tick(deltaTime, 0f);
         }
 
         public void Tick(float deltaTime, float movementIntensity)
         {
-            float movement = movementIntensity < 0f ? 0f : movementIntensity > 1f ? 1f : movementIntensity;
-            Hunger += HungerGrowthRate * deltaTime * (1f + movement * 0.35f);
-            if (Hunger > MaxHunger) Hunger = MaxHunger;
+            if (deltaTime <= 0f)
+            {
+                return;
+            }
 
-            float energyDelta = deltaTime * (0.02f + movement * 0.08f);
-            Energy -= energyDelta;
-            if (Energy < 0f) Energy = 0f;
+            float movement = Clamp01(movementIntensity);
+            float baseHungerDelta = HungerGrowthRate * BaseHungerTimeScale * deltaTime;
+            float movementHungerDelta = HungerGrowthRate * movement * MovementHungerTimeScale * deltaTime;
+            SetHunger(Hunger + baseHungerDelta + movementHungerDelta);
+
+            float energyDrain = deltaTime * (BaseEnergyDrainRate + movement * MovementEnergyDrainRate);
+            float energyRecovery = deltaTime * HungerRecoveryEnergyRate * (1f - HungerRatio);
+            SetEnergy(Energy - energyDrain + energyRecovery);
         }
 
         public void Eat(float nutrition)
         {
-            Hunger -= nutrition;
-            if (Hunger < 0) Hunger = 0;
+            if (nutrition <= 0f)
+            {
+                return;
+            }
 
-            Energy += nutrition * 0.35f;
-            if (Energy > MaxEnergy) Energy = MaxEnergy;
+            SetHunger(Hunger - nutrition);
+            SetEnergy(Energy + nutrition * 0.35f);
         }
 
         public void SetHunger(float hunger)
         {
-            if (hunger < 0f)
-            {
-                Hunger = 0f;
-                return;
-            }
+            Hunger = Clamp(hunger, 0f, MaxHunger);
+        }
 
-            Hunger = hunger > MaxHunger ? MaxHunger : hunger;
+        public void SetEnergy(float energy)
+        {
+            Energy = Clamp(energy, 0f, MaxEnergy);
         }
 
         public HungerStage Stage
@@ -87,8 +109,28 @@ namespace ApexShift.Core.Ecosystem
             }
         }
 
-        public float RiskDrive => Hunger / MaxHunger;
+        public float RiskDrive => Clamp01(HungerRatio * 0.75f + (1f - EnergyRatio) * 0.25f);
         
         public bool IsHungry => Stage != HungerStage.Satisfied;
+
+        private static float Clamp01(float value)
+        {
+            return Clamp(value, 0f, 1f);
+        }
+
+        private static float Clamp(float value, float min, float max)
+        {
+            if (max < min)
+            {
+                max = min;
+            }
+
+            if (value < min)
+            {
+                return min;
+            }
+
+            return value > max ? max : value;
+        }
     }
 }

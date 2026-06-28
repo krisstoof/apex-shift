@@ -8,34 +8,34 @@ namespace ApexShift.Tests.Unit.Ecosystem
         [Test]
         public void HungerIncreasesOverTime()
         {
-            var state = new CreatureNeedsState(100f, 1f, 30f, 60f, 90f);
+            var state = new CreatureNeedsState(1f, 0.2f, 0.35f, 0.60f, 0.82f);
             state.Tick(10f);
-            Assert.AreEqual(10f, state.Hunger);
+            Assert.AreEqual(0.1f, state.Hunger, 0.001f);
         }
 
         [Test]
         public void EatingPlantsReducesHunger()
         {
-            var state = new CreatureNeedsState(100f, 1f, 30f, 60f, 90f);
-            state.Tick(50f);
-            state.Eat(20f);
-            Assert.AreEqual(30f, state.Hunger);
+            var state = new CreatureNeedsState(1f, 0.2f, 0.35f, 0.60f, 0.82f);
+            state.SetHunger(0.50f);
+            state.Eat(0.20f);
+            Assert.AreEqual(0.30f, state.Hunger, 0.001f);
         }
 
         [Test]
         public void HungerStagesAreCorrect()
         {
-            var state = new CreatureNeedsState(100f, 1f, 30f, 60f, 90f);
+            var state = new CreatureNeedsState(1f, 0.2f, 0.35f, 0.60f, 0.82f);
             
             Assert.AreEqual(HungerStage.Satisfied, state.Stage);
             
-            state.Tick(40f);
+            state.SetHunger(0.40f);
             Assert.AreEqual(HungerStage.Hungry, state.Stage);
             
-            state.Tick(30f);
+            state.SetHunger(0.60f);
             Assert.AreEqual(HungerStage.Starving, state.Stage);
             
-            state.Tick(25f);
+            state.SetHunger(0.82f);
             Assert.AreEqual(HungerStage.Desperate, state.Stage);
         }
 
@@ -57,9 +57,9 @@ namespace ApexShift.Tests.Unit.Ecosystem
         [Test]
         public void SetHungerCanSeedCreatureAsHungry()
         {
-            var state = new CreatureNeedsState(100f, 1f, 30f, 60f, 90f);
+            var state = new CreatureNeedsState(1f, 0.2f, 0.35f, 0.60f, 0.82f);
 
-            state.SetHunger(40f);
+            state.SetHunger(0.40f);
 
             Assert.AreEqual(HungerStage.Hungry, state.Stage);
             Assert.IsTrue(state.IsHungry);
@@ -68,18 +68,18 @@ namespace ApexShift.Tests.Unit.Ecosystem
         [Test]
         public void SetHungerClampsToMaximum()
         {
-            var state = new CreatureNeedsState(100f, 1f, 30f, 60f, 90f);
+            var state = new CreatureNeedsState(1f, 0.2f, 0.35f, 0.60f, 0.82f);
 
             state.SetHunger(999f);
 
-            Assert.AreEqual(100f, state.Hunger);
+            Assert.AreEqual(1f, state.Hunger);
             Assert.AreEqual(HungerStage.Desperate, state.Stage);
         }
 
         [Test]
         public void TickWithMovementConsumesEnergy()
         {
-            var state = new CreatureNeedsState(100f, 1f, 30f, 60f, 90f);
+            var state = new CreatureNeedsState(1f, 0.2f, 0.35f, 0.60f, 0.82f);
             float initialEnergy = state.Energy;
 
             state.Tick(10f, 1f);
@@ -91,9 +91,9 @@ namespace ApexShift.Tests.Unit.Ecosystem
         [Test]
         public void SetHungerCanSeedAboveHungryThreshold()
         {
-            var state = new CreatureNeedsState(100f, 1f, 30f, 60f, 90f);
+            var state = new CreatureNeedsState(1f, 0.2f, 0.35f, 0.60f, 0.82f);
 
-            state.SetHunger(32f);
+            state.SetHunger(0.36f);
 
             Assert.IsTrue(state.IsHungry);
             Assert.AreEqual(HungerStage.Hungry, state.Stage);

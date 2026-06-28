@@ -8,10 +8,10 @@ namespace ApexShift.Runtime.Ecosystem
         [Header("Config")]
         [SerializeField] private string creatureId;
         [SerializeField] private float maxHunger = 100f;
-        [SerializeField] private float hungerGrowthRate = 1f;
-        [SerializeField] private float hungryThreshold = 30f;
+        [SerializeField] private float hungerGrowthRate = 20f;
+        [SerializeField] private float hungryThreshold = 35f;
         [SerializeField] private float starvingThreshold = 60f;
-        [SerializeField] private float desperateThreshold = 85f;
+        [SerializeField] private float desperateThreshold = 82f;
         [SerializeField] private float foodSearchRadius = 50f;
         [SerializeField] private float desperateFoodSearchRadius = 80f;
         [SerializeField] private float preySeekHungerThreshold = 42f;
@@ -64,9 +64,9 @@ namespace ApexShift.Runtime.Ecosystem
             _state = new CreatureNeedsState(maxHunger, hungerGrowthRate, hungryThreshold, starvingThreshold, desperateThreshold);
 
             // Seed the migration slice so behavior is visible immediately in RuntimeWorld.
-            // Keep creatures at least a bit hungry so debug frames show state changes.
+            // Runtime keeps the existing Unity 0-100 hunger scale, but rates/thresholds mirror Godot ratios.
             float seededHunger = Random.Range(initialHungerMin, initialHungerMax);
-            seededHunger = Mathf.Max(seededHunger, hungryThreshold + 4f);
+            seededHunger = Mathf.Max(seededHunger, hungryThreshold + maxHunger * 0.04f);
             _state.SetHunger(seededHunger);
         }
 
@@ -140,36 +140,36 @@ namespace ApexShift.Runtime.Ecosystem
             switch (id)
             {
                 case "small_prey":
-                    hungerGrowthRate = 2.8f;
-                    hungryThreshold = 18f;
-                    starvingThreshold = 55f;
+                    hungerGrowthRate = 20f;
+                    hungryThreshold = 35f;
+                    starvingThreshold = 60f;
                     desperateThreshold = 82f;
                     preySeekHungerThreshold = 50f;
                     fleeHungerThreshold = 24f;
                     foodSearchRadius = 110f;
                     desperateFoodSearchRadius = 160f;
-                    initialHungerMin = 28f;
+                    initialHungerMin = 36f;
                     initialHungerMax = 48f;
                     break;
 
                 case "grazer":
-                    hungerGrowthRate = 2.4f;
-                    hungryThreshold = 20f;
-                    starvingThreshold = 58f;
-                    desperateThreshold = 84f;
+                    hungerGrowthRate = 30f;
+                    hungryThreshold = 35f;
+                    starvingThreshold = 60f;
+                    desperateThreshold = 82f;
                     preySeekHungerThreshold = 46f;
                     fleeHungerThreshold = 26f;
                     foodSearchRadius = 120f;
                     desperateFoodSearchRadius = 170f;
-                    initialHungerMin = 30f;
+                    initialHungerMin = 36f;
                     initialHungerMax = 52f;
                     break;
 
                 case "varnak":
-                    hungerGrowthRate = 2.6f;
-                    hungryThreshold = 22f;
-                    starvingThreshold = 60f;
-                    desperateThreshold = 86f;
+                    hungerGrowthRate = 18f;
+                    hungryThreshold = 32f;
+                    starvingThreshold = 58f;
+                    desperateThreshold = 80f;
                     preySeekHungerThreshold = 38f;
                     fleeHungerThreshold = 22f;
                     foodSearchRadius = 140f;

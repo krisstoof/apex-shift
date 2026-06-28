@@ -7,12 +7,17 @@ namespace ApexShift.Core.Ecosystem
     {
         public void Tick(CreatureNeedsState needs, float deltaSeconds)
         {
+            Tick(needs, deltaSeconds, 0f);
+        }
+
+        public void Tick(CreatureNeedsState needs, float deltaSeconds, float movementIntensity)
+        {
             if (needs == null)
             {
                 throw new ArgumentNullException(nameof(needs));
             }
 
-            needs.Tick(deltaSeconds);
+            needs.Tick(deltaSeconds, movementIntensity);
         }
 
         public HungerState GetState(CreatureNeedsState needs)
@@ -93,17 +98,9 @@ namespace ApexShift.Core.Ecosystem
                 ? Math.Max(normalFoodSearchRadius, desperateFoodSearchRadius)
                 : normalFoodSearchRadius;
 
-            float riskTolerance = state.IsDesperate
-                ? 1f
-                : state.IsStarving
-                    ? 0.65f
-                    : state.IsHungry
-                        ? 0.35f
-                        : 0.1f;
-
             return new HungerBehaviorParameters(
                 radius,
-                riskTolerance,
+                state.RiskDrive,
                 state.IsHungry,
                 state.IsDesperate);
         }

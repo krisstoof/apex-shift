@@ -42,35 +42,36 @@ namespace ApexShift.Tests.Unit.Ecosystem
         public void EatWeightsNutritionByDietPreference()
         {
             HungerDietSystem system = new HungerDietSystem();
-            CreatureNeedsState needs = new CreatureNeedsState(100f, 1f, 30f, 60f, 90f);
-            needs.Tick(50f);
+            CreatureNeedsState needs = new CreatureNeedsState(1f, 0.2f, 0.35f, 0.60f, 0.82f);
+            needs.SetHunger(0.50f);
 
-            float appliedNutrition = system.Eat(needs, CreatureDietProfile.GetDefault("grazer"), FoodKind.Plants, 10f);
+            float appliedNutrition = system.Eat(needs, CreatureDietProfile.GetDefault("grazer"), FoodKind.Plants, 0.20f);
 
-            Assert.AreEqual(8.5f, appliedNutrition, 0.001f);
-            Assert.AreEqual(41.5f, needs.Hunger, 0.001f);
+            Assert.AreEqual(0.17f, appliedNutrition, 0.001f);
+            Assert.AreEqual(0.33f, needs.Hunger, 0.001f);
         }
 
         [Test]
-        public void DesperateStageIncreasesSearchRadiusAndRiskTolerance()
+        public void DesperateStageIncreasesSearchRadiusAndUsesGodotRiskDrive()
         {
             HungerDietSystem system = new HungerDietSystem();
-            CreatureNeedsState needs = new CreatureNeedsState(100f, 1f, 30f, 60f, 90f);
-            needs.Tick(95f);
+            CreatureNeedsState needs = new CreatureNeedsState(1f, 0.2f, 0.35f, 0.60f, 0.82f);
+            needs.SetHunger(0.95f);
+            needs.SetEnergy(0.00f);
 
             HungerBehaviorParameters behavior = system.GetBehaviorParameters(needs, 50f, 80f);
 
             Assert.IsTrue(behavior.ShouldSeekFood);
             Assert.IsTrue(behavior.CanUseDesperateFood);
             Assert.AreEqual(80f, behavior.FoodSearchRadius, 0.001f);
-            Assert.AreEqual(1f, behavior.RiskTolerance, 0.001f);
+            Assert.AreEqual(0.9625f, behavior.RiskTolerance, 0.001f);
         }
 
         [Test]
         public void HungerStateMirrorsCreatureNeedsState()
         {
-            CreatureNeedsState needs = new CreatureNeedsState(100f, 1f, 30f, 60f, 90f);
-            needs.Tick(40f);
+            CreatureNeedsState needs = new CreatureNeedsState(1f, 0.2f, 0.35f, 0.60f, 0.82f);
+            needs.SetHunger(0.40f);
 
             HungerState state = HungerState.From(needs);
 
