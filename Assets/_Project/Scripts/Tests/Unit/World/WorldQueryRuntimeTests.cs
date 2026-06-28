@@ -3,6 +3,7 @@ using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.World.Query;
 using NUnit.Framework;
+using UnityEngine.AI;
 using UnityEngine;
 
 namespace ApexShift.Tests.Unit.World
@@ -71,11 +72,18 @@ namespace ApexShift.Tests.Unit.World
             GameObject ecosystemObject = new GameObject("Ecosystem");
             GameObject farCreature = new GameObject("FarSmallPrey");
             GameObject nearCreature = new GameObject("NearSmallPrey");
+            NavMeshData navMeshData = null;
+            NavMeshDataInstance navMeshInstance = default;
+            GameObject navMeshRoot = null;
 
             try
             {
                 EcosystemRuntime ecosystem = ecosystemObject.AddComponent<EcosystemRuntime>();
                 WorldQueryRuntime query = WorldQueryRuntime.GetOrCreate(ecosystem);
+
+                navMeshRoot = new GameObject("NavMeshRoot");
+                navMeshData = new NavMeshData();
+                navMeshInstance = NavMesh.AddNavMeshData(navMeshData);
 
                 farCreature.transform.position = new Vector3(20f, 0f, 0f);
                 CreatureAgentView far = farCreature.AddComponent<CreatureAgentView>();
@@ -94,6 +102,13 @@ namespace ApexShift.Tests.Unit.World
             }
             finally
             {
+                if (navMeshInstance.valid)
+                {
+                    navMeshInstance.Remove();
+                }
+
+                Object.DestroyImmediate(navMeshData);
+                Object.DestroyImmediate(navMeshRoot);
                 Object.DestroyImmediate(nearCreature);
                 Object.DestroyImmediate(farCreature);
                 Object.DestroyImmediate(ecosystemObject);
@@ -106,11 +121,18 @@ namespace ApexShift.Tests.Unit.World
             GameObject ecosystemObject = new GameObject("Ecosystem");
             GameObject predatorObject = new GameObject("Varnak");
             GameObject preyObject = new GameObject("SmallPrey");
+            NavMeshData navMeshData = null;
+            NavMeshDataInstance navMeshInstance = default;
+            GameObject navMeshRoot = null;
 
             try
             {
                 EcosystemRuntime ecosystem = ecosystemObject.AddComponent<EcosystemRuntime>();
                 WorldQueryRuntime query = WorldQueryRuntime.GetOrCreate(ecosystem);
+
+                navMeshRoot = new GameObject("NavMeshRoot");
+                navMeshData = new NavMeshData();
+                navMeshInstance = NavMesh.AddNavMeshData(navMeshData);
 
                 predatorObject.transform.position = new Vector3(1f, 0f, 0f);
                 CreatureAgentView predator = predatorObject.AddComponent<CreatureAgentView>();
@@ -129,6 +151,13 @@ namespace ApexShift.Tests.Unit.World
             }
             finally
             {
+                if (navMeshInstance.valid)
+                {
+                    navMeshInstance.Remove();
+                }
+
+                Object.DestroyImmediate(navMeshData);
+                Object.DestroyImmediate(navMeshRoot);
                 Object.DestroyImmediate(preyObject);
                 Object.DestroyImmediate(predatorObject);
                 Object.DestroyImmediate(ecosystemObject);

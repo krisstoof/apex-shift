@@ -1,4 +1,6 @@
 using ApexShift.Core.Resources;
+using ApexShift.Core.Ecosystem;
+using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Interaction;
 using ApexShift.Runtime.Player;
 using UnityEngine;
@@ -29,6 +31,28 @@ namespace ApexShift.Runtime.Resources
         [SerializeField]
         private bool destroyOnHarvest;
 
+        [Header("Godot ResourceNode parity")]
+        [SerializeField]
+        private bool edibleByHerbivores;
+
+        [SerializeField]
+        private float foodValue;
+
+        [SerializeField]
+        private bool renderOnly;
+
+        [SerializeField]
+        private bool pondVegetation;
+
+        [SerializeField]
+        private int pickupPriority;
+
+        [SerializeField]
+        private int regrowthDays;
+
+        [SerializeField]
+        private bool bridgeToFoodSource = true;
+
         [SerializeField]
         private GameObject depletedVisual;
 
@@ -37,6 +61,7 @@ namespace ApexShift.Runtime.Resources
 
         private ResourceDefinition definition;
         private ResourceState state;
+        private FoodSourceView foodSourceView;
         private readonly HarvestSystem harvestSystem = new HarvestSystem();
 
         public string Prompt
@@ -48,7 +73,7 @@ namespace ApexShift.Runtime.Resources
             }
         }
 
-        public int Priority => 0;
+        public int Priority { get { EnsureState(); return state.PickupPriority; } }
         public float InteractionDuration => 1.5f;
 
         public ResourceState State
@@ -76,6 +101,9 @@ namespace ApexShift.Runtime.Resources
         {
             amount = Mathf.Max(1, amount);
             interactionRadius = Mathf.Max(0.1f, interactionRadius);
+            foodValue = Mathf.Max(0f, foodValue);
+            pickupPriority = Mathf.Max(0, pickupPriority);
+            regrowthDays = Mathf.Max(0, regrowthDays);
         }
 
         public void ConfigureDefault(string kind)
@@ -86,6 +114,13 @@ namespace ApexShift.Runtime.Resources
             itemId = defaultDefinition.ItemId;
             amount = defaultDefinition.HarvestAmount;
             playerHarvestable = defaultDefinition.PlayerHarvestable;
+            edibleByHerbivores = defaultDefinition.EdibleByHerbivores;
+            foodValue = defaultDefinition.FoodValue;
+            renderOnly = defaultDefinition.RenderOnly;
+            pondVegetation = defaultDefinition.PondVegetation;
+            pickupPriority = defaultDefinition.PickupPriority;
+            regrowthDays = defaultDefinition.RegrowthDays;
+            bridgeToFoodSource = defaultDefinition.EdibleByHerbivores;
             deactivateOnHarvest = defaultDefinition.RemoveWhenHarvested;
             definition = null;
             state = null;
@@ -95,6 +130,10 @@ namespace ApexShift.Runtime.Resources
         public bool CanInteract(GameObject actor)
         {
             EnsureState();
+            if (state.RenderOnly)
+            {
+                return false;
+            }
             return TryResolveInventory(actor, out PlayerInventoryRuntime inventoryRuntime)
                    && harvestSystem.CanHarvest(state, inventoryRuntime.Inventory, out _);
         }
@@ -116,6 +155,7 @@ namespace ApexShift.Runtime.Resources
             }
 
             Debug.Log($"[ResourceNode] Harvested: {result.Message}. Total in inventory: {inventoryRuntime.Inventory.GetAmount(state.ItemId)}", this);
+            RefreshFoodSourceBridge();
             if (result.ShouldRemoveNode)
             {
                 ApplyDepletedVisualState();
@@ -126,8 +166,14 @@ namespace ApexShift.Runtime.Resources
 
         public void LoadState(int currentAmount, bool depleted)
         {
+            LoadState(currentAmount, depleted, depleted ? 0f : 1f);
+        }
+
+        public void LoadState(int currentAmount, bool depleted, float growthProgress)
+        {
             EnsureState();
             state.SetAmount(currentAmount);
+            state.SetGrowthProgress(growthProgress);
             if (depleted || currentAmount <= 0)
             {
                 state.MarkDepleted();
@@ -138,6 +184,27 @@ namespace ApexShift.Runtime.Resources
                 SetVisualsEnabled(true);
                 if (depletedVisual != null) depletedVisual.SetActive(false);
             }
+
+            RefreshFoodSourceBridge();
+        }
+
+        public bool AdvanceGrowthDays(int days)
+        {
+            EnsureState();
+            bool changed = state.AdvanceGrowthDays(days);
+            if (!changed)
+            {
+                return false;
+            }
+
+            if (!state.IsDepleted)
+            {
+                SetVisualsEnabled(true);
+                if (depletedVisual != null) depletedVisual.SetActive(false);
+            }
+
+            RefreshFoodSourceBridge();
+            return true;
         }
 
         private void EnsureState()
@@ -153,13 +220,21 @@ namespace ApexShift.Runtime.Resources
                         itemId,
                         Mathf.Max(1, amount),
                         playerHarvestable,
-                        deactivateOnHarvest || destroyOnHarvest);
+                        deactivateOnHarvest || destroyOnHarvest,
+                        edibleByHerbivores,
+                        foodValue,
+                        renderOnly,
+                        pondVegetation,
+                        pickupPriority,
+                        regrowthDays);
             }
 
             if (state == null)
             {
                 state = definition.CreateState();
             }
+
+            EnsureFoodSourceBridge();
         }
 
         private void EnsureInteractionCollider()
@@ -201,6 +276,40 @@ namespace ApexShift.Runtime.Resources
             {
                 depletedVisual.SetActive(true);
             }
+        }
+
+        private void EnsureFoodSourceBridge()
+        {
+            if (!bridgeToFoodSource || state == null || !state.EdibleByHerbivores || state.FoodValue <= 0f)
+            {
+                return;
+            }
+
+            foodSourceView = GetComponent<FoodSourceView>();
+            if (foodSourceView == null)
+            {
+                foodSourceView = gameObject.AddComponent<FoodSourceView>();
+            }
+
+            foodSourceView.Configure(
+                state.ResourceId,
+                state.DisplayName,
+                FoodKind.Plants,
+                Mathf.Max(0.01f, state.FoodValue),
+                1f);
+
+            RefreshFoodSourceBridge();
+        }
+
+        private void RefreshFoodSourceBridge()
+        {
+            if (foodSourceView == null)
+            {
+                return;
+            }
+
+            bool available = state != null && state.IsFoodAvailableForHerbivores;
+            foodSourceView.enabled = available;
         }
 
         private void SetVisualsEnabled(bool enabled)

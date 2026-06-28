@@ -86,12 +86,20 @@ namespace ApexShift.Runtime.Save
             foreach (var node in FindObjectsByType<ApexShift.Runtime.Resources.ResourceNodeView>())
             {
                 Vector3 p = node.transform.position;
-var s = node.State;
+                var s = node.State;
                 resources.Add(new ResourceSaveData(
                     s.ResourceId,
                     node.gameObject.name,
                     p.x, p.y, p.z,
-                    s.Amount, s.MaxAmount, s.IsDepleted));
+                    s.Amount, s.MaxAmount, s.IsDepleted,
+                    s.GrowthProgress,
+                    s.RegrowthDays,
+                    s.EdibleByHerbivores,
+                    s.FoodValue,
+                    s.RenderOnly,
+                    s.PondVegetation,
+                    s.IsDrop,
+                    s.PickupPriority));
             }
             Debug.Log($"[Save] Captured {resources.Count} resource nodes.");
 
@@ -186,7 +194,7 @@ if (saveData == null)
                 Vector3Int key = new Vector3Int(Mathf.RoundToInt(resData.x * 100), Mathf.RoundToInt(resData.y * 100), Mathf.RoundToInt(resData.z * 100));
                 if (lookup.TryGetValue(key, out var node))
                 {
-                    node.LoadState(resData.Amount, resData.Depleted);
+                    node.LoadState(resData.Amount, resData.Depleted, resData.GrowthProgress);
                     restoredCount++;
                 }
             }
