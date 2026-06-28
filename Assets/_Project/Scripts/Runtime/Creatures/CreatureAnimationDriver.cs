@@ -156,7 +156,7 @@ namespace ApexShift.Runtime.Creatures
 
         private bool HasParameter(string parameterName, AnimatorControllerParameterType type)
         {
-            if (_animator == null || string.IsNullOrWhiteSpace(parameterName))
+            if (_animator == null || _animator.runtimeAnimatorController == null || string.IsNullOrWhiteSpace(parameterName))
             {
                 return false;
             }

@@ -36,6 +36,14 @@ namespace ApexShift.EditorTools.Resources
                 inventory = player.AddComponent<PlayerInventoryRuntime>();
             }
 
+            PlayerCraftingRuntime crafting = player.GetComponent<PlayerCraftingRuntime>();
+            if (crafting == null)
+            {
+                crafting = player.AddComponent<PlayerCraftingRuntime>();
+            }
+            crafting.SetInputReader(inputReader);
+            crafting.SetInventoryRuntime(inventory);
+
             PlayerInteractionController interaction = player.GetComponent<PlayerInteractionController>();
             if (interaction == null)
             {

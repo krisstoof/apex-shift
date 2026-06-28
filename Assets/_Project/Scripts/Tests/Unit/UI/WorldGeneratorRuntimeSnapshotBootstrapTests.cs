@@ -20,18 +20,18 @@ namespace ApexShift.Tests.Unit.UI
                 InvokePrivate(generator, "EnsureGameSnapshotProvider");
                 InvokePrivate(generator, "EnsureDebugPanelPresenter");
 
-                Assert.That(Object.FindObjectsByType<GameSnapshotProvider>(FindObjectsInactive.Include, FindObjectsSortMode.None), Is.Not.Empty);
-                Assert.That(Object.FindObjectsByType<DebugPanelPresenter>(FindObjectsInactive.Include, FindObjectsSortMode.None), Is.Not.Empty);
+                Assert.That(Object.FindObjectsByType<GameSnapshotProvider>(FindObjectsInactive.Include), Is.Not.Empty);
+                Assert.That(Object.FindObjectsByType<DebugPanelPresenter>(FindObjectsInactive.Include), Is.Not.Empty);
             }
             finally
             {
                 Object.DestroyImmediate(root);
-                foreach (GameSnapshotProvider provider in Object.FindObjectsByType<GameSnapshotProvider>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                foreach (GameSnapshotProvider provider in Object.FindObjectsByType<GameSnapshotProvider>(FindObjectsInactive.Include))
                 {
                     Object.DestroyImmediate(provider.gameObject);
                 }
 
-                foreach (DebugPanelPresenter presenter in Object.FindObjectsByType<DebugPanelPresenter>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                foreach (DebugPanelPresenter presenter in Object.FindObjectsByType<DebugPanelPresenter>(FindObjectsInactive.Include))
                 {
                     Object.DestroyImmediate(presenter.gameObject);
                 }

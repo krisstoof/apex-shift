@@ -321,30 +321,26 @@ menuCamera.backgroundColor = new Color(0.08f, 0.13f, 0.08f, 1f);
 
         private static void SetActive(GameObject go, bool visible)
         {
-            if (go != null)
+            if (go == null)
             {
-                Debug.Log($"[Flow] Setting {go.name} active={visible}");
-                go.SetActive(visible);
+                return;
             }
-            else
-            {
-                Debug.LogWarning("[Flow] SetActive called on NULL GameObject");
-            }
+
+            Debug.Log($"[Flow] Setting {go.name} active={visible}");
+            go.SetActive(visible);
         }
 
         private static void SetGroupVisible(CanvasGroup group, bool visible)
         {
-            if (group != null)
+            if (group == null)
             {
-                Debug.Log($"[Flow] Setting group {group.gameObject.name} alpha={(visible ? 1 : 0)}");
-                group.alpha = visible ? 1f : 0f;
-                group.interactable = visible;
-                group.blocksRaycasts = visible;
+                return;
             }
-            else
-            {
-                Debug.LogWarning("[Flow] SetGroupVisible called on NULL CanvasGroup");
-            }
+
+            Debug.Log($"[Flow] Setting group {group.gameObject.name} alpha={(visible ? 1 : 0)}");
+            group.alpha = visible ? 1f : 0f;
+            group.interactable = visible;
+            group.blocksRaycasts = visible;
         }
 }
 }

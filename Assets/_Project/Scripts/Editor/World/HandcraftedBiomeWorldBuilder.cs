@@ -2076,13 +2076,14 @@ namespace ApexShift.EditorTools.World
             }
 
             InputActionAsset inputActions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
+            if (inputActions == null)
+            {
+                inputActions = InputSystem.actions;
+            }
+
             if (inputActions != null)
             {
                 inputReader.SetInputActions(inputActions);
-            }
-            else
-            {
-                Debug.LogWarning("Missing input actions asset at " + InputActionsPath);
             }
 
             IsometricPlayerController playerController = player.GetComponent<IsometricPlayerController>();

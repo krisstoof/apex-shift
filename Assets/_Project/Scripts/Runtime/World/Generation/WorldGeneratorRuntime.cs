@@ -105,6 +105,8 @@ namespace ApexShift.Runtime.World.Generation
             surface.collectObjects = CollectObjects.Children;
             surface.BuildNavMesh();
 
+            SpawnAllRegionCreatures();
+
             Random.state = oldState;
 
             Debug.Log($"World Generation Complete. Biomes: {_lastResult.BiomeCount}, Resources: {_lastResult.ResourceCount}, Seed: {seed}");
@@ -423,7 +425,6 @@ namespace ApexShift.Runtime.World.Generation
                 _allTileCenters.Add(regionCenter);
 
                 SpawnRegionResources(region);
-                SpawnRegionCreatures(region);
                 TrySpawnInitialMeatFoodSource(region, region.Bounds);
             }
         }
@@ -547,6 +548,19 @@ namespace ApexShift.Runtime.World.Generation
                     if (pos.magnitude < clearingRadius) continue;
                     SpawnCreature(entry, pos);
                 }
+            }
+        }
+
+        private void SpawnAllRegionCreatures()
+        {
+            foreach (GeneratedBiomeRegion region in _lastResult.Regions)
+            {
+                if (region?.Biome == null || region.Biome.BiomeId == "water")
+                {
+                    continue;
+                }
+
+                SpawnRegionCreatures(region);
             }
         }
 
@@ -1045,6 +1059,11 @@ if (renderer != null)
 
             PlayerInventoryRuntime inventory = player.GetComponent<PlayerInventoryRuntime>();
             if (inventory == null) inventory = player.AddComponent<PlayerInventoryRuntime>();
+
+            PlayerCraftingRuntime crafting = player.GetComponent<PlayerCraftingRuntime>();
+            if (crafting == null) crafting = player.AddComponent<PlayerCraftingRuntime>();
+            crafting.SetInputReader(inputReader);
+            crafting.SetInventoryRuntime(inventory);
 
             IsometricPlayerController controller = player.GetComponent<IsometricPlayerController>();
             if (controller == null) controller = player.AddComponent<IsometricPlayerController>();
