@@ -56,8 +56,6 @@ namespace ApexShift.Runtime.Player
 
             if (Time.timeScale < 0.01f)
             {
-                // Log once per second to avoid spam
-                if (Time.frameCount % 60 == 0) Debug.LogWarning("[Controller] Time.timeScale is 0. Movement blocked.");
                 return;
             }
 

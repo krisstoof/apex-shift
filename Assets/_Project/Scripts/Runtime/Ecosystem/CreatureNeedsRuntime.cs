@@ -98,6 +98,13 @@ namespace ApexShift.Runtime.Ecosystem
             return weightedNutrition;
         }
 
+        public void RestoreNeeds(float hunger, float energy)
+        {
+            EnsureInitialized();
+            State.SetHunger(hunger);
+            State.SetEnergy(energy);
+        }
+
         public bool TryFindPreferredFood(EcosystemRuntime ecosystem, out FoodSourceView source)
         {
             EnsureInitialized();

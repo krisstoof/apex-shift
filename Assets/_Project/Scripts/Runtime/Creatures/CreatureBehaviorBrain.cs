@@ -72,6 +72,7 @@ namespace ApexShift.Runtime.Creatures
         public string HomeBiomeId { get; private set; } = "default";
         public string PopulationBiomeId { get; private set; } = "default";
         public string CurrentNiche { get; private set; } = "HERBIVORE";
+        public float HuntDrive { get; private set; }
         public float AttackCooldown => _varnakCombatCooldownTimer;
         public CreatureBehaviorState State => _state;
         public Transform CurrentTargetTransform => _currentPrey != null ? _currentPrey.transform : _currentFood != null ? _currentFood.transform : _player;
@@ -521,6 +522,30 @@ namespace ApexShift.Runtime.Creatures
         private void SetState(CreatureBehaviorState next, string reason) { _state = next; DecisionReason = string.IsNullOrWhiteSpace(reason) ? next.ToString() : reason; if (_debugOverlay != null) _debugOverlay.SetBehaviorState(next); }
         private void SetWanderEnabled(bool enabled) { if (_wander != null) _wander.enabled = enabled; }
         public void SetBehaviorStateForTests(CreatureBehaviorState state, string reason = "test") => SetState(state, reason);
+        public void RestoreSaveState(string behaviorState, string decisionReason, string lastFoodSource, string currentBiomeId, string homeBiomeId, string populationBiomeId, float attackCooldown, string currentNiche, float huntDrive)
+        {
+            if (!System.Enum.TryParse(behaviorState, true, out CreatureBehaviorState parsedState))
+            {
+                parsedState = CreatureBehaviorState.Wander;
+            }
+
+            SetState(parsedState, string.IsNullOrWhiteSpace(decisionReason) ? "save_load" : decisionReason);
+            LastFoodSource = string.IsNullOrWhiteSpace(lastFoodSource) ? "none" : lastFoodSource;
+            CurrentBiomeId = string.IsNullOrWhiteSpace(currentBiomeId) ? "default" : currentBiomeId.Trim().ToLowerInvariant();
+            HomeBiomeId = string.IsNullOrWhiteSpace(homeBiomeId) ? CurrentBiomeId : homeBiomeId.Trim().ToLowerInvariant();
+            PopulationBiomeId = string.IsNullOrWhiteSpace(populationBiomeId) ? CurrentBiomeId : populationBiomeId.Trim().ToLowerInvariant();
+            _varnakCombatCooldownTimer = Mathf.Max(0f, attackCooldown);
+            CurrentNiche = string.IsNullOrWhiteSpace(currentNiche) ? CurrentNiche : currentNiche.Trim();
+            HuntDrive = Mathf.Clamp01(huntDrive);
+
+            if (parsedState == CreatureBehaviorState.Dead)
+            {
+                _currentFood = null;
+                _currentPrey = null;
+                _panicTimer = 0f;
+                _eatCooldownTimer = 0f;
+            }
+        }
         public void OnCreatureDied() { SetState(CreatureBehaviorState.Dead); SetWanderEnabled(false); _currentPrey = null; _currentFood = null; _eatCooldownTimer = 0f; _panicTimer = 0f; _varnakCombatCooldownTimer = 0f; }
     }
 }

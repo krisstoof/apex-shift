@@ -25,6 +25,13 @@ MonoBehaviour:
     maxScale: 1.1
     resourceKind: leafy_tree
     harvestable: 1
+  - kind: 3
+    count: 3
+    weight: 1
+    minScale: 0.8
+    maxScale: 1.35
+    resourceKind: rock
+    harvestable: 1
   - kind: 4
     count: 10
     weight: 1

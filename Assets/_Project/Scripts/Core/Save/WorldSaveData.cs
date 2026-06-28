@@ -12,12 +12,18 @@ namespace ApexShift.Core.Save
         public float timeOfDay;
         public List<ResourceSaveData> resources = new List<ResourceSaveData>();
         public List<BiomeEcosystemSaveData> biomeStates = new List<BiomeEcosystemSaveData>();
+        public List<CreatureSaveData> creatureStates = new List<CreatureSaveData>();
+        public float ecosystemTickTimer;
+        public string ecosystemStateSource = "generated";
 
         public int Seed => seed;
         public int Day => day;
         public float TimeOfDay => timeOfDay;
-        public IReadOnlyList<ResourceSaveData> Resources => resources;
-        public IReadOnlyList<BiomeEcosystemSaveData> BiomeStates => biomeStates;
+        public IReadOnlyList<ResourceSaveData> Resources => resources ?? (resources = new List<ResourceSaveData>());
+        public IReadOnlyList<BiomeEcosystemSaveData> BiomeStates => biomeStates ?? (biomeStates = new List<BiomeEcosystemSaveData>());
+        public IReadOnlyList<CreatureSaveData> CreatureStates => creatureStates ?? (creatureStates = new List<CreatureSaveData>());
+        public float EcosystemTickTimer => ecosystemTickTimer;
+        public string EcosystemStateSource => string.IsNullOrWhiteSpace(ecosystemStateSource) ? "generated" : ecosystemStateSource;
 
         public static WorldSaveData Empty => new WorldSaveData(0, 1, 0f, Array.Empty<ResourceSaveData>(), Array.Empty<BiomeEcosystemSaveData>());
 
@@ -28,6 +34,22 @@ namespace ApexShift.Core.Save
         public WorldSaveData(int seed, int day, float timeOfDay, IReadOnlyList<ResourceSaveData> resources)
             : this(seed, day, timeOfDay, resources, Array.Empty<BiomeEcosystemSaveData>())
         {
+        }
+
+        public WorldSaveData(
+            int seed,
+            int day,
+            float timeOfDay,
+            IReadOnlyList<ResourceSaveData> resources,
+            IReadOnlyList<BiomeEcosystemSaveData> biomeStates,
+            IReadOnlyList<CreatureSaveData> creatureStates,
+            float ecosystemTickTimer,
+            string ecosystemStateSource)
+            : this(seed, day, timeOfDay, resources, biomeStates)
+        {
+            this.creatureStates = creatureStates != null ? creatureStates.Where(state => state != null).ToList() : new List<CreatureSaveData>();
+            this.ecosystemTickTimer = Math.Max(0f, ecosystemTickTimer);
+            this.ecosystemStateSource = string.IsNullOrWhiteSpace(ecosystemStateSource) ? "generated" : ecosystemStateSource.Trim();
         }
 
         public WorldSaveData(

@@ -50,6 +50,7 @@ namespace ApexShift.Runtime.World.Generation
         private Transform _creatureRoot;
         private Transform _buildingRoot;
         private List<Vector3> _allTileCenters = new List<Vector3>();
+        private List<Vector3> _landTileCenters = new List<Vector3>();
 
         private const string DefaultInputActionsPath = "Assets/InputSystem_Actions.inputactions";
 
@@ -80,6 +81,7 @@ namespace ApexShift.Runtime.World.Generation
         {
             Clear();
             _allTileCenters.Clear();
+            _landTileCenters.Clear();
 
             Random.State oldState = Random.state;
             Random.InitState(seed);
@@ -379,6 +381,7 @@ namespace ApexShift.Runtime.World.Generation
                     if (isLand)
                     {
                         biomeId = DetermineBiome(pos);
+                        _landTileCenters.Add(pos);
                     }
                     else
                     {
@@ -510,6 +513,97 @@ namespace ApexShift.Runtime.World.Generation
                 
                 tile.GetComponent<Renderer>().sharedMaterial = mat;
             }
+
+            if (region.Biome.BiomeId == "water")
+            {
+                ConfigureWaterTile(tile, region.Bounds.center);
+            }
+        }
+
+        private void ConfigureWaterTile(GameObject tile, Vector3 center)
+        {
+            Renderer renderer = tile.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                Material source = biomeCatalog != null ? biomeCatalog.GetBiome("water")?.GroundMaterial : null;
+                Material waterMaterial = source != null ? new Material(source) : new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                Shader waterShader = Shader.Find("Universal Render Pipeline/Unlit");
+                if (waterShader != null)
+                {
+                    waterMaterial.shader = waterShader;
+                }
+                else if (waterMaterial.shader == null)
+                {
+                    waterMaterial.shader = Shader.Find("Standard");
+                }
+
+                float distanceToLand = GetDistanceToNearestLand(center);
+                bool shoreline = distanceToLand < 16f;
+                bool lakeLike = distanceToLand < 10f;
+                Color color = lakeLike
+                    ? new Color(0.14f, 0.50f, 0.66f, 0.76f)
+                    : shoreline
+                        ? new Color(0.10f, 0.42f, 0.62f, 0.70f)
+                        : new Color(0.03f, 0.22f, 0.36f, 0.82f);
+
+                if (waterMaterial.HasProperty("_BaseColor"))
+                {
+                    waterMaterial.SetColor("_BaseColor", color);
+                }
+
+                if (waterMaterial.HasProperty("_Color"))
+                {
+                    waterMaterial.SetColor("_Color", color);
+                }
+
+                if (waterMaterial.HasProperty("_Smoothness"))
+                {
+                    waterMaterial.SetFloat("_Smoothness", lakeLike ? 0.62f : shoreline ? 0.72f : 0.91f);
+                }
+
+                if (waterMaterial.HasProperty("_Metallic"))
+                {
+                    waterMaterial.SetFloat("_Metallic", 0.0f);
+                }
+
+                if (waterMaterial.HasProperty("_SpecColor"))
+                {
+                    waterMaterial.SetColor("_SpecColor", lakeLike ? new Color(0.34f, 0.44f, 0.48f, 1f) : new Color(0.26f, 0.34f, 0.42f, 1f));
+                }
+
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+                renderer.sharedMaterial = waterMaterial;
+            }
+
+            WaterSurfaceAnimator animator = tile.GetComponent<WaterSurfaceAnimator>();
+            if (animator == null)
+            {
+                animator = tile.AddComponent<WaterSurfaceAnimator>();
+            }
+
+            animator.Configure(GetDistanceToNearestLand(center) < 16f);
+        }
+
+        private float GetDistanceToNearestLand(Vector3 center)
+        {
+            if (_landTileCenters.Count == 0)
+            {
+                return float.PositiveInfinity;
+            }
+
+            float best = float.PositiveInfinity;
+            Vector2 waterPoint = new Vector2(center.x, center.z);
+            foreach (Vector3 landCenter in _landTileCenters)
+            {
+                float distance = Vector2.Distance(waterPoint, new Vector2(landCenter.x, landCenter.z));
+                if (distance < best)
+                {
+                    best = distance;
+                }
+            }
+
+            return best;
         }
 
         private void SpawnRegionResources(GeneratedBiomeRegion region)

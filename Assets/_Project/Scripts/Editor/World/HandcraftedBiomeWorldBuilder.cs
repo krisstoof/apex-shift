@@ -858,10 +858,11 @@ namespace ApexShift.EditorTools.World
             private static int ScorePrefabForRole(string path, GameObject prefab, string roleName, string keyword)
             {
                 string text = (path + " " + prefab.name).ToLowerInvariant();
+                if (!text.Contains("embersstorm")) return -1000;
                 if (IsForbiddenForAllNature(text)) return -1000;
+                if (text.Contains("low poly")) return -1000;
                 int score = 0;
                 if (text.Contains(keyword.ToLowerInvariant())) score += 15;
-                if (text.Contains("low poly")) score += 25;
                 if (text.Contains("nature")) score += 25;
                 if (text.Contains("nature pack")) score += 35;
                 score += ScoreRoleText(text, roleName);

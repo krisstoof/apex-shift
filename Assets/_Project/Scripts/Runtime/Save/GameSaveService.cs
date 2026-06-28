@@ -1,9 +1,14 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using ApexShift.Core.Ecosystem;
 using ApexShift.Core.Inventory;
 using ApexShift.Core.Save;
 using ApexShift.Infrastructure.Save;
+using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Player;
+using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.World.Generation;
 using UnityEngine;
 
@@ -25,6 +30,7 @@ namespace ApexShift.Runtime.Save
             {
                 saveStore = new JsonFileGameSaveStore();
             }
+
             return saveStore;
         }
 
@@ -34,7 +40,7 @@ namespace ApexShift.Runtime.Save
         }
 
         public void ResolveReferences()
-{
+        {
             if (worldGenerator == null)
             {
                 worldGenerator = FindAnyObjectByType<WorldGeneratorRuntime>();
@@ -79,7 +85,7 @@ namespace ApexShift.Runtime.Save
 
             InventorySaveData inventory = playerInventory != null ? playerInventory.ToSaveData() : InventorySaveData.Empty;
             SurvivalSaveData survival = playerSurvival != null ? playerSurvival.ToSaveData() : SurvivalSaveData.Default;
-            
+
             if (playerSurvival != null)
             {
                 Vector3 pos = playerSurvival.transform.position;
@@ -87,18 +93,26 @@ namespace ApexShift.Runtime.Save
             }
 
             int seed = worldGenerator != null ? worldGenerator.Seed : 0;
-            
-            // Capture Resources
+
             List<ResourceSaveData> resources = new List<ResourceSaveData>();
-            foreach (var node in FindObjectsByType<ApexShift.Runtime.Resources.ResourceNodeView>())
+            foreach (ResourceNodeView node in FindObjectsByType<ResourceNodeView>(FindObjectsInactive.Include))
             {
+                if (node == null)
+                {
+                    continue;
+                }
+
                 Vector3 p = node.transform.position;
                 var s = node.State;
                 resources.Add(new ResourceSaveData(
                     s.ResourceId,
                     node.gameObject.name,
-                    p.x, p.y, p.z,
-                    s.Amount, s.MaxAmount, s.IsDepleted,
+                    p.x,
+                    p.y,
+                    p.z,
+                    s.Amount,
+                    s.MaxAmount,
+                    s.IsDepleted,
                     s.GrowthProgress,
                     s.RegrowthDays,
                     s.EdibleByHerbivores,
@@ -108,11 +122,21 @@ namespace ApexShift.Runtime.Save
                     s.IsDrop,
                     s.PickupPriority));
             }
-            Debug.Log($"[Save] Captured {resources.Count} resource nodes.");
 
+            CaptureDynamicMeatDrops(resources);
             List<BiomeEcosystemSaveData> biomeStates = CaptureBiomeStates();
+            List<CreatureSaveData> creatureStates = CaptureCreatureStates();
 
-            WorldSaveData world = new WorldSaveData(seed, 1, 0f, resources, biomeStates);
+            WorldSaveData world = new WorldSaveData(
+                seed,
+                1,
+                0f,
+                resources,
+                biomeStates,
+                creatureStates,
+                ecosystemDirector != null ? ecosystemDirector.TickTimer : 0f,
+                ecosystemDirector != null ? ecosystemDirector.EcosystemStateSource : "generated");
+
             return new GameSaveData(inventory, survival, world);
         }
 
@@ -137,28 +161,41 @@ namespace ApexShift.Runtime.Save
                 return false;
             }
 
-            GameSaveData saveData = store.Load(slotName);
-if (saveData == null)
+            GameSaveData saveData;
+            try
+            {
+                saveData = store.Load(slotName);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Save] Load failed: Exception while reading slot '{slotName}': {ex.Message}");
+                return false;
+            }
+
+            return ApplyLoadedState(saveData, slotName);
+        }
+
+        public bool ApplyLoadedState(GameSaveData saveData, string slotName = "runtime")
+        {
+            if (saveData == null)
             {
                 Debug.LogError($"[Save] Load failed: Could not deserialize save data for slot '{slotName}'.");
                 return false;
             }
 
             saveData.EnsureDefaults();
-            Debug.Log($"[Save] Loaded save data. Seed: {saveData.World.Seed}, Resources in save: {saveData.World.Resources.Count}");
 
             if (worldGenerator != null)
             {
-                Debug.Log($"[Save] Regenerating world with seed: {saveData.World.Seed}");
                 worldGenerator.SetSeed(saveData.World.Seed);
                 worldGenerator.Generate();
                 ResolveReferences();
             }
 
-            // Restore Resources
             RestoreResourceStates(saveData.World.Resources);
-
             ApplyBiomeStates(saveData.World.BiomeStates);
+            ApplyEcosystemMetadata(saveData.World);
+            RestoreCreatureStates(saveData.World.CreatureStates);
 
             if (playerInventory != null)
             {
@@ -172,44 +209,22 @@ if (saveData == null)
                 {
                     Vector3 targetPos = new Vector3(saveData.Survival.posX, saveData.Survival.posY, saveData.Survival.posZ);
                     CharacterController cc = playerSurvival.GetComponent<CharacterController>();
-                    if (cc != null) cc.enabled = false;
+                    if (cc != null)
+                    {
+                        cc.enabled = false;
+                    }
+
                     playerSurvival.transform.position = targetPos;
-                    if (cc != null) cc.enabled = true;
-                    Debug.Log($"[Save] Restored player position to: {targetPos}");
+
+                    if (cc != null)
+                    {
+                        cc.enabled = true;
+                    }
                 }
             }
 
             Debug.Log("[Save] Load complete.");
             return true;
-        }
-
-        private void RestoreResourceStates(IReadOnlyList<ResourceSaveData> savedResources)
-        {
-            if (savedResources == null || savedResources.Count == 0) return;
-
-            var nodes = FindObjectsByType<ApexShift.Runtime.Resources.ResourceNodeView>();
-            Debug.Log($"[Save] Restoring state for {savedResources.Count} saved resources among {nodes.Length} active nodes.");
-
-            // Create a spatial lookup for faster matching
-            Dictionary<Vector3Int, ApexShift.Runtime.Resources.ResourceNodeView> lookup = new Dictionary<Vector3Int, ApexShift.Runtime.Resources.ResourceNodeView>();
-            foreach (var node in nodes)
-            {
-                Vector3 p = node.transform.position;
-                Vector3Int key = new Vector3Int(Mathf.RoundToInt(p.x * 100), Mathf.RoundToInt(p.y * 100), Mathf.RoundToInt(p.z * 100));
-                if (!lookup.ContainsKey(key)) lookup[key] = node;
-            }
-
-            int restoredCount = 0;
-            foreach (var resData in savedResources)
-            {
-                Vector3Int key = new Vector3Int(Mathf.RoundToInt(resData.x * 100), Mathf.RoundToInt(resData.y * 100), Mathf.RoundToInt(resData.z * 100));
-                if (lookup.TryGetValue(key, out var node))
-                {
-                    node.LoadState(resData.Amount, resData.Depleted, resData.GrowthProgress);
-                    restoredCount++;
-                }
-            }
-            Debug.Log($"[Save] Restored {restoredCount} resource nodes matching saved positions.");
         }
 
         public void DeleteGame(string slotName)
@@ -219,12 +234,260 @@ if (saveData == null)
 
         private List<BiomeEcosystemSaveData> CaptureBiomeStates()
         {
-            if (ecosystemDirector == null)
+            return ecosystemDirector != null ? ecosystemDirector.CaptureSaveData() : new List<BiomeEcosystemSaveData>();
+        }
+
+        private List<CreatureSaveData> CaptureCreatureStates()
+        {
+            List<CreatureSaveData> creatures = new List<CreatureSaveData>();
+            foreach (CreatureAgentView agent in FindObjectsByType<CreatureAgentView>(FindObjectsInactive.Include))
             {
-                return new List<BiomeEcosystemSaveData>();
+                if (agent == null)
+                {
+                    continue;
+                }
+
+                CreatureHealthRuntime health = agent.GetComponent<CreatureHealthRuntime>();
+                CreatureNeedsRuntime needs = agent.GetComponent<CreatureNeedsRuntime>();
+                CreatureBehaviorBrain brain = agent.GetComponent<CreatureBehaviorBrain>();
+                Vector3 p = agent.transform.position;
+                string creatureId = CreatureSaveData.NormalizeCreatureId(agent.CreatureId);
+                CreatureBehaviorState state = brain != null ? brain.State : CreatureBehaviorState.Wander;
+
+                creatures.Add(new CreatureSaveData(
+                    creatureId,
+                    creatureId,
+                    1,
+                    p.x,
+                    p.y,
+                    p.z,
+                    health != null ? health.CurrentHealth : 1f,
+                    health != null ? health.MaxHealth : 1f,
+                    (health != null && health.IsDead) || state == CreatureBehaviorState.Dead || !agent.gameObject.activeInHierarchy,
+                    needs != null ? needs.State.Hunger : 0f,
+                    needs != null ? needs.State.Energy : 1f,
+                    state.ToString(),
+                    brain != null ? brain.CurrentBiomeId : "default",
+                    brain != null ? brain.HomeBiomeId : "default",
+                    brain != null ? brain.PopulationBiomeId : "default",
+                    brain != null ? brain.DecisionReason : "save_capture",
+                    brain != null ? brain.LastFoodSource : "none",
+                    brain != null ? brain.AttackCooldown : 0f,
+                    brain != null ? brain.CurrentNiche : "HERBIVORE",
+                    brain != null ? brain.HuntDrive : 0f));
             }
 
-            return ecosystemDirector.CaptureSaveData();
+            return creatures;
+        }
+
+        private void RestoreCreatureStates(IReadOnlyList<CreatureSaveData> savedCreatures)
+        {
+            if (savedCreatures == null || savedCreatures.Count == 0)
+            {
+                return;
+            }
+
+            CreatureAgentView[] liveCreatures = FindObjectsByType<CreatureAgentView>(FindObjectsInactive.Include);
+            HashSet<CreatureAgentView> used = new HashSet<CreatureAgentView>();
+
+            foreach (CreatureSaveData saved in savedCreatures.Where(item => item != null))
+            {
+                CreatureAgentView agent = FindBestCreatureMatch(saved, liveCreatures, used);
+                if (agent == null)
+                {
+                    continue;
+                }
+
+                used.Add(agent);
+                RestoreCreatureState(agent, saved);
+            }
+        }
+
+        private static CreatureAgentView FindBestCreatureMatch(CreatureSaveData saved, IReadOnlyList<CreatureAgentView> candidates, ISet<CreatureAgentView> used)
+        {
+            string expectedId = CreatureSaveData.NormalizeCreatureId(saved.CreatureId);
+            CreatureAgentView best = null;
+            float bestDistance = float.PositiveInfinity;
+            Vector3 savedPosition = new Vector3(saved.x, saved.y, saved.z);
+
+            foreach (CreatureAgentView candidate in candidates)
+            {
+                if (candidate == null || used.Contains(candidate))
+                {
+                    continue;
+                }
+
+                if (CreatureSaveData.NormalizeCreatureId(candidate.CreatureId) != expectedId)
+                {
+                    continue;
+                }
+
+                float distance = (candidate.transform.position - savedPosition).sqrMagnitude;
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    best = candidate;
+                }
+            }
+
+            return best;
+        }
+
+        private static void RestoreCreatureState(CreatureAgentView agent, CreatureSaveData saved)
+        {
+            CharacterController controller = agent.GetComponent<CharacterController>();
+            if (controller != null)
+            {
+                controller.enabled = false;
+            }
+
+            agent.transform.position = new Vector3(saved.x, saved.y, saved.z);
+
+            if (controller != null)
+            {
+                controller.enabled = true;
+            }
+
+            CreatureNeedsRuntime needs = agent.GetComponent<CreatureNeedsRuntime>();
+            if (needs != null)
+            {
+                needs.RestoreNeeds(saved.Hunger, saved.Energy);
+            }
+
+            CreatureBehaviorBrain brain = agent.GetComponent<CreatureBehaviorBrain>();
+            if (brain != null)
+            {
+                brain.RestoreSaveState(
+                    saved.BehaviorState,
+                    saved.DecisionReason,
+                    saved.LastFoodSource,
+                    saved.CurrentBiomeId,
+                    saved.HomeBiomeId,
+                    saved.PopulationBiomeId,
+                    saved.AttackCooldown,
+                    saved.CurrentNiche,
+                    saved.HuntDrive);
+            }
+
+            CreatureHealthRuntime health = agent.GetComponent<CreatureHealthRuntime>();
+            if (health != null)
+            {
+                health.RestoreHealth(saved.MaxHealth, saved.Health, saved.Dead);
+            }
+
+            agent.gameObject.SetActive(!saved.Dead);
+        }
+
+        private static void CaptureDynamicMeatDrops(List<ResourceSaveData> resources)
+        {
+            foreach (FoodSourceView food in FindObjectsByType<FoodSourceView>(FindObjectsInactive.Include))
+            {
+                if (food == null || !LooksLikeDynamicMeatDrop(food.gameObject))
+                {
+                    continue;
+                }
+
+                Vector3 p = food.transform.position;
+                int amount = Mathf.Max(0, Mathf.RoundToInt(food.Biomass));
+                resources.Add(new ResourceSaveData(
+                    string.IsNullOrWhiteSpace(food.SourceId) ? "meat_drop" : food.SourceId,
+                    food.gameObject.name,
+                    p.x,
+                    p.y,
+                    p.z,
+                    amount,
+                    Mathf.Max(1, amount),
+                    food.IsEmpty,
+                    0f,
+                    0,
+                    false,
+                    10f,
+                    false,
+                    false,
+                    true,
+                    100));
+            }
+        }
+
+        private static bool LooksLikeDynamicMeatDrop(GameObject go)
+        {
+            return go != null && go.name.StartsWith("MeatDrop_", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void ClearExistingDynamicMeatDrops()
+        {
+            foreach (GameObject go in FindObjectsByType<GameObject>(FindObjectsInactive.Include))
+            {
+                if (LooksLikeDynamicMeatDrop(go))
+                {
+                    DestroyImmediate(go);
+                }
+            }
+        }
+
+        private static bool IsDynamicMeatDrop(ResourceSaveData data)
+        {
+            if (data == null)
+            {
+                return false;
+            }
+
+            return data.IsDrop
+                   || (!string.IsNullOrWhiteSpace(data.ResourceType) && data.ResourceType.StartsWith("MeatDrop_", StringComparison.OrdinalIgnoreCase))
+                   || (!string.IsNullOrWhiteSpace(data.ResourceId) && data.ResourceId.StartsWith("meat_", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static void RestoreDynamicMeatDrop(ResourceSaveData data)
+        {
+            if (data == null || data.Depleted || data.Amount <= 0)
+            {
+                return;
+            }
+
+            GameObject drop = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            drop.name = string.IsNullOrWhiteSpace(data.ResourceType) ? "MeatDrop_restored" : data.ResourceType;
+            drop.transform.position = new Vector3(data.x, data.y, data.z);
+            drop.transform.localScale = new Vector3(0.45f, 0.2f, 0.45f);
+            FoodSourceView food = drop.GetComponent<FoodSourceView>() ?? drop.AddComponent<FoodSourceView>();
+            food.Configure(string.IsNullOrWhiteSpace(data.ResourceId) ? "meat_drop" : data.ResourceId, "Meat", FoodKind.Meat, Mathf.Max(0.01f, data.Amount), Mathf.Max(0.01f, data.FoodValue));
+        }
+
+        private void RestoreResourceStates(IReadOnlyList<ResourceSaveData> savedResources)
+        {
+            if (savedResources == null || savedResources.Count == 0)
+            {
+                return;
+            }
+
+            ClearExistingDynamicMeatDrops();
+            ResourceNodeView[] nodes = FindObjectsByType<ResourceNodeView>(FindObjectsInactive.Include);
+            Dictionary<Vector3Int, ResourceNodeView> lookup = new Dictionary<Vector3Int, ResourceNodeView>();
+            foreach (ResourceNodeView node in nodes)
+            {
+                Vector3 p = node.transform.position;
+                Vector3Int key = new Vector3Int(Mathf.RoundToInt(p.x * 100), Mathf.RoundToInt(p.y * 100), Mathf.RoundToInt(p.z * 100));
+                if (!lookup.ContainsKey(key))
+                {
+                    lookup[key] = node;
+                }
+            }
+
+            int restoredCount = 0;
+            foreach (ResourceSaveData resData in savedResources)
+            {
+                if (IsDynamicMeatDrop(resData))
+                {
+                    RestoreDynamicMeatDrop(resData);
+                    continue;
+                }
+
+                Vector3Int key = new Vector3Int(Mathf.RoundToInt(resData.x * 100), Mathf.RoundToInt(resData.y * 100), Mathf.RoundToInt(resData.z * 100));
+                if (lookup.TryGetValue(key, out ResourceNodeView node))
+                {
+                    node.LoadState(resData.Amount, resData.Depleted, resData.GrowthProgress);
+                    restoredCount++;
+                }
+            }
         }
 
         private void ApplyBiomeStates(IReadOnlyList<BiomeEcosystemSaveData> biomeStates)
@@ -236,5 +499,15 @@ if (saveData == null)
 
             ecosystemDirector.LoadSaveData(biomeStates);
         }
-}
+
+        private void ApplyEcosystemMetadata(WorldSaveData world)
+        {
+            if (ecosystemDirector == null || world == null)
+            {
+                return;
+            }
+
+            ecosystemDirector.RestoreRuntimeMetadata(world.EcosystemTickTimer, world.EcosystemStateSource);
+        }
+    }
 }

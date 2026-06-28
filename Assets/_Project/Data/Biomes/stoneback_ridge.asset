@@ -25,13 +25,6 @@ MonoBehaviour:
     maxScale: 1.35
     resourceKind: rock
     harvestable: 1
-  - kind: 5
-    count: 14
-    weight: 1
-    minScale: 0.45
-    maxScale: 0.85
-    resourceKind: dry_bush
-    harvestable: 1
   - kind: 0
     count: 10
     weight: 1
@@ -46,4 +39,25 @@ MonoBehaviour:
     maxScale: 1.25
     resourceKind: dry_tree
     harvestable: 1
+  - kind: 4
+    count: 3
+    weight: 1
+    minScale: 0.45
+    maxScale: 0.9
+    resourceKind: bush
+    harvestable: 1
+  - kind: 5
+    count: 14
+    weight: 1
+    minScale: 0.45
+    maxScale: 0.85
+    resourceKind: dry_bush
+    harvestable: 1
+  - kind: 6
+    count: 4
+    weight: 1
+    minScale: 0.35
+    maxScale: 0.7
+    resourceKind: 
+    harvestable: 0
   creatures: []

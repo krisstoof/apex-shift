@@ -7,10 +7,13 @@ namespace ApexShift.EditorTools.World
 {
     internal static class VegetationPrefabSelectionRules
     {
+        private const string EmbersStormNatureRoot = "embersstorm -  free nature pack";
+
         internal static IReadOnlyList<GameObject> FindPrefabsForRole(string roleName)
         {
             List<ScoredPrefab> found = new List<ScoredPrefab>();
             HashSet<GameObject> seen = new HashSet<GameObject>();
+            List<ScoredPrefab> emberOnly = new List<ScoredPrefab>();
 
             foreach (string exactName in GetManualOverrideNamesForRole(roleName))
             {
@@ -21,12 +24,16 @@ namespace ApexShift.EditorTools.World
                         continue;
                     }
 
-                    if (TryGetManualVegetationRole(prefab, out string manualRole) && manualRole == roleName)
-                    {
-                        found.Add(new ScoredPrefab(prefab, int.MaxValue));
+                        if (TryGetManualVegetationRole(prefab, out string manualRole) && manualRole == roleName)
+                        {
+                        int score = IsEmbersStormPrefab(prefab) ? int.MaxValue : -1000;
+                        if (score > 0)
+                        {
+                            emberOnly.Add(new ScoredPrefab(prefab, score));
+                        }
                         seen.Add(prefab);
+                        }
                     }
-                }
             }
 
             if (found.Count == 0)
@@ -47,7 +54,11 @@ namespace ApexShift.EditorTools.World
                                 continue;
                             }
 
-                            found.Add(new ScoredPrefab(prefab, int.MaxValue));
+                            int score = IsEmbersStormPrefab(prefab) ? int.MaxValue : -1000;
+                            if (score > 0)
+                            {
+                                emberOnly.Add(new ScoredPrefab(prefab, score));
+                            }
                             seen.Add(prefab);
                             continue;
                         }
@@ -58,10 +69,24 @@ namespace ApexShift.EditorTools.World
                             continue;
                         }
 
-                        found.Add(new ScoredPrefab(prefab, score));
+                        if (IsEmbersStormPrefab(prefab))
+                        {
+                            found.Add(new ScoredPrefab(prefab, score));
+                        }
                         seen.Add(prefab);
                     }
                 }
+            }
+
+            if (emberOnly.Count > 0)
+            {
+                emberOnly.Sort((a, b) => b.Score.CompareTo(a.Score));
+                List<GameObject> emberResult = new List<GameObject>();
+                foreach (ScoredPrefab item in emberOnly)
+                {
+                    emberResult.Add(item.Prefab);
+                }
+                return emberResult;
             }
 
             found.Sort((a, b) => b.Score.CompareTo(a.Score));
@@ -240,20 +265,68 @@ namespace ApexShift.EditorTools.World
             string path = AssetDatabase.GetAssetPath(prefab);
             string text = (path + " " + prefab.name).ToLowerInvariant();
 
+            if (!IsEmbersStormPrefab(prefab))
+            {
+                return -1000;
+            }
+
             if (IsForbiddenForAllNature(text))
             {
                 return -1000;
             }
 
+            if (text.Contains("low poly"))
+            {
+                return -1000;
+            }
+
             int score = 0;
+            if (text.Contains(EmbersStormNatureRoot))
+            {
+                score += 300;
+            }
+
+            score += ScoreEmbersStormFolderMatch(text, roleName);
             if (text.Contains(keyword.ToLowerInvariant())) score += 15;
-            if (text.Contains("low poly")) score += 25;
             if (text.Contains("nature")) score += 25;
             if (text.Contains("nature pack")) score += 35;
 
             score += ScoreRoleText(text, roleName);
             score += ScoreRoleColor(prefab, roleName);
             return score;
+        }
+
+        private static bool IsEmbersStormPrefab(GameObject prefab)
+        {
+            if (prefab == null)
+            {
+                return false;
+            }
+
+            string path = NormalizeAssetName(AssetDatabase.GetAssetPath(prefab));
+            string name = NormalizeAssetName(prefab.name);
+            return path.Contains(EmbersStormNatureRoot) || name.Contains(EmbersStormNatureRoot);
+        }
+
+        private static int ScoreEmbersStormFolderMatch(string text, string roleName)
+        {
+            if (!text.Contains(EmbersStormNatureRoot))
+            {
+                return 0;
+            }
+
+            return roleName switch
+            {
+                "ConiferTree" => text.Contains("/prefabs/trees/pine tree/") ? 300 : text.Contains("/prefabs/trees/") ? 180 : 0,
+                "LeafyTree" => text.Contains("/prefabs/trees/oak/") ? 300 : text.Contains("/prefabs/trees/") ? 180 : 0,
+                "DryTree" => text.Contains("/prefabs/trees/dead trees/") ? 300 : text.Contains("/prefabs/trees/") ? 180 : 0,
+                "Rock" => text.Contains("/prefabs/rocks/") ? 300 : 0,
+                "GreenBush" => text.Contains("/prefabs/trees/bush/") ? 260 : text.Contains("/prefabs/plants/plant/") ? 160 : 0,
+                "DryBush" => text.Contains("/prefabs/trees/dead trees/") ? 260 : text.Contains("/prefabs/trees/bush/") ? 160 : 0,
+                "GrassOrFlower" => text.Contains("/prefabs/plants/grass/") ? 300 : text.Contains("/prefabs/plants/flowers/") ? 220 : 160,
+                "BerryBush" => text.Contains("/prefabs/plants/plant/") ? 220 : text.Contains("/prefabs/trees/bush/") ? 160 : 0,
+                _ => 0
+            };
         }
 
         private static bool IsForbiddenForAllNature(string text)

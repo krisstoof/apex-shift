@@ -259,7 +259,6 @@ GameObject player = GameObject.Find("Player");
 
             int score = 0;
             if (text.Contains(keyword.ToLowerInvariant())) score += 15;
-            if (text.Contains("low poly")) score += 25;
             if (text.Contains("nature")) score += 25;
             if (text.Contains("nature pack")) score += 35;
 
@@ -467,8 +466,8 @@ GameObject player = GameObject.Find("Player");
         {
             if (urpLit == null) return;
 
-            // Load the nature palette texture as fallback
-            Texture2D naturePalette = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Low Poly Trees & Nature Pack (70 Props)/Textures/Main_texture.png");
+            // Use the EmbersStorm palette texture as fallback for older materials.
+            Texture2D naturePalette = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/EmbersStorm -  Free Nature Pack/Texture/Texture.png");
 
             Renderer[] renderers = prefab.GetComponentsInChildren<Renderer>(true);
             foreach (var r in renderers)

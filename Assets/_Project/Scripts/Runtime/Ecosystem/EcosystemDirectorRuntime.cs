@@ -40,6 +40,7 @@ namespace ApexShift.Runtime.Ecosystem
         public IReadOnlyDictionary<string, BiomeEcosystemState> BiomeStates => biomeStates;
         public string EcosystemStateSource => ecosystemStateSource;
         public bool Initialized => initialized;
+        public float TickTimer => tickTimer;
 
         private void Awake()
         {
@@ -201,6 +202,13 @@ namespace ApexShift.Runtime.Ecosystem
             }
 
             ecosystemStateSource = "save";
+            initialized = true;
+        }
+
+        public void RestoreRuntimeMetadata(float savedTickTimer, string savedSource)
+        {
+            tickTimer = Mathf.Max(0f, savedTickTimer);
+            ecosystemStateSource = string.IsNullOrWhiteSpace(savedSource) ? "save" : savedSource.Trim();
             initialized = true;
         }
 

@@ -34,6 +34,26 @@ namespace ApexShift.Runtime.Creatures
             currentHealth = maxHealth;
         }
 
+        public void RestoreHealth(float restoredMaxHealth, float restoredCurrentHealth, bool dead)
+        {
+            maxHealth = Mathf.Max(0.01f, restoredMaxHealth);
+            currentHealth = dead ? 0f : Mathf.Clamp(restoredCurrentHealth, 0f, maxHealth);
+            enabled = !dead;
+
+            if (dead)
+            {
+                CreatureBehaviorRuntime behavior = GetComponent<CreatureBehaviorRuntime>();
+                if (behavior != null)
+                {
+                    behavior.OnCreatureDied();
+                }
+                else
+                {
+                    GetComponent<CreatureBehaviorBrain>()?.OnCreatureDied();
+                }
+            }
+        }
+
         public void TakeDamage(float amount)
         {
             if (IsDead)
