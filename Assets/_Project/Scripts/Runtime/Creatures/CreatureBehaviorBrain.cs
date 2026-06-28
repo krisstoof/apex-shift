@@ -11,6 +11,7 @@ namespace ApexShift.Runtime.Creatures
     [RequireComponent(typeof(CreatureAgentView))]
     [RequireComponent(typeof(CreatureNeedsRuntime))]
     [RequireComponent(typeof(CreatureHealthRuntime))]
+    [RequireComponent(typeof(CreatureSimulationLodRuntime))]
     public sealed class CreatureBehaviorBrain : MonoBehaviour
     {
         [SerializeField] private float updateInterval = 0.25f;
@@ -38,6 +39,7 @@ namespace ApexShift.Runtime.Creatures
         private CreatureHealthRuntime _health;
         private CreatureWanderBehavior _wander;
         private CreatureDebugOverlay _debugOverlay;
+        private CreatureSimulationLodRuntime _simulationLod;
         private CreatureBehaviorState _state;
         private Transform _player;
         private CreatureAgentView _currentPrey;
@@ -67,6 +69,7 @@ namespace ApexShift.Runtime.Creatures
             _health = GetComponent<CreatureHealthRuntime>();
             _wander = GetComponent<CreatureWanderBehavior>();
             _debugOverlay = GetComponent<CreatureDebugOverlay>();
+            _simulationLod = GetComponent<CreatureSimulationLodRuntime>();
         }
 
         private void Update()
@@ -74,7 +77,29 @@ namespace ApexShift.Runtime.Creatures
             if (_agentView == null || _needs == null || _health == null || _health.IsDead) return;
             _timer -= Time.deltaTime;
             if (_timer > 0f) return;
-            _timer = Mathf.Max(0.05f, updateInterval);
+
+            _simulationLod ??= GetComponent<CreatureSimulationLodRuntime>();
+            string creatureId = (_agentView.CreatureId ?? string.Empty).Trim().ToLowerInvariant();
+            if (_simulationLod != null)
+            {
+                _simulationLod.Tick(Time.deltaTime, creatureId);
+                if (!_simulationLod.ShouldRunFullAi)
+                {
+                    SetWanderEnabled(false);
+                    _agentView.Stop();
+                    if (_simulationLod.IsFar && _simulationLod.TryConsumeFarTick(Time.deltaTime, out float farElapsed))
+                    {
+                        TickReducedSimulation(farElapsed, "far");
+                    }
+                    else if (_simulationLod.IsBackgroundSimulationMode && _simulationLod.TryConsumeBackgroundTick(Time.deltaTime, out float backgroundElapsed))
+                    {
+                        TickReducedSimulation(backgroundElapsed, "background");
+                    }
+                    return;
+                }
+            }
+
+            _timer = Mathf.Max(0.05f, _simulationLod != null ? _simulationLod.GetEffectiveAiInterval(updateInterval) : updateInterval);
             DecisionCount++;
             TickBrain();
         }
@@ -168,6 +193,29 @@ namespace ApexShift.Runtime.Creatures
                 if (d <= fleeRangeSmallPrey) { Vector3 away = transform.position - _player.position; away.y = 0f; if (away.sqrMagnitude < 0.001f) { away = Random.insideUnitSphere; away.y = 0f; } SetState(CreatureBehaviorState.Flee, $"player d:{d:0.0}"); MoveToTarget(transform.position + away.normalized * fleeDistanceSmallPrey); _panicTimer = smallPreyPanicDuration; return; }
             }
             SetState(CreatureBehaviorState.Wander, "search");
+        }
+
+        private void TickReducedSimulation(float elapsedSeconds, string mode)
+        {
+            float elapsed = Mathf.Max(0f, elapsedSeconds);
+            if (elapsed <= 0f)
+            {
+                return;
+            }
+
+            string creatureId = (_agentView != null ? _agentView.CreatureId : string.Empty) ?? string.Empty;
+            UpdateTargetMemory(creatureId.Trim().ToLowerInvariant());
+            if (_eatCooldownTimer > 0f) _eatCooldownTimer = Mathf.Max(0f, _eatCooldownTimer - elapsed);
+            if (_varnakCombatCooldownTimer > 0f) _varnakCombatCooldownTimer = Mathf.Max(0f, _varnakCombatCooldownTimer - elapsed);
+            if (_panicTimer > 0f) _panicTimer = Mathf.Max(0f, _panicTimer - elapsed);
+            if (mode == "background" && _state == CreatureBehaviorState.Flee)
+            {
+                SetState(CreatureBehaviorState.Wander, "background_reset_flee");
+            }
+            else
+            {
+                DecisionReason = mode == "far" ? "far_simulation" : "background_simulation";
+            }
         }
 
         private CreatureAgentView FindNearestSceneCreatureById(string creatureId, float maxDistance)

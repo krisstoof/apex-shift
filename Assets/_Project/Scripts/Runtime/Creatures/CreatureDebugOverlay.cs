@@ -21,6 +21,7 @@ namespace ApexShift.Runtime.Creatures
         private CreatureFoodSeekingBehavior foodSeeking;
         private CreatureBehaviorBrain behaviorRuntime;
         private NavMeshAgent navAgent;
+        private CreatureSimulationLodRuntime simulationLod;
         private CreatureBehaviorState behaviorState = CreatureBehaviorState.Idle;
 
         private void Awake()
@@ -40,6 +41,7 @@ namespace ApexShift.Runtime.Creatures
             foodSeeking = GetComponent<CreatureFoodSeekingBehavior>();
             behaviorRuntime = GetComponent<CreatureBehaviorBrain>();
             navAgent = GetComponent<NavMeshAgent>();
+            simulationLod = GetComponent<CreatureSimulationLodRuntime>();
         }
 
         private void EnsureRuntimeReferences()
@@ -48,6 +50,7 @@ namespace ApexShift.Runtime.Creatures
             if (needs == null) needs = GetComponent<CreatureNeedsRuntime>();
             if (behaviorRuntime == null) behaviorRuntime = GetComponent<CreatureBehaviorBrain>();
             if (navAgent == null) navAgent = GetComponent<NavMeshAgent>();
+            if (simulationLod == null) simulationLod = GetComponent<CreatureSimulationLodRuntime>();
         }
 
         public void SetBehaviorState(CreatureBehaviorState state)
@@ -123,11 +126,26 @@ namespace ApexShift.Runtime.Creatures
             string extra = "";
             if (behaviorRuntime != null)
             {
+                string lod = "";
+                if (simulationLod != null && simulationLod.DebugEnabled)
+                {
+                    lod =
+                        $"\nlod: {simulationLod.LevelName} d:{simulationLod.DistanceToPlayer:0.0} c:{simulationLod.LodChangeCount}" +
+                        $"\ntick: a:{simulationLod.ActiveSimulationTickCount}" +
+                        $" f:{simulationLod.FarSimulationTickCount}" +
+                        $" b:{simulationLod.BackgroundSimulationTickCount}";
+                    if (simulationLod.IsVisibilityCulled)
+                    {
+                        lod += " bg";
+                    }
+                }
+
                 lastFood = ShortenLastFoodSource(behaviorRuntime.LastFoodSource);
                 extra =
                     $"\nwhy: {ShortenDecisionReason(behaviorRuntime.DecisionReason)}" +
                     $"\nlast: {lastFood}" +
                     $"\ndec: {behaviorRuntime.DecisionCount} atk:{behaviorRuntime.AttackCooldown:0.0}";
+                extra += lod;
             }
 
             return
