@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using ApexShift.Core.Ecosystem;
 using ApexShift.Core.Save;
+using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.World.Generation;
 using UnityEngine;
@@ -14,12 +16,16 @@ namespace ApexShift.Runtime.Ecosystem
         [SerializeField] private float simulationTickSeconds = 12f;
         [SerializeField] private bool processOneBiomePerFrame = true;
         [SerializeField] private bool showDebugOverlay = true;
+        [SerializeField] private float debugRefreshIntervalSeconds = 0.50f;
 
         private static EcosystemDirectorRuntime _instance;
         private readonly Dictionary<string, BiomeEcosystemState> biomeStates = new Dictionary<string, BiomeEcosystemState>(System.StringComparer.Ordinal);
         private readonly List<GeneratedBiomeRegion> regions = new List<GeneratedBiomeRegion>();
         private readonly List<string> pendingTickBiomeIds = new List<string>();
         private float tickTimer;
+        private float debugTextRefreshTimer;
+        private string cachedDebugText = string.Empty;
+        private float cachedDebugHeight = 92f;
         private bool initialized;
         private string ecosystemStateSource = "generated";
 
@@ -246,17 +252,62 @@ namespace ApexShift.Runtime.Ecosystem
 
         private void OnGUI()
         {
-            if (!showDebugOverlay || !initialized)
+            if (!showDebugOverlay || !initialized || !RuntimeDebugSettings.DebugEnabled || !RuntimeDebugSettings.EcosystemOverlayEnabled)
             {
                 return;
             }
 
+            string text = GetCachedDebugText();
+
             GUI.Box(
-                new Rect(12f, Screen.height * 0.55f + 112f, 310f, 92f),
-                $"Ecosystem Director\n" +
-                $"source: {ecosystemStateSource} biomes:{biomeStates.Count}\n" +
-                $"tick: {tickTimer:0.0}/{simulationTickSeconds:0.0} pending:{pendingTickBiomeIds.Count}\n" +
-                $"avg plant: {GetAveragePlantBiomassPercent():0.0}%");
+                new Rect(12f, Screen.height * 0.55f + 112f, 420f, cachedDebugHeight),
+                text);
+        }
+
+        private string GetCachedDebugText()
+        {
+            debugTextRefreshTimer -= Time.unscaledDeltaTime;
+            if (!string.IsNullOrEmpty(cachedDebugText) && debugTextRefreshTimer > 0f)
+            {
+                return cachedDebugText;
+            }
+
+            debugTextRefreshTimer = Mathf.Max(0.05f, debugRefreshIntervalSeconds > 0f ? debugRefreshIntervalSeconds : RuntimeDebugSettings.RefreshIntervalSeconds);
+            cachedDebugText = BuildEcosystemDebugText();
+            int lines = Mathf.Max(1, cachedDebugText.Split('\n').Length);
+            cachedDebugHeight = Mathf.Max(92f, 18f + lines * 16f);
+            return cachedDebugText;
+        }
+
+        private string BuildEcosystemDebugText()
+        {
+            StringBuilder builder = new StringBuilder(512);
+            builder.AppendLine("Ecosystem Director");
+            builder.AppendLine($"source:{ecosystemStateSource} biomes:{biomeStates.Count} tick:{tickTimer:0.0}/{simulationTickSeconds:0.0} pending:{pendingTickBiomeIds.Count}");
+            builder.AppendLine($"avg plant:{GetAveragePlantBiomassPercent():0.0}%");
+
+            foreach (BiomeEcosystemState state in biomeStates.Values.OrderBy(state => state.BiomeId))
+            {
+                builder.AppendLine(FormatBiomeDebugLine(state));
+            }
+
+            return builder.ToString();
+        }
+
+        private static string FormatBiomeDebugLine(BiomeEcosystemState state)
+        {
+            if (state == null)
+            {
+                return "biome: missing";
+            }
+
+            return $"{Shorten(state.BiomeId, 10)} bio:{state.PlantBiomass:0}/{state.MaxPlantBiomass:0}({state.PlantBiomassPercent:0}%) pop s:{state.SmallPreyPopulation:0.0} g:{state.GrazerPopulation:0.0} v:{state.VarnakPopulation:0.0} stress:{state.FoodStress:0} gen {state.SmallPreyGeneration}/{state.GrazerGeneration}/{state.VarnakGeneration} niche:{Shorten(state.CurrentNiche, 10)} {state.Status}";
+        }
+
+        private static string Shorten(string value, int maxLength)
+        {
+            string safe = string.IsNullOrWhiteSpace(value) ? "none" : value.Trim();
+            return safe.Length <= maxLength ? safe : safe.Substring(0, Mathf.Max(1, maxLength));
         }
 
         private float GetAveragePlantBiomassPercent()

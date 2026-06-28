@@ -1,3 +1,4 @@
+using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Flow;
 using UnityEngine;
@@ -15,6 +16,7 @@ namespace ApexShift.Runtime.Creatures
         [SerializeField] private float verticalOffset = 1.8f;
         [SerializeField] private int width = 160;
         [SerializeField] private int height = 80;
+        [SerializeField] private float refreshIntervalSeconds = 0.35f;
 
         private CreatureAgentView agentView;
         private CreatureNeedsRuntime needs;
@@ -23,6 +25,9 @@ namespace ApexShift.Runtime.Creatures
         private NavMeshAgent navAgent;
         private CreatureSimulationLodRuntime simulationLod;
         private CreatureBehaviorState behaviorState = CreatureBehaviorState.Idle;
+        private string cachedDebugText = string.Empty;
+        private int cachedLineCount = 1;
+        private float nextDebugTextRefreshTime;
 
         private void Awake()
         {
@@ -60,7 +65,7 @@ namespace ApexShift.Runtime.Creatures
 
         private void OnGUI()
         {
-            if (!GameSessionState.IsGameplayActive || HideAllDebugFrames || !showDebugFrame)
+            if (!GameSessionState.IsGameplayActive || !RuntimeDebugSettings.DebugEnabled || !RuntimeDebugSettings.CreatureFramesEnabled || HideAllDebugFrames || !showDebugFrame)
             {
                 return;
             }
@@ -84,8 +89,8 @@ namespace ApexShift.Runtime.Creatures
                 return;
             }
 
-            string text = BuildDebugText();
-            int lineCount = text.Split('\n').Length;
+            string text = GetCachedDebugText();
+            int lineCount = cachedLineCount;
             int dynamicHeight = Mathf.Max(height, 18 + lineCount * 16);
 
             Rect rect = new Rect(
@@ -100,63 +105,25 @@ namespace ApexShift.Runtime.Creatures
             GUI.color = oldColor;
         }
 
-        private string BuildDebugText()
+        public void ForceRefreshForTests()
         {
-            EnsureRuntimeReferences();
+            cachedDebugText = string.Empty;
+            nextDebugTextRefreshTime = 0f;
+        }
 
-            string creatureId = agentView != null ? agentView.CreatureId : gameObject.name;
-            string behavior = GetBehaviorLabel();
-            string nav = GetNavigationLabel();
-            string target = GetTargetLabel();
-
-            string hunger = "n/a";
-            string energy = "n/a";
-            string diet = "n/a";
-            string hungry = "n/a";
-            string lastFood = "n/a";
-
-            if (needs != null)
+        private string GetCachedDebugText()
+        {
+            float interval = Mathf.Max(0.05f, refreshIntervalSeconds > 0f ? refreshIntervalSeconds : RuntimeDebugSettings.RefreshIntervalSeconds);
+            if (string.IsNullOrEmpty(cachedDebugText) || Time.unscaledTime >= nextDebugTextRefreshTime)
             {
-                hunger = $"{needs.State.Stage} {needs.State.Hunger:0}/{needs.State.MaxHunger:0}";
-                energy = $"{needs.State.Energy:0}";
-                diet = $"P:{needs.Diet.PlantPreference:0.00} M:{needs.Diet.MeatPreference:0.00} S:{needs.Diet.ScavengerPreference:0.00}";
-                hungry = needs.IsHungry ? "true" : "false";
+                CreatureDebugData data = CreatureDebugData.Capture(gameObject);
+                behaviorState = data.state;
+                cachedDebugText = data.ToOverlayText();
+                cachedLineCount = Mathf.Max(1, cachedDebugText.Split('\n').Length);
+                nextDebugTextRefreshTime = Time.unscaledTime + interval;
             }
 
-            string extra = "";
-            if (behaviorRuntime != null)
-            {
-                string lod = "";
-                if (simulationLod != null && simulationLod.DebugEnabled)
-                {
-                    lod =
-                        $"\nlod: {simulationLod.LevelName} d:{simulationLod.DistanceToPlayer:0.0} c:{simulationLod.LodChangeCount}" +
-                        $"\ntick: a:{simulationLod.ActiveSimulationTickCount}" +
-                        $" f:{simulationLod.FarSimulationTickCount}" +
-                        $" b:{simulationLod.BackgroundSimulationTickCount}";
-                    if (simulationLod.IsVisibilityCulled)
-                    {
-                        lod += " bg";
-                    }
-                }
-
-                lastFood = ShortenLastFoodSource(behaviorRuntime.LastFoodSource);
-                extra =
-                    $"\nwhy: {ShortenDecisionReason(behaviorRuntime.DecisionReason)}" +
-                    $"\nlast: {lastFood}" +
-                    $"\nniche: {behaviorRuntime.CurrentNiche}" +
-                    $"\ndec: {behaviorRuntime.DecisionCount} atk:{behaviorRuntime.AttackCooldown:0.0}";
-                extra += lod;
-            }
-
-            return
-                $"{creatureId}\n" +
-                $"beh: {behavior}\n" +
-                $"hun: {hunger} hungry:{hungry} en:{energy}\n" +
-                $"diet: {diet}\n" +
-                $"nav: {nav}\n" +
-                $"tgt: {target}" +
-                extra;
+            return cachedDebugText;
         }
 
         private string GetBehaviorLabel()
