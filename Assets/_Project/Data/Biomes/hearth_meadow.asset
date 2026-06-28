@@ -19,38 +19,38 @@ MonoBehaviour:
   starterBiome: 1
   vegetation:
   - kind: 1
-    count: 8
+    count: 4
     weight: 1
-    minScale: 0.7
-    maxScale: 1.1
+    minScale: 0.20
+    maxScale: 0.34
     resourceKind: leafy_tree
     harvestable: 1
   - kind: 3
-    count: 3
+    count: 2
     weight: 1
-    minScale: 0.8
-    maxScale: 1.35
+    minScale: 0.18
+    maxScale: 0.30
     resourceKind: rock
     harvestable: 1
   - kind: 4
-    count: 10
+    count: 5
     weight: 1
-    minScale: 0.45
-    maxScale: 0.9
+    minScale: 0.18
+    maxScale: 0.35
     resourceKind: bush
     harvestable: 1
   - kind: 6
-    count: 32
+    count: 12
     weight: 1
-    minScale: 0.35
-    maxScale: 0.7
+    minScale: 0.10
+    maxScale: 0.20
     resourceKind: 
     harvestable: 0
   - kind: 7
-    count: 6
+    count: 3
     weight: 1
-    minScale: 0.45
-    maxScale: 0.95
+    minScale: 0.18
+    maxScale: 0.35
     resourceKind: berry_bush
     harvestable: 1
   creatures:

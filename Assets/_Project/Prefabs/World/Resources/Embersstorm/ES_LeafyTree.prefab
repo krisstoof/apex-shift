@@ -1,0 +1,131 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &8033613929312585680
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4863369337025507507, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      propertyPath: m_Name
+      value: ES_LeafyTree
+      objectReference: {fileID: 0}
+    - target: {fileID: 5686378877218834548, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5686378877218834548, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5686378877218834548, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5686378877218834548, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5686378877218834548, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5686378877218834548, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5686378877218834548, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5686378877218834548, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5686378877218834548, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5686378877218834548, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5686378877218834548, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5686378877218834548, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5686378877218834548, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4863369337025507507, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2981657471381923857}
+    - targetCorrespondingSourceObject: {fileID: 4863369337025507507, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3983461387224354116}
+  m_SourcePrefab: {fileID: 100100000, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+--- !u!1 &3171389467917301603 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4863369337025507507, guid: 846dc3c893b68b848bb475d0813058c1, type: 3}
+  m_PrefabInstance: {fileID: 8033613929312585680}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2981657471381923857
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3171389467917301603}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8bfc98338054a9f9609a09960df0e60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.Resources.ResourceNodeView
+  resourceKind: leafy_tree
+  displayName: Leafy Tree
+  itemId: wood
+  amount: 4
+  playerHarvestable: 1
+  deactivateOnHarvest: 1
+  destroyOnHarvest: 0
+  edibleByHerbivores: 0
+  foodValue: 0
+  renderOnly: 0
+  pondVegetation: 0
+  pickupPriority: 0
+  regrowthDays: 0
+  bridgeToFoodSource: 0
+  depletedVisual: {fileID: 0}
+  interactionRadius: 2.25
+--- !u!135 &3983461387224354116
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3171389467917301603}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 2.25
+  m_Center: {x: 1.2083457, y: 9.191652, z: -0.48899245}

@@ -1,0 +1,153 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &1864228473092115940
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 3965841237103515587, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      propertyPath: m_Name
+      value: ES_GrassPatch
+      objectReference: {fileID: 0}
+    - target: {fileID: 7626513086808444794, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 7626513086808444794, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 7626513086808444794, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 7626513086808444794, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7626513086808444794, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7626513086808444794, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7626513086808444794, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7626513086808444794, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7626513086808444794, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7626513086808444794, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7626513086808444794, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7626513086808444794, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7626513086808444794, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3965841237103515587, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5735196436931357746}
+    - targetCorrespondingSourceObject: {fileID: 3965841237103515587, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1033325130307917024}
+    - targetCorrespondingSourceObject: {fileID: 3965841237103515587, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4760016322570706287}
+  m_SourcePrefab: {fileID: 100100000, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+--- !u!1 &3375006452098112039 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3965841237103515587, guid: 7b166f8bae1934040bccffcb20ffc5e8, type: 3}
+  m_PrefabInstance: {fileID: 1864228473092115940}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5735196436931357746
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3375006452098112039}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8bfc98338054a9f9609a09960df0e60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.Resources.ResourceNodeView
+  resourceKind: grass_patch
+  displayName: Grass Patch
+  itemId: grass
+  amount: 1
+  playerHarvestable: 0
+  deactivateOnHarvest: 0
+  destroyOnHarvest: 0
+  edibleByHerbivores: 1
+  foodValue: 5
+  renderOnly: 1
+  pondVegetation: 0
+  pickupPriority: 0
+  regrowthDays: 1
+  bridgeToFoodSource: 1
+  depletedVisual: {fileID: 0}
+  interactionRadius: 2.25
+--- !u!135 &1033325130307917024
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3375006452098112039}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 2.25
+  m_Center: {x: -0.04913479, y: 0.7167019, z: 0.035392582}
+--- !u!114 &4760016322570706287
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3375006452098112039}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2855c3bb811ea4649a8194273b450500, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.Ecosystem.FoodSourceView
+  sourceId: grass_patch
+  displayName: Grass Patch
+  kind: 0
+  maxBiomass: 5
+  nutritionPerBiomass: 1
+  disappearWhenEmpty: 1
+  deactivateObjectWhenEmpty: 1

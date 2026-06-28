@@ -22,6 +22,7 @@ namespace ApexShift.Editor.World
     public static class WorldGeneratorRuntimeSceneBuilder
     {
         private const string CatalogPath = "Assets/_Project/Data/Biomes/BiomeCatalog.asset";
+        private const string PrefabRegistryPath = "Assets/_Project/Data/World/PrefabRegistry.asset";
         private const string InputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
         private const string PlayerPrefabPath = "Assets/StylizedCore/StylizedWoodMonsters/URP/AnimationGallery/Prefab/Player.prefab";
         private const string PlayerACPath = "Assets/StylizedCore/StylizedWoodMonsters/URP/AnimationGallery/Animations/Animations Controllers/AC_Player.controller";
@@ -50,10 +51,15 @@ namespace ApexShift.Editor.World
             generatorGo.AddComponent<WorldMapDebugWindow>();
 
             generator.SetBiomeCatalog(catalog);
+            PrefabRegistry registry = EnsurePrefabRegistry();
             
             // Disable auto-generate on start to prevent double generation in Play mode
             var soGenerator = new SerializedObject(generator);
             soGenerator.FindProperty("generateOnStart").boolValue = false;
+            if (registry != null)
+            {
+                soGenerator.FindProperty("prefabRegistry").objectReferenceValue = registry;
+            }
             soGenerator.ApplyModifiedProperties();
 
             var inputActions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
@@ -77,7 +83,7 @@ namespace ApexShift.Editor.World
                 so.FindProperty("playerAnimatorController").objectReferenceValue = playerAC;
             }
 
-            PopulateResourcePrefabs(so);
+            PopulateResourcePrefabs(so, registry);
             PopulateCreaturePrefabs(so);
             
             so.ApplyModifiedProperties();
@@ -113,24 +119,51 @@ GameObject player = GameObject.Find("Player");
             Debug.Log("Runtime World Generator scene created and saved at Assets/_Project/Scenes/RuntimeWorld.unity");
         }
 
-        private static void PopulateResourcePrefabs(SerializedObject so)
+        private static PrefabRegistry EnsurePrefabRegistry()
+        {
+            string folder = "Assets/_Project/Data/World";
+            if (!AssetDatabase.IsValidFolder(folder))
+            {
+                AssetDatabase.CreateFolder("Assets/_Project/Data", "World");
+            }
+
+            PrefabRegistry registry = AssetDatabase.LoadAssetAtPath<PrefabRegistry>(PrefabRegistryPath);
+            if (registry == null)
+            {
+                registry = ScriptableObject.CreateInstance<PrefabRegistry>();
+                AssetDatabase.CreateAsset(registry, PrefabRegistryPath);
+            }
+
+            return registry;
+        }
+
+        private static void PopulateResourcePrefabs(SerializedObject so, PrefabRegistry registry)
         {
             var prop = so.FindProperty("resourcePrefabs");
             prop.ClearArray();
+            if (registry != null)
+            {
+                var registrySo = new SerializedObject(registry);
+                var registryProp = registrySo.FindProperty("resourcePrefabs");
+                registryProp.ClearArray();
 
-            // Runtime world can be procedural, but vegetation identity must use the same
-            // role resolver as HandcraftedBiomeWorldBuilder.
-            AddResourceEntries(prop, VegetationSpawnKind.ConiferTree);
-            AddResourceEntries(prop, VegetationSpawnKind.LeafyTree);
-            AddResourceEntries(prop, VegetationSpawnKind.DryTree);
-            AddResourceEntries(prop, VegetationSpawnKind.Rock);
-            AddResourceEntries(prop, VegetationSpawnKind.GreenBush);
-            AddResourceEntries(prop, VegetationSpawnKind.DryBush);
-            AddResourceEntries(prop, VegetationSpawnKind.BerryBush);
-            AddResourceEntries(prop, VegetationSpawnKind.GrassOrFlower);
+                // Runtime world can be procedural, but vegetation identity must use the same
+                // role resolver as HandcraftedBiomeWorldBuilder.
+                AddResourceEntries(prop, registryProp, VegetationSpawnKind.ConiferTree);
+                AddResourceEntries(prop, registryProp, VegetationSpawnKind.LeafyTree);
+                AddResourceEntries(prop, registryProp, VegetationSpawnKind.DryTree);
+                AddResourceEntries(prop, registryProp, VegetationSpawnKind.Rock);
+                AddResourceEntries(prop, registryProp, VegetationSpawnKind.GreenBush);
+                AddResourceEntries(prop, registryProp, VegetationSpawnKind.DryBush);
+                AddResourceEntries(prop, registryProp, VegetationSpawnKind.BerryBush);
+                AddResourceEntries(prop, registryProp, VegetationSpawnKind.GrassOrFlower);
+                registrySo.ApplyModifiedProperties();
+                EditorUtility.SetDirty(registry);
+                AssetDatabase.SaveAssets();
+            }
         }
 
-        private static void AddResourceEntries(SerializedProperty listProp, VegetationSpawnKind kind)
+        private static void AddResourceEntries(SerializedProperty legacyListProp, SerializedProperty registryListProp, VegetationSpawnKind kind)
         {
             Shader urpLit = Shader.Find("Universal Render Pipeline/Lit");
             List<ScoredResourcePrefab> prefabs = FindResourcePrefabsForKind(kind);
@@ -145,9 +178,15 @@ GameObject player = GameObject.Find("Player");
             {
                 UpgradeMaterialsToURP(scored.Prefab, urpLit);
 
-                int index = listProp.arraySize;
-                listProp.InsertArrayElementAtIndex(index);
-                var entry = listProp.GetArrayElementAtIndex(index);
+                int legacyIndex = legacyListProp.arraySize;
+                legacyListProp.InsertArrayElementAtIndex(legacyIndex);
+                var legacyEntry = legacyListProp.GetArrayElementAtIndex(legacyIndex);
+                legacyEntry.FindPropertyRelative("kind").enumValueIndex = (int)kind;
+                legacyEntry.FindPropertyRelative("prefab").objectReferenceValue = scored.Prefab;
+
+                int registryIndex = registryListProp.arraySize;
+                registryListProp.InsertArrayElementAtIndex(registryIndex);
+                var entry = registryListProp.GetArrayElementAtIndex(registryIndex);
                 entry.FindPropertyRelative("kind").enumValueIndex = (int)kind;
                 entry.FindPropertyRelative("prefab").objectReferenceValue = scored.Prefab;
             }
@@ -510,6 +549,13 @@ GameObject player = GameObject.Find("Player");
                             {
                                 if (mat.HasProperty("_BaseMap")) mat.SetTexture("_BaseMap", mainTex);
                                 if (mat.HasProperty("_MainTex")) mat.SetTexture("_MainTex", mainTex);
+
+                                if (isNature)
+                                {
+                                    Vector2 tiled = mainTex == naturePalette ? new Vector2(0.65f, 0.65f) : new Vector2(0.55f, 0.55f);
+                                    if (mat.HasProperty("_BaseMap")) mat.SetTextureScale("_BaseMap", tiled);
+                                    if (mat.HasProperty("_MainTex")) mat.SetTextureScale("_MainTex", tiled);
+                                }
                             }
                             
                             if (mat.HasProperty("_BaseColor"))

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -26,10 +27,10 @@ namespace ApexShift.EditorTools.World
 
                         if (TryGetManualVegetationRole(prefab, out string manualRole) && manualRole == roleName)
                         {
-                        int score = IsEmbersStormPrefab(prefab) ? int.MaxValue : -1000;
-                        if (score > 0)
+                        int manualScore = IsEmbersStormPrefab(prefab) ? int.MaxValue : -1000;
+                        if (manualScore > 0)
                         {
-                            emberOnly.Add(new ScoredPrefab(prefab, score));
+                            emberOnly.Add(new ScoredPrefab(prefab, manualScore));
                         }
                         seen.Add(prefab);
                         }
@@ -54,10 +55,10 @@ namespace ApexShift.EditorTools.World
                                 continue;
                             }
 
-                            int score = IsEmbersStormPrefab(prefab) ? int.MaxValue : -1000;
-                            if (score > 0)
+                            int manualScore = IsEmbersStormPrefab(prefab) ? int.MaxValue : -1000;
+                            if (manualScore > 0)
                             {
-                                emberOnly.Add(new ScoredPrefab(prefab, score));
+                                emberOnly.Add(new ScoredPrefab(prefab, manualScore));
                             }
                             seen.Add(prefab);
                             continue;
@@ -252,7 +253,7 @@ namespace ApexShift.EditorTools.World
         private static GameObject LoadPrefab(string guid)
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
-            if (IsSnowVariant(path, path))
+            if (IsSnowVariant(path, path) || IsSnowVariant(path, Path.GetFileNameWithoutExtension(path)))
             {
                 return null;
             }
@@ -434,7 +435,42 @@ namespace ApexShift.EditorTools.World
         {
             string normalizedPath = NormalizeAssetName(assetPath);
             string normalizedName = NormalizeAssetName(prefabName);
-            return normalizedPath.Contains("_snow") || normalizedName.Contains("_snow") || normalizedPath.Contains("snow") || normalizedName.Contains("snow");
+            if (IsSnowyPineVariant(normalizedPath, normalizedName))
+            {
+                return true;
+            }
+            return normalizedPath.Contains("_snow")
+                || normalizedName.Contains("_snow")
+                || normalizedPath.Contains("snow")
+                || normalizedName.Contains("snow")
+                || normalizedPath.Contains("winter")
+                || normalizedName.Contains("winter");
+        }
+
+        private static bool IsSnowyPineVariant(string normalizedPath, string normalizedName)
+        {
+            if (!normalizedPath.Contains("/prefabs/trees/pine tree/") && !normalizedName.Contains("pine tree"))
+            {
+                return false;
+            }
+
+            return normalizedName.Contains("pine tree .024")
+                || normalizedName.Contains("pine tree .025")
+                || normalizedName.Contains("pine tree .026")
+                || normalizedName.Contains("pine tree .027")
+                || normalizedName.Contains("pine tree .028")
+                || normalizedName.Contains("pine tree .029")
+                || normalizedName.Contains("pine tree .030")
+                || normalizedName.Contains("pine tree .031")
+                || normalizedName.Contains("pine tree .032")
+                || normalizedName.Contains("pine tree .033")
+                || normalizedName.Contains("pine tree .034")
+                || normalizedName.Contains("pine tree .035")
+                || normalizedName.Contains("pine tree .036")
+                || normalizedName.Contains("pine tree .037")
+                || normalizedName.Contains("pine tree .038")
+                || normalizedName.Contains("pine tree .039")
+                || normalizedName.Contains("pine tree .040");
         }
 
         private static bool IsSnowVariant(GameObject prefab)

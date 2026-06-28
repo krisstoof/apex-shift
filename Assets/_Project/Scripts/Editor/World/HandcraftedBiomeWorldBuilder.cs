@@ -329,7 +329,42 @@ namespace ApexShift.EditorTools.World
         {
             string normalizedPath = NormalizeAssetName(assetPath);
             string normalizedName = NormalizeAssetName(prefabName);
-            return normalizedPath.Contains("_snow") || normalizedName.Contains("_snow");
+            if (IsSnowyPineVariant(normalizedPath, normalizedName))
+            {
+                return true;
+            }
+            return normalizedPath.Contains("_snow")
+                || normalizedName.Contains("_snow")
+                || normalizedPath.Contains("snow")
+                || normalizedName.Contains("snow")
+                || normalizedPath.Contains("winter")
+                || normalizedName.Contains("winter");
+        }
+
+        private static bool IsSnowyPineVariant(string normalizedPath, string normalizedName)
+        {
+            if (!normalizedPath.Contains("/prefabs/trees/pine tree/") && !normalizedName.Contains("pine tree"))
+            {
+                return false;
+            }
+
+            return normalizedName.Contains("pine tree .024")
+                || normalizedName.Contains("pine tree .025")
+                || normalizedName.Contains("pine tree .026")
+                || normalizedName.Contains("pine tree .027")
+                || normalizedName.Contains("pine tree .028")
+                || normalizedName.Contains("pine tree .029")
+                || normalizedName.Contains("pine tree .030")
+                || normalizedName.Contains("pine tree .031")
+                || normalizedName.Contains("pine tree .032")
+                || normalizedName.Contains("pine tree .033")
+                || normalizedName.Contains("pine tree .034")
+                || normalizedName.Contains("pine tree .035")
+                || normalizedName.Contains("pine tree .036")
+                || normalizedName.Contains("pine tree .037")
+                || normalizedName.Contains("pine tree .038")
+                || normalizedName.Contains("pine tree .039")
+                || normalizedName.Contains("pine tree .040");
         }
 
         private static string NormalizeAssetName(string value)
@@ -678,6 +713,11 @@ namespace ApexShift.EditorTools.World
                             continue;
                         }
 
+                        if (!IsEmbersStormPrefab(path, prefab.name))
+                        {
+                            continue;
+                        }
+
                         if (TryGetManualVegetationRole(path, prefab.name, out string manualRole) && manualRole == roleName)
                         {
                             found.Add(new ScoredPrefab(prefab, int.MaxValue));
@@ -696,6 +736,11 @@ namespace ApexShift.EditorTools.World
                             string path = AssetDatabase.GUIDToAssetPath(guid);
                             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                             if (prefab == null || seen.Contains(prefab) || IsSnowVariant(path, prefab.name))
+                            {
+                                continue;
+                            }
+
+                            if (!IsEmbersStormPrefab(path, prefab.name))
                             {
                                 continue;
                             }
@@ -870,6 +915,12 @@ namespace ApexShift.EditorTools.World
                 return score;
             }
 
+            private static bool IsEmbersStormPrefab(string path, string prefabName)
+            {
+                string text = (path + " " + prefabName).ToLowerInvariant();
+                return text.Contains("embersstorm -  free nature pack");
+            }
+
             private static bool IsForbiddenForAllNature(string text)
             {
                 return text.Contains("stylizedwoodmonsters")
@@ -959,12 +1010,47 @@ namespace ApexShift.EditorTools.World
                 return Color.clear;
             }
 
-            private static bool IsSnowVariant(string assetPath, string prefabName)
+        private static bool IsSnowVariant(string assetPath, string prefabName)
+        {
+            string normalizedPath = NormalizeAssetName(assetPath);
+            string normalizedName = NormalizeAssetName(prefabName);
+            if (IsSnowyPineVariant(normalizedPath, normalizedName))
             {
-                string normalizedPath = NormalizeAssetName(assetPath);
-                string normalizedName = NormalizeAssetName(prefabName);
-                return normalizedPath.Contains("_snow") || normalizedName.Contains("_snow") || normalizedPath.Contains("snow") || normalizedName.Contains("snow");
+                return true;
             }
+            return normalizedPath.Contains("_snow")
+                || normalizedName.Contains("_snow")
+                || normalizedPath.Contains("snow")
+                || normalizedName.Contains("snow")
+                || normalizedPath.Contains("winter")
+                || normalizedName.Contains("winter");
+        }
+
+        private static bool IsSnowyPineVariant(string normalizedPath, string normalizedName)
+        {
+            if (!normalizedPath.Contains("/prefabs/trees/pine tree/") && !normalizedName.Contains("pine tree"))
+            {
+                return false;
+            }
+
+            return normalizedName.Contains("pine tree .024")
+                || normalizedName.Contains("pine tree .025")
+                || normalizedName.Contains("pine tree .026")
+                || normalizedName.Contains("pine tree .027")
+                || normalizedName.Contains("pine tree .028")
+                || normalizedName.Contains("pine tree .029")
+                || normalizedName.Contains("pine tree .030")
+                || normalizedName.Contains("pine tree .031")
+                || normalizedName.Contains("pine tree .032")
+                || normalizedName.Contains("pine tree .033")
+                || normalizedName.Contains("pine tree .034")
+                || normalizedName.Contains("pine tree .035")
+                || normalizedName.Contains("pine tree .036")
+                || normalizedName.Contains("pine tree .037")
+                || normalizedName.Contains("pine tree .038")
+                || normalizedName.Contains("pine tree .039")
+                || normalizedName.Contains("pine tree .040");
+        }
 
             private static string NormalizeAssetName(string value)
             {
