@@ -1,4 +1,5 @@
 using ApexShift.Core.Ecosystem;
+using ApexShift.Runtime.World.Query;
 using UnityEngine;
 
 namespace ApexShift.Runtime.Ecosystem
@@ -108,26 +109,32 @@ namespace ApexShift.Runtime.Ecosystem
                 return false;
             }
 
+            WorldQueryRuntime query = WorldQueryRuntime.GetOrCreate(ecosystem);
+            if (query == null)
+            {
+                return false;
+            }
+
             float range = State.Stage == HungerStage.Desperate
                 ? Mathf.Max(foodSearchRadius, desperateFoodSearchRadius)
                 : foodSearchRadius;
 
             if (Diet.PlantPreference >= Diet.MeatPreference && Diet.PlantDiet)
             {
-                if (ecosystem.TryFindNearestPlantFood(transform.position, range, out source))
+                if (query.TryFindNearestPlantFood(transform.position, range, out source))
                 {
                     return true;
                 }
             }
 
-            if ((Diet.MeatDiet || Diet.ScavengerDiet) && ecosystem.TryFindNearestMeatFood(transform.position, range, out source))
+            if ((Diet.MeatDiet || Diet.ScavengerDiet) && query.TryFindNearestMeatFood(transform.position, range, out source))
             {
                 return true;
             }
 
             if (Diet.PlantDiet)
             {
-                return ecosystem.TryFindNearestPlantFood(transform.position, range, out source);
+                return query.TryFindNearestPlantFood(transform.position, range, out source);
             }
 
             return false;
