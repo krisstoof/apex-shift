@@ -31,6 +31,8 @@ namespace ApexShift.Runtime.Creatures
 
         public void SetSpeciesDefinitionForTests(SpeciesDefinition definition) => speciesDefinition = definition;
 
+        public void SetGameBalanceConfigForTests(GameBalanceConfig config) => gameBalanceConfig = config;
+
         public void RestoreHealth(float restoredMaxHealth, float restoredCurrentHealth, bool dead)
         {
             maxHealth = Mathf.Max(0.01f, restoredMaxHealth);

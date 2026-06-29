@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2d0dd75062b9c14e8cac6f264e2c950, type: 3}
+  m_Name: SpeciesDefinition_varnak
+  m_EditorClassIdentifier: 
+  speciesId: varnak
+  displayName: Varnak
+  maxHealth: 90
+  maxHunger: 100
+  hungerGrowthRate: 18
+  hungryThreshold: 32
+  starvingThreshold: 58
+  desperateThreshold: 80
+  foodSearchRadius: 140
+  desperateFoodSearchRadius: 200
+  preySeekHungerThreshold: 38
+  fleeHungerThreshold: 22
+  initialHungerMin: 36
+  initialHungerMax: 58
+  plantPreference: 0
+  meatPreference: 1
+  scavengerPreference: 0.45

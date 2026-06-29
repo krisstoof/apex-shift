@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2d0dd75062b9c14e8cac6f264e2c950, type: 3}
+  m_Name: SpeciesDefinition_grazer
+  m_EditorClassIdentifier: 
+  speciesId: grazer
+  displayName: Grazer
+  maxHealth: 45
+  maxHunger: 100
+  hungerGrowthRate: 30
+  hungryThreshold: 35
+  starvingThreshold: 60
+  desperateThreshold: 82
+  foodSearchRadius: 120
+  desperateFoodSearchRadius: 170
+  preySeekHungerThreshold: 46
+  fleeHungerThreshold: 26
+  initialHungerMin: 36
+  initialHungerMax: 52
+  plantPreference: 0.85
+  meatPreference: 0.05
+  scavengerPreference: 0.1

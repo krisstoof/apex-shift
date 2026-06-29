@@ -11,6 +11,7 @@ using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.World.Biomes;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
+using ApexShift.Runtime.Config;
 using ApexShift.Runtime.World.Query;
 using UnityEngine;
 using UnityEngine.UI;
@@ -36,6 +37,7 @@ namespace ApexShift.Runtime.World.Generation
         [SerializeField] private InputActionAsset inputActions;
         [SerializeField] private RuntimeAnimatorController playerAnimatorController;
         [SerializeField] private GameObject playerPrefab;
+        [SerializeField] private GameBalanceConfig gameBalanceConfig;
 
         [Header("Settings")]
         [SerializeField] private bool generateOnStart = false;
@@ -835,10 +837,12 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
 
             var needs = instance.GetComponent<CreatureNeedsRuntime>();
             if (needs == null) needs = instance.AddComponent<CreatureNeedsRuntime>();
+            needs.SetGameBalanceConfigForTests(gameBalanceConfig);
             needs.Configure(entry.CreatureId);
 
             var health = instance.GetComponent<CreatureHealthRuntime>();
             if (health == null) health = instance.AddComponent<CreatureHealthRuntime>();
+            health.SetGameBalanceConfigForTests(gameBalanceConfig);
             health.Configure(entry.CreatureId);
 
             var oldFoodSeeking = instance.GetComponent<CreatureFoodSeekingBehavior>();

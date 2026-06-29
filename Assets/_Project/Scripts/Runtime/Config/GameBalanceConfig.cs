@@ -75,8 +75,6 @@ namespace ApexShift.Runtime.Config
 
     public static class GameBalanceConfigProvider
     {
-        private static bool warnedMissingConfig;
-
         public static SpeciesDefinition ResolveSpeciesDefinition(GameBalanceConfig config, SpeciesDefinition directDefinition, string speciesId, UnityEngine.Object context)
         {
             if (directDefinition != null && directDefinition.Matches(speciesId))
@@ -88,12 +86,6 @@ namespace ApexShift.Runtime.Config
             if (fromConfig != null)
             {
                 return fromConfig;
-            }
-
-            if (!warnedMissingConfig)
-            {
-                warnedMissingConfig = true;
-                Debug.LogWarning("[GameBalanceConfig] Missing species config. Using Godot-parity fallback defaults for empty scene/tests.", context);
             }
 
             return SpeciesDefinition.CreateDefault(speciesId);

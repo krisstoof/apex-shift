@@ -24,6 +24,7 @@ namespace ApexShift.Editor.World
         private const string CatalogPath = "Assets/_Project/Data/Biomes/BiomeCatalog.asset";
         private const string PrefabRegistryPath = "Assets/_Project/Data/World/PrefabRegistry.asset";
         private const string InputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
+        private const string GameBalanceConfigPath = "Assets/_Project/Config/GameBalanceConfig.asset";
         private const string PlayerPrefabPath = "Assets/StylizedCore/StylizedWoodMonsters/URP/AnimationGallery/Prefab/Player.prefab";
         private const string PlayerACPath = "Assets/StylizedCore/StylizedWoodMonsters/URP/AnimationGallery/Animations/Animations Controllers/AC_Player.controller";
 
@@ -63,12 +64,17 @@ namespace ApexShift.Editor.World
             soGenerator.ApplyModifiedProperties();
 
             var inputActions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
+            var gameBalanceConfig = AssetDatabase.LoadAssetAtPath<ApexShift.Runtime.Config.GameBalanceConfig>(GameBalanceConfigPath);
 
             // Populate Assets
             var so = new SerializedObject(generator);
             if (inputActions != null)
             {
                 so.FindProperty("inputActions").objectReferenceValue = inputActions;
+            }
+            if (gameBalanceConfig != null)
+            {
+                so.FindProperty("gameBalanceConfig").objectReferenceValue = gameBalanceConfig;
             }
 
             GameObject playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
