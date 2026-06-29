@@ -1,4 +1,5 @@
 using UnityEngine;
+using ApexShift.Runtime.Config;
 
 namespace ApexShift.Runtime.Creatures
 {
@@ -24,6 +25,7 @@ namespace ApexShift.Runtime.Creatures
         [SerializeField] private float farUpdateIntervalSeconds = 3f;
         [SerializeField] private float backgroundSimulationIntervalSeconds = 3f;
         [SerializeField] private bool debugEnabled = true;
+        [SerializeField] private CreatureSimulationLodConfig lodConfig;
 
         private CreatureAgentView _agentView;
         private Transform _player;
@@ -52,11 +54,13 @@ namespace ApexShift.Runtime.Creatures
         private void Awake()
         {
             Cache();
+            ApplyConfig(lodConfig);
         }
 
         private void OnEnable()
         {
             Cache();
+            ApplyConfig(lodConfig);
         }
 
         public void Tick(float deltaTime, string creatureId = null)
@@ -145,6 +149,23 @@ namespace ApexShift.Runtime.Creatures
         public void SetPlayerForTests(Transform player)
         {
             _player = player;
+        }
+
+        public void ApplyConfig(CreatureSimulationLodConfig config)
+        {
+            if (config == null)
+            {
+                return;
+            }
+
+            nearDistance = config.NearDistance;
+            mediumDistance = config.MediumDistance;
+            forceVarnakNearDistance = config.ForceVarnakNearDistance;
+            mediumAiIntervalMultiplier = config.MediumAiIntervalMultiplier;
+            mediumSpatialUpdateMultiplier = config.MediumSpatialUpdateMultiplier;
+            farUpdateIntervalSeconds = config.FarUpdateIntervalSeconds;
+            backgroundSimulationIntervalSeconds = config.BackgroundSimulationIntervalSeconds;
+            debugEnabled = config.DebugEnabled;
         }
 
         public void ForceDistancesForTests(float near, float medium, float forceVarnakNear)

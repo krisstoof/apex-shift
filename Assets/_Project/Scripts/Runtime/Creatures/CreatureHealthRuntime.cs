@@ -1,4 +1,5 @@
 using UnityEngine;
+using ApexShift.Runtime.Config;
 
 namespace ApexShift.Runtime.Creatures
 {
@@ -8,6 +9,8 @@ namespace ApexShift.Runtime.Creatures
         [SerializeField] private float maxHealth = 30f;
         [SerializeField] private float currentHealth = 30f;
         [SerializeField] private bool destroyOnDeath = true;
+        [SerializeField] private SpeciesDefinition speciesDefinition;
+        [SerializeField] private GameBalanceConfig gameBalanceConfig;
 
         public float MaxHealth => maxHealth;
         public float CurrentHealth => currentHealth;
@@ -15,24 +18,18 @@ namespace ApexShift.Runtime.Creatures
 
         public void Configure(string creatureId)
         {
-            switch ((creatureId ?? string.Empty).Trim().ToLowerInvariant())
-            {
-                case "small_prey":
-                    maxHealth = 20f;
-                    break;
-                case "grazer":
-                    maxHealth = 45f;
-                    break;
-                case "varnak":
-                    maxHealth = 90f;
-                    break;
-                default:
-                    maxHealth = 30f;
-                    break;
-            }
+            Configure(creatureId, null);
+        }
+
+        public void Configure(string creatureId, SpeciesDefinition overrideDefinition)
+        {
+            SpeciesDefinition resolved = GameBalanceConfigProvider.ResolveSpeciesDefinition(gameBalanceConfig, overrideDefinition != null ? overrideDefinition : speciesDefinition, creatureId, this);
+            maxHealth = resolved != null ? resolved.MaxHealth : 30f;
 
             currentHealth = maxHealth;
         }
+
+        public void SetSpeciesDefinitionForTests(SpeciesDefinition definition) => speciesDefinition = definition;
 
         public void RestoreHealth(float restoredMaxHealth, float restoredCurrentHealth, bool dead)
         {

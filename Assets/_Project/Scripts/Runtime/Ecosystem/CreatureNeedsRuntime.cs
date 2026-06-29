@@ -1,4 +1,5 @@
 using ApexShift.Core.Ecosystem;
+using ApexShift.Runtime.Config;
 using ApexShift.Runtime.World.Query;
 using UnityEngine;
 
@@ -20,6 +21,8 @@ namespace ApexShift.Runtime.Ecosystem
         [SerializeField] private bool useSpeciesDefaults = true;
         [SerializeField] private float initialHungerMin = 15f;
         [SerializeField] private float initialHungerMax = 40f;
+        [SerializeField] private SpeciesDefinition speciesDefinition;
+        [SerializeField] private GameBalanceConfig gameBalanceConfig;
 
         private CreatureNeedsState _state;
         private CreatureDietProfile _diet;
@@ -54,18 +57,22 @@ namespace ApexShift.Runtime.Ecosystem
 
         public void Configure(string id)
         {
+            Configure(id, null);
+        }
+
+        public void Configure(string id, SpeciesDefinition overrideDefinition)
+        {
             creatureId = string.IsNullOrWhiteSpace(id) ? "small_prey" : id.Trim().ToLowerInvariant();
 
+            SpeciesDefinition resolved = GameBalanceConfigProvider.ResolveSpeciesDefinition(gameBalanceConfig, overrideDefinition != null ? overrideDefinition : speciesDefinition, creatureId, this);
             if (useSpeciesDefaults)
             {
-                ApplySpeciesDefaults(creatureId);
+                ApplySpeciesDefinition(resolved);
             }
 
-            _diet = CreatureDietProfile.GetDefault(creatureId);
+            _diet = useSpeciesDefaults ? resolved.CreateDietProfile() : CreatureDietProfile.GetDefault(creatureId);
             _state = new CreatureNeedsState(maxHunger, hungerGrowthRate, hungryThreshold, starvingThreshold, desperateThreshold);
 
-            // Seed the migration slice so behavior is visible immediately in RuntimeWorld.
-            // Runtime keeps the existing Unity 0-100 hunger scale, but rates/thresholds mirror Godot ratios.
             float seededHunger = Random.Range(initialHungerMin, initialHungerMax);
             seededHunger = Mathf.Max(seededHunger, hungryThreshold + maxHunger * 0.04f);
             _state.SetHunger(seededHunger);
@@ -147,64 +154,34 @@ namespace ApexShift.Runtime.Ecosystem
             return false;
         }
 
-        private void ApplySpeciesDefaults(string id)
+        public void SetSpeciesDefinitionForTests(SpeciesDefinition definition)
         {
-            maxHunger = 100f;
+            speciesDefinition = definition;
+            _state = null;
+            _diet = null;
+        }
 
-            switch (id)
-            {
-                case "small_prey":
-                    hungerGrowthRate = 20f;
-                    hungryThreshold = 35f;
-                    starvingThreshold = 60f;
-                    desperateThreshold = 82f;
-                    preySeekHungerThreshold = 50f;
-                    fleeHungerThreshold = 24f;
-                    foodSearchRadius = 110f;
-                    desperateFoodSearchRadius = 160f;
-                    initialHungerMin = 36f;
-                    initialHungerMax = 48f;
-                    break;
+        public void SetGameBalanceConfigForTests(GameBalanceConfig config)
+        {
+            gameBalanceConfig = config;
+            _state = null;
+            _diet = null;
+        }
 
-                case "grazer":
-                    hungerGrowthRate = 30f;
-                    hungryThreshold = 35f;
-                    starvingThreshold = 60f;
-                    desperateThreshold = 82f;
-                    preySeekHungerThreshold = 46f;
-                    fleeHungerThreshold = 26f;
-                    foodSearchRadius = 120f;
-                    desperateFoodSearchRadius = 170f;
-                    initialHungerMin = 36f;
-                    initialHungerMax = 52f;
-                    break;
-
-                case "varnak":
-                    hungerGrowthRate = 18f;
-                    hungryThreshold = 32f;
-                    starvingThreshold = 58f;
-                    desperateThreshold = 80f;
-                    preySeekHungerThreshold = 38f;
-                    fleeHungerThreshold = 22f;
-                    foodSearchRadius = 140f;
-                    desperateFoodSearchRadius = 200f;
-                    initialHungerMin = 36f;
-                    initialHungerMax = 58f;
-                    break;
-
-                default:
-                    hungerGrowthRate = 20f;
-                    hungryThreshold = 35f;
-                    starvingThreshold = 60f;
-                    desperateThreshold = 82f;
-                    preySeekHungerThreshold = 42f;
-                    fleeHungerThreshold = 28f;
-                    foodSearchRadius = 50f;
-                    desperateFoodSearchRadius = 80f;
-                    initialHungerMin = 15f;
-                    initialHungerMax = 35f;
-                    break;
-            }
+        private void ApplySpeciesDefinition(SpeciesDefinition definition)
+        {
+            if (definition == null) return;
+            maxHunger = definition.MaxHunger;
+            hungerGrowthRate = definition.HungerGrowthRate;
+            hungryThreshold = definition.HungryThreshold;
+            starvingThreshold = definition.StarvingThreshold;
+            desperateThreshold = definition.DesperateThreshold;
+            foodSearchRadius = definition.FoodSearchRadius;
+            desperateFoodSearchRadius = definition.DesperateFoodSearchRadius;
+            preySeekHungerThreshold = definition.PreySeekHungerThreshold;
+            fleeHungerThreshold = definition.FleeHungerThreshold;
+            initialHungerMin = definition.InitialHungerMin;
+            initialHungerMax = definition.InitialHungerMax;
         }
 
         private void EnsureInitialized()
