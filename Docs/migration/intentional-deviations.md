@@ -4,6 +4,8 @@ Status: migration decision log for Unity v0.1
 Source of truth baseline: Godot repository `krisstoof/apex-shift-2d`  
 Target implementation: Unity repository `krisstoof/apex-shift`
 
+Current migration status matrix: [`Docs/migration/unity-migration-status.md`](unity-migration-status.md)
+
 This document exists so that migration review, QA and Codex work can separate real parity bugs from intentional Unity changes.
 
 ## Decision labels
@@ -483,7 +485,7 @@ When asking Codex to continue migration:
 
 ## Current close criteria for #37
 
-- This document exists at `docs/migration/intentional-deviations.md`.
+- This document exists at `Docs/migration/intentional-deviations.md`.
 - The main known Unity deviations are classified.
 - Each intentional difference has a reason.
 - QA has rules for deciding bug versus accepted deviation.

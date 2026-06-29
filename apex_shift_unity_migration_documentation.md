@@ -1,9 +1,34 @@
 # Apex Shift — dokumentacja gry i plan migracji logiki do Unity
 
-**Status dokumentu:** wersja robocza v1  
+**Status dokumentu:** historyczny dokument projektowy migracji, odświeżony linkami do aktualnego statusu  
 **Data:** 2026-06-22  
+**Ostatnie odświeżenie dokumentacyjne:** 2026-06-29  
 **Źródła:** branch `develop` repozytorium `krisstoof/apex-shift-2d`, istniejące dokumenty techniczne projektu, aktualny kod Godot oraz dotychczasowe ustalenia projektowe z rozmów.  
 **Cel:** zachować dorobek prototypu Godot i przenieść sens gry, systemy, balans, dane i reguły do Unity bez zaczynania całkowicie od zera.
+
+> Ten plik opisuje intencję migracji i projektowy kierunek Unity. Nie jest już aktualną listą braków.
+> Aktualny stan portu jest w [`Docs/migration/unity-migration-status.md`](Docs/migration/unity-migration-status.md), a świadome różnice względem Godota są w [`Docs/migration/intentional-deviations.md`](Docs/migration/intentional-deviations.md).
+
+## 0. Aktualny status Unity
+
+Unity `apex-shift` ma już zaimplementowane albo rozpoczęte fundamenty wielu systemów opisanych niżej jako docelowe:
+
+- inventory,
+- crafting,
+- itemy i receptury jako dane,
+- resource nodes i regrowth,
+- world generation i biomy,
+- ecosystem state,
+- creature needs oraz hunger/diet,
+- small prey, grazer i Varnak behavior foundations,
+- world query / lookup facade,
+- save/load DTOs i runtime save service,
+- UI snapshot, HUD i debug foundations,
+- testy jednostkowe/regresyjne.
+
+Dlatego przy dalszej pracy nie należy tworzyć generycznych zadań typu „port inventory”, „port crafting”, „add ecosystem director” albo „add save/load”. Tego typu obszary trzeba najpierw sprawdzić w matrixie statusu i rozwijać jako konkretne delty, np. day/night, building/storage, player combat, fire protection, registry cleanup, PlayMode smoke albo tester build.
+
+`apex-shift-2d` pozostaje źródłem intencji, zachowania i balansu. Nie jest instrukcją kopiowania architektury, scen ani zależności 1:1.
 
 ---
 
@@ -69,7 +94,7 @@ To nie ma być zwykły survival, w którym świat jest tylko planszą z zasobami
 
 ---
 
-## 3. Obecny stan prototypu
+## 3. Obecny stan prototypu Godot
 
 ### 3.1. Typ gry
 
