@@ -9,6 +9,5 @@ Current phase: project foundation.
 The existing Godot prototype is a reference for design intent and systems, not code to copy directly.
 
 Migration notes:
-- [Migration status matrix](Docs/Migration/unity-migration-status.md)
 - [Intentional deviations from Godot parity](Docs/Migration/intentional-deviations.md)
 - [Intentional deviations one-pager](Docs/Migration/intentional-deviations-one-pager.md)
