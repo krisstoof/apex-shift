@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb7081996fedfbb4da74a1227ffaa1ee, type: 3}
+  m_Name: CombatAudioProfile
+  m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.Audio.CombatAudioProfile
+  attackVoiceClips:
+  - {fileID: 8300000, guid: b096c74d0c6b6ec4aad836de36687cad, type: 3}
+  meleeHitVoiceClips:
+  - {fileID: 8300000, guid: 92bee83533d440849b1838f79050e7b0, type: 3}
+  bowHitVoiceClips:
+  - {fileID: 8300000, guid: 8c4aa2093d086d84ca5e1474205f988c, type: 3}
+  - {fileID: 8300000, guid: e9157581ae7316e40a7c400df9c73e12, type: 3}
+  bowVoiceClips:
+  - {fileID: 8300000, guid: b5583bf80c433274b8e510fe9e21f520, type: 3}
+  - {fileID: 8300000, guid: 71e981d8a6fa05e4b86ff685084185af, type: 3}
+  hitVoiceClips: []

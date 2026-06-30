@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using ApexShift.Runtime.Ecosystem;
+using ApexShift.Runtime.Events;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -47,6 +48,9 @@ namespace ApexShift.Runtime.Creatures
         public bool backgroundSimulated;
         public int movementSpikeCount;
         public float maxMovementSpikeDistance;
+        public string lastCombatEvent;
+        public float lastCombatDamage;
+        public string lastCombatTarget;
 
         public static CreatureDebugData Capture(GameObject source)
         {
@@ -72,7 +76,10 @@ namespace ApexShift.Runtime.Creatures
                 homeBiomeId = "default",
                 populationBiomeId = "default",
                 currentNiche = "unknown",
-                simulationLevel = "none"
+                simulationLevel = "none",
+                lastCombatEvent = "none",
+                lastCombatDamage = 0f,
+                lastCombatTarget = "none"
             };
 
             if (source == null)
@@ -162,6 +169,8 @@ namespace ApexShift.Runtime.Creatures
                 data.distanceToPlayer = ResolveDistanceToPlayer(source.transform);
             }
 
+            CaptureCombatState(data);
+
             return data;
         }
 
@@ -176,6 +185,7 @@ namespace ApexShift.Runtime.Creatures
             builder.AppendLine($"tgt: {Shorten(currentTarget, 24)} {Shorten(targetDetails, 24)}");
             builder.AppendLine($"bio: {Shorten(currentBiomeId, 10)} pop:{Shorten(populationBiomeId, 10)} niche:{Shorten(currentNiche, 12)}");
             builder.AppendLine($"last: {Shorten(lastFoodSource, 14)} dec:{decisionCount} atk:{attackCooldown:0.0} hunt:{huntDrive:0.00}");
+            builder.AppendLine($"cmb: {Shorten(lastCombatEvent, 32)} tgt:{Shorten(lastCombatTarget, 16)} dmg:{lastCombatDamage:0.0}");
             builder.Append($"sim: {simulationLevel} lod:{simulationLodChangeCount} ticks a:{activeSimulationTickCount} f:{farSimulationTickCount} b:{backgroundSimulationTickCount}");
             if (visibilityCulled || backgroundSimulated)
             {
@@ -230,6 +240,36 @@ namespace ApexShift.Runtime.Creatures
             }
 
             return player != null ? Vector3.Distance(owner.position, player.transform.position) : -1f;
+        }
+
+        private static void CaptureCombatState(CreatureDebugData data)
+        {
+            if (data == null)
+            {
+                return;
+            }
+
+            for (int i = GameEventBus.RecentEvents.Count - 1; i >= 0; i--)
+            {
+                GameplayEvent evt = GameEventBus.RecentEvents[i];
+                if (evt == null || !IsCombatEvent(evt.kind))
+                {
+                    continue;
+                }
+
+                data.lastCombatEvent = string.IsNullOrWhiteSpace(evt.message) ? evt.kind.ToString() : evt.message;
+                data.lastCombatTarget = string.IsNullOrWhiteSpace(evt.targetKind) ? "none" : evt.targetKind;
+                data.lastCombatDamage = evt.amount;
+                return;
+            }
+        }
+
+        private static bool IsCombatEvent(GameplayEventKind kind)
+        {
+            return kind == GameplayEventKind.PlayerMeleeHit
+                   || kind == GameplayEventKind.PlayerBowFired
+                   || kind == GameplayEventKind.PlayerProjectileHit
+                   || kind == GameplayEventKind.TrapTriggered;
         }
 
         private static string NormalizeDebugValue(string value, string fallback)

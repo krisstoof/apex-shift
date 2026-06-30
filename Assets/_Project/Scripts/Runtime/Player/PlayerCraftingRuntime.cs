@@ -110,7 +110,8 @@ namespace ApexShift.Runtime.Player
 
         private void OnOpenCraftingPressed()
         {
-            CraftDefaultRecipe();
+            CraftingPanelUI panel = GetComponent<CraftingPanelUI>();
+            if (panel == null) CraftDefaultRecipe();
         }
 
         private void ResolveReferences()

@@ -61,7 +61,8 @@ namespace ApexShift.Editor.World
                 new VegetationSpawnEntryAsset(VegetationSpawnKind.BerryBush, 3, 1f, 0.18f, 0.35f, "berry_bush", true)
             }, new List<CreatureSpawnEntryAsset>
             {
-                new CreatureSpawnEntryAsset("small_prey", 3, 6, 1f)
+                new CreatureSpawnEntryAsset("small_prey", 3, 6, 1f),
+                new CreatureSpawnEntryAsset("varnak", 0, 1, 1f)
             }));
 
             assets.Add(CreateOrUpdateBiome("stoneback_ridge", "Stoneback Ridge", new Color(0.30f, 0.32f, 0.30f), false, new List<VegetationSpawnEntryAsset>
@@ -83,7 +84,7 @@ namespace ApexShift.Editor.World
                 new VegetationSpawnEntryAsset(VegetationSpawnKind.GrassOrFlower, 2, 1f, 0.10f, 0.18f, "", false)
             }, new List<CreatureSpawnEntryAsset>
             {
-                new CreatureSpawnEntryAsset("varnak", 1, 3, 1f)
+                new CreatureSpawnEntryAsset("varnak", 0, 1, 1f)
             }));
 
             CreateOrUpdateCatalog(assets);

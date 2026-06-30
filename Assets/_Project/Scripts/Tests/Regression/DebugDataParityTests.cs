@@ -1,4 +1,5 @@
 using ApexShift.Runtime.Creatures;
+using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.Ecosystem;
 using NUnit.Framework;
@@ -127,6 +128,37 @@ namespace ApexShift.Tests.Regression
             RuntimeDebugSettings.RestoreDefaults();
             Assert.IsFalse(RuntimeDebugSettings.FreeBuildingEnabled);
             Assert.IsFalse(RuntimeDebugSettings.FreeCraftingEnabled);
+        }
+
+        [Test]
+        public void CreatureDebugDataIncludesRecentCombatEventSummary()
+        {
+            GameEventBus.ClearForTests();
+            GameEventBus.PublishCreatureEvent(
+                GameplayEventKind.PlayerProjectileHit,
+                Vector3.zero,
+                "default",
+                "player",
+                "small_prey",
+                amount: 15f,
+                message: "player_arrow_hit");
+
+            GameObject creature = new GameObject("Creature_small_prey");
+            try
+            {
+                creature.AddComponent<CreatureAgentView>().Configure("small_prey");
+                CreatureDebugData data = CreatureDebugData.Capture(creature);
+
+                StringAssert.Contains("cmb:", data.ToOverlayText());
+                StringAssert.Contains("player_arrow_hit", data.ToOverlayText());
+                Assert.AreEqual(15f, data.lastCombatDamage, 0.001f);
+                Assert.AreEqual("small_prey", data.lastCombatTarget);
+            }
+            finally
+            {
+                Object.DestroyImmediate(creature);
+                GameEventBus.ClearForTests();
+            }
         }
     }
 }

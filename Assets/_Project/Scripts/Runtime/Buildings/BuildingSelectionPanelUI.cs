@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ApexShift.Runtime.Player;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,6 +12,7 @@ namespace ApexShift.Runtime.Buildings
         private static BuildingSelectionPanelUI active;
 
         [SerializeField] private BuildingPlacementRuntime placementRuntime;
+        [SerializeField] private PlayerInventoryRuntime inventoryRuntime;
         [SerializeField] private Canvas canvas;
         [SerializeField] private RectTransform panelRoot;
         [SerializeField] private Text titleText;
@@ -95,6 +97,13 @@ namespace ApexShift.Runtime.Buildings
             SetCollapsed(true);
         }
 
+        public void SetInventoryRuntime(PlayerInventoryRuntime runtime)
+        {
+            inventoryRuntime = runtime;
+            BuildIfNeeded();
+            Refresh();
+        }
+
         public void Refresh()
         {
             if (placementRuntime == null)
@@ -115,6 +124,11 @@ namespace ApexShift.Runtime.Buildings
             if (placementRuntime == null)
             {
                 placementRuntime = GetComponentInParent<BuildingPlacementRuntime>();
+            }
+
+            if (inventoryRuntime == null)
+            {
+                inventoryRuntime = GetComponentInParent<PlayerInventoryRuntime>();
             }
 
             if (font == null)
@@ -161,30 +175,32 @@ namespace ApexShift.Runtime.Buildings
                 panelRoot = panelGo.GetComponent<RectTransform>();
                 panelRoot.anchorMin = new Vector2(0f, 0f);
                 panelRoot.anchorMax = new Vector2(0f, 0f);
-                panelRoot.pivot = new Vector2(0f, 0f);
-                panelRoot.anchoredPosition = new Vector2(16f, 16f);
-                panelRoot.sizeDelta = new Vector2(200f, 176f);
+                panelRoot.anchorMin = new Vector2(0.5f, 0.5f);
+                panelRoot.anchorMax = new Vector2(0.5f, 0.5f);
+                panelRoot.pivot = new Vector2(0.5f, 0.5f);
+                panelRoot.anchoredPosition = Vector2.zero;
+                panelRoot.sizeDelta = new Vector2(680f, 520f);
 
                 Image bg = panelGo.GetComponent<Image>();
-                bg.color = new Color(0.08f, 0.11f, 0.08f, 0.80f);
+                bg.color = new Color(0.05f, 0.055f, 0.06f, 0.88f);
 
-                titleText = CreateText(panelRoot, "Build Menu", 12, TextAnchor.MiddleLeft, new Vector2(10f, -8f), new Vector2(120f, 16f), true);
-                toggleText = CreateText(panelRoot, "Hide", 10, TextAnchor.MiddleCenter, new Vector2(-42f, -10f), new Vector2(30f, 16f), true);
+                titleText = CreateText(panelRoot, "Building — Structures", 24, TextAnchor.MiddleCenter, new Vector2(0f, -28f), new Vector2(-32f, 42f), true);
+                toggleText = CreateText(panelRoot, "Close", 14, TextAnchor.MiddleCenter, new Vector2(-54f, -28f), new Vector2(64f, 26f), true);
                 Button toggleButton = toggleText.gameObject.AddComponent<Button>();
                 toggleButton.targetGraphic = toggleText;
                 toggleButton.onClick.AddListener(ToggleCollapsed);
-                selectedText = CreateText(panelRoot, "No building selected", 9, TextAnchor.MiddleLeft, new Vector2(10f, -26f), new Vector2(168f, 14f), false);
+                selectedText = CreateText(panelRoot, "Select building plan.", 15, TextAnchor.MiddleLeft, new Vector2(0f, 26f), new Vector2(-40f, 42f), false);
 
                 GameObject bodyGo = new GameObject("ButtonContainer", typeof(RectTransform), typeof(Image));
                 bodyGo.transform.SetParent(panelRoot, false);
                 RectTransform bodyRt = bodyGo.GetComponent<RectTransform>();
                 bodyRt.anchorMin = new Vector2(0f, 0f);
                 bodyRt.anchorMax = new Vector2(1f, 1f);
-                bodyRt.offsetMin = new Vector2(8f, 38f);
-                bodyRt.offsetMax = new Vector2(-8f, -8f);
+                bodyRt.offsetMin = new Vector2(24f, 72f);
+                bodyRt.offsetMax = new Vector2(-24f, -64f);
 
                 Image bodyBg = bodyGo.GetComponent<Image>();
-                bodyBg.color = new Color(0.13f, 0.16f, 0.13f, 0.95f);
+                bodyBg.color = new Color(0f, 0f, 0f, 0f);
                 bodyRoot = bodyGo;
                 buttonContainer = bodyGo.transform;
 
@@ -204,7 +220,14 @@ namespace ApexShift.Runtime.Buildings
             {
                 if (buttons[i] != null)
                 {
-                    Destroy(buttons[i].gameObject);
+                    if (Application.isPlaying)
+                    {
+                        Destroy(buttons[i].gameObject);
+                    }
+                    else
+                    {
+                        DestroyImmediate(buttons[i].gameObject);
+                    }
                 }
             }
             buttons.Clear();
@@ -216,7 +239,7 @@ namespace ApexShift.Runtime.Buildings
                 return;
             }
 
-            float y = -4f;
+            float y = 0f;
             foreach (PlaceableDefinition definition in definitions.Where(definition => definition != null))
             {
                 GameObject buttonGo = CreateDefinitionButton(definition);
@@ -226,9 +249,9 @@ namespace ApexShift.Runtime.Buildings
                 rt.anchorMax = new Vector2(1f, 1f);
                 rt.pivot = new Vector2(0.5f, 1f);
                 rt.anchoredPosition = new Vector2(0f, y);
-                rt.sizeDelta = new Vector2(0f, 22f);
+                rt.sizeDelta = new Vector2(0f, 58f);
                 buttons.Add(buttonGo.GetComponent<Button>());
-                y -= 24f;
+                y -= 66f;
             }
         }
 
@@ -246,14 +269,17 @@ namespace ApexShift.Runtime.Buildings
             labelGo.transform.SetParent(buttonGo.transform, false);
             Text label = labelGo.GetComponent<Text>();
             label.font = font;
-            label.text = definition.DisplayName;
+            label.text = BuildDefinitionLabel(definition);
             label.alignment = TextAnchor.MiddleLeft;
             label.color = Color.white;
+            label.fontSize = 15;
+            label.horizontalOverflow = HorizontalWrapMode.Wrap;
+            label.verticalOverflow = VerticalWrapMode.Overflow;
             RectTransform labelRt = label.GetComponent<RectTransform>();
             labelRt.anchorMin = Vector2.zero;
             labelRt.anchorMax = Vector2.one;
-            labelRt.offsetMin = new Vector2(12f, 0f);
-            labelRt.offsetMax = new Vector2(-12f, 0f);
+            labelRt.offsetMin = new Vector2(14f, 4f);
+            labelRt.offsetMax = new Vector2(-14f, -4f);
 
             return buttonGo;
         }
@@ -318,7 +344,7 @@ namespace ApexShift.Runtime.Buildings
 
             placementRuntime.SelectBuilding(buildingId);
             Refresh();
-            SetCollapsed(true);
+            SetCollapsed(false);
         }
 
         private void ApplyCollapsedState()
@@ -330,13 +356,54 @@ namespace ApexShift.Runtime.Buildings
 
             if (toggleText != null)
             {
-                toggleText.text = isCollapsed ? "Show" : "Hide";
+                toggleText.text = isCollapsed ? "Build" : "Close";
             }
 
             if (panelRoot != null)
             {
-                panelRoot.sizeDelta = isCollapsed ? new Vector2(200f, 46f) : new Vector2(200f, 176f);
+                panelRoot.gameObject.SetActive(!isCollapsed);
+                panelRoot.sizeDelta = new Vector2(680f, 520f);
             }
+        }
+
+        private string BuildDefinitionLabel(PlaceableDefinition definition)
+        {
+            if (definition == null)
+            {
+                return "Missing building definition";
+            }
+
+            string status = placementRuntime != null && placementRuntime.SelectedBuildingId == definition.BuildingId
+                ? "selected"
+                : "click to select";
+
+            string requires = FormatBuildRequirements(definition);
+            return $"{definition.DisplayName}\nRequires: {requires} — {status}";
+        }
+
+        private string FormatBuildRequirements(PlaceableDefinition definition)
+        {
+            if (definition == null || definition.MaterialCosts == null || definition.MaterialCosts.Count == 0)
+            {
+                return "free";
+            }
+
+            List<string> parts = new List<string>();
+            foreach (PlaceableDefinition.PlaceableBuildCost cost in definition.MaterialCosts)
+            {
+                if (cost == null || string.IsNullOrWhiteSpace(cost.ItemId))
+                {
+                    continue;
+                }
+
+                int owned = inventoryRuntime != null && inventoryRuntime.Inventory != null
+                    ? inventoryRuntime.Inventory.GetAmount(cost.ItemId)
+                    : 0;
+
+                parts.Add($"{(owned >= cost.Amount ? "✓" : "✗")} {cost.ItemId} {owned}/{cost.Amount}");
+            }
+
+            return parts.Count > 0 ? string.Join("; ", parts) : "free";
         }
     }
 }

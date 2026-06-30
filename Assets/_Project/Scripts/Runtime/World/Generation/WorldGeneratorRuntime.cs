@@ -13,6 +13,7 @@ using ApexShift.Runtime.World.Biomes;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Config;
+using ApexShift.Runtime.Audio;
 using ApexShift.Runtime.World.Query;
 using ApexShift.Runtime.DayNight;
 using UnityEngine;
@@ -40,6 +41,34 @@ namespace ApexShift.Runtime.World.Generation
         [SerializeField] private RuntimeAnimatorController playerAnimatorController;
         [SerializeField] private GameObject playerPrefab;
         [SerializeField] private GameBalanceConfig gameBalanceConfig;
+        [SerializeField] private CreatureAudioProfile creatureAudioProfile;
+        [SerializeField] private CombatAudioProfile combatAudioProfile;
+        [SerializeField] private TrapAudioProfile trapAudioProfile;
+
+        [Header("Ambient Music")]
+        [SerializeField] private bool enableAmbientMusic = true;
+        [SerializeField, Range(0f, 1f)] private float ambientMusicVolume = 0.22f;
+
+        [Header("Creature Population Balance")]
+        [SerializeField] private float creatureSpawnDensityMultiplier = 0.85f;
+        [SerializeField] private bool scaleVarnaksByDay = true;
+        [SerializeField] private int varnakDayOneMaxCount = 0;
+        [SerializeField] private int varnakAddEveryDays = 2;
+        [SerializeField] private int varnakAbsoluteMaxCount = 5;
+        [SerializeField] private float varnakDayOneSpawnMultiplier = 0.05f;
+        [SerializeField] private float varnakSpawnMultiplierPerDay = 0.10f;
+        [SerializeField] private float varnakMaxSpawnMultiplier = 0.65f;
+        [SerializeField] private float minCreatureDistanceFromPlayer = 14f;
+        [SerializeField] private float minVarnakDistanceFromPlayer = 36f;
+        [SerializeField] private int creatureSpawnPositionAttempts = 16;
+        [SerializeField] private int nonVarnakMinimumPerBiomeEntry = 1;
+
+        [Header("Resource Size / Tool Gating")]
+        [SerializeField] private float bigTreeScaleThreshold = 0.92f;
+        [SerializeField] private float bigRockScaleThreshold = 0.88f;
+        [SerializeField] private float bigTreeVisualScaleMultiplier = 1.18f;
+        [SerializeField] private float bigRockVisualScaleMultiplier = 1.16f;
+        [SerializeField] private float smallResourceVisualScaleMultiplier = 0.82f;
 
         [Header("Settings")]
         [SerializeField] private bool generateOnStart = false;
@@ -55,6 +84,9 @@ namespace ApexShift.Runtime.World.Generation
         private Transform _buildingRoot;
         private List<Vector3> _allTileCenters = new List<Vector3>();
         private List<Vector3> _landTileCenters = new List<Vector3>();
+        private Transform _playerTransform;
+        private int _spawnedVarnakCount;
+        private int _currentSpawnDay = 1;
 
         private const string DefaultInputActionsPath = "Assets/InputSystem_Actions.inputactions";
 
@@ -103,7 +135,11 @@ namespace ApexShift.Runtime.World.Generation
             GenerateIslandLayout();
 
             GameObject player = CreatePlayer();
+            _playerTransform = player != null ? player.transform : null;
+            _currentSpawnDay = ResolveCurrentDay();
+            _spawnedVarnakCount = 0;
             GameObject cameraGo = CreateCamera(player.transform);
+            EnsureAmbientMusicRuntime();
             CreateWorldBounds();
 
             ConfigurePlayerRuntime(player, cameraGo);
@@ -114,6 +150,7 @@ namespace ApexShift.Runtime.World.Generation
             if (surface == null) surface = _terrainRoot.gameObject.AddComponent<NavMeshSurface>();
             surface.collectObjects = CollectObjects.Children;
             surface.BuildNavMesh();
+            EnsureCreatureIslandBoundsRuntime();
 
             SpawnAllRegionCreatures();
 
@@ -161,6 +198,9 @@ namespace ApexShift.Runtime.World.Generation
             DestroyAllByName("PlayerFollowCamera");
             DestroyAllByName("Directional Light");
             DestroyAllByName("WorldBounds");
+            DestroyAllByName("ActionBarUI");
+            DestroyAllByName("CreatureIslandBoundsRuntime");
+            DestroyAllByName("AmbientMusicRuntime");
 
             // Do not destroy generic menu objects here. Main menu / start screen
             // often uses roots named "UI" and a shared EventSystem.
@@ -214,6 +254,40 @@ namespace ApexShift.Runtime.World.Generation
             }
 
             registry.SetPrefabRegistry(prefabRegistry);
+        }
+
+        private void EnsureCreatureIslandBoundsRuntime()
+        {
+            CreatureIslandBoundsRuntime bounds = Object.FindAnyObjectByType<CreatureIslandBoundsRuntime>();
+            if (bounds == null)
+            {
+                GameObject go = new GameObject("CreatureIslandBoundsRuntime");
+                go.transform.SetParent(transform);
+                bounds = go.AddComponent<CreatureIslandBoundsRuntime>();
+            }
+
+            // Tile size is currently 8m. A 5.85m radius keeps targets inside the playable
+            // land tile footprint while allowing movement across tile seams.
+            bounds.Configure(_allTileCenters, 5.85f);
+        }
+
+        private void EnsureAmbientMusicRuntime()
+        {
+            if (!enableAmbientMusic)
+            {
+                return;
+            }
+
+            AmbientMusicRuntime ambient = Object.FindAnyObjectByType<AmbientMusicRuntime>();
+            if (ambient == null)
+            {
+                GameObject go = new GameObject("AmbientMusicRuntime");
+                go.transform.SetParent(transform);
+                ambient = go.AddComponent<AmbientMusicRuntime>();
+            }
+
+            ambient.SetVolume(ambientMusicVolume);
+            ambient.Play();
         }
 
         private Transform CreateRoot(string name)
@@ -484,7 +558,6 @@ namespace ApexShift.Runtime.World.Generation
                 _allTileCenters.Add(regionCenter);
 
                 SpawnRegionResources(region);
-                TrySpawnInitialMeatFoodSource(region, region.Bounds);
             }
         }
 
@@ -681,21 +754,54 @@ namespace ApexShift.Runtime.World.Generation
             foreach (var entry in region.Biome.Creatures)
             {
                 if (entry == null) continue;
+                string creatureId = NormalizeCreatureId(entry.CreatureId);
+                if (creatureId == "varnak" && !CanSpawnMoreVarnaks())
+                {
+                    continue;
+                }
 
-                int count = Random.Range(entry.MinCount, entry.MaxCount + 1);
+                float creatureSpawnProbability = spawnProbability;
+                if (creatureId == "varnak")
+                {
+                    creatureSpawnProbability *= GetVarnakSpawnMultiplierForDay(_currentSpawnDay);
+                    if (creatureSpawnProbability <= 0f)
+                    {
+                        continue;
+                    }
+                }
+
+                int count = Mathf.CeilToInt(Random.Range(entry.MinCount, entry.MaxCount + 1) * Mathf.Clamp01(creatureSpawnDensityMultiplier));
+                count = Mathf.Max(0, count);
+                if (creatureId != "varnak" && entry.MaxCount > 0)
+                {
+                    count = Mathf.Max(Mathf.Clamp(nonVarnakMinimumPerBiomeEntry, 0, Mathf.Max(1, entry.MaxCount)), count);
+                }
+                if (creatureId == "varnak")
+                {
+                    count = Mathf.Min(count, GetRemainingVarnakSpawnCapacity());
+                }
+
                 int countToSpawn = 0;
                 for (int i = 0; i < count; i++)
                 {
-                    if (Random.value < spawnProbability)
+                    if (Random.value < creatureSpawnProbability)
                     {
                         countToSpawn++;
                     }
                 }
 
+                if (creatureId == "varnak")
+                {
+                    countToSpawn = Mathf.Min(countToSpawn, GetRemainingVarnakSpawnCapacity());
+                }
+
                 for (int i = 0; i < countToSpawn; i++)
                 {
-                    Vector3 pos = GetRandomPointInBounds(spawnBounds);
-                    if (pos.magnitude < clearingRadius) continue;
+                    if (!TryGetSafeCreatureSpawnPoint(spawnBounds, creatureId, out Vector3 pos))
+                    {
+                        continue;
+                    }
+
                     SpawnCreature(entry, pos);
                 }
             }
@@ -714,27 +820,108 @@ namespace ApexShift.Runtime.World.Generation
             }
         }
 
-        private void TrySpawnInitialMeatFoodSource(GeneratedBiomeRegion region, Bounds spawnBounds)
+        private bool TryGetSafeCreatureSpawnPoint(Bounds spawnBounds, string creatureId, out Vector3 pos)
         {
-            // Foundation-only meat source for #21.
-            // Full "creature death creates meat drop" belongs to the later death/hunting issue.
-            if (region == null || region.Biome == null || region.Biome.BiomeId != "redfang_wilds")
+            int attempts = Mathf.Max(1, creatureSpawnPositionAttempts);
+            float minDistance = creatureId == "varnak"
+                ? Mathf.Max(minCreatureDistanceFromPlayer, minVarnakDistanceFromPlayer)
+                : Mathf.Max(clearingRadius, minCreatureDistanceFromPlayer);
+
+            for (int attempt = 0; attempt < attempts; attempt++)
             {
-                return;
+                Vector3 candidate = GetRandomPointInBounds(spawnBounds);
+                CreatureIslandBoundsRuntime bounds = CreatureIslandBoundsRuntime.Active;
+                if (bounds != null && bounds.HasLand)
+                {
+                    bounds.TryClampToLand(candidate, out candidate);
+                }
+
+                if (!IsCreatureSpawnPointSafe(candidate, minDistance))
+                {
+                    continue;
+                }
+
+                pos = candidate;
+                return true;
             }
 
-            if (Random.value > 0.08f)
-            {
-                return;
-            }
+            pos = default;
+            return false;
+        }
 
-            Vector3 pos = GetRandomPointInBounds(spawnBounds);
+        private bool IsCreatureSpawnPointSafe(Vector3 pos, float minDistanceFromPlayer)
+        {
             if (pos.magnitude < clearingRadius)
             {
-                return;
+                return false;
             }
 
-            CreateMeatFoodSource(pos);
+            if (_playerTransform != null)
+            {
+                // Player can be snapped to terrain after creation, so always use current transform.
+                Vector3 delta = pos - _playerTransform.position;
+                delta.y = 0f;
+                if (delta.sqrMagnitude < minDistanceFromPlayer * minDistanceFromPlayer)
+                {
+                    return false;
+                }
+            }
+
+            // Extra safety against center/start-area spawns even if player reference is missing.
+            float startSafeRadius = Mathf.Max(clearingRadius, minCreatureDistanceFromPlayer);
+            if (pos.sqrMagnitude < startSafeRadius * startSafeRadius)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private int ResolveCurrentDay()
+        {
+            ApexShift.Runtime.DayNight.DayNightRuntime dayNight = ApexShift.Runtime.DayNight.DayNightRuntime.Active;
+            return dayNight != null ? Mathf.Max(1, dayNight.Day) : 1;
+        }
+
+        private int GetVarnakMaxCountForDay(int day)
+        {
+            if (!scaleVarnaksByDay)
+            {
+                return Mathf.Max(0, varnakAbsoluteMaxCount);
+            }
+
+            int safeDay = Mathf.Max(1, day);
+            int addEvery = Mathf.Max(1, varnakAddEveryDays);
+            int additional = Mathf.FloorToInt((safeDay - 1) / (float)addEvery);
+            int maxForDay = Mathf.Max(0, varnakDayOneMaxCount) + additional;
+            return Mathf.Clamp(maxForDay, 0, Mathf.Max(0, varnakAbsoluteMaxCount));
+        }
+
+        private float GetVarnakSpawnMultiplierForDay(int day)
+        {
+            if (!scaleVarnaksByDay)
+            {
+                return 1f;
+            }
+
+            int safeDay = Mathf.Max(1, day);
+            float multiplier = varnakDayOneSpawnMultiplier + Mathf.Max(0, safeDay - 1) * Mathf.Max(0f, varnakSpawnMultiplierPerDay);
+            return Mathf.Clamp(multiplier, 0f, Mathf.Max(0f, varnakMaxSpawnMultiplier));
+        }
+
+        private int GetRemainingVarnakSpawnCapacity()
+        {
+            return Mathf.Max(0, GetVarnakMaxCountForDay(_currentSpawnDay) - _spawnedVarnakCount);
+        }
+
+        private bool CanSpawnMoreVarnaks()
+        {
+            return GetRemainingVarnakSpawnCapacity() > 0;
+        }
+
+        private static string NormalizeCreatureId(string creatureId)
+        {
+            return string.IsNullOrWhiteSpace(creatureId) ? string.Empty : creatureId.Trim().ToLowerInvariant();
         }
 
         private Vector3 GetRandomPointInBounds(Bounds bounds)
@@ -748,7 +935,10 @@ namespace ApexShift.Runtime.World.Generation
 
         private void SpawnResource(VegetationSpawnEntryAsset entry, Vector3 position)
         {
-            GameObject prefab = GetPrefabForKind(entry.Kind);
+            float scale = Random.Range(entry.MinScale, entry.MaxScale);
+            string resolvedKind = ResolveResourceKind(entry, scale);
+            
+            GameObject prefab = GetPrefabForResolvedKind(resolvedKind, entry.Kind);
             GameObject instance;
 
             if (prefab != null)
@@ -762,35 +952,122 @@ namespace ApexShift.Runtime.World.Generation
                 instance.transform.rotation = Quaternion.Euler(0, Random.Range(0, 360), 0);
             }
 
-            instance.name = $"{entry.Kind}_{_lastResult.ResourceCount}";
+            instance.name = $"{resolvedKind}_{_lastResult.ResourceCount}";
 
-            float scale = Random.Range(entry.MinScale, entry.MaxScale);
-            instance.transform.localScale *= scale;
+            float visualScaleMultiplier = ResolveResourceVisualScaleMultiplier(resolvedKind);
+            instance.transform.localScale *= scale * visualScaleMultiplier;
 
-            string rKind = entry.ResourceKind;
-            if (string.IsNullOrWhiteSpace(rKind))
+            string configuredKind = resolvedKind;
+            if (string.IsNullOrWhiteSpace(configuredKind))
             {
                 if (entry.Kind == VegetationSpawnKind.GreenBush)
-                    rKind = "bush";
+                    configuredKind = "bush";
                 else if (entry.Kind == VegetationSpawnKind.GrassOrFlower)
-                    rKind = "";
+                    configuredKind = "";
                 else
-                    rKind = entry.RoleId;
+                    configuredKind = entry.RoleId;
             }
 
-            if (!string.IsNullOrWhiteSpace(rKind))
+            if (!string.IsNullOrWhiteSpace(configuredKind))
             {
                 ResourceNodeView nodeView = instance.GetComponent<ResourceNodeView>();
                 if (nodeView == null)
                 {
                     nodeView = instance.AddComponent<ResourceNodeView>();
                 }
-                nodeView.ConfigureDefault(rKind);
+                nodeView.ConfigureDefault(configuredKind);
+                nodeView.ConfigureToolRequirement(ResolveRequiredToolForResource(configuredKind));
             }
 
             AddFoodSourceToResource(entry.Kind, instance);
 
             _lastResult.ResourceCount++;
+        }
+
+        private string ResolveResourceKind(VegetationSpawnEntryAsset entry, float scale)
+        {
+            if (entry == null)
+            {
+                return string.Empty;
+            }
+
+            string explicitKind = string.IsNullOrWhiteSpace(entry.ResourceKind)
+                ? string.Empty
+                : entry.ResourceKind.Trim().ToLowerInvariant();
+
+            if (!string.IsNullOrWhiteSpace(explicitKind))
+            {
+                if (IsTreeResourceKind(explicitKind))
+                {
+                    return scale >= Mathf.Max(0.01f, bigTreeScaleThreshold) ? "big_tree" : "small_tree";
+                }
+
+                if (IsRockResourceKind(explicitKind))
+                {
+                    return scale >= Mathf.Max(0.01f, bigRockScaleThreshold) ? "big_rock" : "small_rock";
+                }
+
+                return explicitKind;
+            }
+
+            string role = string.IsNullOrWhiteSpace(entry.RoleId) ? string.Empty : entry.RoleId.Trim().ToLowerInvariant();
+            if (entry.Kind == VegetationSpawnKind.ConiferTree ||
+                entry.Kind == VegetationSpawnKind.LeafyTree ||
+                entry.Kind == VegetationSpawnKind.DryTree ||
+                IsTreeResourceKind(role))
+            {
+                return scale >= Mathf.Max(0.01f, bigTreeScaleThreshold) ? "big_tree" : "small_tree";
+            }
+
+            if (entry.Kind == VegetationSpawnKind.Rock || IsRockResourceKind(role))
+            {
+                return scale >= Mathf.Max(0.01f, bigRockScaleThreshold) ? "big_rock" : "small_rock";
+            }
+
+            return role;
+        }
+
+        private float ResolveResourceVisualScaleMultiplier(string resourceKind)
+        {
+            string normalized = string.IsNullOrWhiteSpace(resourceKind) ? string.Empty : resourceKind.Trim().ToLowerInvariant();
+            switch (normalized)
+            {
+                case "big_tree":
+                    return Mathf.Max(1f, bigTreeVisualScaleMultiplier);
+                case "big_rock":
+                    return Mathf.Max(1f, bigRockVisualScaleMultiplier);
+                case "small_tree":
+                case "small_rock":
+                    return Mathf.Clamp(smallResourceVisualScaleMultiplier, 0.25f, 1f);
+                default:
+                    return 1f;
+            }
+        }
+
+        private static string ResolveRequiredToolForResource(string resourceKind)
+        {
+            string normalized = string.IsNullOrWhiteSpace(resourceKind) ? string.Empty : resourceKind.Trim().ToLowerInvariant();
+            switch (normalized)
+            {
+                case "big_tree":
+                    return "axe";
+                case "big_rock":
+                    return "pickaxe";
+                default:
+                    return string.Empty;
+            }
+        }
+
+        private static bool IsTreeResourceKind(string resourceKind)
+        {
+            string normalized = string.IsNullOrWhiteSpace(resourceKind) ? string.Empty : resourceKind.Trim().ToLowerInvariant();
+            return normalized == "tree" || normalized == "conifer_tree" || normalized == "leafy_tree" || normalized == "dry_tree" || normalized.EndsWith("_tree");
+        }
+
+        private static bool IsRockResourceKind(string resourceKind)
+        {
+            string normalized = string.IsNullOrWhiteSpace(resourceKind) ? string.Empty : resourceKind.Trim().ToLowerInvariant();
+            return normalized == "rock" || normalized.EndsWith("_rock");
         }
 
         private void AddFoodSourceToResource(VegetationSpawnKind kind, GameObject instance)
@@ -816,6 +1093,12 @@ namespace ApexShift.Runtime.World.Generation
 
         private void SpawnCreature(CreatureSpawnEntryAsset entry, Vector3 position)
         {
+            CreatureIslandBoundsRuntime bounds = CreatureIslandBoundsRuntime.Active;
+            if (bounds != null && bounds.HasLand)
+            {
+                bounds.TryClampToLand(position, out position);
+            }
+
             GameObject prefab = GetPrefabForCreature(entry.CreatureId);
             GameObject instance;
 
@@ -830,6 +1113,10 @@ namespace ApexShift.Runtime.World.Generation
             }
 
             instance.name = $"Creature_{entry.CreatureId}";
+            if (NormalizeCreatureId(entry.CreatureId) == "varnak")
+            {
+                _spawnedVarnakCount++;
+            }
 
             // Remove existing movement components from asset pack prefabs to prevent player input interference
             var moveInput = instance.GetComponent("MovePlayerInput");
@@ -876,13 +1163,25 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             var health = instance.GetComponent<CreatureHealthRuntime>();
             if (health == null) health = instance.AddComponent<CreatureHealthRuntime>();
             health.SetGameBalanceConfigForTests(gameBalanceConfig);
+            health.SetCreatureAudioProfileForTests(creatureAudioProfile);
             health.Configure(entry.CreatureId);
+
+            var hitbox = instance.GetComponent<CreatureHitboxRuntime>();
+            if (hitbox == null) hitbox = instance.AddComponent<CreatureHitboxRuntime>();
+            hitbox.Configure(entry.CreatureId);
+
+            var creatureAudio = instance.GetComponent<CreatureAudioRuntime>();
+            if (creatureAudio == null) creatureAudio = instance.AddComponent<CreatureAudioRuntime>();
+            creatureAudio.SetCreatureAudioProfile(creatureAudioProfile);
+            creatureAudio.Configure(entry.CreatureId);
 
             var oldFoodSeeking = instance.GetComponent<CreatureFoodSeekingBehavior>();
             if (oldFoodSeeking != null) oldFoodSeeking.enabled = false;
 
-            var oldAwareness = instance.GetComponent<CreaturePlayerAwarenessBehavior>();
-            if (oldAwareness != null) oldAwareness.enabled = false;
+            var playerAwareness = instance.GetComponent<CreaturePlayerAwarenessBehavior>();
+            if (playerAwareness == null) playerAwareness = instance.AddComponent<CreaturePlayerAwarenessBehavior>();
+            playerAwareness.enabled = true;
+            playerAwareness.Configure(entry.CreatureId);
 
             var behavior = instance.GetComponent<CreatureBehaviorRuntime>();
             if (behavior == null) behavior = instance.AddComponent<CreatureBehaviorRuntime>();
@@ -964,46 +1263,6 @@ if (renderer != null)
             return root;
         }
 
-        private void CreateMeatFoodSource(Vector3 position)
-        {
-            GameObject meat = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            meat.name = $"MeatDrop_{_lastResult.ResourceCount}";
-            meat.transform.SetParent(_resourceRoot);
-            meat.transform.position = position + Vector3.up * 0.10f;
-            meat.transform.localScale = new Vector3(0.45f, 0.20f, 0.45f);
-
-            Renderer renderer = meat.GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                if (mat.shader == null) mat.shader = Shader.Find("Standard");
-
-                Color meatColor = new Color(0.55f, 0.08f, 0.06f);
-                if (mat.HasProperty("_BaseColor"))
-                    mat.SetColor("_BaseColor", meatColor);
-                else
-                    mat.color = meatColor;
-
-                renderer.sharedMaterial = mat;
-            }
-
-            ResourceNodeView nodeView = meat.GetComponent<ResourceNodeView>();
-            if (nodeView == null)
-            {
-                nodeView = meat.AddComponent<ResourceNodeView>();
-            }
-            nodeView.ConfigureDefault("meat_drop");
-
-            FoodSourceView food = meat.GetComponent<FoodSourceView>();
-            if (food == null)
-            {
-                food = meat.AddComponent<FoodSourceView>();
-            }
-            food.Configure(ApexShift.Core.Ecosystem.FoodKind.Meat, 20f, 10f);
-
-            _lastResult.ResourceCount++;
-        }
-
         private void ConfigureCreatureMovement(string creatureId, CreatureNavigationAdapter adapter, CreatureWanderBehavior wander)
         {
             switch (creatureId)
@@ -1037,6 +1296,33 @@ if (renderer != null)
             var matches = resourcePrefabs.Where(p => p != null && p.Prefab != null && p.Kind == kind).ToList();
             if (matches.Count == 0) return null;
             return matches[Random.Range(0, matches.Count)].Prefab;
+        }
+
+        private GameObject GetPrefabForResolvedKind(string resolvedKind, VegetationSpawnKind fallbackKind)
+        {
+            // First, try to find a prefab based on the resolved kind (small_tree, big_tree, small_rock, big_rock, etc.)
+            // This allows for dedicated asset variants for different sizes.
+            // Users can name their prefabs to include the resolved kind (e.g., "tree_small", "tree_big", "rock_small", "rock_big")
+            if (!string.IsNullOrWhiteSpace(resolvedKind))
+            {
+                string normalizedResolved = resolvedKind.Trim().ToLowerInvariant();
+                
+                // Check resourcePrefabs list - prefab names should include the resolved kind
+                // For example: name a small tree prefab "tree_small" or "small_tree_variant"
+                var sizedMatches = resourcePrefabs
+                    .Where(p => p != null && p.Prefab != null && 
+                           p.Prefab.name.ToLowerInvariant().Contains(normalizedResolved))
+                    .ToList();
+
+                if (sizedMatches.Count > 0)
+                {
+                    return sizedMatches[Random.Range(0, sizedMatches.Count)].Prefab;
+                }
+            }
+
+            // Fall back to the original VegetationSpawnKind lookup
+            // This ensures we always get a generic tree/rock prefab, which will be scaled appropriately
+            return GetPrefabForKind(fallbackKind);
         }
 
         private GameObject GetPrefabForCreature(string creatureId)
@@ -1157,8 +1443,49 @@ if (renderer != null)
                 player.transform.position = spawnPos;
             }
 
+            player.tag = "Player";
+            player.SetActive(true);
+            EnsurePlayerVisible(player);
             SnapObjectToTerrainSurface(player, 0.10f);
+            Debug.Log($"[WorldGen] Player spawned: name={player.name}, pos={player.transform.position}, active={player.activeInHierarchy}, renderers={player.GetComponentsInChildren<Renderer>(true).Length}");
             return player;
+        }
+
+        private void EnsurePlayerVisible(GameObject player)
+        {
+            if (player == null)
+            {
+                return;
+            }
+
+            Renderer[] renderers = player.GetComponentsInChildren<Renderer>(true);
+            bool hasVisibleRenderer = false;
+            foreach (Renderer renderer in renderers)
+            {
+                if (renderer != null)
+                {
+                    renderer.enabled = true;
+                    hasVisibleRenderer = true;
+                }
+            }
+
+            if (hasVisibleRenderer)
+            {
+                return;
+            }
+
+            Debug.LogWarning("[WorldGen] Player prefab has no renderers; attaching a visible fallback capsule so the player is not invisible.");
+            GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            visual.name = "PlayerVisualFallback";
+            visual.transform.SetParent(player.transform, false);
+            visual.transform.localPosition = Vector3.up * 0.9f;
+            visual.transform.localRotation = Quaternion.identity;
+            visual.transform.localScale = new Vector3(0.85f, 1.1f, 0.85f);
+            Collider collider = visual.GetComponent<Collider>();
+            if (collider != null)
+            {
+                Destroy(collider);
+            }
         }
 
         private void SnapObjectToTerrainSurface(GameObject target, float surfaceOffset)
@@ -1192,6 +1519,10 @@ if (renderer != null)
 
             PlayerInputReader inputReader = player.GetComponent<PlayerInputReader>();
             if (inputReader == null) inputReader = player.AddComponent<PlayerInputReader>();
+
+            PlayerPresenceRuntime presence = player.GetComponent<PlayerPresenceRuntime>();
+            if (presence == null) presence = player.AddComponent<PlayerPresenceRuntime>();
+            presence.MarkActive();
             
             if (inputActions != null)
             {
@@ -1221,6 +1552,35 @@ if (renderer != null)
             if (inventoryPanel == null) inventoryPanel = player.AddComponent<ApexShift.Runtime.Player.PlayerInventoryPanelRuntime>();
             inventoryPanel.SetInputReader(inputReader);
             inventoryPanel.SetInventoryRuntime(inventory);
+
+            ActionBarRuntime actionBar = player.GetComponent<ActionBarRuntime>();
+            if (actionBar == null) actionBar = player.AddComponent<ActionBarRuntime>();
+            actionBar.SetInventoryRuntime(inventory);
+            actionBar.SetInputReader(inputReader);
+
+            CraftingPanelUI craftingPanel = player.GetComponent<CraftingPanelUI>();
+            if (craftingPanel == null) craftingPanel = player.AddComponent<CraftingPanelUI>();
+            craftingPanel.SetInputReader(inputReader);
+            craftingPanel.SetCraftingRuntime(crafting);
+            craftingPanel.SetInventoryRuntime(inventory);
+
+            PlayerCombatRuntime combat = player.GetComponent<PlayerCombatRuntime>();
+            if (combat == null)
+            {
+                combat = player.AddComponent<PlayerCombatRuntime>();
+            }
+            combat.SetInputReader(inputReader);
+            combat.SetInventoryRuntime(inventory);
+            combat.SetSurvivalRuntime(survival);
+            combat.SetAttackOrigin(player.transform);
+
+            PlayerCombatExperienceRuntime combatExperience = player.GetComponent<PlayerCombatExperienceRuntime>();
+            if (combatExperience == null)
+            {
+                combatExperience = player.AddComponent<PlayerCombatExperienceRuntime>();
+            }
+            combatExperience.SetInputReader(inputReader);
+            combatExperience.SetVisualRoot(player.transform.childCount > 0 ? player.transform.GetChild(0) : player.transform);
 
             IsometricPlayerController controller = player.GetComponent<IsometricPlayerController>();
             if (controller == null) controller = player.AddComponent<IsometricPlayerController>();
@@ -1281,6 +1641,7 @@ if (renderer != null)
             buildingPlacement.SetPlacementOrigin(player.transform);
             buildingPlacement.SetBuildingParent(_buildingRoot);
             inputReader.SetBuildingPlacementRuntime(buildingPlacement);
+            combatExperience.SetBuildingPlacementRuntime(buildingPlacement);
 
             BuildingSelectionPanelUI selectionPanel = player.GetComponent<BuildingSelectionPanelUI>();
             if (selectionPanel == null)
@@ -1289,13 +1650,69 @@ if (renderer != null)
             }
 
             selectionPanel.SetPlacementRuntime(buildingPlacement);
+            selectionPanel.SetInventoryRuntime(inventory);
             buildingPlacement.SetSelectionPanel(selectionPanel);
+        }
+
+        private void EnsurePlayerWorldVisuals(GameObject player)
+        {
+            if (player == null)
+            {
+                return;
+            }
+
+            Canvas accidentalCanvas = player.GetComponent<Canvas>();
+            if (accidentalCanvas != null)
+            {
+                Destroy(accidentalCanvas);
+            }
+
+            GraphicRaycaster accidentalRaycaster = player.GetComponent<GraphicRaycaster>();
+            if (accidentalRaycaster != null)
+            {
+                Destroy(accidentalRaycaster);
+            }
+
+            CanvasScaler accidentalScaler = player.GetComponent<CanvasScaler>();
+            if (accidentalScaler != null)
+            {
+                Destroy(accidentalScaler);
+            }
+
+            if (player.GetComponentInChildren<Renderer>() != null)
+            {
+                return;
+            }
+
+            GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            visual.name = "PlayerFallbackVisual";
+            visual.transform.SetParent(player.transform, false);
+            visual.transform.localPosition = new Vector3(0f, 0.9f, 0f);
+            visual.transform.localScale = new Vector3(0.55f, 0.9f, 0.55f);
+
+            Collider collider = visual.GetComponent<Collider>();
+            if (collider != null)
+            {
+                Destroy(collider);
+            }
+
+            Renderer renderer = visual.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                if (mat.shader == null) mat.shader = Shader.Find("Standard");
+                Color color = new Color(0.25f, 0.55f, 0.95f);
+                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+                else mat.color = color;
+                renderer.sharedMaterial = mat;
+            }
         }
 
         private GameObject CreateCamera(Transform target)
         {
             if (useCinemachine)
             {
+                Debug.Log($"[WorldGen] Creating Cinemachine camera for target={(target != null ? target.name : "<null>")} at {(target != null ? target.position.ToString() : "<null>")}");
                 return CreateCinemachineRig(target);
             }
 
@@ -1304,6 +1721,7 @@ if (renderer != null)
             CameraComponent cam = go.AddComponent<CameraComponent>();
             cam.orthographic = true;
             cam.orthographicSize = 14f;
+            EnsureSingleAudioListener(go);
             
             System.Type cameraDataType = System.Type.GetType("UnityEngine.Rendering.Universal.UniversalAdditionalCameraData, Unity.RenderPipelines.Universal.Runtime");
             if (cameraDataType != null) {
@@ -1316,6 +1734,7 @@ if (renderer != null)
             follow.SetTarget(target);
             follow.SetInitialRotation(Quaternion.Euler(35.264f, 45f, 0f));
             follow.SnapToTarget();
+            Debug.Log($"[WorldGen] Main Camera positioned at {go.transform.position}, target={(target != null ? target.name : "<null>")} targetPos={(target != null ? target.position.ToString() : "<null>")}");
 
             GameObject lightGo = new GameObject("Directional Light");
             Light l = lightGo.AddComponent<Light>();
@@ -1342,6 +1761,7 @@ if (renderer != null)
             CameraComponent camera = cameraObject.AddComponent<CameraComponent>();
             camera.orthographic = true;
             camera.orthographicSize = orthographicSize;
+            EnsureSingleAudioListener(cameraObject);
             
             // Add URP data safely via reflection
             System.Type cameraDataType = System.Type.GetType("UnityEngine.Rendering.Universal.UniversalAdditionalCameraData, Unity.RenderPipelines.Universal.Runtime");
@@ -1372,6 +1792,7 @@ if (renderer != null)
             CinemachineFollow follow = followCamera.AddComponent<CinemachineFollow>();
             follow.FollowOffset = cameraOffset;
             followCamera.AddComponent<CinemachineOrthographicZoom>();
+            Debug.Log($"[WorldGen] Cinemachine rig created. MainCamera={cameraObject.transform.position}, FollowCamera={followCamera.transform.position}, target={(target != null ? target.name : "<null>")} targetPos={(target != null ? target.position.ToString() : "<null>")}");
 
             GameObject lightGo = new GameObject("Directional Light");
             Light l = lightGo.AddComponent<Light>();
@@ -1380,6 +1801,42 @@ if (renderer != null)
             lightGo.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
 
             return cameraObject;
+        }
+
+        private static void EnsureSingleAudioListener(GameObject cameraObject)
+        {
+            if (cameraObject == null)
+            {
+                return;
+            }
+
+            AudioListener listener = cameraObject.GetComponent<AudioListener>();
+            if (listener == null)
+            {
+                listener = cameraObject.AddComponent<AudioListener>();
+            }
+
+            AudioListener[] allListeners = UnityEngine.Object.FindObjectsByType<AudioListener>(FindObjectsInactive.Include);
+            bool keptFirst = false;
+            foreach (AudioListener item in allListeners)
+            {
+                if (item == null)
+                {
+                    continue;
+                }
+
+                if (!keptFirst)
+                {
+                    keptFirst = true;
+                    item.enabled = true;
+                    continue;
+                }
+
+                if (item.gameObject != cameraObject)
+                {
+                    item.enabled = false;
+                }
+            }
         }
 
         private void CreateWorldBounds()

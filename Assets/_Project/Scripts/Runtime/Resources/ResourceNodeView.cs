@@ -4,6 +4,7 @@ using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Interaction;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Events;
+using ApexShift.Runtime.Audio;
 using UnityEngine;
 
 namespace ApexShift.Runtime.Resources
@@ -60,6 +61,11 @@ namespace ApexShift.Runtime.Resources
         [SerializeField]
         private float interactionRadius = 2.25f;
 
+        [Header("Tool gating")]
+        [SerializeField] private string requiredToolItemId = string.Empty;
+        [SerializeField] private bool autoResolveToolRequirement = true;
+        [SerializeField] private string missingToolMessage = string.Empty;
+
         private ResourceDefinition definition;
         private ResourceState state;
         private FoodSourceView foodSourceView;
@@ -70,7 +76,14 @@ namespace ApexShift.Runtime.Resources
             get
             {
                 EnsureState();
-                return harvestSystem.GetPrompt(state);
+                string prompt = harvestSystem.GetPrompt(state);
+                string requiredTool = ResolveRequiredToolItemId();
+                if (!string.IsNullOrWhiteSpace(prompt) && !string.IsNullOrWhiteSpace(requiredTool))
+                {
+                    return $"{prompt} ({FormatRequiredTool(requiredTool)} required)";
+                }
+
+                return prompt;
             }
         }
 
@@ -135,8 +148,18 @@ namespace ApexShift.Runtime.Resources
             {
                 return false;
             }
-            return TryResolveInventory(actor, out PlayerInventoryRuntime inventoryRuntime)
-                   && harvestSystem.CanHarvest(state, inventoryRuntime.Inventory, out _);
+
+            if (!TryResolveInventory(actor, out PlayerInventoryRuntime inventoryRuntime))
+            {
+                return false;
+            }
+
+            if (!HasRequiredTool(inventoryRuntime, out _))
+            {
+                return false;
+            }
+
+            return harvestSystem.CanHarvest(state, inventoryRuntime.Inventory, out _);
         }
 
         public bool Interact(GameObject actor)
@@ -148,6 +171,12 @@ namespace ApexShift.Runtime.Resources
                 return false;
             }
 
+            if (!HasRequiredTool(inventoryRuntime, out string missingTool))
+            {
+                Debug.Log($"[ResourceNode] Cannot harvest {displayName}: requires {missingTool}.", this);
+                return false;
+            }
+
             HarvestResult result = harvestSystem.Harvest(state, inventoryRuntime.Inventory);
             if (!result.Success)
             {
@@ -156,6 +185,7 @@ namespace ApexShift.Runtime.Resources
             }
 
             Debug.Log($"[ResourceNode] Harvested: {result.Message}. Total in inventory: {inventoryRuntime.Inventory.GetAmount(state.ItemId)}", this);
+            WorldActionAudio.PlayPickup(transform.position);
             GameEventBus.PublishResourceHarvested(
                 transform.position,
                 ResolveEventBiomeId(),
@@ -256,6 +286,71 @@ namespace ApexShift.Runtime.Resources
             }
 
             EnsureFoodSourceBridge();
+        }
+
+        private bool HasRequiredTool(PlayerInventoryRuntime inventoryRuntime, out string missingTool)
+        {
+            missingTool = string.Empty;
+            string requiredTool = ResolveRequiredToolItemId();
+            if (string.IsNullOrWhiteSpace(requiredTool))
+            {
+                return true;
+            }
+
+            if (inventoryRuntime == null || inventoryRuntime.Inventory == null || inventoryRuntime.Inventory.GetAmount(requiredTool) <= 0)
+            {
+                missingTool = requiredTool;
+                missingToolMessage = $"Requires {FormatRequiredTool(requiredTool)}";
+                return false;
+            }
+
+            missingToolMessage = string.Empty;
+            return true;
+        }
+
+        private string ResolveRequiredToolItemId()
+        {
+            if (!autoResolveToolRequirement && !string.IsNullOrWhiteSpace(requiredToolItemId))
+            {
+                return requiredToolItemId.Trim().ToLowerInvariant();
+            }
+
+            EnsureState();
+            string kind = state != null ? state.ResourceId : resourceKind;
+            kind = string.IsNullOrWhiteSpace(kind) ? string.Empty : kind.Trim().ToLowerInvariant();
+
+            switch (kind)
+            {
+                case "big_tree":
+                    return "axe";
+                case "big_rock":
+                    return "pickaxe";
+                default:
+                    return string.IsNullOrWhiteSpace(requiredToolItemId)
+                        ? string.Empty
+                        : requiredToolItemId.Trim().ToLowerInvariant();
+            }
+        }
+
+        private static string FormatRequiredTool(string toolItemId)
+        {
+            switch (string.IsNullOrWhiteSpace(toolItemId) ? string.Empty : toolItemId.Trim().ToLowerInvariant())
+            {
+                case "axe":
+                    return "axe";
+                case "pickaxe":
+                    return "pickaxe";
+                default:
+                    return toolItemId;
+            }
+        }
+
+        public void ConfigureToolRequirement(string toolItemId)
+        {
+            requiredToolItemId = string.IsNullOrWhiteSpace(toolItemId)
+                ? string.Empty
+                : toolItemId.Trim().ToLowerInvariant();
+            autoResolveToolRequirement = string.IsNullOrWhiteSpace(requiredToolItemId);
         }
 
         private void EnsureInteractionCollider()

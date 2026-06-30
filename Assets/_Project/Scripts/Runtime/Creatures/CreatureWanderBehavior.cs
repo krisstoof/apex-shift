@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using ApexShift.Runtime.World.Generation;
 
 namespace ApexShift.Runtime.Creatures
 {
@@ -49,9 +50,16 @@ namespace ApexShift.Runtime.Creatures
                 {
                     Vector3 randomDirection = Random.insideUnitSphere * wanderRadius;
                     randomDirection += transform.position;
+
+                    CreatureIslandBoundsRuntime islandBounds = CreatureIslandBoundsRuntime.Active;
+                    if (islandBounds != null && islandBounds.HasLand)
+                    {
+                        islandBounds.TryClampToLand(randomDirection, out randomDirection);
+                    }
                     
                     if (adapter.TrySamplePosition(randomDirection, out Vector3 targetPos, wanderRadius))
                     {
+                        if (islandBounds != null && islandBounds.HasLand) islandBounds.TryClampToLand(targetPos, out targetPos);
                         Debug.Log($"[Wander] {gameObject.name} moving to {targetPos}");
                         _view.MoveTo(targetPos);
 

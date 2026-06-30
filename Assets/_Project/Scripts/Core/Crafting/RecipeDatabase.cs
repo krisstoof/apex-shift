@@ -54,6 +54,24 @@ namespace ApexShift.Core.Crafting
                     new RecipeIngredient(new ItemId("fiber"), 4),
                     new RecipeIngredient(new ItemId("bone"), 1)
                 }),
+                new RecipeDefinition(new RecipeId("arrow"), new ItemId("arrow"), 5, new[]
+                {
+                    new RecipeIngredient(new ItemId("wood"), 1),
+                    new RecipeIngredient(new ItemId("stone"), 1),
+                    new RecipeIngredient(new ItemId("fiber"), 1)
+                }),
+                new RecipeDefinition(new RecipeId("axe"), new ItemId("axe"), 1, new[]
+                {
+                    new RecipeIngredient(new ItemId("wood"), 2),
+                    new RecipeIngredient(new ItemId("stone"), 2),
+                    new RecipeIngredient(new ItemId("fiber"), 1)
+                }),
+                new RecipeDefinition(new RecipeId("pickaxe"), new ItemId("pickaxe"), 1, new[]
+                {
+                    new RecipeIngredient(new ItemId("wood"), 2),
+                    new RecipeIngredient(new ItemId("stone"), 3),
+                    new RecipeIngredient(new ItemId("fiber"), 1)
+                }),
                 new RecipeDefinition(new RecipeId("trap"), new ItemId("trap"), 1, new[]
                 {
                     new RecipeIngredient(new ItemId("wood"), 2),

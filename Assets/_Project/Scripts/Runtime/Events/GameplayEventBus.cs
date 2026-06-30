@@ -21,7 +21,11 @@ namespace ApexShift.Runtime.Events
         EcosystemTickAdvanced,
         DayChanged,
         NightStarted,
-        MorningStarted
+        MorningStarted,
+        PlayerMeleeHit,
+        PlayerBowFired,
+        PlayerProjectileHit,
+        TrapTriggered
     }
 
     [Serializable]

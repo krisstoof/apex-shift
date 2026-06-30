@@ -1,0 +1,79 @@
+{
+  "pack": "Apex Shift Item Models v1",
+  "format": "OBJ + shared MTL",
+  "unity_import_path": "Assets/_Project/Art/Items/Models",
+  "models": [
+    {
+      "id": "item_wood_log",
+      "file": "Assets/_Project/Art/Items/Models/item_wood_log_low_poly.obj",
+      "format": "OBJ/MTL",
+      "unity_notes": "Y-up, pivot near ground, scale in meters, shared MTL"
+    },
+    {
+      "id": "item_stone",
+      "file": "Assets/_Project/Art/Items/Models/item_stone_low_poly.obj",
+      "format": "OBJ/MTL",
+      "unity_notes": "Y-up, pivot near ground, scale in meters, shared MTL"
+    },
+    {
+      "id": "item_fiber_bundle",
+      "file": "Assets/_Project/Art/Items/Models/item_fiber_bundle_low_poly.obj",
+      "format": "OBJ/MTL",
+      "unity_notes": "Y-up, pivot near ground, scale in meters, shared MTL"
+    },
+    {
+      "id": "item_raw_meat",
+      "file": "Assets/_Project/Art/Items/Models/item_raw_meat_low_poly.obj",
+      "format": "OBJ/MTL",
+      "unity_notes": "Y-up, pivot near ground, scale in meters, shared MTL"
+    },
+    {
+      "id": "item_berries",
+      "file": "Assets/_Project/Art/Items/Models/item_berries_low_poly.obj",
+      "format": "OBJ/MTL",
+      "unity_notes": "Y-up, pivot near ground, scale in meters, shared MTL"
+    },
+    {
+      "id": "item_bone",
+      "file": "Assets/_Project/Art/Items/Models/item_bone_low_poly.obj",
+      "format": "OBJ/MTL",
+      "unity_notes": "Y-up, pivot near ground, scale in meters, shared MTL"
+    },
+    {
+      "id": "item_hide",
+      "file": "Assets/_Project/Art/Items/Models/item_hide_low_poly.obj",
+      "format": "OBJ/MTL",
+      "unity_notes": "Y-up, pivot near ground, scale in meters, shared MTL"
+    },
+    {
+      "id": "tool_spear",
+      "file": "Assets/_Project/Art/Items/Models/tool_spear_low_poly.obj",
+      "format": "OBJ/MTL",
+      "unity_notes": "Y-up, pivot near ground, scale in meters, shared MTL"
+    },
+    {
+      "id": "ammo_arrow",
+      "file": "Assets/_Project/Art/Items/Models/ammo_arrow_low_poly.obj",
+      "format": "OBJ/MTL",
+      "unity_notes": "Y-up, pivot near ground, scale in meters, shared MTL"
+    },
+    {
+      "id": "tool_bow",
+      "file": "Assets/_Project/Art/Items/Models/tool_bow_low_poly.obj",
+      "format": "OBJ/MTL",
+      "unity_notes": "Y-up, pivot near ground, scale in meters, shared MTL"
+    },
+    {
+      "id": "tool_torch",
+      "file": "Assets/_Project/Art/Items/Models/tool_torch_low_poly.obj",
+      "format": "OBJ/MTL",
+      "unity_notes": "Y-up, pivot near ground, scale in meters, shared MTL"
+    },
+    {
+      "id": "icon_storage_box_item",
+      "file": "Assets/_Project/Art/Items/Models/icon_storage_box_item_low_poly.obj",
+      "format": "OBJ/MTL",
+      "unity_notes": "Y-up, pivot near ground, scale in meters, shared MTL"
+    }
+  ]
+}

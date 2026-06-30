@@ -32,6 +32,7 @@ namespace ApexShift.EditorTools.Camera
             CameraComponent camera = cameraObject.AddComponent<CameraComponent>();
             camera.orthographic = true;
             camera.orthographicSize = orthographicSize;
+            EnsureSingleAudioListener(cameraObject);
             cameraObject.AddComponent<CinemachineBrain>();
 
             GameObject followCamera = new GameObject("PlayerFollowCamera");
@@ -59,6 +60,42 @@ namespace ApexShift.EditorTools.Camera
                 $"FollowCamera={followCamera.name}, Target={(player != null ? player.name : "<null>")}, Offset={cameraOffset}");
 
             return cameraObject;
+        }
+
+        private static void EnsureSingleAudioListener(GameObject cameraObject)
+        {
+            if (cameraObject == null)
+            {
+                return;
+            }
+
+            AudioListener listener = cameraObject.GetComponent<AudioListener>();
+            if (listener == null)
+            {
+                cameraObject.AddComponent<AudioListener>();
+            }
+
+            AudioListener[] allListeners = Object.FindObjectsByType<AudioListener>(FindObjectsInactive.Include);
+            bool keptFirst = false;
+            foreach (AudioListener item in allListeners)
+            {
+                if (item == null)
+                {
+                    continue;
+                }
+
+                if (!keptFirst)
+                {
+                    keptFirst = true;
+                    item.enabled = true;
+                    continue;
+                }
+
+                if (item.gameObject != cameraObject)
+                {
+                    item.enabled = false;
+                }
+            }
         }
     }
 }

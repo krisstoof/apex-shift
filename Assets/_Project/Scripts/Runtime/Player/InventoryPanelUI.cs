@@ -150,7 +150,7 @@ namespace ApexShift.Runtime.Player
         private void CreateSlot(Transform parent, string itemId, int amount)
         {
             bool hasItem = amount > 0 && !string.IsNullOrWhiteSpace(itemId);
-            GameObject slot = new GameObject("Slot", typeof(RectTransform), typeof(Image), typeof(SlotClickHandler));
+            GameObject slot = new GameObject("Slot", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(SlotClickHandler), typeof(SlotDragHandler));
             slot.transform.SetParent(parent, false);
             Image bg = slot.GetComponent<Image>();
             bg.color = new Color(0.16f, 0.20f, 0.16f, 0.95f);
@@ -183,6 +183,7 @@ namespace ApexShift.Runtime.Player
             amountRt.offsetMax = new Vector2(-4f, -4f);
 
             slot.GetComponent<SlotClickHandler>().Bind(this, itemId, amount, icon, amountText);
+            slot.GetComponent<SlotDragHandler>().Bind(this, itemId, amount, icon);
         }
 
         private Sprite ResolveIcon(string itemId)
@@ -337,6 +338,93 @@ namespace ApexShift.Runtime.Player
                 if (eventData.button == PointerEventData.InputButton.Right)
                 {
                     owner.DropItem(itemId, amount);
+                }
+            }
+        }
+
+        private sealed class SlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+        {
+            private InventoryPanelUI owner;
+            private string itemId;
+            private int amount;
+            private Image sourceIcon;
+            private CanvasGroup canvasGroup;
+            private GameObject dragGhost;
+
+            public void Bind(InventoryPanelUI owner, string itemId, int amount, Image sourceIcon)
+            {
+                this.owner = owner;
+                this.itemId = itemId ?? string.Empty;
+                this.amount = amount;
+                this.sourceIcon = sourceIcon;
+                canvasGroup = GetComponent<CanvasGroup>();
+            }
+
+            public void OnBeginDrag(PointerEventData eventData)
+            {
+                if (owner == null || string.IsNullOrWhiteSpace(itemId) || amount <= 0 || sourceIcon == null || sourceIcon.sprite == null)
+                {
+                    return;
+                }
+
+                if (canvasGroup != null)
+                {
+                    canvasGroup.blocksRaycasts = false;
+                    canvasGroup.alpha = 0.72f;
+                }
+
+                dragGhost = new GameObject("InventoryDragGhost", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+                Canvas ghostCanvas = dragGhost.GetComponent<Canvas>();
+                ghostCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                ghostCanvas.sortingOrder = 7000;
+
+                GameObject iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+                iconGo.transform.SetParent(dragGhost.transform, false);
+                Image icon = iconGo.GetComponent<Image>();
+                icon.sprite = sourceIcon.sprite;
+                icon.raycastTarget = false;
+                RectTransform rect = iconGo.GetComponent<RectTransform>();
+                rect.sizeDelta = new Vector2(48f, 48f);
+                rect.position = eventData.position;
+            }
+
+            public void OnDrag(PointerEventData eventData)
+            {
+                if (dragGhost == null || eventData == null)
+                {
+                    return;
+                }
+
+                RectTransform rect = dragGhost.GetComponentInChildren<RectTransform>();
+                if (rect != null)
+                {
+                    rect.position = eventData.position;
+                }
+            }
+
+            public void OnEndDrag(PointerEventData eventData)
+            {
+                if (canvasGroup != null)
+                {
+                    canvasGroup.blocksRaycasts = true;
+                    canvasGroup.alpha = 1f;
+                }
+
+                if (dragGhost != null)
+                {
+                    Destroy(dragGhost);
+                    dragGhost = null;
+                }
+
+                if (eventData == null || string.IsNullOrWhiteSpace(itemId))
+                {
+                    return;
+                }
+
+                ActionBarRuntime actionBar = ActionBarRuntime.Active;
+                if (actionBar != null && actionBar.TryAssignItemAtScreenPosition(itemId, eventData.position))
+                {
+                    Debug.Log($"[Inventory] assigned {itemId} to action bar");
                 }
             }
         }

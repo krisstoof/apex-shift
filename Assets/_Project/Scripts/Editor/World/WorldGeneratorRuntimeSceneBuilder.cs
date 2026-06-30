@@ -5,6 +5,8 @@ using ApexShift.Runtime.PlayerInput;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Debugging;
 using ApexShift.Presentation.HUD;
+using ApexShift.Runtime.Audio;
+using ApexShift.EditorTools.Data;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -75,6 +77,16 @@ namespace ApexShift.Editor.World
             if (gameBalanceConfig != null)
             {
                 so.FindProperty("gameBalanceConfig").objectReferenceValue = gameBalanceConfig;
+            }
+            CreatureAudioProfile creatureAudioProfile = DefaultAudioAssetGenerator.LoadCreatureProfile();
+            if (creatureAudioProfile == null)
+            {
+                DefaultAudioAssetGenerator.CreateDefaultAudioProfiles();
+                creatureAudioProfile = DefaultAudioAssetGenerator.LoadCreatureProfile();
+            }
+            if (creatureAudioProfile != null)
+            {
+                so.FindProperty("creatureAudioProfile").objectReferenceValue = creatureAudioProfile;
             }
 
             GameObject playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);

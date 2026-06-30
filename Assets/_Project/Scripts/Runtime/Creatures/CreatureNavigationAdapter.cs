@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
+using ApexShift.Runtime.World.Generation;
 
 namespace ApexShift.Runtime.Creatures
 {
@@ -20,9 +21,51 @@ namespace ApexShift.Runtime.Creatures
 
         public bool IsOnNavMesh => _agent != null && _agent.isOnNavMesh;
 
+        private void LateUpdate()
+        {
+            CreatureIslandBoundsRuntime bounds = CreatureIslandBoundsRuntime.Active;
+            if (bounds == null || !bounds.HasLand)
+            {
+                return;
+            }
+
+            if (!bounds.IsNearLand(transform.position) && bounds.TryClampToLand(transform.position, out Vector3 clamped))
+            {
+                WarpTo(clamped);
+                Stop();
+            }
+        }
+
         public bool TryMoveTo(Vector3 destination)
-{
-            if (!hasValidNavMesh || _agent == null || !_agent.isOnNavMesh) return false;
+        {
+            if (_agent == null)
+            {
+                _agent = GetComponent<NavMeshAgent>();
+            }
+
+            if (_agent == null)
+            {
+                return false;
+            }
+
+            if (!_agent.isOnNavMesh)
+            {
+                hasValidNavMesh = WarpToNearestNavMesh();
+            }
+
+            if (!hasValidNavMesh || !_agent.isOnNavMesh) return false;
+
+            CreatureIslandBoundsRuntime bounds = CreatureIslandBoundsRuntime.Active;
+            if (bounds != null && bounds.HasLand)
+            {
+                if (!bounds.TryClampToLand(destination, out destination))
+                {
+                    return false;
+                }
+            }
+
+            if (TrySamplePosition(destination, out Vector3 sampled, 8f)) destination = sampled;
+            if (bounds != null && bounds.HasLand) bounds.TryClampToLand(destination, out destination);
             _agent.isStopped = false;
             return _agent.SetDestination(destination);
         }
@@ -61,6 +104,21 @@ namespace ApexShift.Runtime.Creatures
         {
             if (!hasValidNavMesh || _agent == null || _agent.pathPending) return false;
             return _agent.remainingDistance <= (_agent.stoppingDistance > 0 ? _agent.stoppingDistance : stoppingDistance);
+        }
+
+        private bool WarpTo(Vector3 position)
+        {
+            if (_agent == null)
+            {
+                return false;
+            }
+
+            if (TrySamplePosition(position, out Vector3 sampled, 8f))
+            {
+                return _agent.Warp(sampled);
+            }
+
+            return _agent.Warp(position);
         }
 
         public void Stop()

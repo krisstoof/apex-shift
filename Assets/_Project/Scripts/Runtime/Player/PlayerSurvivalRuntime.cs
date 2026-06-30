@@ -26,6 +26,13 @@ namespace ApexShift.Runtime.Player
         [SerializeField]
         private bool logToConsole;
 
+        [Header("Stamina Movement Penalty")]
+        [SerializeField] private float tiredStaminaThreshold = 25f;
+        [SerializeField] private float exhaustedStaminaThreshold = 7.5f;
+        [SerializeField] private float tiredSpeedMultiplier = 0.78f;
+        [SerializeField] private float exhaustedSpeedMultiplier = 0.48f;
+        [SerializeField] private float noStaminaSpeedMultiplier = 0.35f;
+
         [SerializeField]
         private float debugLogInterval = 2f;
 
@@ -39,7 +46,7 @@ namespace ApexShift.Runtime.Player
         public bool WantsSprint { get; private set; }
         public bool IsSprinting { get; private set; }
         public bool CanSprint => stats != null && survivalSystem != null && survivalSystem.CanSprint(stats);
-        public float SpeedMultiplier => stats != null && survivalSystem != null ? survivalSystem.GetSpeedMultiplier(stats) : 1f;
+        public float SpeedMultiplier => stats != null && survivalSystem != null ? survivalSystem.GetSpeedMultiplier(stats) * GetStaminaSpeedMultiplier() : 1f;
         public string ConditionText => stats != null && survivalSystem != null ? survivalSystem.GetConditionText(stats) : "uninitialized";
 
         private void Awake()
@@ -91,7 +98,10 @@ namespace ApexShift.Runtime.Player
         public SurvivalTickResult Damage(float amount)
         {
             EnsureInitialized();
-            return survivalSystem.ApplyDamage(stats, amount);
+            Debug.Log($"[PlayerSurvival] Damage called with amount: {amount}, current health: {stats.Health}");
+            SurvivalTickResult result = survivalSystem.ApplyDamage(stats, amount);
+            Debug.Log($"[PlayerSurvival] After damage - new health: {stats.Health}, result: {result}");
+            return result;
         }
 
         public SurvivalTickResult Heal(float amount)
@@ -139,6 +149,31 @@ namespace ApexShift.Runtime.Player
         {
             EnsureInitialized();
             stats.LoadFromSaveData(data);
+        }
+
+        private float GetStaminaSpeedMultiplier()
+        {
+            if (stats == null)
+            {
+                return 1f;
+            }
+
+            if (stats.Stamina <= 0.01f)
+            {
+                return Mathf.Clamp01(noStaminaSpeedMultiplier);
+            }
+
+            if (stats.Stamina <= Mathf.Max(0f, exhaustedStaminaThreshold))
+            {
+                return Mathf.Clamp01(exhaustedSpeedMultiplier);
+            }
+
+            if (stats.Stamina <= Mathf.Max(exhaustedStaminaThreshold, tiredStaminaThreshold))
+            {
+                return Mathf.Clamp01(tiredSpeedMultiplier);
+            }
+
+            return 1f;
         }
 
         private void InitializeCore()

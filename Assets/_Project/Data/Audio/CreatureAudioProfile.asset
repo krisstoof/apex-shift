@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 140e4692240225c4ab88da652234175b, type: 3}
+  m_Name: CreatureAudioProfile
+  m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.Audio.CreatureAudioProfile
+  hitVoiceClips:
+  - {fileID: 8300000, guid: d2c91d8e4a022ed48a51161afb38903c, type: 3}
+  deathVoiceClips:
+  - {fileID: 8300000, guid: 136765e03516f094eb5908d45cfb4c7a, type: 3}

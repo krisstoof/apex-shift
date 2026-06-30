@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.Ecosystem;
+using ApexShift.Runtime.Audio;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Resources;
@@ -191,6 +192,7 @@ namespace ApexShift.Runtime.Buildings
             {
                 ConsumeBuildMaterials(selectedDefinition);
             }
+            WorldActionAudio.PlayBuild(instance.transform.position);
             Debug.Log($"[BuildingPlacement] Placed {selectedDefinition.BuildingId}.", instance);
 
             if (!RuntimeDebugSettings.FreeBuildingEnabled && !HasRequiredMaterials(selectedDefinition))

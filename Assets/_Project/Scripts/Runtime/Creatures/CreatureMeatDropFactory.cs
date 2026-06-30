@@ -1,6 +1,5 @@
 using UnityEngine;
-using ApexShift.Core.Ecosystem;
-using ApexShift.Runtime.Ecosystem;
+using ApexShift.Runtime.Items;
 
 namespace ApexShift.Runtime.Creatures
 {
@@ -13,32 +12,45 @@ namespace ApexShift.Runtime.Creatures
                 return;
             }
 
-            GameObject drop = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            drop.name = $"MeatDrop_{sourceCreature.CreatureId}";
-            drop.transform.position = position + Vector3.up * 0.1f;
-            drop.transform.localScale = new Vector3(0.45f, 0.2f, 0.45f);
+            string id = string.IsNullOrWhiteSpace(sourceCreature.CreatureId)
+                ? string.Empty
+                : sourceCreature.CreatureId.Trim().ToLowerInvariant();
 
-            CreatureMeatDropConfigurator.Configure(drop, sourceCreature.CreatureId);
-        }
-    }
+            int amount = ResolveMeatAmount(id);
+            Vector3 dropPosition = position + new Vector3(0f, 0.18f, 0f);
 
-    internal static class CreatureMeatDropConfigurator
-    {
-        public static void Configure(GameObject drop, string creatureId)
-        {
-            FoodSourceView food = drop.GetComponent<FoodSourceView>() ?? drop.AddComponent<FoodSourceView>();
-            food.Configure($"meat_{creatureId}", "Meat", FoodKind.Meat, 20f, 10f);
-
-            Renderer renderer = drop.GetComponent<Renderer>();
-            if (renderer != null)
+            GameObject drop = ItemPickupSpawner.Spawn("meat", amount, dropPosition, Quaternion.identity);
+            if (drop != null)
             {
-                Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                if (mat.shader == null) mat.shader = Shader.Find("Standard");
-                Color meatColor = new Color(0.55f, 0.08f, 0.06f);
-                if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", meatColor);
-                else mat.color = meatColor;
-                renderer.sharedMaterial = mat;
+                drop.name = $"Item_meat_from_{id}";
             }
+        }
+
+        private static int ResolveMeatAmount(string creatureId)
+        {
+            switch (creatureId)
+            {
+                case "small_prey": return 1;
+                case "grazer": return 2;
+                case "varnak": return 3;
+                default: return 1;
+            }
+        }
+
+        public static void TrySpawnBoneDrop(Vector3 position, CreatureAgentView sourceCreature)
+        {
+            if (sourceCreature == null)
+            {
+                return;
+            }
+
+            string id = string.IsNullOrWhiteSpace(sourceCreature.CreatureId) ? string.Empty : sourceCreature.CreatureId.Trim().ToLowerInvariant();
+            if (id != "varnak")
+            {
+                return;
+            }
+
+            ItemPickupSpawner.Spawn("bone", Random.Range(1, 3), position + new Vector3(0.35f, 0.15f, 0.15f), Quaternion.identity);
         }
     }
 }

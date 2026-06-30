@@ -5,8 +5,12 @@ using ApexShift.EditorTools.Camera;
 using ApexShift.Runtime.Camera;
 using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.Interaction;
+using ApexShift.Runtime.Buildings;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.PlayerInput;
+using ApexShift.Runtime.Audio;
+using ApexShift.Runtime.Creatures;
+using ApexShift.EditorTools.Data;
 using ApexShift.Presentation.Interaction;
 using ApexShift.Presentation.HUD;
 using UnityEditor;
@@ -255,6 +259,14 @@ namespace ApexShift.EditorTools
             motionFeedback.SetInputReader(inputReader);
             motionFeedback.SetVisualRoot(ResolvePlayerVisualRoot(player));
 
+            PlayerCombatExperienceRuntime combatExperience = player.GetComponent<PlayerCombatExperienceRuntime>();
+            if (combatExperience == null)
+            {
+                combatExperience = player.AddComponent<PlayerCombatExperienceRuntime>();
+            }
+            combatExperience.SetInputReader(inputReader);
+            combatExperience.SetVisualRoot(ResolvePlayerVisualRoot(player));
+
             PlayerActionDebugLog debugLog = player.GetComponent<PlayerActionDebugLog>();
             if (debugLog == null)
             {
@@ -273,6 +285,55 @@ namespace ApexShift.EditorTools
             {
                 animator.runtimeAnimatorController = runtimeController;
                 animationDriver.SetAnimator(animator);
+            }
+
+            AssignAudioProfiles(player);
+        }
+
+        private static void AssignAudioProfiles(GameObject player)
+        {
+            DefaultAudioAssetGenerator.CreateDefaultAudioProfiles();
+            CombatAudioProfile combatProfile = DefaultAudioAssetGenerator.LoadCombatProfile();
+            TrapAudioProfile trapProfile = DefaultAudioAssetGenerator.LoadTrapProfile();
+            CreatureAudioProfile creatureProfile = DefaultAudioAssetGenerator.LoadCreatureProfile();
+
+            if (combatProfile != null)
+            {
+                SerializedObject combatSO = new SerializedObject(player.GetComponent<PlayerCombatRuntime>());
+                combatSO.FindProperty("combatAudioProfile").objectReferenceValue = combatProfile;
+                combatSO.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            if (trapProfile != null)
+            {
+                TrapDamageRuntime[] traps = UnityEngine.Object.FindObjectsByType<TrapDamageRuntime>(FindObjectsInactive.Include);
+                foreach (TrapDamageRuntime trap in traps)
+                {
+                    if (trap == null)
+                    {
+                        continue;
+                    }
+
+                    SerializedObject trapSO = new SerializedObject(trap);
+                    trapSO.FindProperty("trapAudioProfile").objectReferenceValue = trapProfile;
+                    trapSO.ApplyModifiedPropertiesWithoutUndo();
+                }
+            }
+
+            if (creatureProfile != null)
+            {
+                CreatureAudioRuntime[] creatures = UnityEngine.Object.FindObjectsByType<CreatureAudioRuntime>(FindObjectsInactive.Include);
+                foreach (CreatureAudioRuntime creature in creatures)
+                {
+                    if (creature == null)
+                    {
+                        continue;
+                    }
+
+                    SerializedObject creatureSO = new SerializedObject(creature);
+                    creatureSO.FindProperty("creatureAudioProfile").objectReferenceValue = creatureProfile;
+                    creatureSO.ApplyModifiedPropertiesWithoutUndo();
+                }
             }
         }
 

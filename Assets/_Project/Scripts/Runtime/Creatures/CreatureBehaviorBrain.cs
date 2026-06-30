@@ -3,6 +3,8 @@ using ApexShift.Core.Ecosystem;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.World.Query;
 using ApexShift.Runtime.Events;
+using ApexShift.Runtime.Player;
+using ApexShift.Runtime.Audio;
 
 namespace ApexShift.Runtime.Creatures
 {
@@ -31,7 +33,8 @@ namespace ApexShift.Runtime.Creatures
         [Header("Varnak player AI")]
         [SerializeField] private float varnakPlayerDetectRange = 28f;
         [SerializeField] private float varnakPlayerCloseChaseRange = 12f;
-        [SerializeField] private float varnakPlayerAttackRange = 2.5f;
+        [SerializeField] private float varnakPlayerAttackRange = 3.5f;
+        [SerializeField] private float varnakPlayerDamage = 12f;
         [Header("Grazer emergency AI")]
         [SerializeField] private float grazerScavengeRange = 72f;
         [SerializeField] private float grazerSmallPreyDetectRange = 16f;
@@ -148,6 +151,34 @@ namespace ApexShift.Runtime.Creatures
 
         private void HandleVarnakBrain(WorldQueryRuntime query)
         {
+            if (_player != null)
+            {
+                float playerDistance = HorizontalDistance(transform.position, _player.position);
+                if (playerDistance <= varnakPlayerDetectRange)
+                {
+                    Debug.Log($"[Varnak] Player detected at distance: {playerDistance:F2}, DetectRange: {varnakPlayerDetectRange}, AttackRange: {varnakPlayerAttackRange}, Cooldown: {_varnakCombatCooldownTimer:F2}");
+                    bool shouldAttackPlayer = playerDistance <= varnakPlayerAttackRange;
+                    if (shouldAttackPlayer)
+                    {
+                        Debug.Log($"[Varnak] ATTACK STATE - Player in range! Distance: {playerDistance:0.00}, AttackRange: {varnakPlayerAttackRange}");
+                    }
+
+                    SetState(shouldAttackPlayer ? CreatureBehaviorState.Attack : CreatureBehaviorState.Chase, $"player d:{playerDistance:0.0}");
+                    if (playerDistance > varnakPlayerAttackRange)
+                    {
+                        MoveToTarget(_player.position);
+                    }
+                    else
+                    {
+                        _agentView.Stop();
+                        Debug.Log($"[Varnak] About to call TryPublishVarnakCombatEvent - Cooldown: {_varnakCombatCooldownTimer}");
+                        TryPublishVarnakCombatEvent(GameplayEventKind.VarnakAttackedPlayer, "player", "varnak_attacked_player");
+                    }
+
+                    return;
+                }
+            }
+
             CreatureAgentView prey = _currentPrey;
             if (prey == null || !prey.isActiveAndEnabled)
             {
@@ -168,24 +199,6 @@ namespace ApexShift.Runtime.Creatures
                     TryPublishVarnakCombatEvent(GetVarnakHuntEventKind(prey.CreatureId), prey.CreatureId, $"varnak_hunted_{prey.CreatureId}");
                 }
                 return;
-            }
-            if (_player != null)
-            {
-                float distance = HorizontalDistance(transform.position, _player.position);
-                if (distance <= varnakPlayerDetectRange)
-                {
-                    SetState(CreatureBehaviorState.Chase, $"player d:{distance:0.0}");
-                    if (distance > varnakPlayerAttackRange)
-                    {
-                        MoveToTarget(_player.position);
-                    }
-                    else
-                    {
-                        _agentView.Stop();
-                        TryPublishVarnakCombatEvent(GameplayEventKind.VarnakAttackedPlayer, "player", "varnak_attacked_player");
-                    }
-                    return;
-                }
             }
             SetState(CreatureBehaviorState.Wander, "seek_food");
         }
@@ -561,6 +574,22 @@ namespace ApexShift.Runtime.Creatures
             }
 
             PublishCreatureGameplayEvent(kind, targetKind, 1f, 0f, 0f, message);
+            if (kind == GameplayEventKind.VarnakAttackedPlayer && _player != null)
+            {
+                PlayerSurvivalRuntime survival = _player.GetComponent<PlayerSurvivalRuntime>() ?? _player.GetComponentInParent<PlayerSurvivalRuntime>();
+                if (survival != null)
+                {
+                    float damageAmount = Mathf.Max(0f, varnakPlayerDamage);
+                    Debug.Log($"[Varnak] Applying {damageAmount} damage to player at {_player.position}");
+                    survival.Damage(damageAmount);
+                    ProceduralCombatAudio.PlayMeleeHit(_player.position + Vector3.up * 0.9f, 0.60f);
+                }
+                else
+                {
+                    Debug.LogWarning($"[Varnak] Could not find PlayerSurvivalRuntime on player object or its parent!");
+                }
+            }
+
             _varnakCombatCooldownTimer = 1.25f;
         }
 

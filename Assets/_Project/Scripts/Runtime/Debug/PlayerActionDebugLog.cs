@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ApexShift.Runtime.Camera;
+using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Flow;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.PlayerInput;
@@ -248,6 +249,12 @@ namespace ApexShift.Runtime.Debugging
                 GUILayout.Label("Sprint: " + (lastSprintHeld ? "yes" : "no"));
             }
 
+            GameplayEvent combatEvent = GetLatestCombatEvent();
+            if (combatEvent != null)
+            {
+                GUILayout.Label("Combat: " + FormatCombatEvent(combatEvent));
+            }
+
             if (secondaryTarget != null)
             {
                 GUILayout.Label("Cam: " + secondaryTarget.name);
@@ -446,6 +453,35 @@ namespace ApexShift.Runtime.Debugging
         private static string FormatVector(Vector3 value)
         {
             return value.x.ToString("0.00") + ", " + value.y.ToString("0.00") + ", " + value.z.ToString("0.00");
+        }
+
+        private static string FormatCombatEvent(GameplayEvent evt)
+        {
+            string target = string.IsNullOrWhiteSpace(evt.targetKind) ? "none" : evt.targetKind;
+            string item = string.IsNullOrWhiteSpace(evt.itemId) ? "none" : evt.itemId;
+            return evt.kind + " " + item + "->" + target + " dmg:" + evt.amount.ToString("0.0");
+        }
+
+        private static GameplayEvent GetLatestCombatEvent()
+        {
+            for (int i = GameEventBus.RecentEvents.Count - 1; i >= 0; i--)
+            {
+                GameplayEvent evt = GameEventBus.RecentEvents[i];
+                if (evt == null)
+                {
+                    continue;
+                }
+
+                if (evt.kind == GameplayEventKind.PlayerMeleeHit
+                    || evt.kind == GameplayEventKind.PlayerBowFired
+                    || evt.kind == GameplayEventKind.PlayerProjectileHit
+                    || evt.kind == GameplayEventKind.TrapTriggered)
+                {
+                    return evt;
+                }
+            }
+
+            return null;
         }
 
         private void LoadPreferences()

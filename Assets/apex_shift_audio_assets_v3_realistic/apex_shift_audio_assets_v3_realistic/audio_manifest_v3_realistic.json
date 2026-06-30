@@ -1,0 +1,645 @@
+{
+  "pack": "Apex Shift Audio Assets v3 realistic-ish",
+  "sample_rate": 48000,
+  "format": "16-bit PCM WAV",
+  "count": 66,
+  "unity_import_path": "Assets/_Project/Audio",
+  "assets": [
+    {
+      "id": "spear_swing_real_01",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/spear_swing_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -8,
+      "notes": "Natural spear air swing"
+    },
+    {
+      "id": "spear_hit_flesh_real_01",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/spear_hit_flesh_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -5,
+      "notes": "Foley-style spear impact into creature"
+    },
+    {
+      "id": "bow_release_real_01",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/bow_release_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -7,
+      "notes": "Wood/string bow release"
+    },
+    {
+      "id": "arrow_fly_real_01",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/arrow_fly_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -13,
+      "notes": "Subtle arrow pass-by"
+    },
+    {
+      "id": "wood_chop_real_01",
+      "category": "resources",
+      "file": "Assets/_Project/Audio/SFX/resources/wood_chop_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -6,
+      "notes": "Wood chop/hit"
+    },
+    {
+      "id": "stone_hit_real_01",
+      "category": "resources",
+      "file": "Assets/_Project/Audio/SFX/resources/stone_hit_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -6,
+      "notes": "Stone hit"
+    },
+    {
+      "id": "trap_snap_real_01",
+      "category": "combat/traps",
+      "file": "Assets/_Project/Audio/SFX/combat/traps/trap_snap_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -4,
+      "notes": "Spike trap snap"
+    },
+    {
+      "id": "spear_swing_real_02",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/spear_swing_real_02.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -8,
+      "notes": "Natural spear air swing"
+    },
+    {
+      "id": "spear_hit_flesh_real_02",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/spear_hit_flesh_real_02.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -5,
+      "notes": "Foley-style spear impact into creature"
+    },
+    {
+      "id": "bow_release_real_02",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/bow_release_real_02.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -7,
+      "notes": "Wood/string bow release"
+    },
+    {
+      "id": "arrow_fly_real_02",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/arrow_fly_real_02.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -13,
+      "notes": "Subtle arrow pass-by"
+    },
+    {
+      "id": "wood_chop_real_02",
+      "category": "resources",
+      "file": "Assets/_Project/Audio/SFX/resources/wood_chop_real_02.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -6,
+      "notes": "Wood chop/hit"
+    },
+    {
+      "id": "stone_hit_real_02",
+      "category": "resources",
+      "file": "Assets/_Project/Audio/SFX/resources/stone_hit_real_02.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -6,
+      "notes": "Stone hit"
+    },
+    {
+      "id": "trap_snap_real_02",
+      "category": "combat/traps",
+      "file": "Assets/_Project/Audio/SFX/combat/traps/trap_snap_real_02.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -4,
+      "notes": "Spike trap snap"
+    },
+    {
+      "id": "spear_swing_real_03",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/spear_swing_real_03.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -8,
+      "notes": "Natural spear air swing"
+    },
+    {
+      "id": "spear_hit_flesh_real_03",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/spear_hit_flesh_real_03.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -5,
+      "notes": "Foley-style spear impact into creature"
+    },
+    {
+      "id": "bow_release_real_03",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/bow_release_real_03.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -7,
+      "notes": "Wood/string bow release"
+    },
+    {
+      "id": "arrow_fly_real_03",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/arrow_fly_real_03.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -13,
+      "notes": "Subtle arrow pass-by"
+    },
+    {
+      "id": "wood_chop_real_03",
+      "category": "resources",
+      "file": "Assets/_Project/Audio/SFX/resources/wood_chop_real_03.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -6,
+      "notes": "Wood chop/hit"
+    },
+    {
+      "id": "stone_hit_real_03",
+      "category": "resources",
+      "file": "Assets/_Project/Audio/SFX/resources/stone_hit_real_03.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -6,
+      "notes": "Stone hit"
+    },
+    {
+      "id": "trap_snap_real_03",
+      "category": "combat/traps",
+      "file": "Assets/_Project/Audio/SFX/combat/traps/trap_snap_real_03.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -4,
+      "notes": "Spike trap snap"
+    },
+    {
+      "id": "spear_swing_real_04",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/spear_swing_real_04.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -8,
+      "notes": "Natural spear air swing"
+    },
+    {
+      "id": "spear_hit_flesh_real_04",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/spear_hit_flesh_real_04.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -5,
+      "notes": "Foley-style spear impact into creature"
+    },
+    {
+      "id": "bow_release_real_04",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/bow_release_real_04.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -7,
+      "notes": "Wood/string bow release"
+    },
+    {
+      "id": "arrow_fly_real_04",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/arrow_fly_real_04.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -13,
+      "notes": "Subtle arrow pass-by"
+    },
+    {
+      "id": "wood_chop_real_04",
+      "category": "resources",
+      "file": "Assets/_Project/Audio/SFX/resources/wood_chop_real_04.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -6,
+      "notes": "Wood chop/hit"
+    },
+    {
+      "id": "stone_hit_real_04",
+      "category": "resources",
+      "file": "Assets/_Project/Audio/SFX/resources/stone_hit_real_04.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -6,
+      "notes": "Stone hit"
+    },
+    {
+      "id": "trap_snap_real_04",
+      "category": "combat/traps",
+      "file": "Assets/_Project/Audio/SFX/combat/traps/trap_snap_real_04.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -4,
+      "notes": "Spike trap snap"
+    },
+    {
+      "id": "arrow_hit_flesh_real_01",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/arrow_hit_flesh_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -5,
+      "notes": "Arrow hits creature"
+    },
+    {
+      "id": "arrow_hit_wood_real_01",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/arrow_hit_wood_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -6,
+      "notes": "Arrow hits wood/ground"
+    },
+    {
+      "id": "arrow_hit_stone_real_01",
+      "category": "combat/player",
+      "file": "Assets/_Project/Audio/SFX/combat/player/arrow_hit_stone_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -7,
+      "notes": "Arrow hits stone"
+    },
+    {
+      "id": "varnak_growl_real_01",
+      "category": "creatures/varnak",
+      "file": "Assets/_Project/Audio/SFX/creatures/varnak/varnak_growl_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -8,
+      "notes": "Varnak low growl"
+    },
+    {
+      "id": "varnak_attack_real_01",
+      "category": "creatures/varnak",
+      "file": "Assets/_Project/Audio/SFX/creatures/varnak/varnak_attack_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -6,
+      "notes": "Varnak attack vocal"
+    },
+    {
+      "id": "varnak_hurt_real_01",
+      "category": "creatures/varnak",
+      "file": "Assets/_Project/Audio/SFX/creatures/varnak/varnak_hurt_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -7,
+      "notes": "Varnak hurt"
+    },
+    {
+      "id": "grazer_alert_real_01",
+      "category": "creatures/grazer",
+      "file": "Assets/_Project/Audio/SFX/creatures/grazer/grazer_alert_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -9,
+      "notes": "Grazer alert"
+    },
+    {
+      "id": "small_prey_alarm_real_01",
+      "category": "creatures/small_prey",
+      "file": "Assets/_Project/Audio/SFX/creatures/small_prey/small_prey_alarm_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -11,
+      "notes": "Small prey alarm"
+    },
+    {
+      "id": "varnak_growl_real_02",
+      "category": "creatures/varnak",
+      "file": "Assets/_Project/Audio/SFX/creatures/varnak/varnak_growl_real_02.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -8,
+      "notes": "Varnak low growl"
+    },
+    {
+      "id": "varnak_attack_real_02",
+      "category": "creatures/varnak",
+      "file": "Assets/_Project/Audio/SFX/creatures/varnak/varnak_attack_real_02.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -6,
+      "notes": "Varnak attack vocal"
+    },
+    {
+      "id": "varnak_hurt_real_02",
+      "category": "creatures/varnak",
+      "file": "Assets/_Project/Audio/SFX/creatures/varnak/varnak_hurt_real_02.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -7,
+      "notes": "Varnak hurt"
+    },
+    {
+      "id": "grazer_alert_real_02",
+      "category": "creatures/grazer",
+      "file": "Assets/_Project/Audio/SFX/creatures/grazer/grazer_alert_real_02.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -9,
+      "notes": "Grazer alert"
+    },
+    {
+      "id": "small_prey_alarm_real_02",
+      "category": "creatures/small_prey",
+      "file": "Assets/_Project/Audio/SFX/creatures/small_prey/small_prey_alarm_real_02.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -11,
+      "notes": "Small prey alarm"
+    },
+    {
+      "id": "varnak_growl_real_03",
+      "category": "creatures/varnak",
+      "file": "Assets/_Project/Audio/SFX/creatures/varnak/varnak_growl_real_03.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -8,
+      "notes": "Varnak low growl"
+    },
+    {
+      "id": "varnak_attack_real_03",
+      "category": "creatures/varnak",
+      "file": "Assets/_Project/Audio/SFX/creatures/varnak/varnak_attack_real_03.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -6,
+      "notes": "Varnak attack vocal"
+    },
+    {
+      "id": "varnak_hurt_real_03",
+      "category": "creatures/varnak",
+      "file": "Assets/_Project/Audio/SFX/creatures/varnak/varnak_hurt_real_03.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -7,
+      "notes": "Varnak hurt"
+    },
+    {
+      "id": "grazer_alert_real_03",
+      "category": "creatures/grazer",
+      "file": "Assets/_Project/Audio/SFX/creatures/grazer/grazer_alert_real_03.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -9,
+      "notes": "Grazer alert"
+    },
+    {
+      "id": "small_prey_alarm_real_03",
+      "category": "creatures/small_prey",
+      "file": "Assets/_Project/Audio/SFX/creatures/small_prey/small_prey_alarm_real_03.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -11,
+      "notes": "Small prey alarm"
+    },
+    {
+      "id": "varnak_death_real_01",
+      "category": "creatures/varnak",
+      "file": "Assets/_Project/Audio/SFX/creatures/varnak/varnak_death_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -6,
+      "notes": "Varnak death"
+    },
+    {
+      "id": "grazer_death_real_01",
+      "category": "creatures/grazer",
+      "file": "Assets/_Project/Audio/SFX/creatures/grazer/grazer_death_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -8,
+      "notes": "Grazer death"
+    },
+    {
+      "id": "footstep_grass_real_01",
+      "category": "footsteps",
+      "file": "Assets/_Project/Audio/SFX/footsteps/footstep_grass_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -14,
+      "notes": "Grass footstep"
+    },
+    {
+      "id": "footstep_dirt_real_01",
+      "category": "footsteps",
+      "file": "Assets/_Project/Audio/SFX/footsteps/footstep_dirt_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -14,
+      "notes": "Dirt footstep"
+    },
+    {
+      "id": "footstep_stone_real_01",
+      "category": "footsteps",
+      "file": "Assets/_Project/Audio/SFX/footsteps/footstep_stone_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -15,
+      "notes": "Stone footstep"
+    },
+    {
+      "id": "footstep_grass_real_02",
+      "category": "footsteps",
+      "file": "Assets/_Project/Audio/SFX/footsteps/footstep_grass_real_02.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -14,
+      "notes": "Grass footstep"
+    },
+    {
+      "id": "footstep_dirt_real_02",
+      "category": "footsteps",
+      "file": "Assets/_Project/Audio/SFX/footsteps/footstep_dirt_real_02.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -14,
+      "notes": "Dirt footstep"
+    },
+    {
+      "id": "footstep_stone_real_02",
+      "category": "footsteps",
+      "file": "Assets/_Project/Audio/SFX/footsteps/footstep_stone_real_02.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -15,
+      "notes": "Stone footstep"
+    },
+    {
+      "id": "footstep_grass_real_03",
+      "category": "footsteps",
+      "file": "Assets/_Project/Audio/SFX/footsteps/footstep_grass_real_03.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -14,
+      "notes": "Grass footstep"
+    },
+    {
+      "id": "footstep_dirt_real_03",
+      "category": "footsteps",
+      "file": "Assets/_Project/Audio/SFX/footsteps/footstep_dirt_real_03.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -14,
+      "notes": "Dirt footstep"
+    },
+    {
+      "id": "footstep_stone_real_03",
+      "category": "footsteps",
+      "file": "Assets/_Project/Audio/SFX/footsteps/footstep_stone_real_03.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -15,
+      "notes": "Stone footstep"
+    },
+    {
+      "id": "storage_open_real_01",
+      "category": "inventory",
+      "file": "Assets/_Project/Audio/SFX/inventory/storage_open_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -8,
+      "notes": "Wooden storage open"
+    },
+    {
+      "id": "storage_close_real_01",
+      "category": "inventory",
+      "file": "Assets/_Project/Audio/SFX/inventory/storage_close_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -8,
+      "notes": "Wooden storage close"
+    },
+    {
+      "id": "build_place_wood_real_01",
+      "category": "building",
+      "file": "Assets/_Project/Audio/SFX/building/build_place_wood_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -6,
+      "notes": "Structure placed"
+    },
+    {
+      "id": "build_place_trap_real_01",
+      "category": "building",
+      "file": "Assets/_Project/Audio/SFX/building/build_place_trap_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -6,
+      "notes": "Trap placed"
+    },
+    {
+      "id": "pickup_soft_real_01",
+      "category": "resources",
+      "file": "Assets/_Project/Audio/SFX/resources/pickup_soft_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -12,
+      "notes": "Natural pickup"
+    },
+    {
+      "id": "ui_click_real_01",
+      "category": "ui",
+      "file": "Assets/_Project/Audio/SFX/ui/ui_click_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -14,
+      "notes": "Subtle UI click"
+    },
+    {
+      "id": "ui_invalid_real_01",
+      "category": "ui",
+      "file": "Assets/_Project/Audio/SFX/ui/ui_invalid_real_01.wav",
+      "loop": false,
+      "channels": 1,
+      "suggested_volume_db": -10,
+      "notes": "Invalid action"
+    },
+    {
+      "id": "campfire_loop_real_01",
+      "category": "camp",
+      "file": "Assets/_Project/Audio/Ambience/camp/campfire_loop_real_01.wav",
+      "loop": true,
+      "channels": 2,
+      "suggested_volume_db": -18,
+      "notes": "Stereo campfire loop"
+    },
+    {
+      "id": "forest_day_loop_real_01",
+      "category": "world",
+      "file": "Assets/_Project/Audio/Ambience/world/forest_day_loop_real_01.wav",
+      "loop": true,
+      "channels": 2,
+      "suggested_volume_db": -22,
+      "notes": "Stereo forest day ambience"
+    }
+  ],
+  "notes": [
+    "No third-party samples were used.",
+    "Procedural foley-style approximations: more natural than v2, but not equivalent to field-recorded foley libraries.",
+    "Recommended for prototype and vertical slice. Replace hero sounds later with real recordings if budget allows."
+  ],
+  "issue_44_mapping": {
+    "PlayerCombatRuntime.attackVoiceClips": [
+      "spear_swing_real_01",
+      "spear_swing_real_02",
+      "spear_swing_real_03",
+      "spear_swing_real_04"
+    ],
+    "PlayerCombatRuntime.meleeHitVoiceClips": [
+      "spear_hit_flesh_real_01",
+      "spear_hit_flesh_real_02",
+      "spear_hit_flesh_real_03",
+      "spear_hit_flesh_real_04"
+    ],
+    "PlayerCombatRuntime.bowVoiceClips": [
+      "bow_release_real_01",
+      "bow_release_real_02",
+      "bow_release_real_03",
+      "bow_release_real_04"
+    ],
+    "PlayerCombatRuntime.bowHitVoiceClips": [
+      "arrow_hit_flesh_real_01",
+      "arrow_hit_wood_real_01",
+      "arrow_hit_stone_real_01"
+    ],
+    "TrapDamageRuntime.triggerVoiceClips": [
+      "trap_snap_real_01",
+      "trap_snap_real_02",
+      "trap_snap_real_03",
+      "trap_snap_real_04"
+    ],
+    "Varnak": [
+      "varnak_growl_real_01..03",
+      "varnak_attack_real_01..03",
+      "varnak_hurt_real_01..03",
+      "varnak_death_real_01"
+    ]
+  }
+}

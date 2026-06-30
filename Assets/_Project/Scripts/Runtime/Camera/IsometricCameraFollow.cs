@@ -25,10 +25,10 @@ namespace ApexShift.Runtime.Camera
         private float zoomSpeed = 4f;
 
         [SerializeField]
-        private float minOrthographicSize = 10f;
+        private float minOrthographicSize = 8f;
 
         [SerializeField]
-        private float maxOrthographicSize = 22f;
+        private float maxOrthographicSize = 18f;
 
         [SerializeField]
         private bool enableSmoothing = true;

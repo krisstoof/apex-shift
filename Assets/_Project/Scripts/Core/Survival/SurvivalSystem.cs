@@ -106,8 +106,10 @@ namespace ApexShift.Core.Survival
                 throw new ArgumentNullException(nameof(stats));
             }
 
+            Console.WriteLine($"[SurvivalSystem] ApplyDamage called: amount={amount}, currentHealth={stats.Health}, godMode={stats.GodMode}");
             float before = stats.Health;
             float healthDelta = stats.ApplyDamage(amount);
+            Console.WriteLine($"[SurvivalSystem] After damage: newHealth={stats.Health}, delta={healthDelta}");
             bool died = stats.Health <= 0f && before > 0f;
             return new SurvivalTickResult(stats, false, healthDelta, 0f, 0f, 0f, died, died ? "damage" : string.Empty);
         }

@@ -55,6 +55,6 @@ MonoBehaviour:
     harvestable: 0
   creatures:
   - creatureId: varnak
-    minCount: 1
-    maxCount: 3
+    minCount: 0
+    maxCount: 1
     weight: 1

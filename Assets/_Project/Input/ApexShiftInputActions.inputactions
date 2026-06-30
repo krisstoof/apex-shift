@@ -46,14 +46,14 @@
             "name": "UI",
             "id": "5e681bd7-2c0e-47d4-9dc7-6437dd0ad111",
             "actions": [
-                { "name": "navigate", "type": "Value", "id": "11f74c3e-1d3b-4ec4-8d0d-1eeb1b2c0111", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": true },
+                { "name": "navigate", "type": "PassThrough", "id": "11f74c3e-1d3b-4ec4-8d0d-1eeb1b2c0111", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": false },
                 { "name": "submit", "type": "Button", "id": "22f74c3e-1d3b-4ec4-8d0d-1eeb1b2c0222", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
                 { "name": "cancel", "type": "Button", "id": "33f74c3e-1d3b-4ec4-8d0d-1eeb1b2c0333", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
-                { "name": "point", "type": "Value", "id": "88f74c3e-1d3b-4ec4-8d0d-1eeb1b2c0888", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": true },
-                { "name": "click", "type": "Button", "id": "99f74c3e-1d3b-4ec4-8d0d-1eeb1b2c0999", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": true },
-                { "name": "rightClick", "type": "Button", "id": "aaf74c3e-1d3b-4ec4-8d0d-1eeb1b2c0aaa", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": true },
-                { "name": "middleClick", "type": "Button", "id": "bbf74c3e-1d3b-4ec4-8d0d-1eeb1b2c0bbb", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": true },
-                { "name": "scrollWheel", "type": "Value", "id": "ccf74c3e-1d3b-4ec4-8d0d-1eeb1b2c0ccc", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": true }
+                { "name": "point", "type": "PassThrough", "id": "88f74c3e-1d3b-4ec4-8d0d-1eeb1b2c0888", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": true },
+                { "name": "click", "type": "PassThrough", "id": "99f74c3e-1d3b-4ec4-8d0d-1eeb1b2c0999", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "rightClick", "type": "PassThrough", "id": "aaf74c3e-1d3b-4ec4-8d0d-1eeb1b2c0aaa", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "middleClick", "type": "PassThrough", "id": "bbf74c3e-1d3b-4ec4-8d0d-1eeb1b2c0bbc", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "scrollWheel", "type": "PassThrough", "id": "ccf74c3e-1d3b-4ec4-8d0d-1eeb1b2c0ccc", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": false }
             ],
             "bindings": [
                 { "name": "WASD", "id": "44f74c3e-1d3b-4ec4-8d0d-1eeb1b2c0444", "path": "2DVector", "interactions": "", "processors": "", "groups": "", "action": "navigate", "isComposite": true, "isPartOfComposite": false },
@@ -81,7 +81,7 @@
                 { "name": "", "id": "ccf74c3e-1d3b-4ec4-8d0d-1eeb1b2c0ccd", "path": "<Mouse>/scroll", "interactions": "", "processors": "", "groups": ";Keyboard&Mouse", "action": "scrollWheel", "isComposite": false, "isPartOfComposite": false },
                 { "name": "", "id": "aaf74c3e-1d3b-4ec4-8d0d-1eeb1b2c0aab", "path": "<Mouse>/rightButton", "interactions": "", "processors": "", "groups": ";Keyboard&Mouse", "action": "rightClick", "isComposite": false, "isPartOfComposite": false },
                 { "name": "", "id": "bbf74c3e-1d3b-4ec4-8d0d-1eeb1b2c0bbc", "path": "<Mouse>/middleButton", "interactions": "", "processors": "", "groups": ";Keyboard&Mouse", "action": "middleClick", "isComposite": false, "isPartOfComposite": false }
-
+            ]
         }
     ],
     "controlSchemes": [

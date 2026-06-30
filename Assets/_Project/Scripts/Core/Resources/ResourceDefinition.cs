@@ -60,12 +60,20 @@ namespace ApexShift.Core.Resources
                 case "tree":
                 case "conifer_tree":
                     return new ResourceDefinition(new ResourceId("conifer_tree"), "Tree", "wood", 4);
+                case "small_tree":
+                    return new ResourceDefinition(new ResourceId("small_tree"), "Small Tree", "wood", 2);
+                case "big_tree":
+                    return new ResourceDefinition(new ResourceId("big_tree"), "Big Tree", "wood", 7);
                 case "leafy_tree":
                     return new ResourceDefinition(new ResourceId("leafy_tree"), "Leafy Tree", "wood", 4);
                 case "dry_tree":
                     return new ResourceDefinition(new ResourceId("dry_tree"), "Dry Tree", "wood", 3);
                 case "rock":
                     return new ResourceDefinition(new ResourceId("rock"), "Rock", "stone", 2);
+                case "small_rock":
+                    return new ResourceDefinition(new ResourceId("small_rock"), "Small Rock", "stone", 1);
+                case "big_rock":
+                    return new ResourceDefinition(new ResourceId("big_rock"), "Big Rock", "stone", 5);
                 case "bush":
                     return new ResourceDefinition(new ResourceId("bush"), "Bush", "fiber", 2, edibleByHerbivores: true, foodValue: 6f);
                 case "dry_bush":

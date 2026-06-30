@@ -58,3 +58,7 @@ MonoBehaviour:
     minCount: 3
     maxCount: 6
     weight: 1
+  - creatureId: varnak
+    minCount: 0
+    maxCount: 1
+    weight: 1

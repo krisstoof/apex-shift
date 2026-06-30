@@ -1,5 +1,6 @@
 using System;
 using ApexShift.Core.Save;
+using ApexShift.Runtime.Audio;
 using ApexShift.Runtime.Interaction;
 using ApexShift.Runtime.Player;
 using UnityEngine;
@@ -15,6 +16,7 @@ namespace ApexShift.Runtime.Buildings
         [SerializeField] private Vector3 footprintSize = new Vector3(2f, 1.5f, 2f);
         [SerializeField] private bool blocksPlacement = true;
         [SerializeField] private float interactionDuration = 0.25f;
+        [SerializeField] private TrapAudioProfile trapAudioProfile;
 
         public string BuildingId => Normalize(buildingId, "unknown");
         public string InstanceId => Normalize(instanceId, string.Empty);
@@ -24,6 +26,7 @@ namespace ApexShift.Runtime.Buildings
         public int Priority => 25;
         public float InteractionDuration => Mathf.Max(0.05f, interactionDuration);
         public StorageContainerRuntime StorageContainer => GetComponent<StorageContainerRuntime>();
+        public TrapDamageRuntime TrapDamage => GetComponent<TrapDamageRuntime>();
 
         private void OnEnable()
         {
@@ -50,6 +53,7 @@ namespace ApexShift.Runtime.Buildings
             this.prompt = string.IsNullOrWhiteSpace(prompt) ? BuildDefaultPrompt(this.buildingId) : prompt.Trim();
             EnsureCollider();
             EnsureStorageContainerIfNeeded();
+            EnsureTrapDamageIfNeeded();
             BuildingRegistry.Active?.Register(this);
         }
 
@@ -110,6 +114,16 @@ namespace ApexShift.Runtime.Buildings
             {
                 StorageContainerRuntime container = GetComponent<StorageContainerRuntime>() ?? gameObject.AddComponent<StorageContainerRuntime>();
                 container.Configure(InstanceId);
+            }
+        }
+
+        private void EnsureTrapDamageIfNeeded()
+        {
+            if (BuildingId == "trap")
+            {
+                TrapDamageRuntime trap = GetComponent<TrapDamageRuntime>() ?? gameObject.AddComponent<TrapDamageRuntime>();
+                trap.Configure(InstanceId, FootprintSize);
+                trap.SetTrapAudioProfile(trapAudioProfile);
             }
         }
 
