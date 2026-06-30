@@ -1,4 +1,5 @@
 using ApexShift.Core.Save;
+using ApexShift.Core.Inventory;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -34,6 +35,25 @@ namespace ApexShift.Tests.Unit.Buildings
             {
                 UnityEngine.Object.DestroyImmediate(go);
             }
+        }
+
+        [Test]
+        public void BuildingSaveData_PreservesStorageInventory()
+        {
+            InventorySaveData storage = new InventorySaveData(6, new[]
+            {
+                new InventorySlotSaveData(0, "wood", 4),
+                new InventorySlotSaveData(1, "stone", 2)
+            });
+
+            BuildingSaveData data = new BuildingSaveData("box_1", "storage_box", 3f, 1f, 5f, 90f, true, storage);
+
+            Assert.AreEqual(6, data.StorageInventory.SlotCount);
+            Assert.AreEqual(2, data.StorageInventory.Slots.Count);
+            Assert.AreEqual("wood", data.StorageInventory.Slots[0].ItemId);
+            Assert.AreEqual(4, data.StorageInventory.Slots[0].Amount);
+            Assert.AreEqual("stone", data.StorageInventory.Slots[1].ItemId);
+            Assert.AreEqual(2, data.StorageInventory.Slots[1].Amount);
         }
     }
 }

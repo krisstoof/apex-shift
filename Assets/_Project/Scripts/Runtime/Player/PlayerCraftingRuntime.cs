@@ -1,5 +1,6 @@
 using ApexShift.Core.Crafting;
 using ApexShift.Core.Items;
+using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.PlayerInput;
 using UnityEngine;
 
@@ -96,6 +97,12 @@ namespace ApexShift.Runtime.Player
             }
 
             inventoryRuntime.EnsureInitialized();
+            if (RuntimeDebugSettings.FreeCraftingEnabled)
+            {
+                LastResult = CraftRecipeWithoutCosts(resolvedRecipeId, normalizedRecipeId);
+                return LastResult;
+            }
+
             LastResult = craftingSystem.Craft(inventoryRuntime.Inventory, resolvedRecipeId);
             LogCraftingResult(LastResult);
             return LastResult;
@@ -134,6 +141,36 @@ namespace ApexShift.Runtime.Player
             itemDatabase = ItemDatabase.CreateDefault();
             recipeDatabase = RecipeDatabase.CreateDefault(itemDatabase);
             craftingSystem = new CraftingSystem(recipeDatabase, itemDatabase);
+        }
+
+        private CraftingResult CraftRecipeWithoutCosts(string resolvedRecipeId, RecipeId normalizedRecipeId)
+        {
+            if (recipeDatabase == null)
+            {
+                EnsureCore();
+            }
+
+            RecipeDefinition recipe = recipeDatabase.GetRecipe(resolvedRecipeId);
+            if (recipe == null)
+            {
+                LastResult = CraftingResult.Failed(CraftingResultStatus.InvalidRecipe, normalizedRecipeId);
+                LogCraftingResult(LastResult);
+                return LastResult;
+            }
+
+            if (inventoryRuntime != null && inventoryRuntime.Inventory != null)
+            {
+                if (!inventoryRuntime.Inventory.AddItemFullStack(recipe.ResultItemId, recipe.ResultAmount))
+                {
+                    LastResult = CraftingResult.Failed(CraftingResultStatus.InventoryFull, normalizedRecipeId);
+                    LogCraftingResult(LastResult);
+                    return LastResult;
+                }
+            }
+
+            LastResult = CraftingResult.Success(normalizedRecipeId, recipe.ResultItemId, recipe.ResultAmount, new RecipeIngredient[0]);
+            LogCraftingResult(LastResult);
+            return LastResult;
         }
 
         private void SubscribeInput()

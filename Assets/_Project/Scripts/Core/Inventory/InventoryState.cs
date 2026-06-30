@@ -150,6 +150,43 @@ namespace ApexShift.Core.Inventory
             return true;
         }
 
+        public int RemoveItemById(string itemId, int amount)
+        {
+            string normalizedId = itemDatabase.NormalizeItemId(itemId).ToString();
+            if (amount <= 0 || !itemDatabase.HasItem(normalizedId))
+            {
+                return 0;
+            }
+
+            int remaining = amount;
+            int removedTotal = 0;
+
+            for (int i = 0; i < slots.Count && remaining > 0; i++)
+            {
+                InventorySlot slot = slots[i];
+                if (slot.IsEmpty || slot.ItemId != normalizedId)
+                {
+                    continue;
+                }
+
+                int removed = slot.Stack.RemoveAmount(remaining);
+                if (removed <= 0)
+                {
+                    continue;
+                }
+
+                remaining -= removed;
+                removedTotal += removed;
+            }
+
+            if (removedTotal > 0)
+            {
+                InventoryChanged?.Invoke();
+            }
+
+            return removedTotal;
+        }
+
         public int RemoveFromSlot(int slotIndex, int amount = -1)
         {
             if (!IsValidSlotIndex(slotIndex))

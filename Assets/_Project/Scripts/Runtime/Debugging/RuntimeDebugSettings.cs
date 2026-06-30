@@ -13,6 +13,8 @@ namespace ApexShift.Runtime.Debugging
         public static bool DebugEnabled { get; private set; } = true;
         public static bool CreatureFramesEnabled { get; private set; } = true;
         public static bool EcosystemOverlayEnabled { get; private set; } = true;
+        public static bool FreeBuildingEnabled { get; private set; } = false;
+        public static bool FreeCraftingEnabled { get; private set; } = false;
         public static float RefreshIntervalSeconds { get; private set; } = 0.35f;
 
         public static void SetDebugEnabled(bool enabled)
@@ -30,6 +32,16 @@ namespace ApexShift.Runtime.Debugging
             EcosystemOverlayEnabled = enabled;
         }
 
+        public static void SetFreeBuildingEnabled(bool enabled)
+        {
+            FreeBuildingEnabled = enabled;
+        }
+
+        public static void SetFreeCraftingEnabled(bool enabled)
+        {
+            FreeCraftingEnabled = enabled;
+        }
+
         public static void SetRefreshInterval(float seconds)
         {
             RefreshIntervalSeconds = Mathf.Max(MinimumRefreshInterval, seconds);
@@ -40,6 +52,8 @@ namespace ApexShift.Runtime.Debugging
             DebugEnabled = true;
             CreatureFramesEnabled = true;
             EcosystemOverlayEnabled = true;
+            FreeBuildingEnabled = false;
+            FreeCraftingEnabled = false;
             RefreshIntervalSeconds = 0.35f;
         }
     }

@@ -11,6 +11,7 @@ using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.DayNight;
+using ApexShift.Runtime.Camera;
 using ApexShift.Runtime.World.Generation;
 using UnityEngine;
 
@@ -231,23 +232,41 @@ namespace ApexShift.Runtime.Save
                 if (saveData.Survival.hasPosition)
                 {
                     Vector3 targetPos = new Vector3(saveData.Survival.posX, saveData.Survival.posY, saveData.Survival.posZ);
-                    CharacterController cc = playerSurvival.GetComponent<CharacterController>();
-                    if (cc != null)
-                    {
-                        cc.enabled = false;
-                    }
-
-                    playerSurvival.transform.position = targetPos;
-
-                    if (cc != null)
-                    {
-                        cc.enabled = true;
-                    }
+                    ApplyPlayerPosition(targetPos);
                 }
             }
 
             Debug.Log("[Save] Load complete.");
             return true;
+        }
+
+        private void ApplyPlayerPosition(Vector3 targetPos)
+        {
+            if (playerSurvival == null)
+            {
+                return;
+            }
+
+            CharacterController cc = playerSurvival.GetComponent<CharacterController>();
+            if (cc != null)
+            {
+                cc.enabled = false;
+            }
+
+            playerSurvival.transform.SetPositionAndRotation(targetPos, playerSurvival.transform.rotation);
+            Physics.SyncTransforms();
+
+            if (cc != null)
+            {
+                cc.enabled = true;
+            }
+
+            IsometricCameraFollow cameraFollow = FindAnyObjectByType<IsometricCameraFollow>();
+            if (cameraFollow != null)
+            {
+                cameraFollow.SetTarget(playerSurvival.transform);
+                cameraFollow.SnapToTarget();
+            }
         }
 
         public void DeleteGame(string slotName)

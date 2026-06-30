@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using ApexShift.Core.Ecosystem;
+using ApexShift.Runtime.Buildings;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Events;
@@ -59,11 +60,12 @@ namespace ApexShift.Runtime.UI.Snapshots
             int plantFood = ecosystem != null ? ecosystem.PlantFoodSourceCount : foods.Count(food => food != null && food.Kind == FoodKind.Plants);
             int meatFood = ecosystem != null ? ecosystem.MeatFoodSourceCount : foods.Count(food => food != null && food.Kind == FoodKind.Meat);
             int foodCount = ecosystem != null ? ecosystem.FoodSourceCount : foods.Length;
+            int storageContainers = UnityEngine.Object.FindObjectsByType<StorageContainerRuntime>(FindObjectsInactive.Exclude).Length;
             int creatureCount = ecosystem != null ? ecosystem.CreatureCount : creatures.Length;
             int navOnMesh = navAgents.Count(agent => agent != null && agent.isOnNavMesh);
             int hungryCreatures = needs.Count(need => need != null && need.State.IsHungry);
             string[] recentEvents = GameEventBus.GetRecentEventLines(8);
-            return new WorldDebugSnapshot(worldGenerator != null ? worldGenerator.Seed : 0, player != null ? player.position : Vector3.zero, player != null, resources.Length, creatureCount, foodCount, plantFood, meatFood, navOnMesh, Mathf.Max(0, navAgents.Length - navOnMesh), hungryCreatures, smoothedFps, Time.realtimeSinceStartup, recentEvents);
+            return new WorldDebugSnapshot(worldGenerator != null ? worldGenerator.Seed : 0, player != null ? player.position : Vector3.zero, player != null, resources.Length, creatureCount, foodCount, plantFood, meatFood, navOnMesh, Mathf.Max(0, navAgents.Length - navOnMesh), hungryCreatures, storageContainers, smoothedFps, Time.realtimeSinceStartup, recentEvents);
         }
         private void ResolveReferences()
         {

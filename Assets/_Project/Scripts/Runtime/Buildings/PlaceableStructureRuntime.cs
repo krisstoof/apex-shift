@@ -23,6 +23,7 @@ namespace ApexShift.Runtime.Buildings
         public string Prompt => string.IsNullOrWhiteSpace(prompt) ? $"Use {BuildingId}" : prompt;
         public int Priority => 25;
         public float InteractionDuration => Mathf.Max(0.05f, interactionDuration);
+        public StorageContainerRuntime StorageContainer => GetComponent<StorageContainerRuntime>();
 
         private void OnEnable()
         {
@@ -48,17 +49,32 @@ namespace ApexShift.Runtime.Buildings
 
             this.prompt = string.IsNullOrWhiteSpace(prompt) ? BuildDefaultPrompt(this.buildingId) : prompt.Trim();
             EnsureCollider();
+            EnsureStorageContainerIfNeeded();
             BuildingRegistry.Active?.Register(this);
         }
 
         public BuildingSaveData ToSaveData()
         {
-            return new BuildingSaveData(InstanceId, BuildingId, transform.position.x, transform.position.y, transform.position.z, transform.eulerAngles.y, gameObject.activeSelf);
+            InventorySaveData storageInventory = StorageContainer != null
+                ? StorageContainer.ToSaveData()
+                : InventorySaveData.Empty;
+
+            return new BuildingSaveData(InstanceId, BuildingId, transform.position.x, transform.position.y, transform.position.z, transform.eulerAngles.y, gameObject.activeSelf, storageInventory);
         }
 
         public bool CanInteract(GameObject actor)
         {
-            return actor != null && isActiveAndEnabled;
+            if (actor == null || !isActiveAndEnabled)
+            {
+                return false;
+            }
+
+            if (BuildingId == "wall")
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public bool Interact(GameObject actor)
@@ -68,8 +84,33 @@ namespace ApexShift.Runtime.Buildings
                 return false;
             }
 
+            StorageContainerRuntime container = StorageContainer;
+            if (container != null)
+            {
+                Debug.Log($"[Building] Forwarding interaction to storage container '{container.ContainerId}'.", this);
+                return container.Open(actor);
+            }
+
             Debug.Log($"[Building] Interacted with {BuildingId} ({InstanceId}).", this);
             return true;
+        }
+
+        public void LoadStorageFromSaveData(InventorySaveData data)
+        {
+            StorageContainerRuntime container = StorageContainer;
+            if (container != null)
+            {
+                container.LoadFromSaveData(data);
+            }
+        }
+
+        private void EnsureStorageContainerIfNeeded()
+        {
+            if (BuildingId == "storage_box")
+            {
+                StorageContainerRuntime container = GetComponent<StorageContainerRuntime>() ?? gameObject.AddComponent<StorageContainerRuntime>();
+                container.Configure(InstanceId);
+            }
         }
 
         private void EnsureCollider()

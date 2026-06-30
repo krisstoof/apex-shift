@@ -106,6 +106,7 @@ namespace ApexShift.Runtime.Buildings
                 }
 
                 structure.Configure(data.BuildingId, data.InstanceId, structure.FootprintSize);
+                structure.LoadStorageFromSaveData(data.StorageInventory);
                 Register(structure);
             }
         }

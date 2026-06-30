@@ -115,12 +115,18 @@ namespace ApexShift.Tests.Regression
             RuntimeDebugSettings.SetDebugEnabled(false);
             RuntimeDebugSettings.SetCreatureFramesEnabled(false);
             RuntimeDebugSettings.SetEcosystemOverlayEnabled(false);
+            RuntimeDebugSettings.SetFreeBuildingEnabled(true);
+            RuntimeDebugSettings.SetFreeCraftingEnabled(true);
 
             Assert.IsFalse(RuntimeDebugSettings.DebugEnabled);
             Assert.IsFalse(RuntimeDebugSettings.CreatureFramesEnabled);
             Assert.IsFalse(RuntimeDebugSettings.EcosystemOverlayEnabled);
+            Assert.IsTrue(RuntimeDebugSettings.FreeBuildingEnabled);
+            Assert.IsTrue(RuntimeDebugSettings.FreeCraftingEnabled);
 
             RuntimeDebugSettings.RestoreDefaults();
+            Assert.IsFalse(RuntimeDebugSettings.FreeBuildingEnabled);
+            Assert.IsFalse(RuntimeDebugSettings.FreeCraftingEnabled);
         }
     }
 }

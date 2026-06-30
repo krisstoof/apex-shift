@@ -1217,6 +1217,11 @@ if (renderer != null)
             crafting.SetInputReader(inputReader);
             crafting.SetInventoryRuntime(inventory);
 
+            ApexShift.Runtime.Player.PlayerInventoryPanelRuntime inventoryPanel = player.GetComponent<ApexShift.Runtime.Player.PlayerInventoryPanelRuntime>();
+            if (inventoryPanel == null) inventoryPanel = player.AddComponent<ApexShift.Runtime.Player.PlayerInventoryPanelRuntime>();
+            inventoryPanel.SetInputReader(inputReader);
+            inventoryPanel.SetInventoryRuntime(inventory);
+
             IsometricPlayerController controller = player.GetComponent<IsometricPlayerController>();
             if (controller == null) controller = player.AddComponent<IsometricPlayerController>();
             controller.SetInputReader(inputReader);

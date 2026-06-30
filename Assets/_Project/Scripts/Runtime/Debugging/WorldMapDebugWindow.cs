@@ -85,6 +85,20 @@ namespace ApexShift.Runtime.Debugging
                     CreatureDebugOverlay.HideAllDebugFrames = newHideFrames;
                 }
 
+                bool freeBuilding = RuntimeDebugSettings.FreeBuildingEnabled;
+                bool newFreeBuilding = GUILayout.Toggle(freeBuilding, "Free Building / Darmowe budowanie");
+                if (newFreeBuilding != freeBuilding)
+                {
+                    RuntimeDebugSettings.SetFreeBuildingEnabled(newFreeBuilding);
+                }
+
+                bool freeCrafting = RuntimeDebugSettings.FreeCraftingEnabled;
+                bool newFreeCrafting = GUILayout.Toggle(freeCrafting, "Free Crafting / Darmowe tworzenie");
+                if (newFreeCrafting != freeCrafting)
+                {
+                    RuntimeDebugSettings.SetFreeCraftingEnabled(newFreeCrafting);
+                }
+
                 GUILayout.Label("World debug is snapshot-driven. Scene mutation buttons were removed from UI.");
                 GUILayout.EndVertical();
             }

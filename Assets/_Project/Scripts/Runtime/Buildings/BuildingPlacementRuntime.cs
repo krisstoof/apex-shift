@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Player;
@@ -160,7 +161,7 @@ namespace ApexShift.Runtime.Buildings
                 return false;
             }
 
-            if (!HasRequiredMaterials(selectedDefinition))
+            if (!RuntimeDebugSettings.FreeBuildingEnabled && !HasRequiredMaterials(selectedDefinition))
             {
                 currentValidation = PlacementValidationResult.Invalid("missing build materials");
                 return false;
@@ -186,10 +187,13 @@ namespace ApexShift.Runtime.Buildings
             structure.Configure(selectedDefinition.BuildingId, null, selectedDefinition.FootprintSize);
             buildingRegistry?.Register(structure);
 
-            ConsumeBuildMaterials(selectedDefinition);
+            if (!RuntimeDebugSettings.FreeBuildingEnabled)
+            {
+                ConsumeBuildMaterials(selectedDefinition);
+            }
             Debug.Log($"[BuildingPlacement] Placed {selectedDefinition.BuildingId}.", instance);
 
-            if (!HasRequiredMaterials(selectedDefinition))
+            if (!RuntimeDebugSettings.FreeBuildingEnabled && !HasRequiredMaterials(selectedDefinition))
             {
                 ClearSelection();
             }
@@ -551,13 +555,18 @@ namespace ApexShift.Runtime.Buildings
                 return spatial;
             }
 
-            return HasRequiredMaterials(definition)
+            return RuntimeDebugSettings.FreeBuildingEnabled || HasRequiredMaterials(definition)
                 ? PlacementValidationResult.Valid
                 : PlacementValidationResult.Invalid("missing build materials");
         }
 
         private bool HasRequiredMaterials(PlaceableDefinition definition)
         {
+            if (RuntimeDebugSettings.FreeBuildingEnabled)
+            {
+                return true;
+            }
+
             return definition != null
                    && inventoryRuntime != null
                    && inventoryRuntime.Inventory != null
@@ -566,6 +575,11 @@ namespace ApexShift.Runtime.Buildings
 
         private string FormatMaterialStatus(PlaceableDefinition definition)
         {
+            if (RuntimeDebugSettings.FreeBuildingEnabled)
+            {
+                return "free";
+            }
+
             if (definition == null || definition.MaterialCosts == null || definition.MaterialCosts.Count == 0)
             {
                 return "free";

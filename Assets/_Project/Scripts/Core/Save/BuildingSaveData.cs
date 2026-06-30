@@ -12,6 +12,7 @@ namespace ApexShift.Core.Save
         public float z;
         public float rotationY;
         public bool active = true;
+        public InventorySaveData storageInventory = InventorySaveData.Empty;
 
         public string InstanceId => Normalize(instanceId, "building");
         public string BuildingId => Normalize(buildingId, "unknown");
@@ -20,12 +21,13 @@ namespace ApexShift.Core.Save
         public float Z => z;
         public float RotationY => rotationY;
         public bool Active => active;
+        public InventorySaveData StorageInventory => storageInventory ?? InventorySaveData.Empty;
 
         public BuildingSaveData()
         {
         }
 
-        public BuildingSaveData(string instanceId, string buildingId, float x, float y, float z, float rotationY, bool active = true)
+        public BuildingSaveData(string instanceId, string buildingId, float x, float y, float z, float rotationY, bool active = true, InventorySaveData storageInventory = null)
         {
             this.instanceId = Normalize(instanceId, Guid.NewGuid().ToString("N"));
             this.buildingId = Normalize(buildingId, "unknown");
@@ -34,6 +36,7 @@ namespace ApexShift.Core.Save
             this.z = z;
             this.rotationY = NormalizeYaw(rotationY);
             this.active = active;
+            this.storageInventory = storageInventory ?? InventorySaveData.Empty;
         }
 
         private static string Normalize(string value, string fallback)

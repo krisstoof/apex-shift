@@ -55,6 +55,7 @@ namespace ApexShift.Runtime.UI.Debugging
             builder.AppendLine($"creatures: {world.creatureCount}  hungry: {world.hungryCreatureCount}");
             builder.AppendLine($"food all/plants/meat: {world.foodSourceCount}/{world.plantFoodSourceCount}/{world.meatFoodSourceCount}");
             builder.AppendLine($"nav on/off: {world.navAgentsOnMesh}/{world.navAgentsOffMesh}");
+            builder.AppendLine($"storage containers: {world.storageContainerCount}");
             builder.AppendLine();
             builder.AppendLine("=== SURVIVAL ===");
             builder.AppendLine($"hp/hun/sta/rest: {survival.health:0}/{survival.hunger:0}/{survival.stamina:0}/{survival.rest:0}");
