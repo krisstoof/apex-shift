@@ -41,6 +41,8 @@ namespace ApexShift.Tests.Regression
                 Assert.AreEqual(62f, state.World.CreatureStates[0].Hunger, 0.001f);
                 Assert.AreEqual(1, state.World.BiomeStates.Count);
                 Assert.AreEqual(40f, state.World.BiomeStates[0].PlantBiomass, 0.001f);
+                Assert.AreEqual(1, state.World.Day);
+                Assert.AreEqual(0f, state.World.TimeOfDay, 0.001f);
             }
             finally
             {
@@ -110,6 +112,8 @@ namespace ApexShift.Tests.Regression
                 Assert.AreEqual("loaded_scavenge", brain.DecisionReason);
                 Assert.AreEqual("forest", brain.CurrentBiomeId);
                 Assert.AreEqual("meat_drop", brain.LastFoodSource);
+                Assert.AreEqual(1, world.Day);
+                Assert.AreEqual(0f, world.TimeOfDay, 0.001f);
             }
             finally
             {

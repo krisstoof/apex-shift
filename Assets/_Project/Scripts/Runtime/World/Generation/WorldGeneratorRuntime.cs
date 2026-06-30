@@ -13,6 +13,7 @@ using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Config;
 using ApexShift.Runtime.World.Query;
+using ApexShift.Runtime.DayNight;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
@@ -92,6 +93,7 @@ namespace ApexShift.Runtime.World.Generation
 
             CreateBootstrapper();
             EnsureEcosystemRuntime();
+            EnsureDayNightRuntime();
             EnsureGameSnapshotProvider();
             EnsureDebugPanelPresenter();
             EnsureWorldMapDebugWindow();
@@ -150,6 +152,7 @@ namespace ApexShift.Runtime.World.Generation
             DestroyAllByName("BuildingRoot");
             DestroyAllByName("GameBootstrapper");
             DestroyAllByName("EcosystemRuntime");
+            DestroyAllByName("DayNightRuntime");
             DestroyAllByName("WorldMapDebugWindow");
             DestroyAllByName("Player");
             DestroyAllByName("Main Camera");
@@ -262,6 +265,18 @@ namespace ApexShift.Runtime.World.Generation
             GameObject go = new GameObject("GameSnapshotProvider");
             go.transform.SetParent(transform);
             go.AddComponent<ApexShift.Runtime.UI.Snapshots.GameSnapshotProvider>();
+        }
+
+        private void EnsureDayNightRuntime()
+        {
+            if (Object.FindAnyObjectByType<DayNightRuntime>() != null)
+            {
+                return;
+            }
+
+            GameObject go = new GameObject("DayNightRuntime");
+            go.transform.SetParent(transform);
+            go.AddComponent<DayNightRuntime>();
         }
 
         private void EnsureDebugPanelPresenter()

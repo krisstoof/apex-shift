@@ -6,6 +6,7 @@ using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Resources;
+using ApexShift.Runtime.DayNight;
 using ApexShift.Runtime.World.Generation;
 using UnityEngine;
 using UnityEngine.AI;
@@ -19,6 +20,7 @@ namespace ApexShift.Runtime.UI.Snapshots
         [SerializeField] private PlayerInventoryRuntime playerInventory;
         [SerializeField] private PlayerSurvivalRuntime playerSurvival;
         [SerializeField] private Transform playerTransform;
+        [SerializeField] private DayNightRuntime dayNightRuntime;
         [SerializeField] private float refreshIntervalSeconds = 0.5f;
         [SerializeField] private bool autoRefresh = true;
         private float refreshTimer;
@@ -40,7 +42,8 @@ namespace ApexShift.Runtime.UI.Snapshots
             InventorySnapshot inventory = InventorySnapshot.FromInventory(playerInventory != null ? playerInventory.Inventory : null);
             SurvivalSnapshot survival = playerSurvival != null ? SurvivalSnapshot.FromStats(playerSurvival.Stats, playerSurvival.ConditionText, playerSurvival.CanSprint, playerSurvival.IsSprinting) : SurvivalSnapshot.Empty;
             WorldDebugSnapshot world = CaptureWorldDebugSnapshot();
-            lastSnapshot = new GameSnapshot(inventory, survival, world, Time.realtimeSinceStartup);
+            DayNightSnapshot dayNight = DayNightSnapshot.FromRuntime(dayNightRuntime);
+            lastSnapshot = new GameSnapshot(inventory, survival, world, dayNight, Time.realtimeSinceStartup);
             SnapshotUpdated?.Invoke(lastSnapshot);
             return lastSnapshot;
         }
@@ -67,6 +70,7 @@ namespace ApexShift.Runtime.UI.Snapshots
             if (worldGenerator == null) worldGenerator = UnityEngine.Object.FindAnyObjectByType<WorldGeneratorRuntime>();
             if (playerInventory == null) playerInventory = UnityEngine.Object.FindAnyObjectByType<PlayerInventoryRuntime>();
             if (playerSurvival == null) playerSurvival = UnityEngine.Object.FindAnyObjectByType<PlayerSurvivalRuntime>();
+            if (dayNightRuntime == null) dayNightRuntime = UnityEngine.Object.FindAnyObjectByType<DayNightRuntime>();
             ResolvePlayerTransform();
         }
         private Transform ResolvePlayerTransform()

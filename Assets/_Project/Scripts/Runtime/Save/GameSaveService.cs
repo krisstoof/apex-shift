@@ -9,6 +9,7 @@ using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Resources;
+using ApexShift.Runtime.DayNight;
 using ApexShift.Runtime.World.Generation;
 using UnityEngine;
 
@@ -21,6 +22,7 @@ namespace ApexShift.Runtime.Save
         [SerializeField] private PlayerInventoryRuntime playerInventory;
         [SerializeField] private PlayerSurvivalRuntime playerSurvival;
         [SerializeField] private EcosystemDirectorRuntime ecosystemDirector;
+        [SerializeField] private DayNightRuntime dayNightRuntime;
 
         private IGameSaveStore saveStore;
 
@@ -77,6 +79,11 @@ namespace ApexShift.Runtime.Save
             {
                 ecosystemDirector = FindAnyObjectByType<EcosystemDirectorRuntime>();
             }
+
+            if (dayNightRuntime == null)
+            {
+                dayNightRuntime = FindAnyObjectByType<DayNightRuntime>();
+            }
         }
 
         public GameSaveData CaptureCurrentState()
@@ -126,11 +133,13 @@ namespace ApexShift.Runtime.Save
             CaptureDynamicMeatDrops(resources);
             List<BiomeEcosystemSaveData> biomeStates = CaptureBiomeStates();
             List<CreatureSaveData> creatureStates = CaptureCreatureStates();
+            int day = dayNightRuntime != null ? dayNightRuntime.Day : 1;
+            float timeOfDay = dayNightRuntime != null ? dayNightRuntime.TimeOfDay01 : 0f;
 
             WorldSaveData world = new WorldSaveData(
                 seed,
-                1,
-                0f,
+                day,
+                timeOfDay,
                 resources,
                 biomeStates,
                 creatureStates,
@@ -196,6 +205,10 @@ namespace ApexShift.Runtime.Save
             ApplyBiomeStates(saveData.World.BiomeStates);
             ApplyEcosystemMetadata(saveData.World);
             RestoreCreatureStates(saveData.World.CreatureStates);
+            if (dayNightRuntime != null)
+            {
+                dayNightRuntime.LoadFromWorldSaveData(saveData.World.Day, saveData.World.TimeOfDay);
+            }
 
             if (playerInventory != null)
             {

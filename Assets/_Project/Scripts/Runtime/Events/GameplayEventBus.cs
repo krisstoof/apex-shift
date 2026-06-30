@@ -18,7 +18,10 @@ namespace ApexShift.Runtime.Events
         VarnakScaredByFire,
         BiomassChanged,
         PopulationChanged,
-        EcosystemTickAdvanced
+        EcosystemTickAdvanced,
+        DayChanged,
+        NightStarted,
+        MorningStarted
     }
 
     [Serializable]
@@ -138,6 +141,21 @@ namespace ApexShift.Runtime.Events
         public static void PublishEcosystemTickAdvanced(string biomeId, float amount = 1f, string message = null)
         {
             Publish(new GameplayEvent(GameplayEventKind.EcosystemTickAdvanced, Vector3.zero, biomeId, actorSpecies: "ecosystem", targetKind: "tick", amount: amount, message: message ?? "ecosystem_tick_advanced"));
+        }
+
+        public static void PublishDayChanged(int day, string message = null)
+        {
+            Publish(new GameplayEvent(GameplayEventKind.DayChanged, Vector3.zero, "global", actorSpecies: "day_night", targetKind: "day", amount: Mathf.Max(1, day), message: message ?? "day_changed"));
+        }
+
+        public static void PublishNightStarted(int day, float hour, string message = null)
+        {
+            Publish(new GameplayEvent(GameplayEventKind.NightStarted, Vector3.zero, "global", actorSpecies: "day_night", targetKind: "night", amount: Mathf.Max(0f, hour), message: message ?? $"night_started_day_{Mathf.Max(1, day)}"));
+        }
+
+        public static void PublishMorningStarted(int day, float hour, string message = null)
+        {
+            Publish(new GameplayEvent(GameplayEventKind.MorningStarted, Vector3.zero, "global", actorSpecies: "day_night", targetKind: "morning", amount: Mathf.Max(0f, hour), message: message ?? $"morning_started_day_{Mathf.Max(1, day)}"));
         }
 
         public static IReadOnlyList<GameplayEvent> GetRecentEvents(int maxCount)

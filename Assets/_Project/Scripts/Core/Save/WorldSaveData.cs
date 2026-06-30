@@ -61,13 +61,24 @@ namespace ApexShift.Core.Save
         {
             this.seed = seed;
             this.day = Math.Max(1, day);
-            this.timeOfDay = Math.Max(0f, timeOfDay);
+            this.timeOfDay = NormalizeTimeOfDay(timeOfDay);
             this.resources = resources != null
                 ? resources.Where(resource => resource != null).ToList()
                 : new List<ResourceSaveData>();
             this.biomeStates = biomeStates != null
                 ? biomeStates.Where(state => state != null).ToList()
                 : new List<BiomeEcosystemSaveData>();
+        }
+
+        private static float NormalizeTimeOfDay(float value)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+            {
+                return 0f;
+            }
+
+            float normalized = value % 1f;
+            return normalized < 0f ? normalized + 1f : normalized;
         }
     }
 }

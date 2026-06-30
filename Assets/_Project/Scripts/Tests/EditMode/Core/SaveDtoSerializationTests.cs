@@ -51,6 +51,8 @@ namespace ApexShift.Tests.EditMode.Core
             Assert.IsTrue(restored.Survival.GodMode);
             Assert.IsTrue(restored.Survival.hasPosition);
             Assert.AreEqual(12345, restored.World.Seed);
+            Assert.AreEqual(2, restored.World.Day);
+            Assert.AreEqual(0.25f, restored.World.TimeOfDay, 0.001f);
             Assert.AreEqual(1, restored.World.Resources.Count);
             Assert.IsTrue(restored.Version.IsCompatible);
         }

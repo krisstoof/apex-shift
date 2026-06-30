@@ -42,10 +42,12 @@ namespace ApexShift.Runtime.UI.Debugging
             WorldDebugSnapshot world = snapshot.worldDebug ?? WorldDebugSnapshot.Empty;
             SurvivalSnapshot survival = snapshot.survival ?? SurvivalSnapshot.Empty;
             InventorySnapshot inventory = snapshot.inventory ?? InventorySnapshot.Empty;
+            DayNightSnapshot dayNight = snapshot.dayNight ?? DayNightSnapshot.Empty;
             StringBuilder builder = new StringBuilder(1024);
             builder.AppendLine("=== GAME SNAPSHOT ===");
             builder.AppendLine($"t: {world.realtimeSinceStartup:0.0}s  fps: {world.fps:0}");
             builder.AppendLine($"seed: {world.seed}");
+            builder.AppendLine($"day: {dayNight.day}  time: {dayNight.ClockText}  phase: {dayNight.phaseLabel}");
             builder.AppendLine($"player: {(world.hasPlayer ? world.playerPosition.ToString("F1") : "missing")}");
             builder.AppendLine();
             builder.AppendLine("=== WORLD ===");

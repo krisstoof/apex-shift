@@ -18,12 +18,14 @@ namespace ApexShift.Tests.Unit.UI
                 }),
                 new SurvivalSnapshot(75f, 40f, 20f, 88f, "healthy", true, false),
                 new WorldDebugSnapshot(1234, new Vector3(1f, 2f, 3f), true, 9, 4, 2, 1, 1, 3, 1, 2, 58.2f, 12.5f),
+                new DayNightSnapshot(3, 0.75f, 18f, false, 0f, "Evening"),
                 12.5f);
 
             string formatted = DebugPanelPresenter.FormatSnapshot(snapshot);
 
             StringAssert.Contains("=== GAME SNAPSHOT ===", formatted);
             StringAssert.Contains("seed: 1234", formatted);
+            StringAssert.Contains("day: 3  time: 18:00  phase: Evening", formatted);
             StringAssert.Contains("resources: 9", formatted);
             StringAssert.Contains("creatures: 4  hungry: 2", formatted);
             StringAssert.Contains("hp/hun/sta/rest: 75/40/20/88", formatted);
