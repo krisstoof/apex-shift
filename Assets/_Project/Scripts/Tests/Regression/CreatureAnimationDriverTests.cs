@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Reflection;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
 using NUnit.Framework;
@@ -39,6 +38,7 @@ namespace ApexShift.Tests.Regression
 
                 creature = new GameObject("Creature_varnak");
                 creature.transform.position = Vector3.zero;
+                creature.AddComponent<NavMeshAgent>();
                 creature.AddComponent<CreatureNavigationAdapter>();
                 creature.AddComponent<CreatureAgentView>().Configure("varnak");
                 creature.AddComponent<CreatureNeedsRuntime>().Configure("varnak");
@@ -61,15 +61,12 @@ namespace ApexShift.Tests.Regression
 
                 behavior.SetBehaviorStateForTests(CreatureBehaviorState.Chase, "test");
 
-                FieldInfo stateField = typeof(CreatureAnimationDriver).GetField("_currentState", BindingFlags.Instance | BindingFlags.NonPublic);
-                Assert.IsNotNull(stateField);
-
                 float currentState = 0f;
                 for (int i = 0; i < 120; i++)
                 {
                     yield return null;
 
-                    currentState = (float)stateField.GetValue(driver);
+                    currentState = driver.CurrentState;
                     if (currentState > 0.25f)
                     {
                         break;

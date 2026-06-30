@@ -4,7 +4,6 @@ using UnityEngine.AI;
 namespace ApexShift.Runtime.Creatures
 {
     [RequireComponent(typeof(Animator))]
-    [RequireComponent(typeof(NavMeshAgent))]
     public sealed class CreatureAnimationDriver : MonoBehaviour
     {
         [Header("Animation Settings")]
@@ -18,16 +17,20 @@ namespace ApexShift.Runtime.Creatures
 
         private Animator _animator;
         private NavMeshAgent _agent;
+        private CreatureNavigationAdapter _navigationAdapter;
 
         private float _currentVert;
         private float _currentState;
         private CreatureBehaviorBrain _behavior;
         private CreatureBehaviorState _lastState;
 
+        public float CurrentState => _currentState;
+
         private void Awake()
         {
             _animator = GetComponentInChildren<Animator>();
             _agent = GetComponent<NavMeshAgent>();
+            _navigationAdapter = GetComponent<CreatureNavigationAdapter>();
             _behavior = GetComponent<CreatureBehaviorBrain>();
         }
 
@@ -38,7 +41,7 @@ namespace ApexShift.Runtime.Creatures
 
         private void Update()
         {
-            if (_animator == null || _agent == null)
+            if (_animator == null)
             {
                 return;
             }
@@ -48,8 +51,13 @@ namespace ApexShift.Runtime.Creatures
                 _behavior = GetComponent<CreatureBehaviorBrain>();
             }
 
-            float currentSpeed = _agent.velocity.magnitude;
-            float maxSpeed = _agent.speed;
+            float currentSpeed = _agent != null ? _agent.velocity.magnitude : 0f;
+            float maxSpeed = _agent != null ? _agent.speed : 0f;
+            if (_navigationAdapter != null && _agent == null)
+            {
+                currentSpeed = 0f;
+                maxSpeed = 0f;
+            }
             float targetVert = 0f;
             float targetState = 0f;
             CreatureBehaviorState state = _behavior != null ? _behavior.State : CreatureBehaviorState.Idle;

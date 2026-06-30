@@ -544,4 +544,14 @@ MonoBehaviour:
   - kind: 6
     prefab: {fileID: 4765915941283362149, guid: ef5bc836f0a51284ab0860985b7086c0, type: 3}
   creaturePrefabs: []
-  buildingPrefabs: []
+  buildingPrefabs:
+  - buildingId: storage_box
+    prefab: {fileID: 919132149155446097, guid: 5c47bbd75e27f2a45ba87700748d2338, type: 3}
+  - buildingId: campfire
+    prefab: {fileID: 919132149155446097, guid: e711123c7a7165349840cb35ab33aac2, type: 3}
+  - buildingId: wall
+    prefab: {fileID: 919132149155446097, guid: 3fad331f0a89c75469ed4cd478ad83dc, type: 3}
+  - buildingId: trap
+    prefab: {fileID: 919132149155446097, guid: bd55f4b2f3ced3d4ba5fbfb9d82fda89, type: 3}
+  - buildingId: tent
+    prefab: {fileID: 919132149155446097, guid: 59728f5daf447b64fb6704c1aa7bd13a, type: 3}

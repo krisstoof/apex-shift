@@ -13,6 +13,7 @@ namespace ApexShift.Core.Save
         public List<ResourceSaveData> resources = new List<ResourceSaveData>();
         public List<BiomeEcosystemSaveData> biomeStates = new List<BiomeEcosystemSaveData>();
         public List<CreatureSaveData> creatureStates = new List<CreatureSaveData>();
+        public List<BuildingSaveData> buildingStates = new List<BuildingSaveData>();
         public float ecosystemTickTimer;
         public string ecosystemStateSource = "generated";
 
@@ -22,6 +23,7 @@ namespace ApexShift.Core.Save
         public IReadOnlyList<ResourceSaveData> Resources => resources ?? (resources = new List<ResourceSaveData>());
         public IReadOnlyList<BiomeEcosystemSaveData> BiomeStates => biomeStates ?? (biomeStates = new List<BiomeEcosystemSaveData>());
         public IReadOnlyList<CreatureSaveData> CreatureStates => creatureStates ?? (creatureStates = new List<CreatureSaveData>());
+        public IReadOnlyList<BuildingSaveData> BuildingStates => buildingStates ?? (buildingStates = new List<BuildingSaveData>());
         public float EcosystemTickTimer => ecosystemTickTimer;
         public string EcosystemStateSource => string.IsNullOrWhiteSpace(ecosystemStateSource) ? "generated" : ecosystemStateSource;
 
@@ -43,11 +45,13 @@ namespace ApexShift.Core.Save
             IReadOnlyList<ResourceSaveData> resources,
             IReadOnlyList<BiomeEcosystemSaveData> biomeStates,
             IReadOnlyList<CreatureSaveData> creatureStates,
+            IReadOnlyList<BuildingSaveData> buildingStates,
             float ecosystemTickTimer,
             string ecosystemStateSource)
             : this(seed, day, timeOfDay, resources, biomeStates)
         {
             this.creatureStates = creatureStates != null ? creatureStates.Where(state => state != null).ToList() : new List<CreatureSaveData>();
+            this.buildingStates = buildingStates != null ? buildingStates.Where(state => state != null).ToList() : new List<BuildingSaveData>();
             this.ecosystemTickTimer = Math.Max(0f, ecosystemTickTimer);
             this.ecosystemStateSource = string.IsNullOrWhiteSpace(ecosystemStateSource) ? "generated" : ecosystemStateSource.Trim();
         }

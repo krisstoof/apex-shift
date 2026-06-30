@@ -3,10 +3,10 @@ using UnityEngine.AI;
 
 namespace ApexShift.Runtime.Creatures
 {
-    [RequireComponent(typeof(NavMeshAgent))]
     public class CreatureNavigationAdapter : MonoBehaviour
     {
         private NavMeshAgent _agent;
+        private bool hasValidNavMesh;
 
         private void Awake()
         {
@@ -15,14 +15,14 @@ namespace ApexShift.Runtime.Creatures
 
         private void Start()
         {
-            WarpToNearestNavMesh();
+            hasValidNavMesh = WarpToNearestNavMesh();
         }
 
         public bool IsOnNavMesh => _agent != null && _agent.isOnNavMesh;
 
         public bool TryMoveTo(Vector3 destination)
 {
-            if (_agent == null || !_agent.isOnNavMesh) return false;
+            if (!hasValidNavMesh || _agent == null || !_agent.isOnNavMesh) return false;
             _agent.isStopped = false;
             return _agent.SetDestination(destination);
         }
@@ -39,17 +39,27 @@ namespace ApexShift.Runtime.Creatures
             return false;
         }
 
-        public void WarpToNearestNavMesh()
+        public bool WarpToNearestNavMesh()
         {
+            if (_agent == null)
+            {
+                return false;
+            }
+
             if (TrySamplePosition(transform.position, out Vector3 hitPosition, 10f))
             {
                 _agent.Warp(hitPosition);
+                hasValidNavMesh = true;
+                return true;
             }
+
+            hasValidNavMesh = false;
+            return false;
         }
 
         public bool HasReachedDestination(float stoppingDistance = 0.5f)
         {
-            if (_agent == null || _agent.pathPending) return false;
+            if (!hasValidNavMesh || _agent == null || _agent.pathPending) return false;
             return _agent.remainingDistance <= (_agent.stoppingDistance > 0 ? _agent.stoppingDistance : stoppingDistance);
         }
 

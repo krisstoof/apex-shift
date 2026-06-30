@@ -8,6 +8,9 @@ namespace ApexShift.Runtime.PlayerInput
         [SerializeField]
         private InputActionAsset inputActions;
 
+        [SerializeField]
+        private ApexShift.Runtime.Buildings.BuildingPlacementRuntime buildingPlacementRuntime;
+
         public Vector2 Move { get; private set; }
         public Vector2 LookScreenPosition { get; private set; }
         public bool SprintHeld { get; private set; }
@@ -36,8 +39,18 @@ namespace ApexShift.Runtime.PlayerInput
             CacheActions();
         }
 
+        public void SetBuildingPlacementRuntime(ApexShift.Runtime.Buildings.BuildingPlacementRuntime runtime)
+        {
+            buildingPlacementRuntime = runtime;
+        }
+
         private void Awake()
         {
+            if (buildingPlacementRuntime == null)
+            {
+                buildingPlacementRuntime = GetComponent<ApexShift.Runtime.Buildings.BuildingPlacementRuntime>();
+            }
+
             if (inputActions == null)
             {
                 inputActions = InputSystem.actions;
@@ -151,7 +164,20 @@ namespace ApexShift.Runtime.PlayerInput
             Debug.Log("[Input] Interact Key Pressed!");
             InteractPressed?.Invoke();
         }
-private void OnAttack(InputAction.CallbackContext context) => AttackPressed?.Invoke();
+        private void OnAttack(InputAction.CallbackContext context)
+        {
+            if (buildingPlacementRuntime == null)
+            {
+                buildingPlacementRuntime = GetComponent<ApexShift.Runtime.Buildings.BuildingPlacementRuntime>();
+            }
+
+            if (buildingPlacementRuntime != null && buildingPlacementRuntime.BlocksPlayerPrimaryAction)
+            {
+                return;
+            }
+
+            AttackPressed?.Invoke();
+        }
         private void OnOpenInventory(InputAction.CallbackContext context) => OpenInventoryPressed?.Invoke();
         private void OnOpenCrafting(InputAction.CallbackContext context) => OpenCraftingPressed?.Invoke();
         private void OnToggleMap(InputAction.CallbackContext context) => ToggleMapPressed?.Invoke();

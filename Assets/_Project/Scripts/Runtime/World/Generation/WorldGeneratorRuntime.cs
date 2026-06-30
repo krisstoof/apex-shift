@@ -8,6 +8,7 @@ using ApexShift.Runtime.Interaction;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.PlayerInput;
 using ApexShift.Runtime.Resources;
+using ApexShift.Runtime.Buildings;
 using ApexShift.Runtime.World.Biomes;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
@@ -98,6 +99,7 @@ namespace ApexShift.Runtime.World.Generation
             EnsureDebugPanelPresenter();
             EnsureWorldMapDebugWindow();
             EnsureRoots();
+            EnsureBuildingRegistry();
             GenerateIslandLayout();
 
             GameObject player = CreatePlayer();
@@ -196,6 +198,22 @@ namespace ApexShift.Runtime.World.Generation
             _resourceRoot = CreateRoot("ResourceRoot");
             _creatureRoot = CreateRoot("CreatureRoot");
             _buildingRoot = CreateRoot("BuildingRoot");
+        }
+
+        private void EnsureBuildingRegistry()
+        {
+            if (_buildingRoot == null)
+            {
+                return;
+            }
+
+            BuildingRegistry registry = _buildingRoot.GetComponent<BuildingRegistry>();
+            if (registry == null)
+            {
+                registry = _buildingRoot.gameObject.AddComponent<BuildingRegistry>();
+            }
+
+            registry.SetPrefabRegistry(prefabRegistry);
         }
 
         private Transform CreateRoot(string name)
@@ -1245,6 +1263,28 @@ if (renderer != null)
             debugLog.SetMovementController(controller);
             debugLog.SetMotionFeedback(motionFeedback);
             debugLog.SetCameraFollow(cameraGo != null ? cameraGo.GetComponent<IsometricCameraFollow>() : null);
+
+            BuildingPlacementRuntime buildingPlacement = player.GetComponent<BuildingPlacementRuntime>();
+            if (buildingPlacement == null)
+            {
+                buildingPlacement = player.AddComponent<BuildingPlacementRuntime>();
+            }
+
+            buildingPlacement.SetInventoryRuntime(inventory);
+            buildingPlacement.SetPrefabRegistry(prefabRegistry);
+            buildingPlacement.SetBuildingRegistry(_buildingRoot != null ? _buildingRoot.GetComponent<BuildingRegistry>() : BuildingRegistry.Active);
+            buildingPlacement.SetPlacementOrigin(player.transform);
+            buildingPlacement.SetBuildingParent(_buildingRoot);
+            inputReader.SetBuildingPlacementRuntime(buildingPlacement);
+
+            BuildingSelectionPanelUI selectionPanel = player.GetComponent<BuildingSelectionPanelUI>();
+            if (selectionPanel == null)
+            {
+                selectionPanel = player.AddComponent<BuildingSelectionPanelUI>();
+            }
+
+            selectionPanel.SetPlacementRuntime(buildingPlacement);
+            buildingPlacement.SetSelectionPanel(selectionPanel);
         }
 
         private GameObject CreateCamera(Transform target)

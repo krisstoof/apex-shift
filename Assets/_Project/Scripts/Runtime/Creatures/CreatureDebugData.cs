@@ -86,6 +86,7 @@ namespace ApexShift.Runtime.Creatures
             CreatureBehaviorBrain brain = source.GetComponent<CreatureBehaviorBrain>();
             CreatureSimulationLodRuntime lod = source.GetComponent<CreatureSimulationLodRuntime>();
             NavMeshAgent nav = source.GetComponent<NavMeshAgent>();
+            CreatureNavigationAdapter adapter = source.GetComponent<CreatureNavigationAdapter>();
 
             if (agent != null)
             {
@@ -139,6 +140,10 @@ namespace ApexShift.Runtime.Creatures
                 {
                     data.navStatus = "off";
                 }
+            }
+            else if (adapter != null)
+            {
+                data.navStatus = "off";
             }
 
             if (lod != null)

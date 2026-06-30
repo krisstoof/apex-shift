@@ -140,7 +140,9 @@ namespace ApexShift.Presentation.HUD
 
             // Group 4b: Clock (Bottom Left, above FPS)
             GameObject clockPanel = CreateUIPanel(hudGo.transform, "ClockPanel", new Vector2(0, 0), new Vector2(0, 0), new Vector2(120, 30), new Vector2(20, 92));
-            clockPanel.GetComponent<Image>().color = new Color(0.03f, 0.05f, 0.03f, 0.5f);
+            Image clockBg = clockPanel.GetComponent<Image>();
+            clockBg.color = new Color(0.03f, 0.05f, 0.03f, 0.38f);
+            clockBg.raycastTarget = false;
 
             GameObject clockIconGo = new GameObject("ClockIcon");
             clockIconGo.transform.SetParent(clockPanel.transform, false);
@@ -150,16 +152,16 @@ namespace ApexShift.Presentation.HUD
             clockIconRt.anchorMin = new Vector2(0f, 0.5f);
             clockIconRt.anchorMax = new Vector2(0f, 0.5f);
             clockIconRt.pivot = new Vector2(0.5f, 0.5f);
-            clockIconRt.sizeDelta = new Vector2(18, 18);
-            clockIconRt.anchoredPosition = new Vector2(14, 1);
+            clockIconRt.sizeDelta = new Vector2(14, 14);
+            clockIconRt.anchoredPosition = new Vector2(12, 0);
 
-            GameObject timeLabelGo = CreateMenuText(clockPanel.transform, "TimeLabel", "placeholder", 16, TextAnchor.MiddleLeft, new Vector2(28, -1), new Color(0.98f, 0.96f, 0.82f, 1f));
+            GameObject timeLabelGo = CreateMenuText(clockPanel.transform, "TimeLabel", "00:00", 14, TextAnchor.MiddleLeft, new Vector2(24, 0), new Color(0.98f, 0.96f, 0.82f, 1f));
             RectTransform timeRt = timeLabelGo.GetComponent<RectTransform>();
             timeRt.anchorMin = new Vector2(0f, 0.5f);
             timeRt.anchorMax = new Vector2(1f, 0.5f);
             timeRt.pivot = new Vector2(0f, 0.5f);
-            timeRt.sizeDelta = new Vector2(84, 18);
-            timeRt.anchoredPosition = new Vector2(26, -1);
+            timeRt.sizeDelta = new Vector2(54, 18);
+            timeRt.anchoredPosition = new Vector2(24, 0);
 
             DayNightClockUI clockUI = clockPanel.AddComponent<DayNightClockUI>();
             clockUI.Configure(timeLabelGo.GetComponent<Text>(), clockIcon, Object.FindAnyObjectByType<DayNightRuntime>());

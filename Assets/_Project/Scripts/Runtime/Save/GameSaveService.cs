@@ -5,6 +5,7 @@ using ApexShift.Core.Ecosystem;
 using ApexShift.Core.Inventory;
 using ApexShift.Core.Save;
 using ApexShift.Infrastructure.Save;
+using ApexShift.Runtime.Buildings;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Player;
@@ -23,6 +24,7 @@ namespace ApexShift.Runtime.Save
         [SerializeField] private PlayerSurvivalRuntime playerSurvival;
         [SerializeField] private EcosystemDirectorRuntime ecosystemDirector;
         [SerializeField] private DayNightRuntime dayNightRuntime;
+        [SerializeField] private BuildingRegistry buildingRegistry;
 
         private IGameSaveStore saveStore;
 
@@ -84,6 +86,11 @@ namespace ApexShift.Runtime.Save
             {
                 dayNightRuntime = FindAnyObjectByType<DayNightRuntime>();
             }
+
+            if (buildingRegistry == null)
+            {
+                buildingRegistry = FindAnyObjectByType<BuildingRegistry>();
+            }
         }
 
         public GameSaveData CaptureCurrentState()
@@ -133,6 +140,7 @@ namespace ApexShift.Runtime.Save
             CaptureDynamicMeatDrops(resources);
             List<BiomeEcosystemSaveData> biomeStates = CaptureBiomeStates();
             List<CreatureSaveData> creatureStates = CaptureCreatureStates();
+            List<BuildingSaveData> buildingStates = CaptureBuildingStates();
             int day = dayNightRuntime != null ? dayNightRuntime.Day : 1;
             float timeOfDay = dayNightRuntime != null ? dayNightRuntime.TimeOfDay01 : 0f;
 
@@ -143,6 +151,7 @@ namespace ApexShift.Runtime.Save
                 resources,
                 biomeStates,
                 creatureStates,
+                buildingStates,
                 ecosystemDirector != null ? ecosystemDirector.TickTimer : 0f,
                 ecosystemDirector != null ? ecosystemDirector.EcosystemStateSource : "generated");
 
@@ -205,6 +214,7 @@ namespace ApexShift.Runtime.Save
             ApplyBiomeStates(saveData.World.BiomeStates);
             ApplyEcosystemMetadata(saveData.World);
             RestoreCreatureStates(saveData.World.CreatureStates);
+            RestoreBuildingStates(saveData.World.BuildingStates);
             if (dayNightRuntime != null)
             {
                 dayNightRuntime.LoadFromWorldSaveData(saveData.World.Day, saveData.World.TimeOfDay);
@@ -291,6 +301,21 @@ namespace ApexShift.Runtime.Save
             }
 
             return creatures;
+        }
+
+        private List<BuildingSaveData> CaptureBuildingStates()
+        {
+            return buildingRegistry != null ? buildingRegistry.CaptureSaveData() : new List<BuildingSaveData>();
+        }
+
+        private void RestoreBuildingStates(IReadOnlyList<BuildingSaveData> buildingStates)
+        {
+            if (buildingRegistry == null)
+            {
+                return;
+            }
+
+            buildingRegistry.RestoreFromSaveData(buildingStates, worldGenerator != null ? worldGenerator.transform : null);
         }
 
         private void RestoreCreatureStates(IReadOnlyList<CreatureSaveData> savedCreatures)

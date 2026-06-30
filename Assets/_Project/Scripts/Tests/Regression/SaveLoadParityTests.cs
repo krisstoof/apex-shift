@@ -98,6 +98,7 @@ namespace ApexShift.Tests.Regression
                             "OMNIVORE",
                             0.42f)
                     },
+                    new List<BuildingSaveData>(),
                     3.5f,
                     "save");
 
@@ -149,6 +150,7 @@ namespace ApexShift.Tests.Regression
                     {
                         new CreatureSaveData("small_prey", "small_prey", 1, 0f, 0f, 0f, 0f, 20f, true, 80f, 0.2f, "Dead", "default", "default", "default", "dead_from_save", "none", 0f, "HERBIVORE", 0f)
                     },
+                    new List<BuildingSaveData>(),
                     0f,
                     "save");
 

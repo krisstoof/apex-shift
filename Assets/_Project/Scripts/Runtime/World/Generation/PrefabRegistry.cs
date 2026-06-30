@@ -72,10 +72,59 @@ namespace ApexShift.Runtime.World.Generation
         }
 
 #if UNITY_EDITOR
+        public bool TryGetBuildingModelPrefab(string buildingId, out GameObject prefab)
+        {
+            prefab = null;
+            if (string.IsNullOrWhiteSpace(buildingId))
+            {
+                return false;
+            }
+
+            string normalized = buildingId.Trim().ToLowerInvariant();
+            string path = $"Assets/apex_shift_placeables_3d_v2_unity_obj/Assets/_Project/Art/Placeables/Models/{normalized}_low_poly.obj";
+            prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            return prefab != null;
+        }
+#endif
+
+#if UNITY_EDITOR
         private void OnValidate()
         {
+            AutoFillMissingBuildingPrefabs();
             WarnAboutDuplicateCreatureIds();
             WarnAboutDuplicateBuildingIds();
+        }
+
+        private void AutoFillMissingBuildingPrefabs()
+        {
+            if (buildingPrefabs == null || buildingPrefabs.Count == 0)
+            {
+                return;
+            }
+
+            bool changed = false;
+            foreach (BuildingPrefabEntry entry in buildingPrefabs)
+            {
+                if (entry == null || entry.Prefab != null || string.IsNullOrWhiteSpace(entry.BuildingId))
+                {
+                    continue;
+                }
+
+                if (TryGetBuildingModelPrefab(entry.BuildingId, out GameObject prefab))
+                {
+                    var field = entry.GetType().GetField("prefab", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                    if (field != null)
+                    {
+                        field.SetValue(entry, prefab);
+                        changed = true;
+                    }
+                }
+            }
+
+            if (changed)
+            {
+                UnityEditor.EditorUtility.SetDirty(this);
+            }
         }
 
         private void WarnAboutDuplicateCreatureIds()

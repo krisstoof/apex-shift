@@ -35,7 +35,12 @@ namespace ApexShift.Tests.EditMode.Core
                 resources: new List<ResourceSaveData>
                 {
                     new ResourceSaveData("tree_1", "conifer_tree", 1f, 0f, 2f, 0, 4, depleted: true)
-                });
+                },
+                biomeStates: new List<BiomeEcosystemSaveData>(),
+                creatureStates: new List<CreatureSaveData>(),
+                buildingStates: new List<BuildingSaveData>(),
+                ecosystemTickTimer: 0f,
+                ecosystemStateSource: "generated");
 
             GameSaveData original = new GameSaveData(inventory, survival, world);
             UnityJsonGameSaveSerializer serializer = new UnityJsonGameSaveSerializer();

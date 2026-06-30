@@ -47,7 +47,7 @@ namespace ApexShift.Runtime.UI.Snapshots
 
             int hh = totalMinutes / 60;
             int mm = totalMinutes % 60;
-            return $"{hh}h{mm:00}";
+            return $"{hh:00}:{mm:00}";
         }
 
         private static float Normalize01(float value)

@@ -1,0 +1,111 @@
+{
+  "name": "Apex Shift Low Poly Placeables 3D v2",
+  "format": "OBJ + MTL",
+  "unity_axis": "Y-up, meters, pivot at ground center where practical",
+  "models": [
+    {
+      "id": "storage_box",
+      "file": "storage_box_low_poly.obj",
+      "suggested_collider": {
+        "type": "BoxCollider",
+        "center": [
+          0,
+          0.5,
+          0
+        ],
+        "size": [
+          2.45,
+          1.05,
+          1.35
+        ]
+      }
+    },
+    {
+      "id": "campfire",
+      "file": "campfire_low_poly.obj",
+      "suggested_collider": {
+        "type": "Sphere/Box trigger + BoxCollider",
+        "center": [
+          0,
+          0.2,
+          0
+        ],
+        "size": [
+          2.1,
+          0.45,
+          2.1
+        ]
+      }
+    },
+    {
+      "id": "wall",
+      "file": "wall_low_poly.obj",
+      "suggested_collider": {
+        "type": "BoxCollider",
+        "center": [
+          0,
+          0.8,
+          0
+        ],
+        "size": [
+          3.25,
+          1.8,
+          0.32
+        ]
+      }
+    },
+    {
+      "id": "trap",
+      "file": "trap_low_poly.obj",
+      "suggested_collider": {
+        "type": "BoxCollider trigger",
+        "center": [
+          0,
+          0.28,
+          0
+        ],
+        "size": [
+          2.0,
+          0.5,
+          1.7
+        ]
+      }
+    },
+    {
+      "id": "tent",
+      "file": "tent_low_poly.obj",
+      "suggested_collider": {
+        "type": "BoxCollider",
+        "center": [
+          0,
+          0.55,
+          0
+        ],
+        "size": [
+          2.2,
+          1.35,
+          2.0
+        ]
+      }
+    }
+  ],
+  "materials": [
+    "wood",
+    "wood_dark",
+    "wood_light",
+    "wood_tip",
+    "metal",
+    "metal_dark",
+    "metal_light",
+    "stone",
+    "stone_dark",
+    "ember",
+    "ember_dark",
+    "flame_orange",
+    "flame_yellow",
+    "cloth",
+    "cloth_dark",
+    "rope",
+    "shadow_gap"
+  ]
+}

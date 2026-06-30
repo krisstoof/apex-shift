@@ -1,0 +1,120 @@
+# Apex Shift low-poly placeable materials
+newmtl wood
+Kd 0.4800 0.2700 0.1100
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl wood_dark
+Kd 0.3000 0.1600 0.0700
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl wood_light
+Kd 0.7200 0.4300 0.1800
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl wood_tip
+Kd 0.8300 0.5500 0.2500
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl metal
+Kd 0.3600 0.3800 0.3800
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl metal_dark
+Kd 0.2000 0.2200 0.2300
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl metal_light
+Kd 0.5800 0.6000 0.5800
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl stone
+Kd 0.3400 0.3500 0.3500
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl stone_dark
+Kd 0.2200 0.2300 0.2400
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl ember
+Kd 0.9200 0.1900 0.0300
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl ember_dark
+Kd 0.4000 0.0600 0.0300
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl flame_orange
+Kd 1.0000 0.3600 0.0200
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl flame_yellow
+Kd 1.0000 0.8200 0.1000
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl cloth
+Kd 0.6200 0.4700 0.2500
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl cloth_dark
+Kd 0.3600 0.2700 0.1500
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl rope
+Kd 0.6200 0.4500 0.2500
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
+newmtl shadow_gap
+Kd 0.0350 0.0260 0.0180
+Ka 0.0000 0.0000 0.0000
+Ks 0.0800 0.0800 0.0800
+Ns 16
+illum 2
+
