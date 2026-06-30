@@ -8,6 +8,7 @@ using ApexShift.Infrastructure.Save;
 using ApexShift.Runtime.Buildings;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
+using ApexShift.Runtime.Items;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.DayNight;
@@ -139,6 +140,7 @@ namespace ApexShift.Runtime.Save
             }
 
             CaptureDynamicMeatDrops(resources);
+            List<PickupSaveData> pickups = CapturePickupStates();
             List<BiomeEcosystemSaveData> biomeStates = CaptureBiomeStates();
             List<CreatureSaveData> creatureStates = CaptureCreatureStates();
             List<BuildingSaveData> buildingStates = CaptureBuildingStates();
@@ -150,6 +152,7 @@ namespace ApexShift.Runtime.Save
                 day,
                 timeOfDay,
                 resources,
+                pickups,
                 biomeStates,
                 creatureStates,
                 buildingStates,
@@ -212,6 +215,7 @@ namespace ApexShift.Runtime.Save
             }
 
             RestoreResourceStates(saveData.World.Resources);
+            RestorePickupStates(saveData.World.Pickups);
             ApplyBiomeStates(saveData.World.BiomeStates);
             ApplyEcosystemMetadata(saveData.World);
             RestoreCreatureStates(saveData.World.CreatureStates);
@@ -507,6 +511,45 @@ namespace ApexShift.Runtime.Save
             drop.transform.localScale = new Vector3(0.45f, 0.2f, 0.45f);
             FoodSourceView food = drop.GetComponent<FoodSourceView>() ?? drop.AddComponent<FoodSourceView>();
             food.Configure(string.IsNullOrWhiteSpace(data.ResourceId) ? "meat_drop" : data.ResourceId, "Meat", FoodKind.Meat, Mathf.Max(0.01f, data.Amount), Mathf.Max(0.01f, data.FoodValue));
+        }
+
+        private List<PickupSaveData> CapturePickupStates()
+        {
+            List<PickupSaveData> pickups = new List<PickupSaveData>();
+            foreach (ItemPickupView pickup in FindObjectsByType<ItemPickupView>(FindObjectsInactive.Include))
+            {
+                if (pickup == null || string.IsNullOrWhiteSpace(pickup.ItemId) || pickup.Amount <= 0)
+                {
+                    continue;
+                }
+
+                Transform t = pickup.transform;
+                Quaternion rot = t != null ? t.rotation : Quaternion.identity;
+                Vector3 pos = t != null ? t.position : Vector3.zero;
+                pickups.Add(new PickupSaveData(pickup.ItemId, pickup.Amount, pos.x, pos.y, pos.z, rot.x, rot.y, rot.z, rot.w));
+            }
+
+            return pickups;
+        }
+
+        private void RestorePickupStates(IReadOnlyList<PickupSaveData> savedPickups)
+        {
+            if (savedPickups == null || savedPickups.Count == 0)
+            {
+                return;
+            }
+
+            foreach (PickupSaveData pickup in savedPickups)
+            {
+                if (pickup == null || string.IsNullOrWhiteSpace(pickup.ItemId) || pickup.Amount <= 0)
+                {
+                    continue;
+                }
+
+                Vector3 pos = new Vector3(pickup.X, pickup.Y, pickup.Z);
+                Quaternion rot = new Quaternion(pickup.RotX, pickup.RotY, pickup.RotZ, pickup.RotW);
+                ItemPickupSpawner.Spawn(pickup.ItemId, pickup.Amount, pos, rot);
+            }
         }
 
         private void RestoreResourceStates(IReadOnlyList<ResourceSaveData> savedResources)

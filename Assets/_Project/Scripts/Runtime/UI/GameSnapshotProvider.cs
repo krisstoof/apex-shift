@@ -5,6 +5,7 @@ using ApexShift.Runtime.Buildings;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Events;
+using ApexShift.Runtime.Items;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.DayNight;
@@ -56,6 +57,7 @@ namespace ApexShift.Runtime.UI.Snapshots
             CreatureAgentView[] creatures = UnityEngine.Object.FindObjectsByType<CreatureAgentView>(FindObjectsInactive.Exclude);
             CreatureNeedsRuntime[] needs = UnityEngine.Object.FindObjectsByType<CreatureNeedsRuntime>(FindObjectsInactive.Exclude);
             FoodSourceView[] foods = UnityEngine.Object.FindObjectsByType<FoodSourceView>(FindObjectsInactive.Exclude);
+            ItemPickupView[] pickups = UnityEngine.Object.FindObjectsByType<ItemPickupView>(FindObjectsInactive.Exclude);
             NavMeshAgent[] navAgents = UnityEngine.Object.FindObjectsByType<NavMeshAgent>(FindObjectsInactive.Exclude);
             int plantFood = ecosystem != null ? ecosystem.PlantFoodSourceCount : foods.Count(food => food != null && food.Kind == FoodKind.Plants);
             int meatFood = ecosystem != null ? ecosystem.MeatFoodSourceCount : foods.Count(food => food != null && food.Kind == FoodKind.Meat);
@@ -65,7 +67,7 @@ namespace ApexShift.Runtime.UI.Snapshots
             int navOnMesh = navAgents.Count(agent => agent != null && agent.isOnNavMesh);
             int hungryCreatures = needs.Count(need => need != null && need.State.IsHungry);
             string[] recentEvents = GameEventBus.GetRecentEventLines(8);
-            return new WorldDebugSnapshot(worldGenerator != null ? worldGenerator.Seed : 0, player != null ? player.position : Vector3.zero, player != null, resources.Length, creatureCount, foodCount, plantFood, meatFood, navOnMesh, Mathf.Max(0, navAgents.Length - navOnMesh), hungryCreatures, storageContainers, smoothedFps, Time.realtimeSinceStartup, recentEvents);
+            return new WorldDebugSnapshot(worldGenerator != null ? worldGenerator.Seed : 0, player != null ? player.position : Vector3.zero, player != null, resources.Length, creatureCount, foodCount, plantFood, meatFood, navOnMesh, Mathf.Max(0, navAgents.Length - navOnMesh), hungryCreatures, storageContainers, pickups.Length, smoothedFps, Time.realtimeSinceStartup, recentEvents);
         }
         private void ResolveReferences()
         {
