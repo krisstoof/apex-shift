@@ -22,7 +22,7 @@ namespace ApexShift.Runtime.Creatures
             GameObject drop = ItemPickupSpawner.Spawn("meat", amount, dropPosition, Quaternion.identity);
             if (drop != null)
             {
-                drop.name = $"Item_meat_from_{id}";
+                drop.name = $"MeatDrop_{id}";
             }
         }
 

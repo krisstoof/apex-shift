@@ -33,7 +33,6 @@ namespace ApexShift.Runtime.Buildings
         [SerializeField] private bool enableKeyboardShortcuts = true;
         [SerializeField] private KeyCode placeKey = KeyCode.Mouse0;
         [SerializeField] private Key toggleMenuKey = Key.B;
-        [SerializeField] private string[] quickSelectItems = { "storage_box", "campfire", "wall", "trap", "tent" };
 
         private readonly List<PlaceableDefinition> runtimeDefinitions = new List<PlaceableDefinition>();
         private PlacementPreview preview;
@@ -252,15 +251,6 @@ namespace ApexShift.Runtime.Buildings
             if (Keyboard.current == null)
             {
                 return;
-            }
-
-            for (int i = 0; i < quickSelectItems.Length && i < 9; i++)
-            {
-                Key key = (Key)((int)Key.Digit1 + i);
-                if (Keyboard.current[key].wasPressedThisFrame)
-                {
-                    SelectItem(quickSelectItems[i]);
-                }
             }
 
             if (Keyboard.current[Key.Escape].wasPressedThisFrame)

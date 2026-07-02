@@ -367,6 +367,12 @@ namespace ApexShift.Runtime.Player
                     return;
                 }
 
+                if (!ActionBarRuntime.IsActionBarItem(itemId))
+                {
+                    Debug.Log($"[Inventory] '{itemId}' is a resource/non-action item and cannot be assigned to action bar.");
+                    return;
+                }
+
                 if (canvasGroup != null)
                 {
                     canvasGroup.blocksRaycasts = false;

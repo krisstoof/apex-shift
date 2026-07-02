@@ -35,7 +35,6 @@ namespace ApexShift.Runtime.Audio
         [Header("Clip Sources")]
         [SerializeField] private AudioClip[] ambientClips;
         [SerializeField] private string resourcesFolder = "Free_Nature_Ambient";
-        [SerializeField] private string editorPathToken = "Free_Nature_Ambient";
 
         private readonly List<AudioClip> runtimeClips = new List<AudioClip>();
         private AudioSource sourceA;
@@ -334,15 +333,13 @@ namespace ApexShift.Runtime.Audio
         private IEnumerable<AudioClip> FindEditorClips()
         {
             string[] guids = AssetDatabase.FindAssets("t:AudioClip", new[] { "Assets" });
-            string normalizedToken = NormalizePathToken(editorPathToken);
 
             foreach (string guid in guids)
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 string normalizedPath = NormalizePathToken(path);
 
-                if (!normalizedPath.Contains(normalizedToken) &&
-                    !normalizedPath.Contains("freenatureambient") &&
+                if (!normalizedPath.Contains("freenatureambient") &&
                     !normalizedPath.Contains("natureambient"))
                 {
                     continue;

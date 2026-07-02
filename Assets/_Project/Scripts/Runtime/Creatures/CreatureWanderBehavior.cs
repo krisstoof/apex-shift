@@ -60,7 +60,6 @@ namespace ApexShift.Runtime.Creatures
                     if (adapter.TrySamplePosition(randomDirection, out Vector3 targetPos, wanderRadius))
                     {
                         if (islandBounds != null && islandBounds.HasLand) islandBounds.TryClampToLand(targetPos, out targetPos);
-                        Debug.Log($"[Wander] {gameObject.name} moving to {targetPos}");
                         _view.MoveTo(targetPos);
 
                         // Wait until reached or path invalid

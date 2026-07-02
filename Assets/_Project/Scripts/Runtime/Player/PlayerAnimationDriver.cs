@@ -21,6 +21,9 @@ namespace ApexShift.Runtime.Player
         private string runningStateName = "Running";
 
         [SerializeField]
+        private string swimmingStateName = "Swimming";
+
+        [SerializeField]
         private string speedParameter = "Speed";
 
         [SerializeField]
@@ -51,6 +54,7 @@ namespace ApexShift.Runtime.Player
         private bool hasInteract;
         private bool hasSwimming;
         private bool hasStateFallback;
+        private bool hasSwimmingStateFallback;
         private bool loggedMissingStateFallback;
         private string currentState;
         private bool isSwimming;
@@ -74,7 +78,8 @@ namespace ApexShift.Runtime.Player
                 Debug.Log(
                     $"[PlayerAnimationDriver] Animator={(animator != null ? animator.name : "missing")}, " +
                     $"hasSpeed={hasSpeed}, hasMoving={hasMoving}, hasSprinting={hasSprinting}, " +
-                    $"hasAttack={hasAttack}, hasInteract={hasInteract}, hasStateFallback={hasStateFallback}",
+                    $"hasAttack={hasAttack}, hasInteract={hasInteract}, hasSwimming={hasSwimming}, " +
+                    $"hasStateFallback={hasStateFallback}, hasSwimmingStateFallback={hasSwimmingStateFallback}",
                     this);
             }
         }
@@ -134,7 +139,7 @@ namespace ApexShift.Runtime.Player
 
             if (hasStateFallback)
             {
-                UpdateStateFallback(isMoving, isSprinting);
+                UpdateStateFallback(isMoving, isSprinting, isSwimming);
             }
         }
 
@@ -167,7 +172,7 @@ namespace ApexShift.Runtime.Player
             }
         }
 
-        private void UpdateStateFallback(bool isMoving, bool isSprinting)
+        private void UpdateStateFallback(bool isMoving, bool isSprinting, bool swimming)
         {
             if (!CanUseStateFallback())
             {
@@ -175,6 +180,17 @@ namespace ApexShift.Runtime.Player
                 {
                     loggedMissingStateFallback = true;
                     Debug.LogWarning("[PlayerAnimationDriver] State fallback skipped because Idle/Walking/Running clips were not found.", this);
+                }
+
+                return;
+            }
+
+            if (swimming && ContainsClip(animator.runtimeAnimatorController.animationClips, swimmingStateName))
+            {
+                if (!string.Equals(currentState, swimmingStateName))
+                {
+                    currentState = swimmingStateName;
+                    animator.CrossFadeInFixedTime(currentState, crossFadeDuration);
                 }
 
                 return;
@@ -203,6 +219,7 @@ namespace ApexShift.Runtime.Player
             hasAttack = false;
             hasInteract = false;
             hasStateFallback = false;
+            hasSwimmingStateFallback = false;
 
             if (animator == null)
             {
@@ -237,6 +254,7 @@ namespace ApexShift.Runtime.Player
                 }
             }
 
+            hasSwimmingStateFallback = ContainsClip(animator.runtimeAnimatorController.animationClips, swimmingStateName);
             hasStateFallback = !hasSpeed && !hasMoving && CanUseStateFallback();
         }
 

@@ -56,15 +56,21 @@ namespace ApexShift.Runtime.World.Generation
         [SerializeField] private float creatureSpawnDensityMultiplier = 0.85f;
         [SerializeField] private bool scaleVarnaksByDay = true;
         [SerializeField] private int varnakDayOneMaxCount = 0;
-        [SerializeField] private int varnakAddEveryDays = 2;
+        [SerializeField] private int varnakAddEveryDays = 1;
         [SerializeField] private int varnakAbsoluteMaxCount = 5;
         [SerializeField] private float varnakDayOneSpawnMultiplier = 0.05f;
         [SerializeField] private float varnakSpawnMultiplierPerDay = 0.10f;
         [SerializeField] private float varnakMaxSpawnMultiplier = 0.65f;
-        [SerializeField] private float minCreatureDistanceFromPlayer = 14f;
-        [SerializeField] private float minVarnakDistanceFromPlayer = 36f;
-        [SerializeField] private int creatureSpawnPositionAttempts = 16;
+        [SerializeField] private float minCreatureDistanceFromPlayer = 30f;
+        [SerializeField] private float minVarnakDistanceFromPlayer = 48f;
+        [SerializeField] private int creatureSpawnPositionAttempts = 36;
         [SerializeField] private int nonVarnakMinimumPerBiomeEntry = 1;
+
+        [Header("Daily Varnak Spawning")]
+        [SerializeField] private bool spawnVarnaksOnDayChange = true;
+        [SerializeField] private int firstVarnakSpawnDay = 2;
+        [SerializeField] private int varnakDailySpawnAttempts = 8;
+        [SerializeField] private float varnakDailySpawnChanceMultiplier = 1.35f;
 
         [Header("Resource Size / Tool Gating")]
         [SerializeField] private float bigTreeScaleThreshold = 0.92f;
@@ -96,6 +102,7 @@ namespace ApexShift.Runtime.World.Generation
         private int _spawnedVarnakCount;
         private int _currentSpawnDay = 1;
         private IslandTopographyRuntime _islandTopography;
+        private DayNightRuntime _dayNightRuntime;
 
         private const string DefaultInputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
 
@@ -139,6 +146,12 @@ namespace ApexShift.Runtime.World.Generation
             EnsureGameSnapshotProvider();
             EnsureDebugPanelPresenter();
             EnsureWorldMapDebugWindow();
+            UnsubscribeFromDayNightRuntime();
+            _dayNightRuntime = DayNightRuntime.Active;
+            if (_dayNightRuntime != null)
+            {
+                _dayNightRuntime.DayChanged += HandleDayChanged;
+            }
             EnsureRoots();
             EnsureBuildingRegistry();
             GenerateIslandLayout();
@@ -187,6 +200,11 @@ namespace ApexShift.Runtime.World.Generation
 
         private void Clear()
         {
+            if (_dayNightRuntime != null)
+            {
+                _dayNightRuntime.DayChanged -= HandleDayChanged;
+                _dayNightRuntime = null;
+            }
             if (_terrainRoot != null) DestroyObject(_terrainRoot.gameObject);
             if (_biomeRoot != null) DestroyObject(_biomeRoot.gameObject);
             if (_resourceRoot != null) DestroyObject(_resourceRoot.gameObject);
@@ -644,11 +662,15 @@ namespace ApexShift.Runtime.World.Generation
 
         private void CheckAndAddWall(int nx, int nz, Vector3 pos, Vector3 direction, bool[,] landGrid, int gridSize, float tileSize)
         {
-            bool isWater = false;
-            if (nx < 0 || nx >= gridSize || nz < 0 || nz >= gridSize) isWater = true;
-            else if (!landGrid[nx, nz]) isWater = true;
+            bool outsideGrid = nx < 0 || nx >= gridSize || nz < 0 || nz >= gridSize;
+            if (!outsideGrid)
+            {
+                // Do not place invisible walls between land and water.
+                // The player is allowed to enter shallow water; WorldBounds limits only deep/out-of-world water.
+                return;
+            }
 
-            if (isWater)
+            if (outsideGrid)
             {
                 GameObject wall = new GameObject("IslandWall");
                 wall.transform.SetParent(_terrainRoot);
@@ -1011,6 +1033,120 @@ namespace ApexShift.Runtime.World.Generation
             }
 
             pos = default;
+            return false;
+        }
+
+        private void SubscribeToDayNightRuntime()
+        {
+            UnsubscribeFromDayNightRuntime();
+            _dayNightRuntime = DayNightRuntime.Active;
+            if (_dayNightRuntime != null)
+            {
+                _dayNightRuntime.DayChanged += HandleDayChanged;
+            }
+        }
+
+        private void UnsubscribeFromDayNightRuntime()
+        {
+            if (_dayNightRuntime != null)
+            {
+                _dayNightRuntime.DayChanged -= HandleDayChanged;
+                _dayNightRuntime = null;
+            }
+        }
+
+        private void HandleDayChanged(int day)
+        {
+            _currentSpawnDay = Mathf.Max(1, day);
+            TrySpawnVarnaksForDay(_currentSpawnDay);
+        }
+
+        private void TrySpawnVarnaksForDay(int day)
+        {
+            if (!spawnVarnaksOnDayChange || _lastResult == null || _creatureRoot == null)
+            {
+                return;
+            }
+
+            int safeDay = Mathf.Max(1, day);
+            if (safeDay < Mathf.Max(2, firstVarnakSpawnDay))
+            {
+                return;
+            }
+
+            int remainingCapacity = GetRemainingVarnakSpawnCapacity();
+            if (remainingCapacity <= 0)
+            {
+                Debug.Log($"[VarnakSpawn] Day {safeDay}: capacity reached ({_spawnedVarnakCount}/{GetVarnakMaxCountForDay(safeDay)}).", this);
+                return;
+            }
+
+            int spawned = 0;
+            int attempts = Mathf.Max(1, varnakDailySpawnAttempts);
+            float chance = Mathf.Clamp01(GetVarnakSpawnMultiplierForDay(safeDay) * Mathf.Max(0f, varnakDailySpawnChanceMultiplier));
+            CreatureSpawnEntryAsset varnakEntry = new CreatureSpawnEntryAsset("varnak", 1, 1, 1f);
+
+            for (int attempt = 0; attempt < attempts && spawned < remainingCapacity; attempt++)
+            {
+                if (Random.value > chance)
+                {
+                    continue;
+                }
+
+                if (!TryGetVarnakSpawnPoint(out Vector3 pos))
+                {
+                    continue;
+                }
+
+                SpawnCreature(varnakEntry, pos);
+                spawned++;
+            }
+
+            if (spawned > 0)
+            {
+                Debug.Log($"[VarnakSpawn] Day {safeDay}: spawned {spawned}. Total={_spawnedVarnakCount}/{GetVarnakMaxCountForDay(safeDay)}.", this);
+            }
+        }
+
+        private bool TryGetVarnakSpawnPoint(out Vector3 pos)
+        {
+            pos = default;
+            if (_lastResult == null || _lastResult.Regions == null || _lastResult.Regions.Count == 0)
+            {
+                return false;
+            }
+
+            List<GeneratedBiomeRegion> preferred = _lastResult.Regions
+                .Where(region => region?.Biome != null
+                                 && region.Biome.BiomeId != "water"
+                                 && region.Biome.Creatures != null
+                                 && region.Biome.Creatures.Any(entry => entry != null && NormalizeCreatureId(entry.CreatureId) == "varnak"))
+                .ToList();
+
+            List<GeneratedBiomeRegion> candidates = preferred.Count > 0
+                ? preferred
+                : _lastResult.Regions.Where(region => region?.Biome != null && region.Biome.BiomeId != "water").ToList();
+
+            if (candidates.Count == 0)
+            {
+                return false;
+            }
+
+            int attempts = Mathf.Max(8, creatureSpawnPositionAttempts);
+            for (int i = 0; i < attempts; i++)
+            {
+                GeneratedBiomeRegion region = candidates[Random.Range(0, candidates.Count)];
+                Bounds spawnBounds = region.Bounds;
+                float padding = settings?.Padding ?? 5f;
+                float actualPadding = Mathf.Min(padding, region.Bounds.size.x * 0.2f);
+                spawnBounds.Expand(new Vector3(-actualPadding * 2f, 0f, -actualPadding * 2f));
+
+                if (TryGetSafeCreatureSpawnPoint(spawnBounds, "varnak", out pos))
+                {
+                    return true;
+                }
+            }
+
             return false;
         }
 
@@ -1742,6 +1878,11 @@ if (renderer != null)
             actionBar.SetInventoryRuntime(inventory);
             actionBar.SetInputReader(inputReader);
 
+            PlayerHeldItemRuntime heldItem = player.GetComponent<PlayerHeldItemRuntime>();
+            if (heldItem == null) heldItem = player.AddComponent<PlayerHeldItemRuntime>();
+            heldItem.SetActionBarRuntime(actionBar);
+            heldItem.SetInventoryRuntime(inventory);
+
             CraftingPanelUI craftingPanel = player.GetComponent<CraftingPanelUI>();
             if (craftingPanel == null) craftingPanel = player.AddComponent<CraftingPanelUI>();
             craftingPanel.SetInputReader(inputReader);
@@ -1756,6 +1897,7 @@ if (renderer != null)
             combat.SetInputReader(inputReader);
             combat.SetInventoryRuntime(inventory);
             combat.SetSurvivalRuntime(survival);
+            combat.SetActionBarRuntime(actionBar);
             combat.SetAttackOrigin(player.transform);
 
             PlayerCombatExperienceRuntime combatExperience = player.GetComponent<PlayerCombatExperienceRuntime>();

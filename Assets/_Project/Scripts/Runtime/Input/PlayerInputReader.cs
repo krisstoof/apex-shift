@@ -21,6 +21,7 @@ namespace ApexShift.Runtime.PlayerInput
         public event System.Action OpenCraftingPressed;
         public event System.Action ToggleMapPressed;
         public event System.Action PausePressed;
+        public event System.Action<int> ActionSlotPressed;
 
         private InputActionMap gameplayMap;
         private InputAction moveAction;
@@ -106,6 +107,30 @@ namespace ApexShift.Runtime.PlayerInput
             inputActions.Enable();
         }
 
+        private void Update()
+        {
+            PollActionSlotKeys();
+        }
+
+        private void PollActionSlotKeys()
+        {
+            if (Keyboard.current == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < 9; i++)
+            {
+                Key digitKey = (Key)((int)Key.Digit1 + i);
+                Key keypadKey = (Key)((int)Key.Numpad1 + i);
+
+                if (Keyboard.current[digitKey].wasPressedThisFrame || Keyboard.current[keypadKey].wasPressedThisFrame)
+                {
+                    ActionSlotPressed?.Invoke(i);
+                }
+            }
+        }
+
         private void OnDisable()
         {
             if (inputActions == null || gameplayMap == null)
@@ -136,6 +161,10 @@ namespace ApexShift.Runtime.PlayerInput
             }
 
             gameplayMap = inputActions.FindActionMap("Player", false);
+            if (gameplayMap == null)
+            {
+                gameplayMap = inputActions.FindActionMap("Gameplay", false);
+            }
             moveAction = gameplayMap?.FindAction("Move", false);
             lookAction = gameplayMap?.FindAction("Look", false);
             interactAction = gameplayMap?.FindAction("Interact", false);

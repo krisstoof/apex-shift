@@ -15,7 +15,7 @@ MonoBehaviour:
   biomeId: hearth_meadow
   displayName: Hearth Meadow
   groundColor: {r: 0.5, g: 0.68, b: 0.36, a: 1}
-  groundMaterial: {fileID: 2100000, guid: 4cd9efe333423d544b7263618950f58d, type: 2}
+  groundMaterial: {fileID: 2100000, guid: ed0666338014955488862f7d87e0d9aa, type: 2}
   starterBiome: 1
   vegetation:
   - kind: 1

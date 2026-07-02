@@ -32,18 +32,48 @@ namespace ApexShift.Runtime.Player
         [Header("Water / Swimming")]
         [SerializeField]
         [Tooltip("Movement speed while swimming.")]
-        private float swimSpeed = 3f;
+        private float swimSpeed = 2.35f;
 
         [SerializeField]
-        [Tooltip("Y position of the water surface. The player floats at this height while in water.")]
-        private float waterSurfaceY = -0.3f;
+        [Tooltip("Player root Y while swimming. This is below water surface so the character looks submerged.")]
+        private float waterSurfaceY = -0.85f;
+
+        [SerializeField]
+        [Tooltip("How quickly the player root is pulled down/up when entering or leaving water.")]
+        private float waterVerticalBlendSpeed = 10f;
+
+        [Header("Swimming Visuals")]
+        [SerializeField]
+        [Tooltip("Child transform used as visual root. If empty, the first child with a Renderer is used.")]
+        private Transform visualRoot;
+
+        [SerializeField]
+        [Tooltip("Additional local Y offset applied to the visual only while swimming.")]
+        private float swimVisualYOffset = -0.62f;
+
+        [SerializeField]
+        [Tooltip("Forward pitch applied to the visual while swimming. Makes the character look like swimming instead of standing.")]
+        private float swimVisualPitchDegrees = 58f;
+
+        [SerializeField]
+        private float swimVisualBlendSpeed = 8f;
+
+        [SerializeField]
+        [Tooltip("Confirm water state from topography every frame instead of relying only on trigger callbacks.")]
+        private bool useTopographyWaterState = true;
+
+        [SerializeField]
+        private bool logWaterStateChanges;
 
         private CharacterController characterController;
         private Rigidbody rigidbodyComponent;
+        private PlayerAnimationDriver animationDriver;
         private bool isInWater;
+        private Vector3 visualDefaultLocalPosition;
+        private Quaternion visualDefaultLocalRotation = Quaternion.identity;
         private float _verticalVelocity;
         private const float Gravity = -22f;
-        private float _waterCheckTimer;   // for periodic topography-based swim detection
+        private bool hadTopographyState;
 
         private void Awake()
         {
@@ -59,6 +89,8 @@ namespace ApexShift.Runtime.Player
 
             characterController = GetComponent<CharacterController>();
             rigidbodyComponent = GetComponent<Rigidbody>();
+            animationDriver = GetComponent<PlayerAnimationDriver>();
+            ResolveVisualRoot();
         }
 
         private void Update()
@@ -80,45 +112,73 @@ namespace ApexShift.Runtime.Player
             }
 
             Vector2 input = inputReader.Move;
-            if (input.sqrMagnitude > 0.01f)
-            {
-                Debug.Log($"[Controller] Movement Input: {input}");
-            }
             Vector3 movement = CalculateCameraRelativeMovement(input);
-if (movement.sqrMagnitude > 1f)
+            if (movement.sqrMagnitude > 1f)
             {
                 movement.Normalize();
             }
 
+            SyncWaterStateFromTopography();
             MoveWithWorldBounds(movement);
             ApplyGravity();
-            CheckWaterStateFromTopography();
+            SyncWaterStateFromTopography();
+            UpdateSwimmingVisuals();
             RotateTowardLookPosition(inputReader.LookScreenPosition);
         }
 
         /// <summary>
-        /// Periodically queries IslandTopographyRuntime to sync swim state.
-        /// Acts as a reliable fallback if trigger-based detection misses transitions.
+        /// Queries IslandTopographyRuntime to sync swim state.
+        /// This is the authoritative water check; trigger callbacks are only a fast hint.
         /// </summary>
-        private void CheckWaterStateFromTopography()
+        private void SyncWaterStateFromTopography()
         {
-            _waterCheckTimer -= Time.deltaTime;
-            if (_waterCheckTimer > 0f) return;
-            _waterCheckTimer = 0.4f;
+            if (!useTopographyWaterState)
+            {
+                return;
+            }
 
             IslandTopographyRuntime topo = IslandTopographyRuntime.Active;
             if (topo == null || !topo.IsBuilt) return;
 
             bool onWater = topo.IsWaterAt(transform.position.x, transform.position.z);
-            if (onWater && !isInWater)
+            hadTopographyState = true;
+            SetWaterState(onWater, "topography");
+        }
+
+        private bool IsWaterAtPosition(Vector3 position)
+        {
+            IslandTopographyRuntime topo = IslandTopographyRuntime.Active;
+            if (topo != null && topo.IsBuilt)
             {
-                EnterWater();
-                GetComponent<PlayerAnimationDriver>()?.SetSwimming(true);
+                return topo.IsWaterAt(position.x, position.z);
             }
-            else if (!onWater && isInWater)
+
+            return isInWater;
+        }
+
+        private void SetWaterState(bool inWater, string reason)
+        {
+            if (isInWater == inWater)
             {
-                ExitWater();
-                GetComponent<PlayerAnimationDriver>()?.SetSwimming(false);
+                return;
+            }
+
+            if (inWater)
+            {
+                isInWater = true;
+                _verticalVelocity = 0f;
+                if (animationDriver == null) animationDriver = GetComponent<PlayerAnimationDriver>();
+                ResolveVisualRoot();
+                animationDriver?.SetSwimming(true);
+                if (logWaterStateChanges) Debug.Log($"[Controller] Entered water via {reason}", this);
+            }
+            else
+            {
+                isInWater = false;
+                if (animationDriver == null) animationDriver = GetComponent<PlayerAnimationDriver>();
+                ResolveVisualRoot();
+                animationDriver?.SetSwimming(false);
+                if (logWaterStateChanges) Debug.Log($"[Controller] Exited water via {reason}", this);
             }
         }
 
@@ -169,9 +229,18 @@ if (movement.sqrMagnitude > 1f)
             float speed = GetCurrentMovementSpeed();
             Vector3 desiredPosition = currentPosition + movement * (speed * Time.deltaTime);
 
-            // While swimming, keep player floating at the water surface
+            bool desiredWaterState = IsWaterAtPosition(desiredPosition);
+            if (desiredWaterState != isInWater)
+            {
+                SetWaterState(desiredWaterState, "desired_position");
+            }
+
+            // While swimming, pull the player below the water surface. This makes the
+            // state visually distinct from simply walking on a blue floor.
             if (isInWater)
-                desiredPosition.y = Mathf.Lerp(currentPosition.y, waterSurfaceY, 8f * Time.deltaTime);
+            {
+                desiredPosition.y = Mathf.Lerp(currentPosition.y, waterSurfaceY, Mathf.Clamp01(waterVerticalBlendSpeed * Time.deltaTime));
+            }
 
             WorldBounds worldBounds = WorldBounds.Active;
             if (worldBounds == null)
@@ -201,7 +270,7 @@ if (movement.sqrMagnitude > 1f)
             }
 
             Vector3 clamped = worldBounds.ClampToNearestAllowed(desiredPosition);
-            clamped.y = currentPosition.y;
+            clamped.y = isInWater ? Mathf.Lerp(currentPosition.y, waterSurfaceY, Mathf.Clamp01(waterVerticalBlendSpeed * Time.deltaTime)) : currentPosition.y;
             ApplyMovement(clamped);
         }
 
@@ -210,7 +279,6 @@ if (movement.sqrMagnitude > 1f)
             CameraComponent mainCamera = CameraComponent.main;
             if (mainCamera == null)
             {
-                if (Time.frameCount % 120 == 0) Debug.LogWarning("[Controller] Main Camera not found for rotation!");
                 return;
             }
 
@@ -234,11 +302,6 @@ if (movement.sqrMagnitude > 1f)
                 return;
             }
 
-            if (Time.frameCount % 60 == 0)
-            {
-                Debug.Log($"[Controller] Rotating toward direction: {direction.normalized}");
-            }
-
             Quaternion targetRotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Mathf.Clamp01(turnSpeed * Time.deltaTime));
         }
@@ -256,13 +319,13 @@ if (movement.sqrMagnitude > 1f)
         /// <summary>Called by PlayerWaterDetector when the player enters a water trigger volume.</summary>
         public void EnterWater()
         {
-            isInWater = true;
+            if (!hadTopographyState || IsWaterAtPosition(transform.position)) SetWaterState(true, "trigger");
         }
 
         /// <summary>Called by PlayerWaterDetector when the player leaves all water trigger volumes.</summary>
         public void ExitWater()
         {
-            isInWater = false;
+            if (!hadTopographyState || !IsWaterAtPosition(transform.position)) SetWaterState(false, "trigger");
         }
 
         public bool IsInWater => isInWater;
@@ -298,6 +361,61 @@ if (movement.sqrMagnitude > 1f)
             }
 
             transform.position = position;
+        }
+
+        private void ResolveVisualRoot()
+        {
+            if (visualRoot != null)
+            {
+                return;
+            }
+
+            Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+            foreach (Renderer renderer in renderers)
+            {
+                if (renderer == null || renderer.transform == transform)
+                {
+                    continue;
+                }
+
+                visualRoot = renderer.transform;
+                break;
+            }
+
+            if (visualRoot == null && transform.childCount > 0)
+            {
+                visualRoot = transform.GetChild(0);
+            }
+
+            if (visualRoot != null)
+            {
+                visualDefaultLocalPosition = visualRoot.localPosition;
+                visualDefaultLocalRotation = visualRoot.localRotation;
+            }
+        }
+
+        private void UpdateSwimmingVisuals()
+        {
+            ResolveVisualRoot();
+            if (visualRoot == null)
+            {
+                return;
+            }
+
+            float blend = Mathf.Clamp01(swimVisualBlendSpeed * Time.deltaTime);
+            if (isInWater)
+            {
+                Vector3 targetLocalPosition = visualDefaultLocalPosition + Vector3.up * swimVisualYOffset;
+                Quaternion targetLocalRotation = visualDefaultLocalRotation * Quaternion.Euler(swimVisualPitchDegrees, 0f, 0f);
+
+                visualRoot.localPosition = Vector3.Lerp(visualRoot.localPosition, targetLocalPosition, blend);
+                visualRoot.localRotation = Quaternion.Slerp(visualRoot.localRotation, targetLocalRotation, blend);
+            }
+            else
+            {
+                visualRoot.localPosition = Vector3.Lerp(visualRoot.localPosition, visualDefaultLocalPosition, blend);
+                visualRoot.localRotation = Quaternion.Slerp(visualRoot.localRotation, visualDefaultLocalRotation, blend);
+            }
         }
 
         private float GetCurrentMovementSpeed()

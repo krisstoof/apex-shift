@@ -14,6 +14,7 @@ namespace ApexShift.Runtime.Player
         [SerializeField] private PlayerInputReader inputReader;
         [SerializeField] private PlayerInventoryRuntime inventoryRuntime;
         [SerializeField] private PlayerSurvivalRuntime survivalRuntime;
+        [SerializeField] private ActionBarRuntime actionBarRuntime;
         [SerializeField] private Transform attackOrigin;
 
         [Header("Prototype Rules")]
@@ -119,6 +120,7 @@ namespace ApexShift.Runtime.Player
 
         public void SetInventoryRuntime(PlayerInventoryRuntime runtime) => inventoryRuntime = runtime;
         public void SetSurvivalRuntime(PlayerSurvivalRuntime runtime) => survivalRuntime = runtime;
+        public void SetActionBarRuntime(ActionBarRuntime runtime) => actionBarRuntime = runtime;
         public void SetAttackOrigin(Transform origin) => attackOrigin = origin != null ? origin : transform;
 
         public bool TriggerPrimaryAttack()
@@ -137,18 +139,21 @@ namespace ApexShift.Runtime.Player
                 direction.Normalize();
             }
 
-            // In the current prototype there is no explicit "equipped weapon" state yet.
-            // Prefer melee if the player owns a spear or unarmed prototype attacks are allowed.
-            // Otherwise owning a bow makes every LMB fire a projectile, which feels like
-            // melee is broken and makes close combat unreliable.
-            if (HasItem("spear") || allowPrototypeUnarmedAttack)
-            {
-                return TryMeleeAttack(direction, HasItem("spear"));
-            }
+            string activeItemId = ResolveActiveActionItemId();
 
-            if (HasItem("bow"))
+            if (string.Equals(activeItemId, "bow", System.StringComparison.OrdinalIgnoreCase) && HasItem("bow"))
             {
                 return TryFireBow(direction);
+            }
+
+            if (string.Equals(activeItemId, "spear", System.StringComparison.OrdinalIgnoreCase) && HasItem("spear"))
+            {
+                return TryMeleeAttack(direction, true);
+            }
+
+            if (allowPrototypeUnarmedAttack)
+            {
+                return TryMeleeAttack(direction, false);
             }
 
             PublishCombatEvent(GameplayEventKind.PlayerMeleeHit, "player_attack_no_weapon", transform.position, "none", "no_weapon", 0f);
@@ -397,6 +402,27 @@ namespace ApexShift.Runtime.Player
         private bool HasItem(string itemId)
         {
             return inventoryRuntime != null && inventoryRuntime.Inventory != null && inventoryRuntime.Inventory.HasItem(itemId, 1);
+        }
+
+        private string ResolveActiveActionItemId()
+        {
+            if (actionBarRuntime == null)
+            {
+                actionBarRuntime = GetComponent<ActionBarRuntime>() ?? ActionBarRuntime.Active;
+            }
+
+            string activeItemId = actionBarRuntime != null ? actionBarRuntime.ActiveItemId : string.Empty;
+            if (!string.IsNullOrWhiteSpace(activeItemId) && !ActionBarRuntime.IsActionBarItem(activeItemId))
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(activeItemId))
+            {
+                GetComponent<PlayerHeldItemRuntime>()?.ForceEquipActionItem(activeItemId);
+            }
+
+            return string.IsNullOrWhiteSpace(activeItemId) ? string.Empty : activeItemId.Trim().ToLowerInvariant();
         }
 
         private void ResolveReferences()

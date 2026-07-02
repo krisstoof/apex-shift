@@ -45,9 +45,15 @@ namespace ApexShift.Runtime.Fire
 
         public static bool TryGetStrongestSource(Vector3 position, out FireSourceRuntime result)
         {
+            return TryGetStrongestSource(position, 1f, out result);
+        }
+
+        public static bool TryGetStrongestSource(Vector3 position, float radiusMultiplier, out FireSourceRuntime result)
+        {
             CleanupDeadSources();
             result = null;
             float bestScore = float.NegativeInfinity;
+            float multiplier = Mathf.Max(0.1f, radiusMultiplier);
 
             for (int i = 0; i < sources.Count; i++)
             {
@@ -57,7 +63,7 @@ namespace ApexShift.Runtime.Fire
                     continue;
                 }
 
-                float radius = Mathf.Max(0.1f, source.ProtectionRadius);
+                float radius = Mathf.Max(0.1f, source.ProtectionRadius) * multiplier;
                 Vector3 delta = source.transform.position - position;
                 delta.y = 0f;
                 float distance = delta.magnitude;

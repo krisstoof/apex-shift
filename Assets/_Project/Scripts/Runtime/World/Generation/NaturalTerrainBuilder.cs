@@ -306,28 +306,34 @@ namespace ApexShift.Runtime.World.Generation
             go.AddComponent<MeshFilter>().sharedMesh          = mesh;
             go.AddComponent<MeshRenderer>().sharedMaterials   = mats.ToArray();
 
-            // ── Physics floor: flat BoxCollider instead of MeshCollider ─────────
-            // MeshCollider on a large irregular mesh creates invisible micro-edges
-            // at tile boundaries that the CharacterController interprets as walls,
-            // preventing the player from crossing from land onto the water surface.
-            // A single flat BoxCollider has no such edges – the player walks onto it
-            // smoothly from any direction.  Top face is at waterY so it sits exactly
-            // at the water surface; the land MeshCollider (always above waterY on
-            // land) takes priority there so the player never "floats" above terrain.
+            // ── Swim support collider, not a walkable water-floor ───────────────
+            // Previous version put the top face exactly at waterY. CharacterController
+            // then stood on water like a normal floor, so the player visually walked
+            // across the surface. Keep a broad support collider below the surface only:
+            // it catches the controller if detection fails, but the player can be
+            // visually lowered into a swimming pose.
             float worldSpan = gridSize * tileSize;
+            const float swimSupportDepth = 1.15f;
+            const float swimSupportThickness = 0.10f;
             BoxCollider waterFloor = go.AddComponent<BoxCollider>();
-            waterFloor.center = new Vector3(0f, waterY - 0.05f, 0f);  // top face = waterY
-            waterFloor.size   = new Vector3(worldSpan, 0.1f, worldSpan);
+            waterFloor.center = new Vector3(0f, waterY - swimSupportDepth - swimSupportThickness * 0.5f, 0f);
+            waterFloor.size   = new Vector3(worldSpan, swimSupportThickness, worldSpan);
 
-            // Trigger for PlayerWaterDetector – covers the entire water area at surface height
+            // Trigger for PlayerWaterDetector. It is intentionally non-solid; actual
+            // water state is confirmed by IslandTopographyRuntime on the player, because
+            // this unified mesh has rectangular bounds even when its triangles are only water.
             Bounds b = mesh.bounds;
             if (Application.isPlaying)
             {
-                BoxCollider trigger = go.AddComponent<BoxCollider>();
+                GameObject triggerGo = new GameObject("WaterSurfaceTrigger");
+                triggerGo.transform.SetParent(go.transform, false);
+                triggerGo.layer = go.layer;
+
+                BoxCollider trigger = triggerGo.AddComponent<BoxCollider>();
                 trigger.isTrigger = true;
                 trigger.center    = new Vector3(0f, 0.7f, 0f);    // slightly above surface
                 trigger.size      = new Vector3(b.size.x, 1.4f, b.size.z);
-                go.AddComponent<WaterVolume>();
+                triggerGo.AddComponent<WaterVolume>();
             }
 
             return go;

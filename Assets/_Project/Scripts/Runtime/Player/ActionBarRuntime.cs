@@ -16,6 +16,14 @@ namespace ApexShift.Runtime.Player
         [SerializeField] private PlayerInventoryRuntime inventoryRuntime;
         [SerializeField] private ApexShift.Runtime.PlayerInput.PlayerInputReader inputReader;
         [SerializeField] private int slotCount = 9;
+        [SerializeField] private bool forceEquipOnSlotSelect = true;
+        [SerializeField] private bool rejectNonActionItems = true;
+        [SerializeField] private bool autoAssignTestItemsOnAwake = true;
+        [SerializeField] private Color normalSlotColor = new Color(0.10f, 0.12f, 0.09f, 0.82f);
+        [SerializeField] private Color activeSlotColor = new Color(0.86f, 0.74f, 0.20f, 0.96f);
+        [SerializeField] private Color emptyActiveSlotColor = new Color(0.48f, 0.42f, 0.14f, 0.96f);
+        [SerializeField] private Vector2 activeSlotScale = new Vector2(1.12f, 1.12f);
+        [SerializeField] private Color activeOutlineColor = new Color(1f, 0.98f, 0.55f, 1f);
 
         private readonly string[] assignedItemIds = new string[9];
         private readonly List<SlotView> slotViews = new List<SlotView>();
@@ -23,23 +31,61 @@ namespace ApexShift.Runtime.Player
         private Canvas canvas;
         private Font font;
         private readonly Dictionary<string, Sprite> iconCache = new Dictionary<string, Sprite>(StringComparer.OrdinalIgnoreCase);
+        private int activeSlotIndex = -1;
+        private bool uiBuilt = false;
+
+        public int ActiveSlotIndex => activeSlotIndex;
+        public string ActiveItemId => activeSlotIndex >= 0 && activeSlotIndex < assignedItemIds.Length ? assignedItemIds[activeSlotIndex] ?? string.Empty : string.Empty;
+        public event Action<int, string> ActiveSlotChanged;
 
         private void Awake()
         {
+            Debug.Log($"[ActionBar] Awake() called on {gameObject.name}", this);
             Active = this;
             font = UnityEngine.Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             EnsureEventSystem();
-            CleanupDuplicateActionBars();
+            
+            // Destroy all existing ActionBarUI instances
+            GameObject[] allObjects = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include);
+            foreach (GameObject go in allObjects)
+            {
+                if (go != null && go.name == "ActionBarUI")
+                {
+                    if (Application.isPlaying)
+                    {
+                        Destroy(go);
+                    }
+                    else
+                    {
+                        DestroyImmediate(go);
+                    }
+                }
+            }
+            
             BuildIfNeeded();
             Refresh();
+
+            if (autoAssignTestItemsOnAwake)
+            {
+                Debug.Log("[ActionBar] Auto-assigning test items on awake...", this);
+                AssignItemToSlot(0, "spear");
+                AssignItemToSlot(1, "bow");
+                AssignItemToSlot(2, "axe");
+                AssignItemToSlot(3, "pickaxe");
+                AssignItemToSlot(4, "torch");
+            }
         }
 
         private void OnEnable()
         {
             Active = this;
-            CleanupDuplicateActionBars();
-            BuildIfNeeded();
             Refresh();
+            SubscribeToInput();
+        }
+
+        private void OnDisable()
+        {
+            UnsubscribeFromInput();
         }
 
         private void OnDestroy()
@@ -57,18 +103,33 @@ namespace ApexShift.Runtime.Player
 
         private void Update()
         {
-            if (Keyboard.current == null)
-            {
-                return;
-            }
+            // Keyboard polling moved to PlayerInputReader.PollActionSlotKeys()
+            // ActionBarRuntime now listens to ActionSlotPressed event instead
+        }
 
-            for (int i = 0; i < Mathf.Min(slotCount, 9); i++)
+        private void SubscribeToInput()
+        {
+            if (inputReader != null)
             {
-                Key key = (Key)((int)Key.Digit1 + i);
-                if (Keyboard.current[key].wasPressedThisFrame)
-                {
-                    Debug.Log($"[ActionBar] selected slot {i + 1}: {assignedItemIds[i]}");
-                }
+                inputReader.ActionSlotPressed -= OnActionSlotPressed;
+                inputReader.ActionSlotPressed += OnActionSlotPressed;
+            }
+        }
+
+        private void UnsubscribeFromInput()
+        {
+            if (inputReader != null)
+            {
+                inputReader.ActionSlotPressed -= OnActionSlotPressed;
+            }
+        }
+
+        private void OnActionSlotPressed(int slotIndex)
+        {
+            if (slotIndex >= 0 && slotIndex < 9)
+            {
+                SetActiveSlot(slotIndex);
+                Debug.Log($"[ActionBar] active slot -> {slotIndex + 1} ({ActiveItemId})");
             }
         }
 
@@ -80,13 +141,22 @@ namespace ApexShift.Runtime.Player
 
         public void SetInputReader(ApexShift.Runtime.PlayerInput.PlayerInputReader reader)
         {
+            UnsubscribeFromInput();
             inputReader = reader;
+            SubscribeToInput();
         }
 
         public bool TryAssignItemAtScreenPosition(string itemId, Vector2 screenPosition)
         {
-            if (string.IsNullOrWhiteSpace(itemId))
+            string normalized = NormalizeItemId(itemId);
+            if (string.IsNullOrWhiteSpace(normalized))
             {
+                return false;
+            }
+
+            if (rejectNonActionItems && !IsActionBarItem(normalized))
+            {
+                Debug.Log($"[ActionBar] rejected non-action item '{normalized}'. Resources should stay in inventory.", this);
                 return false;
             }
 
@@ -100,7 +170,7 @@ namespace ApexShift.Runtime.Player
 
                 if (RectTransformUtility.RectangleContainsScreenPoint(view.Rect, screenPosition, null))
                 {
-                    Assign(i, itemId);
+                    Assign(i, normalized);
                     return true;
                 }
             }
@@ -115,17 +185,129 @@ namespace ApexShift.Runtime.Player
                 return;
             }
 
-            assignedItemIds[slotIndex] = itemId.Trim().ToLowerInvariant();
+            string normalized = NormalizeItemId(itemId);
+            if (rejectNonActionItems && !IsActionBarItem(normalized))
+            {
+                Debug.Log($"[ActionBar] rejected non-action item '{normalized}'.", this);
+                return;
+            }
+
+            assignedItemIds[slotIndex] = normalized;
+            SetActiveSlot(slotIndex);
             Refresh();
-            Debug.Log($"[ActionBar] assigned {assignedItemIds[slotIndex]} to slot {slotIndex + 1}");
+            Debug.Log($"[ActionBar] assigned and activated {assignedItemIds[slotIndex]} in slot {slotIndex + 1}", this);
+        }
+
+        public void SetActiveSlot(int slotIndex)
+        {
+            if (slotIndex < 0 || slotIndex >= assignedItemIds.Length)
+            {
+                if (activeSlotIndex < 0)
+                {
+                    return;
+                }
+
+                activeSlotIndex = -1;
+                Refresh();
+                NotifyActiveSlotChanged();
+                return;
+            }
+
+            activeSlotIndex = slotIndex;
+            Refresh();
+            NotifyActiveSlotChanged();
+        }
+
+        public void ClearActiveSlot()
+        {
+            activeSlotIndex = -1;
+            Refresh();
+            NotifyActiveSlotChanged();
+        }
+
+        public bool IsSlotActive(int slotIndex)
+        {
+            return slotIndex >= 0 && slotIndex < assignedItemIds.Length && activeSlotIndex == slotIndex;
+        }
+
+        public string GetAssignedItemInSlot(int slotIndex)
+        {
+            return slotIndex >= 0 && slotIndex < assignedItemIds.Length
+                ? assignedItemIds[slotIndex] ?? string.Empty
+                : string.Empty;
+        }
+
+        public void AssignItemToSlot(int slotIndex, string itemId)
+        {
+            if (slotIndex < 0 || slotIndex >= assignedItemIds.Length)
+            {
+                Debug.LogWarning($"[ActionBar] invalid slot index {slotIndex}", this);
+                return;
+            }
+
+            string normalized = NormalizeItemId(itemId);
+            if (rejectNonActionItems && !IsActionBarItem(normalized))
+            {
+                Debug.Log($"[ActionBar] rejected non-action item '{normalized}'.", this);
+                return;
+            }
+
+            assignedItemIds[slotIndex] = normalized;
+            SetActiveSlot(slotIndex);
+            Refresh();
+            Debug.Log($"[ActionBar] assigned {normalized} to slot {slotIndex + 1}", this);
+        }
+
+        private void NotifyActiveSlotChanged()
+        {
+            string activeItem = ActiveItemId;
+            ActiveSlotChanged?.Invoke(activeSlotIndex, activeItem);
+
+            if (forceEquipOnSlotSelect)
+            {
+                PlayerHeldItemRuntime held = GetComponent<PlayerHeldItemRuntime>();
+                if (held == null)
+                {
+                    held = gameObject.AddComponent<PlayerHeldItemRuntime>();
+                }
+
+                held.SetActionBarRuntime(this);
+                held.SetInventoryRuntime(inventoryRuntime);
+                held.ForceEquipActionItem(activeItem);
+            }
+
+            Debug.Log(
+                $"[ActionBar] selected slot {activeSlotIndex + 1}; assigned='{GetAssignedItemInSlot(activeSlotIndex)}'; active='{activeItem}'",
+                this);
         }
 
         private void BuildIfNeeded()
         {
-            if (uiRoot != null && canvas != null && slotViews.Count > 0)
+            if (uiBuilt)
             {
                 return;
             }
+
+            // Destroy ALL ActionBarUI objects first
+            GameObject[] allObjects = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include);
+            foreach (GameObject go in allObjects)
+            {
+                if (go != null && go.name == "ActionBarUI")
+                {
+                    if (Application.isPlaying)
+                    {
+                        Destroy(go);
+                    }
+                    else
+                    {
+                        DestroyImmediate(go);
+                    }
+                }
+            }
+
+            uiBuilt = true;
+            uiRoot = null;
+            slotViews.Clear();
 
             if (uiRoot == null)
             {
@@ -198,8 +380,18 @@ namespace ApexShift.Runtime.Player
             slot.transform.SetParent(parent, false);
             RectTransform rt = slot.GetComponent<RectTransform>();
             rt.sizeDelta = new Vector2(66f, 54f);
+            
+            // Add LayoutElement so HorizontalLayoutGroup knows the preferred size
+            LayoutElement layoutElement = slot.AddComponent<LayoutElement>();
+            layoutElement.preferredWidth = 66f;
+            layoutElement.preferredHeight = 54f;
+            
             Image bg = slot.GetComponent<Image>();
-            bg.color = new Color(0.10f, 0.12f, 0.09f, 0.82f);
+            bg.color = normalSlotColor;
+            Outline outline = slot.AddComponent<Outline>();
+            outline.enabled = false;
+            outline.effectDistance = new Vector2(3f, -3f);
+            outline.effectColor = activeOutlineColor;
 
             Text number = CreateText(slot.transform, "Number", (index + 1).ToString(), 11, TextAnchor.UpperLeft);
             RectTransform numberRt = number.GetComponent<RectTransform>();
@@ -225,7 +417,16 @@ namespace ApexShift.Runtime.Player
             labelRt.offsetMin = new Vector2(2f, 2f);
             labelRt.offsetMax = new Vector2(-2f, -2f);
 
-            return new SlotView(rt, icon, label);
+            Text badge = CreateText(slot.transform, "ActiveBadge", "ACTIVE", 9, TextAnchor.UpperRight);
+            RectTransform badgeRt = badge.GetComponent<RectTransform>();
+            badgeRt.anchorMin = Vector2.zero;
+            badgeRt.anchorMax = Vector2.one;
+            badgeRt.offsetMin = new Vector2(2f, 2f);
+            badgeRt.offsetMax = new Vector2(-2f, -2f);
+            badge.color = activeOutlineColor;
+            badge.enabled = false;
+
+            return new SlotView(rt, bg, outline, icon, label, badge);
         }
 
         private void Refresh()
@@ -235,16 +436,26 @@ namespace ApexShift.Runtime.Player
             {
                 string itemId = i < assignedItemIds.Length ? assignedItemIds[i] : string.Empty;
                 SlotView view = slotViews[i];
+                bool isActive = IsSlotActive(i);
                 if (string.IsNullOrWhiteSpace(itemId))
                 {
                     view.Icon.enabled = false;
-                    view.Label.text = string.Empty;
+                    view.Background.color = isActive ? emptyActiveSlotColor : normalSlotColor;
+                    view.Outline.enabled = isActive;
+                    view.Rect.localScale = isActive ? new Vector3(activeSlotScale.x, activeSlotScale.y, 1f) : Vector3.one;
+                    view.Label.text = isActive ? "active" : string.Empty;
+                    view.Badge.enabled = isActive;
                     continue;
                 }
 
                 view.Icon.sprite = ResolveIcon(itemId);
                 view.Icon.enabled = view.Icon.sprite != null;
-                view.Label.text = itemId;
+                view.Background.color = isActive ? activeSlotColor : normalSlotColor;
+                view.Outline.enabled = isActive;
+                view.Outline.effectColor = activeOutlineColor;
+                view.Rect.localScale = isActive ? new Vector3(activeSlotScale.x, activeSlotScale.y, 1f) : Vector3.one;
+                view.Label.text = isActive ? $"> {itemId} <" : itemId;
+                view.Badge.enabled = isActive;
             }
         }
 
@@ -274,6 +485,43 @@ namespace ApexShift.Runtime.Player
             Sprite sprite = UnityEngine.Resources.Load<Sprite>(path) ?? UnityEngine.Resources.Load<Sprite>("ApexShift2D/Art/Icons/Items/item_unknown");
             iconCache[normalized] = sprite;
             return sprite;
+        }
+
+        public static bool IsActionBarItem(string itemId)
+        {
+            switch (NormalizeItemId(itemId))
+            {
+                case "spear":
+                case "bow":
+                case "axe":
+                case "pickaxe":
+                case "torch":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public static bool IsBlockedResourceItem(string itemId)
+        {
+            switch (NormalizeItemId(itemId))
+            {
+                case "wood":
+                case "stone":
+                case "fiber":
+                case "meat":
+                case "hide":
+                case "bone":
+                case "berries":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static string NormalizeItemId(string itemId)
+        {
+            return string.IsNullOrWhiteSpace(itemId) ? string.Empty : itemId.Trim().ToLowerInvariant();
         }
 
         private Text CreateText(Transform parent, string name, string text, int fontSize, TextAnchor anchor)
@@ -347,16 +595,22 @@ namespace ApexShift.Runtime.Player
 
         private sealed class SlotView
         {
-            public SlotView(RectTransform rect, Image icon, Text label)
+            public SlotView(RectTransform rect, Image background, Outline outline, Image icon, Text label, Text badge)
             {
                 Rect = rect;
+                Background = background;
+                Outline = outline;
                 Icon = icon;
                 Label = label;
+                Badge = badge;
             }
 
             public RectTransform Rect { get; }
+            public Image Background { get; }
+            public Outline Outline { get; }
             public Image Icon { get; }
             public Text Label { get; }
+            public Text Badge { get; }
         }
     }
 }

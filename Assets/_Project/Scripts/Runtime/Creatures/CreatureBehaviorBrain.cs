@@ -5,6 +5,7 @@ using ApexShift.Runtime.World.Query;
 using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Audio;
+using ApexShift.Runtime.Fire;
 
 namespace ApexShift.Runtime.Creatures
 {
@@ -35,6 +36,8 @@ namespace ApexShift.Runtime.Creatures
         [SerializeField] private float varnakPlayerCloseChaseRange = 12f;
         [SerializeField] private float varnakPlayerAttackRange = 3.5f;
         [SerializeField] private float varnakPlayerDamage = 12f;
+        [SerializeField] private float varnakFireFearRangeMultiplier = 1.45f;
+        [SerializeField] private float varnakFireFearMinimumRange = 12f;
         [Header("Grazer emergency AI")]
         [SerializeField] private float grazerScavengeRange = 72f;
         [SerializeField] private float grazerSmallPreyDetectRange = 16f;
@@ -151,6 +154,11 @@ namespace ApexShift.Runtime.Creatures
 
         private void HandleVarnakBrain(WorldQueryRuntime query)
         {
+            if (TryFleeFromFire())
+            {
+                return;
+            }
+
             if (_player != null)
             {
                 float playerDistance = HorizontalDistance(transform.position, _player.position);
@@ -201,6 +209,42 @@ namespace ApexShift.Runtime.Creatures
                 return;
             }
             SetState(CreatureBehaviorState.Wander, "seek_food");
+        }
+
+        private bool TryFleeFromFire()
+        {
+            if (!FireSourceRegistry.TryGetStrongestSource(transform.position, varnakFireFearRangeMultiplier, out FireSourceRuntime source))
+            {
+                return false;
+            }
+
+            Vector3 away = transform.position - source.transform.position;
+            away.y = 0f;
+            if (away.sqrMagnitude < 0.001f)
+            {
+                away = Random.insideUnitSphere;
+                away.y = 0f;
+            }
+
+            float radius = Mathf.Max(1f, source.ProtectionRadius);
+            float fleeRange = Mathf.Max(varnakFireFearMinimumRange, radius * Mathf.Max(1f, varnakFireFearRangeMultiplier));
+            Vector3 target = transform.position + away.normalized * fleeRange;
+            CreatureNavigationAdapter adapter = _agentView != null ? _agentView.GetNavigationAdapter() : null;
+            if (adapter != null && adapter.TrySamplePosition(target, out Vector3 sampled, navSampleDistance))
+            {
+                target = sampled;
+            }
+
+            if (_wander != null && _wander.enabled)
+            {
+                _wander.enabled = false;
+            }
+
+            SetState(CreatureBehaviorState.Flee, $"afraid_of_fire:{source.SourceId}");
+            _agentView.Stop();
+            MoveToTarget(target);
+            TryPublishVarnakCombatEvent(GameplayEventKind.VarnakScaredByFire, source.SourceId, "varnak_scared_by_fire");
+            return true;
         }
 
         private void HandleGrazerBrain(WorldQueryRuntime query)

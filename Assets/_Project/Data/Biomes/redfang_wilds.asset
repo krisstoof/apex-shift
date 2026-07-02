@@ -15,7 +15,7 @@ MonoBehaviour:
   biomeId: redfang_wilds
   displayName: Redfang Wilds
   groundColor: {r: 0.55, g: 0.36, b: 0.16, a: 1}
-  groundMaterial: {fileID: 2100000, guid: cde236655c5c6f94886e804baadde036, type: 2}
+  groundMaterial: {fileID: 2100000, guid: 5213a5ef58e5fac41a7889028eda09d2, type: 2}
   starterBiome: 0
   vegetation:
   - kind: 2

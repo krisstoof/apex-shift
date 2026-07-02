@@ -15,7 +15,7 @@ MonoBehaviour:
   biomeId: south_thicket
   displayName: South Thicket
   groundColor: {r: 0.2, g: 0.43, b: 0.13, a: 1}
-  groundMaterial: {fileID: 2100000, guid: 644ea2bd34d84d542b279f71af0684b2, type: 2}
+  groundMaterial: {fileID: 2100000, guid: 45eb7efec0c8f504285b382733758e52, type: 2}
   starterBiome: 0
   vegetation:
   - kind: 1

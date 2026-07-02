@@ -15,7 +15,7 @@ MonoBehaviour:
   biomeId: westwood
   displayName: Westwood
   groundColor: {r: 0.055, g: 0.18, b: 0.075, a: 1}
-  groundMaterial: {fileID: 2100000, guid: 6421fe5830882714f9229f70629b28e5, type: 2}
+  groundMaterial: {fileID: 2100000, guid: 819f33e97450f7648b451ffed5bc5900, type: 2}
   starterBiome: 0
   vegetation:
   - kind: 0

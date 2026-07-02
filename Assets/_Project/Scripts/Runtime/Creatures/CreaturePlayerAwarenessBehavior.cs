@@ -14,6 +14,8 @@ namespace ApexShift.Runtime.Creatures
         [SerializeField] private float fleeDistance = 8f;
         [SerializeField] private float varnakChaseRange = 28f;
         [SerializeField] private float varnakStopDistance = 2.5f;
+        [SerializeField] private float varnakFireFearRangeMultiplier = 1.45f;
+        [SerializeField] private float varnakFireFearMinimumRange = 12f;
         [SerializeField] private float forcedThreatDuration = 1.25f;
         [SerializeField] private float navSampleDistance = 4f;
 
@@ -108,13 +110,13 @@ namespace ApexShift.Runtime.Creatures
                 return;
             }
 
+            if (id == "varnak" && TryAvoidFire(distance))
+            {
+                return;
+            }
+
             if (id == "varnak" && (forced || IsPassiveState(currentState)) && distance <= varnakChaseRange)
             {
-                if (TryAvoidFire(distance))
-                {
-                    return;
-                }
-
                 if (distance > varnakStopDistance)
                 {
                     behavior?.SetBehaviorStateForTests(CreatureBehaviorState.Chase, forced ? "player_combat_noise" : $"player_detected d:{distance:0.0}");
@@ -193,7 +195,7 @@ namespace ApexShift.Runtime.Creatures
 
         private bool TryAvoidFire(float playerDistance)
         {
-            if (!FireSourceRegistry.TryGetStrongestSource(transform.position, out FireSourceRuntime source))
+            if (!FireSourceRegistry.TryGetStrongestSource(transform.position, varnakFireFearRangeMultiplier, out FireSourceRuntime source))
             {
                 return false;
             }
@@ -207,7 +209,8 @@ namespace ApexShift.Runtime.Creatures
             }
 
             float radius = Mathf.Max(1f, source.ProtectionRadius);
-            Vector3 target = transform.position + direction.normalized * Mathf.Max(6f, radius * 0.65f);
+            float fleeRange = Mathf.Max(varnakFireFearMinimumRange, radius * Mathf.Max(1f, varnakFireFearRangeMultiplier));
+            Vector3 target = transform.position + direction.normalized * fleeRange;
             CreatureNavigationAdapter adapter = view.GetNavigationAdapter();
             if (adapter != null && adapter.TrySamplePosition(target, out Vector3 sampled, navSampleDistance))
             {
