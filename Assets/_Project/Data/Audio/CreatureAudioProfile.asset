@@ -12,7 +12,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 140e4692240225c4ab88da652234175b, type: 3}
   m_Name: CreatureAudioProfile
   m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.Audio.CreatureAudioProfile
-  hitVoiceClips:
-  - {fileID: 8300000, guid: d2c91d8e4a022ed48a51161afb38903c, type: 3}
+  smallPreyAlarmClips:
+  - {fileID: 8300000, guid: 2f9c21799873186479252e9988d343f4, type: 3}
+  - {fileID: 8300000, guid: 437557eb1829e7044ad0d100b47b0b6e, type: 3}
+  - {fileID: 8300000, guid: 614f4e4892977454b9f613fe501ff981, type: 3}
+  grazerAlertClips:
+  - {fileID: 8300000, guid: bab929edfb2371342980eb1bb5afd281, type: 3}
+  - {fileID: 8300000, guid: 74c9a4f18e916504393b04c98b3787d5, type: 3}
+  - {fileID: 8300000, guid: 4478e56003bc1d149b2652269dffaf45, type: 3}
+  varnakGrowlClips:
+  - {fileID: 8300000, guid: 92c033787b37e574bbbbd5bfd19a42f1, type: 3}
+  - {fileID: 8300000, guid: 43bb3b355756af24e830cde1d4d6175f, type: 3}
+  - {fileID: 8300000, guid: 62006e9e58a4c6847981fd223e9e202a, type: 3}
+  varnakAttackClips:
+  - {fileID: 8300000, guid: b7c65357c41cc79409ad052d4f7b5768, type: 3}
+  - {fileID: 8300000, guid: 9e434512a359cd74a95546bc1dacd265, type: 3}
+  - {fileID: 8300000, guid: cb3679d7dfd8508478ff1f04bc185d86, type: 3}
+  varnakHurtClips:
+  - {fileID: 8300000, guid: a4d221eee755771488e0f236fe2742f6, type: 3}
+  - {fileID: 8300000, guid: cd8268629290d8545aa904b4ff2b08d8, type: 3}
+  - {fileID: 8300000, guid: f27ab12865918c746bc8108ab7473a33, type: 3}
   deathVoiceClips:
-  - {fileID: 8300000, guid: 136765e03516f094eb5908d45cfb4c7a, type: 3}
+  - {fileID: 8300000, guid: 078d528f408c3da458b133cf472072de, type: 3}
+  - {fileID: 8300000, guid: b03ac6e9b27103e48b22ddc191451667, type: 3}
+  footstepClips:
+  - {fileID: 8300000, guid: b97076ef07e84be458a770bf1cf1ba3e, type: 3}
+  - {fileID: 8300000, guid: 9221f0b6c29b37b4eb40706ea577912a, type: 3}
+  - {fileID: 8300000, guid: 159259a825d25b647831c63cebbaeb42, type: 3}
+  - {fileID: 8300000, guid: 2cccc6167bce89b4989bb9c5358f4fbe, type: 3}
+  - {fileID: 8300000, guid: 5b8a0bfa00ce7e34ab3514a9f4c39bf3, type: 3}
+  - {fileID: 8300000, guid: 05687ab81019ada4aaf1c4dbfd4fa946, type: 3}
+  - {fileID: 8300000, guid: 34a340973cb0cbb4da6b6a667680bbe9, type: 3}
+  - {fileID: 8300000, guid: b36e2da71af82004eabce8ef6801015d, type: 3}
+  - {fileID: 8300000, guid: 081ec025d884b0c40b4b295905423681, type: 3}

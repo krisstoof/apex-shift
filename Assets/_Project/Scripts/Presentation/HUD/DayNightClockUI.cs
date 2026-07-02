@@ -50,33 +50,30 @@ namespace ApexShift.Presentation.HUD
 
         private void Refresh()
         {
-            if (timeLabel == null)
-            {
-                return;
-            }
+            if (timeLabel == null) return;
 
             DayNightSnapshot snapshot = DayNightSnapshot.FromRuntime(dayNightRuntime);
-            timeLabel.alignment = TextAnchor.MiddleLeft;
+
+            timeLabel.alignment      = TextAnchor.MiddleCenter;
             timeLabel.supportRichText = false;
-            timeLabel.enabled = true;
-            timeLabel.fontSize = 14;
-            timeLabel.raycastTarget = false;
-            timeLabel.color = new Color(0.98f, 0.96f, 0.82f, 1f);
+            timeLabel.enabled        = true;
+            timeLabel.fontSize       = 14;
+            timeLabel.raycastTarget  = false;
+            // Night = cool blue-white, Day = warm cream
+            timeLabel.color = snapshot.isNight
+                ? new Color(0.78f, 0.88f, 1.00f, 1f)
+                : new Color(0.98f, 0.94f, 0.72f, 1f);
             timeLabel.text = snapshot.ClockText;
 
-            if (icon != null)
-            {
-                icon.raycastTarget = false;
-                icon.color = snapshot.isNight ? new Color(0.34f, 0.48f, 0.88f, 1f) : new Color(0.98f, 0.82f, 0.28f, 1f);
-                icon.preserveAspect = true;
-            }
+            // Hide icon if one was accidentally assigned without a sprite
+            if (icon != null) icon.enabled = icon.sprite != null;
 
+            // Keep panel width just enough for the text; no dynamic resizing that
+            // could accidentally expose a gap below the clock.
             if (panelRoot != null)
             {
-                float iconWidth = icon != null ? 22f : 8f;
-                float preferredWidth = Mathf.Clamp(iconWidth + timeLabel.preferredWidth + 12f, 76f, 96f);
-                Vector2 size = panelRoot.sizeDelta;
-                panelRoot.sizeDelta = new Vector2(preferredWidth, Mathf.Max(24f, size.y));
+                float w = Mathf.Clamp(timeLabel.preferredWidth + 16f, 72f, 106f);
+                panelRoot.sizeDelta = new Vector2(w, panelRoot.sizeDelta.y);
             }
         }
     }

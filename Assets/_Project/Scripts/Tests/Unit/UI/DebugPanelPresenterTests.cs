@@ -17,7 +17,7 @@ namespace ApexShift.Tests.Unit.UI
                     new InventoryItemSnapshot("torch", 1)
                 }),
                 new SurvivalSnapshot(75f, 40f, 20f, 88f, "healthy", true, false),
-                new WorldDebugSnapshot(1234, new Vector3(1f, 2f, 3f), true, 9, 4, 2, 1, 1, 3, 1, 2, 58.2f, 12.5f),
+                new WorldDebugSnapshot(1234, new Vector3(1f, 2f, 3f), true, 9, 4, 2, 1, 1, 3, 1, 2, 0, 0, 0, 0, 58.2f, 12.5f, System.Array.Empty<string>()),
                 new DayNightSnapshot(3, 0.75f, 18f, false, 0f, "Evening"),
                 12.5f);
 

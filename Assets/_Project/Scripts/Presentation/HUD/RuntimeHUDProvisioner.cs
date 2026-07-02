@@ -138,33 +138,21 @@ namespace ApexShift.Presentation.HUD
             fpsRt.anchoredPosition = Vector2.zero;
             fpsLabelGo.AddComponent<FpsCounterUI>();
 
-            // Group 4b: Clock (Bottom Left, above FPS)
-            GameObject clockPanel = CreateUIPanel(hudGo.transform, "ClockPanel", new Vector2(0, 0), new Vector2(0, 0), new Vector2(120, 30), new Vector2(20, 92));
+            // Group 4b: Clock (Bottom Left, above FPS) – text only, no icon placeholder
+            GameObject clockPanel = CreateUIPanel(hudGo.transform, "ClockPanel", new Vector2(0, 0), new Vector2(0, 0), new Vector2(92, 26), new Vector2(14, 56));
             Image clockBg = clockPanel.GetComponent<Image>();
-            clockBg.color = new Color(0.03f, 0.05f, 0.03f, 0.38f);
+            clockBg.color = new Color(0.02f, 0.04f, 0.02f, 0.42f);
             clockBg.raycastTarget = false;
 
-            GameObject clockIconGo = new GameObject("ClockIcon");
-            clockIconGo.transform.SetParent(clockPanel.transform, false);
-            Image clockIcon = clockIconGo.AddComponent<Image>();
-            clockIcon.raycastTarget = false;
-            RectTransform clockIconRt = clockIconGo.GetComponent<RectTransform>();
-            clockIconRt.anchorMin = new Vector2(0f, 0.5f);
-            clockIconRt.anchorMax = new Vector2(0f, 0.5f);
-            clockIconRt.pivot = new Vector2(0.5f, 0.5f);
-            clockIconRt.sizeDelta = new Vector2(14, 14);
-            clockIconRt.anchoredPosition = new Vector2(12, 0);
-
-            GameObject timeLabelGo = CreateMenuText(clockPanel.transform, "TimeLabel", "00:00", 14, TextAnchor.MiddleLeft, new Vector2(24, 0), new Color(0.98f, 0.96f, 0.82f, 1f));
+            GameObject timeLabelGo = CreateMenuText(clockPanel.transform, "TimeLabel", "00:00", 14, TextAnchor.MiddleCenter, Vector2.zero, new Color(0.98f, 0.96f, 0.82f, 1f));
             RectTransform timeRt = timeLabelGo.GetComponent<RectTransform>();
-            timeRt.anchorMin = new Vector2(0f, 0.5f);
-            timeRt.anchorMax = new Vector2(1f, 0.5f);
-            timeRt.pivot = new Vector2(0f, 0.5f);
-            timeRt.sizeDelta = new Vector2(54, 18);
-            timeRt.anchoredPosition = new Vector2(24, 0);
+            timeRt.anchorMin = Vector2.zero;
+            timeRt.anchorMax = Vector2.one;
+            timeRt.offsetMin = new Vector2(4f, 0f);
+            timeRt.offsetMax = new Vector2(-4f, 0f);
 
             DayNightClockUI clockUI = clockPanel.AddComponent<DayNightClockUI>();
-            clockUI.Configure(timeLabelGo.GetComponent<Text>(), clockIcon, Object.FindAnyObjectByType<DayNightRuntime>());
+            clockUI.Configure(timeLabelGo.GetComponent<Text>(), null, Object.FindAnyObjectByType<DayNightRuntime>());
 
             // Group 5: Inventory (Bottom Center)
             GameObject inventoryPanel = CreateUIPanel(hudGo.transform, "InventoryPanel", new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(380, 50), new Vector2(0, 40));

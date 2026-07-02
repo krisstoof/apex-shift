@@ -95,6 +95,10 @@ namespace ApexShift.Runtime.Audio
             }
 
             ambientClips = unique.ToArray();
+            
+            // Auto-enable looping when there's only one clip (stable ambient context)
+            loopSingleClip = ambientClips.Length <= 1;
+            
             RefreshClipList();
         }
 

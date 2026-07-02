@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 1718275678565275195}
   - component: {fileID: -7610481066008819586}
   m_Layer: 0
-  m_Name: Rock.116
+  m_Name: Rock.107
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -41,7 +41,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9055735194438259213}
-  m_Mesh: {fileID: 1637181458036513482, guid: d3283069ad4611b4b9cf2fdbf471af89, type: 3}
+  m_Mesh: {fileID: 1636055900833434348, guid: d3283069ad4611b4b9cf2fdbf471af89, type: 3}
 --- !u!23 &1718275678565275195
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -112,4 +112,4 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: 1637181458036513482, guid: d3283069ad4611b4b9cf2fdbf471af89, type: 3}
+  m_Mesh: {fileID: 1636055900833434348, guid: d3283069ad4611b4b9cf2fdbf471af89, type: 3}

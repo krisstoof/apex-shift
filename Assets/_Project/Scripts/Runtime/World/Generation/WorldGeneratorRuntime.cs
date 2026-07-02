@@ -14,8 +14,11 @@ using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Config;
 using ApexShift.Runtime.Audio;
+using ApexShift.Runtime.Fire;
 using ApexShift.Runtime.World.Query;
 using ApexShift.Runtime.DayNight;
+using ApexShift.Runtime.World.Sky;
+using ApexShift.Runtime.World.Topography;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
@@ -70,6 +73,11 @@ namespace ApexShift.Runtime.World.Generation
         [SerializeField] private float bigRockVisualScaleMultiplier = 1.16f;
         [SerializeField] private float smallResourceVisualScaleMultiplier = 0.82f;
 
+        [Header("Terrain")]
+        [SerializeField] private Material seabedMaterial;
+        [SerializeField] private Material waterSurfaceMaterial;
+        [SerializeField] private Material cliffMaterial;
+
         [Header("Settings")]
         [SerializeField] private bool generateOnStart = false;
         [SerializeField] private int seed = 12345;
@@ -87,8 +95,9 @@ namespace ApexShift.Runtime.World.Generation
         private Transform _playerTransform;
         private int _spawnedVarnakCount;
         private int _currentSpawnDay = 1;
+        private IslandTopographyRuntime _islandTopography;
 
-        private const string DefaultInputActionsPath = "Assets/InputSystem_Actions.inputactions";
+        private const string DefaultInputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
 
         public event System.Action<GameObject> OnGenerationComplete;
         public int Seed => seed;
@@ -192,6 +201,7 @@ namespace ApexShift.Runtime.World.Generation
             DestroyAllByName("GameBootstrapper");
             DestroyAllByName("EcosystemRuntime");
             DestroyAllByName("DayNightRuntime");
+            DestroyAllByName("DayNightSkyRuntime");
             DestroyAllByName("WorldMapDebugWindow");
             DestroyAllByName("Player");
             DestroyAllByName("Main Camera");
@@ -201,6 +211,12 @@ namespace ApexShift.Runtime.World.Generation
             DestroyAllByName("ActionBarUI");
             DestroyAllByName("CreatureIslandBoundsRuntime");
             DestroyAllByName("AmbientMusicRuntime");
+            DestroyAllByName("AmbientSoundController");
+            DestroyAllByName("IslandTopographyRuntime");
+            DestroyAllByName("IslandTerrainMesh");
+            DestroyAllByName("WaterSurfaceMesh");
+            DestroyAllByName("SeabedMesh");
+            DestroyAllByName("CliffWallsMesh");
 
             // Do not destroy generic menu objects here. Main menu / start screen
             // often uses roots named "UI" and a shared EventSystem.
@@ -256,6 +272,18 @@ namespace ApexShift.Runtime.World.Generation
             registry.SetPrefabRegistry(prefabRegistry);
         }
 
+        private void EnsureIslandTopographyRuntime()
+        {
+            if (_islandTopography != null) return;
+            _islandTopography = Object.FindAnyObjectByType<IslandTopographyRuntime>();
+            if (_islandTopography == null)
+            {
+                GameObject go = new GameObject("IslandTopographyRuntime");
+                go.transform.SetParent(transform);
+                _islandTopography = go.AddComponent<IslandTopographyRuntime>();
+            }
+        }
+
         private void EnsureCreatureIslandBoundsRuntime()
         {
             CreatureIslandBoundsRuntime bounds = Object.FindAnyObjectByType<CreatureIslandBoundsRuntime>();
@@ -266,9 +294,12 @@ namespace ApexShift.Runtime.World.Generation
                 bounds = go.AddComponent<CreatureIslandBoundsRuntime>();
             }
 
-            // Tile size is currently 8m. A 5.85m radius keeps targets inside the playable
-            // land tile footprint while allowing movement across tile seams.
-            bounds.Configure(_allTileCenters, 5.85f);
+            // Use topography safe creature centres if available, otherwise fall back to all land centres.
+            List<Vector3> creatureCenters = _islandTopography != null
+                ? _islandTopography.GetSafeCreatureLandCenters()
+                : _allTileCenters;
+
+            bounds.Configure(creatureCenters, 5.85f);
         }
 
         private void EnsureAmbientMusicRuntime()
@@ -287,7 +318,45 @@ namespace ApexShift.Runtime.World.Generation
             }
 
             ambient.SetVolume(ambientMusicVolume);
-            ambient.Play();
+
+            // Ensure ambient sound controller that routes clips per biome/time-of-day
+            AmbientSoundController controller = Object.FindAnyObjectByType<AmbientSoundController>();
+            if (controller == null)
+            {
+                GameObject controllerGo = new GameObject("AmbientSoundController");
+                controllerGo.transform.SetParent(transform);
+                controller = controllerGo.AddComponent<AmbientSoundController>();
+            }
+
+            // Auto-register per-biome ambient profiles from the biome catalog
+            if (biomeCatalog != null)
+            {
+                foreach (BiomeDefinitionAsset biome in biomeCatalog.Biomes)
+                {
+                    if (biome != null && biome.AmbientProfile != null)
+                    {
+                        controller.RegisterProfile(biome.AmbientProfile);
+                    }
+                }
+            }
+
+            // The controller drives AmbientMusicRuntime clip selection.
+            // Fall back to generic Play() if no profiles are registered so music still plays.
+            if (biomeCatalog == null || !HasAnyAmbientProfiles())
+            {
+                ambient.Play();
+            }
+        }
+
+        private bool HasAnyAmbientProfiles()
+        {
+            if (biomeCatalog == null) return false;
+            foreach (BiomeDefinitionAsset biome in biomeCatalog.Biomes)
+            {
+                if (biome != null && biome.AmbientProfile != null && biome.AmbientProfile.HasAnyClips())
+                    return true;
+            }
+            return false;
         }
 
         private Transform CreateRoot(string name)
@@ -363,12 +432,26 @@ namespace ApexShift.Runtime.World.Generation
         {
             if (Object.FindAnyObjectByType<DayNightRuntime>() != null)
             {
+                EnsureDayNightSkyRuntime();
                 return;
             }
 
             GameObject go = new GameObject("DayNightRuntime");
             go.transform.SetParent(transform);
             go.AddComponent<DayNightRuntime>();
+            EnsureDayNightSkyRuntime();
+        }
+
+        private void EnsureDayNightSkyRuntime()
+        {
+            if (Object.FindAnyObjectByType<DayNightSkyRuntime>() != null)
+            {
+                return;
+            }
+
+            GameObject go = new GameObject("DayNightSkyRuntime");
+            go.transform.SetParent(transform);
+            go.AddComponent<DayNightSkyRuntime>();
         }
 
         private void EnsureDebugPanelPresenter()
@@ -515,6 +598,48 @@ namespace ApexShift.Runtime.World.Generation
                     CheckAndAddWall(x, z - 1, pos, Vector3.back, landGrid, gridSize, tileSize);
                 }
             }
+
+            // Third pass: Build the unified natural terrain mesh (replaces per-tile land cubes)
+            // Build topography runtime before terrain mesh so other systems can query it immediately
+            EnsureIslandTopographyRuntime();
+            _islandTopography.Build(gridSize, tileSize, IsInsideIsland, GetTerrainHeight, DetermineBiome);
+
+            NaturalTerrainBuilder.BuildIslandTerrain(
+                _terrainRoot,
+                gridSize,
+                tileSize,
+                biomeCatalog,
+                IsInsideIsland,
+                GetTerrainHeight,
+                DetermineBiome);
+
+            // Fourth pass: Unified water surface mesh (replaces per-tile water cubes)
+            NaturalTerrainBuilder.BuildUnifiedWaterSurface(
+                _terrainRoot,
+                gridSize,
+                tileSize,
+                waterSurfaceMaterial,
+                waterSurfaceMaterial,
+                IsInsideIsland);
+
+            // Fifth pass: Build the seabed mesh visible below the water surface
+            NaturalTerrainBuilder.BuildSeabed(
+                _terrainRoot,
+                gridSize,
+                tileSize,
+                seabedMaterial,
+                IsInsideIsland);
+
+            // Sixth pass: Cliff walls at elevated coastlines
+            NaturalTerrainBuilder.BuildCliffWalls(
+                _terrainRoot,
+                gridSize,
+                tileSize,
+                cliffMaterial,
+                biomeCatalog,
+                IsInsideIsland,
+                GetTerrainHeight,
+                DetermineBiome);
         }
 
         private void CheckAndAddWall(int nx, int nz, Vector3 pos, Vector3 direction, bool[,] landGrid, int gridSize, float tileSize)
@@ -549,8 +674,10 @@ namespace ApexShift.Runtime.World.Generation
             _lastResult.Regions.Add(region);
             _lastResult.BiomeCount++;
 
-            CreateTerrainTile(region);
-            
+            // Land and water tiles: unified meshes handle all rendering and collision.
+            // Neither individual cubes nor water surface tiles are created here anymore.
+            // Water tiles still need to store region bounds for biome queries.
+
             if (biomeId != "water")
             {
                 // Store the actual terrain surface height, not the original flat y=0 center.
@@ -679,6 +806,16 @@ namespace ApexShift.Runtime.World.Generation
                     waterMaterial.SetColor("_SpecColor", lakeLike ? new Color(0.34f, 0.44f, 0.48f, 1f) : new Color(0.26f, 0.34f, 0.42f, 1f));
                 }
 
+                // Enable URP alpha transparency so the seabed is visible through the water surface
+                if (waterMaterial.HasProperty("_Surface"))
+                    waterMaterial.SetFloat("_Surface", 1f);        // 1 = Transparent
+                if (waterMaterial.HasProperty("_Blend"))
+                    waterMaterial.SetFloat("_Blend", 0f);          // 0 = Alpha blend
+                if (waterMaterial.HasProperty("_AlphaClip"))
+                    waterMaterial.SetFloat("_AlphaClip", 0f);
+                waterMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                waterMaterial.renderQueue = 3000;
+
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
                 renderer.sharedMaterial = waterMaterial;
@@ -691,6 +828,26 @@ namespace ApexShift.Runtime.World.Generation
             }
 
             animator.Configure(GetDistanceToNearestLand(center) < 16f);
+
+            // Add a trigger volume slightly above the water surface so PlayerWaterDetector
+            // can switch the player into swim mode when they step onto water.
+            float tileHalfSize = center.magnitude > 0.001f
+                ? Mathf.Round(8f * 0.5f)   // default tileSize/2
+                : 4f;
+
+            GameObject waterTriggerGo = new GameObject("WaterTrigger");
+            waterTriggerGo.transform.SetParent(tile.transform);
+            waterTriggerGo.transform.localPosition = Vector3.zero;
+            waterTriggerGo.layer = LayerMask.NameToLayer("Default");
+            // Tag used by PlayerWaterDetector
+            if (UnityEngine.Application.isPlaying)
+                waterTriggerGo.tag = "Water";
+
+            BoxCollider trigger = waterTriggerGo.AddComponent<BoxCollider>();
+            trigger.isTrigger = true;
+            // Height: from slightly below water surface to just above – shallow swim zone
+            trigger.center = Vector3.zero;
+            trigger.size   = new Vector3(8f, 1.4f, 8f);
         }
 
         private float GetDistanceToNearestLand(Vector3 center)
@@ -734,6 +891,14 @@ namespace ApexShift.Runtime.World.Generation
 
                     Vector3 pos = GetRandomPointInBounds(spawnBounds);
                     if (pos.magnitude < clearingRadius) continue;
+
+                    // Fine-resolution check: spawn position must be inside the island boundary
+                    // (topography uses 8-unit grid cells; coastline is defined at ~1.3-unit resolution)
+                    if (!IsInsideIsland(pos.x, pos.z)) continue;
+
+                    // Topography guard: skip water/shoreline resource positions
+                    if (_islandTopography != null && !_islandTopography.IsSafeForResourceAt(pos.x, pos.z))
+                        continue;
 
                     _lastResult.SpawnAttempts++;
                     SpawnResource(entry, pos);
@@ -851,10 +1016,11 @@ namespace ApexShift.Runtime.World.Generation
 
         private bool IsCreatureSpawnPointSafe(Vector3 pos, float minDistanceFromPlayer)
         {
-            if (pos.magnitude < clearingRadius)
-            {
+            if (pos.magnitude < clearingRadius) return false;
+
+            // Topography: reject water, shoreline, and out-of-island positions
+            if (_islandTopography != null && !_islandTopography.IsSafeForCreatureAt(pos.x, pos.z))
                 return false;
-            }
 
             if (_playerTransform != null)
             {
@@ -931,6 +1097,21 @@ namespace ApexShift.Runtime.World.Generation
                 bounds.center.y + 0.02f,
                 Random.Range(bounds.min.z, bounds.max.z)
             );
+        }
+
+        /// <summary>Returns a random land point validated by topography (not water, not shoreline).
+        /// Falls back to GetRandomPointInBounds if topography is unavailable.</summary>
+        private bool TryGetSafeResourcePoint(Bounds bounds, out Vector3 point, int maxAttempts = 8)
+        {
+            for (int i = 0; i < maxAttempts; i++)
+            {
+                point = GetRandomPointInBounds(bounds);
+                if (_islandTopography != null && !_islandTopography.IsSafeForResourceAt(point.x, point.z))
+                    continue;
+                return true;
+            }
+            point = bounds.center;
+            return false;
         }
 
         private void SpawnResource(VegetationSpawnEntryAsset entry, Vector3 position)
@@ -1411,23 +1592,26 @@ if (renderer != null)
 
         private GameObject CreatePlayer()
         {
-            Vector3 spawnPos = Vector3.up * 0.10f;
-            if (_allTileCenters.Count > 0)
+            // Use topography to find a safe player spawn point (not shoreline, not ridge).
+            Vector3 spawnPos;
+            if (_islandTopography != null && _islandTopography.IsBuilt)
             {
-                // Find actual terrain-surface tile center closest to zero.
+                spawnPos = _islandTopography.GetSafePlayerSpawnPoint() + Vector3.up * 0.10f;
+            }
+            else if (_allTileCenters.Count > 0)
+            {
                 Vector3 nearest = _allTileCenters[0];
                 float minDist = new Vector2(nearest.x, nearest.z).sqrMagnitude;
                 foreach (var center in _allTileCenters)
                 {
                     float d = new Vector2(center.x, center.z).sqrMagnitude;
-                    if (d < minDist)
-                    {
-                        minDist = d;
-                        nearest = center;
-                    }
+                    if (d < minDist) { minDist = d; nearest = center; }
                 }
-
                 spawnPos = nearest + Vector3.up * 0.10f;
+            }
+            else
+            {
+                spawnPos = Vector3.up * 0.10f;
             }
 
             GameObject player;
@@ -1582,10 +1766,17 @@ if (renderer != null)
             combatExperience.SetInputReader(inputReader);
             combatExperience.SetVisualRoot(player.transform.childCount > 0 ? player.transform.GetChild(0) : player.transform);
 
+            TorchRuntime torchRuntime = player.GetComponent<TorchRuntime>();
+            if (torchRuntime == null) torchRuntime = player.AddComponent<TorchRuntime>();
+
             IsometricPlayerController controller = player.GetComponent<IsometricPlayerController>();
             if (controller == null) controller = player.AddComponent<IsometricPlayerController>();
             controller.SetInputReader(inputReader);
             controller.SetSurvivalRuntime(survival);
+
+            // Water detection (PlayerWaterDetector requires IsometricPlayerController + PlayerAnimationDriver)
+            if (player.GetComponent<PlayerWaterDetector>() == null)
+                player.AddComponent<PlayerWaterDetector>();
 
             PlayerInteractionController interaction = player.GetComponent<PlayerInteractionController>();
             if (interaction == null) interaction = player.AddComponent<PlayerInteractionController>();
@@ -1736,12 +1927,6 @@ if (renderer != null)
             follow.SnapToTarget();
             Debug.Log($"[WorldGen] Main Camera positioned at {go.transform.position}, target={(target != null ? target.name : "<null>")} targetPos={(target != null ? target.position.ToString() : "<null>")}");
 
-            GameObject lightGo = new GameObject("Directional Light");
-            Light l = lightGo.AddComponent<Light>();
-            l.type = LightType.Directional;
-            l.intensity = 1.1f;
-            lightGo.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
-
             return go;
         }
 
@@ -1794,12 +1979,6 @@ if (renderer != null)
             followCamera.AddComponent<CinemachineOrthographicZoom>();
             Debug.Log($"[WorldGen] Cinemachine rig created. MainCamera={cameraObject.transform.position}, FollowCamera={followCamera.transform.position}, target={(target != null ? target.name : "<null>")} targetPos={(target != null ? target.position.ToString() : "<null>")}");
 
-            GameObject lightGo = new GameObject("Directional Light");
-            Light l = lightGo.AddComponent<Light>();
-            l.type = LightType.Directional;
-            l.intensity = 1.1f;
-            lightGo.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
-
             return cameraObject;
         }
 
@@ -1844,7 +2023,14 @@ if (renderer != null)
             GameObject go = new GameObject("WorldBounds");
             go.transform.SetParent(transform);
             WorldBounds bounds = go.AddComponent<WorldBounds>();
-            bounds.Configure(8f, _allTileCenters);
+
+            // Include land + shallow water (3 tiles from shore) so the player
+            // can enter the water without hitting an invisible wall.
+            List<Vector3> navigable = _islandTopography != null
+                ? _islandTopography.GetNavigableCenters(3)
+                : _allTileCenters;
+
+            bounds.Configure(8f, navigable);
         }
 
         private void OnDrawGizmos()
@@ -1863,12 +2049,22 @@ if (renderer != null)
             if (_lastResult == null) return;
 
             GUI.color = Color.black;
-            // Move lower to avoid overlapping with resources panel
-            GUILayout.BeginArea(new Rect(Screen.width - 310, 450, 300, 200));
+            GUILayout.BeginArea(new Rect(Screen.width - 310, 450, 300, 260));
             GUILayout.Label($"Seed: {_lastResult.Seed}");
             GUILayout.Label($"Biomes: {_lastResult.BiomeCount}");
             GUILayout.Label($"Resources: {_lastResult.ResourceCount}");
             GUILayout.Label($"Spawn Attempts: {_lastResult.SpawnAttempts}");
+
+            // ── Topography debug stats ──────────────────────────────────────
+            if (_islandTopography != null && _islandTopography.IsBuilt)
+            {
+                GUILayout.Space(4);
+                GUILayout.Label($"── Topography ──");
+                GUILayout.Label($"Land: {_islandTopography.LandCellCount}  Water: {_islandTopography.WaterCellCount}");
+                GUILayout.Label($"Shore: {_islandTopography.ShoreCellCount}  Ridge: {_islandTopography.RidgeCellCount}");
+                GUILayout.Label($"Safe Player: {_islandTopography.SafePlayerCells}");
+                GUILayout.Label($"Safe Creature: {_islandTopography.SafeCreatureCells}");
+            }
             GUILayout.EndArea();
         }
 }

@@ -1,6 +1,7 @@
 using System;
 using ApexShift.Core.Save;
 using ApexShift.Runtime.Audio;
+using ApexShift.Runtime.Fire;
 using ApexShift.Runtime.Interaction;
 using ApexShift.Runtime.Player;
 using UnityEngine;
@@ -27,6 +28,7 @@ namespace ApexShift.Runtime.Buildings
         public float InteractionDuration => Mathf.Max(0.05f, interactionDuration);
         public StorageContainerRuntime StorageContainer => GetComponent<StorageContainerRuntime>();
         public TrapDamageRuntime TrapDamage => GetComponent<TrapDamageRuntime>();
+        public CampfireRuntime Campfire => GetComponent<CampfireRuntime>();
 
         private void OnEnable()
         {
@@ -54,6 +56,7 @@ namespace ApexShift.Runtime.Buildings
             EnsureCollider();
             EnsureStorageContainerIfNeeded();
             EnsureTrapDamageIfNeeded();
+            EnsureCampfireIfNeeded();
             BuildingRegistry.Active?.Register(this);
         }
 
@@ -95,6 +98,13 @@ namespace ApexShift.Runtime.Buildings
                 return container.Open(actor);
             }
 
+            CampfireRuntime campfire = Campfire;
+            if (campfire != null)
+            {
+                Debug.Log($"[Building] Forwarding interaction to campfire '{InstanceId}'.", this);
+                return campfire.Interact(actor);
+            }
+
             Debug.Log($"[Building] Interacted with {BuildingId} ({InstanceId}).", this);
             return true;
         }
@@ -124,6 +134,14 @@ namespace ApexShift.Runtime.Buildings
                 TrapDamageRuntime trap = GetComponent<TrapDamageRuntime>() ?? gameObject.AddComponent<TrapDamageRuntime>();
                 trap.Configure(InstanceId, FootprintSize);
                 trap.SetTrapAudioProfile(trapAudioProfile);
+            }
+        }
+
+        private void EnsureCampfireIfNeeded()
+        {
+            if (BuildingId == "campfire")
+            {
+                _ = GetComponent<CampfireRuntime>() ?? gameObject.AddComponent<CampfireRuntime>();
             }
         }
 

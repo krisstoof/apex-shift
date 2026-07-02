@@ -1,5 +1,6 @@
 using ApexShift.Runtime.PlayerInput;
 using ApexShift.Runtime.World;
+using ApexShift.Runtime.World.Topography;
 using UnityEngine;
 using CameraComponent = UnityEngine.Camera;
 
@@ -28,8 +29,21 @@ namespace ApexShift.Runtime.Player
         [SerializeField]
         private bool movementEnabled = true;
 
+        [Header("Water / Swimming")]
+        [SerializeField]
+        [Tooltip("Movement speed while swimming.")]
+        private float swimSpeed = 3f;
+
+        [SerializeField]
+        [Tooltip("Y position of the water surface. The player floats at this height while in water.")]
+        private float waterSurfaceY = -0.3f;
+
         private CharacterController characterController;
         private Rigidbody rigidbodyComponent;
+        private bool isInWater;
+        private float _verticalVelocity;
+        private const float Gravity = -22f;
+        private float _waterCheckTimer;   // for periodic topography-based swim detection
 
         private void Awake()
         {
@@ -77,7 +91,51 @@ if (movement.sqrMagnitude > 1f)
             }
 
             MoveWithWorldBounds(movement);
+            ApplyGravity();
+            CheckWaterStateFromTopography();
             RotateTowardLookPosition(inputReader.LookScreenPosition);
+        }
+
+        /// <summary>
+        /// Periodically queries IslandTopographyRuntime to sync swim state.
+        /// Acts as a reliable fallback if trigger-based detection misses transitions.
+        /// </summary>
+        private void CheckWaterStateFromTopography()
+        {
+            _waterCheckTimer -= Time.deltaTime;
+            if (_waterCheckTimer > 0f) return;
+            _waterCheckTimer = 0.4f;
+
+            IslandTopographyRuntime topo = IslandTopographyRuntime.Active;
+            if (topo == null || !topo.IsBuilt) return;
+
+            bool onWater = topo.IsWaterAt(transform.position.x, transform.position.z);
+            if (onWater && !isInWater)
+            {
+                EnterWater();
+                GetComponent<PlayerAnimationDriver>()?.SetSwimming(true);
+            }
+            else if (!onWater && isInWater)
+            {
+                ExitWater();
+                GetComponent<PlayerAnimationDriver>()?.SetSwimming(false);
+            }
+        }
+
+        private void ApplyGravity()
+        {
+            if (characterController == null || !characterController.enabled || !usePhysicsMovement)
+                return;
+            if (isInWater)
+            {
+                _verticalVelocity = 0f;
+                return;
+            }
+            if (characterController.isGrounded && _verticalVelocity < 0f)
+                _verticalVelocity = -2f;      // small constant keeps CharacterController grounded
+            else
+                _verticalVelocity += Gravity * Time.deltaTime;
+            characterController.Move(new Vector3(0f, _verticalVelocity * Time.deltaTime, 0f));
         }
 
         private Vector3 CalculateCameraRelativeMovement(Vector2 input)
@@ -110,6 +168,10 @@ if (movement.sqrMagnitude > 1f)
             Vector3 currentPosition = transform.position;
             float speed = GetCurrentMovementSpeed();
             Vector3 desiredPosition = currentPosition + movement * (speed * Time.deltaTime);
+
+            // While swimming, keep player floating at the water surface
+            if (isInWater)
+                desiredPosition.y = Mathf.Lerp(currentPosition.y, waterSurfaceY, 8f * Time.deltaTime);
 
             WorldBounds worldBounds = WorldBounds.Active;
             if (worldBounds == null)
@@ -191,6 +253,20 @@ if (movement.sqrMagnitude > 1f)
             movementEnabled = enabled;
         }
 
+        /// <summary>Called by PlayerWaterDetector when the player enters a water trigger volume.</summary>
+        public void EnterWater()
+        {
+            isInWater = true;
+        }
+
+        /// <summary>Called by PlayerWaterDetector when the player leaves all water trigger volumes.</summary>
+        public void ExitWater()
+        {
+            isInWater = false;
+        }
+
+        public bool IsInWater => isInWater;
+
         public void SetSurvivalRuntime(PlayerSurvivalRuntime runtime)
         {
             survivalRuntime = runtime;
@@ -226,6 +302,12 @@ if (movement.sqrMagnitude > 1f)
 
         private float GetCurrentMovementSpeed()
         {
+            if (isInWater)
+            {
+                float sm = survivalRuntime != null ? Mathf.Max(0f, survivalRuntime.SpeedMultiplier) : 1f;
+                return swimSpeed * sm;
+            }
+
             bool shouldSprint;
             float speedMultiplier = 1f;
             if (survivalRuntime != null)

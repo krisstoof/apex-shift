@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ApexShift.Core.World.Biomes;
+using ApexShift.Runtime.Audio;
 using UnityEngine;
 
 namespace ApexShift.Runtime.World.Biomes
@@ -15,6 +16,10 @@ namespace ApexShift.Runtime.World.Biomes
         [SerializeField] private List<VegetationSpawnEntryAsset> vegetation = new List<VegetationSpawnEntryAsset>();
         [SerializeField] private List<CreatureSpawnEntryAsset> creatures = new List<CreatureSpawnEntryAsset>();
 
+        [Header("Ambient Audio")]
+        [Tooltip("Optional per-biome ambient profile. When assigned, AmbientSoundController will use it automatically.")]
+        [SerializeField] private BiomeAmbientProfile ambientProfile;
+
         public string BiomeId => biomeId;
         public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? biomeId : displayName;
         public Color GroundColor => groundColor;
@@ -22,6 +27,7 @@ namespace ApexShift.Runtime.World.Biomes
         public bool StarterBiome => starterBiome;
         public IReadOnlyList<VegetationSpawnEntryAsset> Vegetation => vegetation;
         public IReadOnlyList<CreatureSpawnEntryAsset> Creatures => creatures;
+        public BiomeAmbientProfile AmbientProfile => ambientProfile;
 
         public void Configure(
             string id,

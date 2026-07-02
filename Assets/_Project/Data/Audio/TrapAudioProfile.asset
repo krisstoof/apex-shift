@@ -13,4 +13,11 @@ MonoBehaviour:
   m_Name: TrapAudioProfile
   m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.Audio.TrapAudioProfile
   trapTriggerVoiceClips:
-  - {fileID: 8300000, guid: fd8b71c843169224fb4863af3405b4da, type: 3}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 8300000, guid: a17eef2ee7e22ab439d3cda20635fa75, type: 3}
+  - {fileID: 8300000, guid: db10093dac3928e4985394d17f9ee0c1, type: 3}
+  - {fileID: 8300000, guid: 6fe1cfe554d9d46459ef7088fe545bfc, type: 3}
+  - {fileID: 8300000, guid: 6ac3327cc19175448a7cf830dca0324e, type: 3}

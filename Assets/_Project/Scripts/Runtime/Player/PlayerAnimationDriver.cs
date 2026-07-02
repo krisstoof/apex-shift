@@ -36,6 +36,9 @@ namespace ApexShift.Runtime.Player
         private string interactTrigger = "Interact";
 
         [SerializeField]
+        private string swimmingParameter = "IsSwimming";
+
+        [SerializeField]
         private float crossFadeDuration = 0.12f;
 
         [SerializeField]
@@ -46,9 +49,11 @@ namespace ApexShift.Runtime.Player
         private bool hasSprinting;
         private bool hasAttack;
         private bool hasInteract;
+        private bool hasSwimming;
         private bool hasStateFallback;
         private bool loggedMissingStateFallback;
         private string currentState;
+        private bool isSwimming;
 
         private void Awake()
         {
@@ -122,6 +127,11 @@ namespace ApexShift.Runtime.Player
                 animator.SetBool(sprintingParameter, isSprinting);
             }
 
+            if (hasSwimming)
+            {
+                animator.SetBool(swimmingParameter, isSwimming);
+            }
+
             if (hasStateFallback)
             {
                 UpdateStateFallback(isMoving, isSprinting);
@@ -141,6 +151,19 @@ namespace ApexShift.Runtime.Player
             if (animator != null && hasInteract)
             {
                 animator.SetTrigger(interactTrigger);
+            }
+        }
+
+        /// <summary>
+        /// Called by PlayerWaterDetector to enable or disable the swimming animation state.
+        /// Has no effect if the Animator controller does not contain an "IsSwimming" bool parameter.
+        /// </summary>
+        public void SetSwimming(bool swimming)
+        {
+            isSwimming = swimming;
+            if (animator != null && hasSwimming)
+            {
+                animator.SetBool(swimmingParameter, swimming);
             }
         }
 
@@ -207,6 +230,10 @@ namespace ApexShift.Runtime.Player
                 else if (parameter.name == interactTrigger)
                 {
                     hasInteract = parameter.type == AnimatorControllerParameterType.Trigger;
+                }
+                else if (parameter.name == swimmingParameter)
+                {
+                    hasSwimming = parameter.type == AnimatorControllerParameterType.Bool;
                 }
             }
 

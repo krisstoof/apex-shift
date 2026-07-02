@@ -304,7 +304,7 @@ namespace ApexShift.Runtime.Player
 
         private void CleanupDuplicateActionBars()
         {
-            GameObject[] allObjects = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            GameObject[] allObjects = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include);
             foreach (GameObject go in allObjects)
             {
                 if (go == null || go.name != "ActionBarUI")

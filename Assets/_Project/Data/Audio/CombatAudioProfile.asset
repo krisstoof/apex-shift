@@ -13,13 +13,26 @@ MonoBehaviour:
   m_Name: CombatAudioProfile
   m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.Audio.CombatAudioProfile
   attackVoiceClips:
-  - {fileID: 8300000, guid: b096c74d0c6b6ec4aad836de36687cad, type: 3}
+  - {fileID: 8300000, guid: f9576eb9c81301b49affd1af577e891e, type: 3}
+  - {fileID: 8300000, guid: 788260ef6af39b74c8d0f65e97426855, type: 3}
+  - {fileID: 8300000, guid: 73e737f188380e7418d74fa20a2fbcb0, type: 3}
+  - {fileID: 8300000, guid: f85419b7e53bb5547a7d50435e5a47ae, type: 3}
   meleeHitVoiceClips:
-  - {fileID: 8300000, guid: 92bee83533d440849b1838f79050e7b0, type: 3}
+  - {fileID: 8300000, guid: a99483b81b7c5644d86ecb5bf093ea64, type: 3}
+  - {fileID: 8300000, guid: c2742cb644dfc694887bbd796f564be2, type: 3}
+  - {fileID: 8300000, guid: be0d25e2e1c1637419972e0ef0830c06, type: 3}
+  - {fileID: 8300000, guid: 77c05b037bb147e4297545af05c43e41, type: 3}
   bowHitVoiceClips:
-  - {fileID: 8300000, guid: 8c4aa2093d086d84ca5e1474205f988c, type: 3}
-  - {fileID: 8300000, guid: e9157581ae7316e40a7c400df9c73e12, type: 3}
+  - {fileID: 8300000, guid: 11252ae91b39e3d4ab6975db76664e19, type: 3}
+  - {fileID: 8300000, guid: 8d31abda99bf1534cb2c2016bf2838d8, type: 3}
+  - {fileID: 8300000, guid: 9de7e07355653a5468cb13b4fa136407, type: 3}
   bowVoiceClips:
-  - {fileID: 8300000, guid: b5583bf80c433274b8e510fe9e21f520, type: 3}
-  - {fileID: 8300000, guid: 71e981d8a6fa05e4b86ff685084185af, type: 3}
+  - {fileID: 8300000, guid: 17ef61f024152fa438aec36173dafeaf, type: 3}
+  - {fileID: 8300000, guid: 219da449107e68e4b9d7f33711d5b219, type: 3}
+  - {fileID: 8300000, guid: 0ee1b77ba93c0d949b3b077cc44dbda2, type: 3}
+  - {fileID: 8300000, guid: e4819e56e49b52a4fb03b032ffc877fe, type: 3}
+  - {fileID: 8300000, guid: c96be22e44e47aa41808021ea99f03bf, type: 3}
+  - {fileID: 8300000, guid: 2063690da10df5848b3a289c7666f339, type: 3}
+  - {fileID: 8300000, guid: 6f5613f364cf61a4cb3929f25abf8700, type: 3}
+  - {fileID: 8300000, guid: 0f2fd374715e1e147a4b3bc40aecbc01, type: 3}
   hitVoiceClips: []

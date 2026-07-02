@@ -1,5 +1,7 @@
 using UnityEngine;
 using ApexShift.Runtime.Player;
+using ApexShift.Runtime.Events;
+using ApexShift.Runtime.Fire;
 
 namespace ApexShift.Runtime.Creatures
 {
@@ -108,6 +110,11 @@ namespace ApexShift.Runtime.Creatures
 
             if (id == "varnak" && (forced || IsPassiveState(currentState)) && distance <= varnakChaseRange)
             {
+                if (TryAvoidFire(distance))
+                {
+                    return;
+                }
+
                 if (distance > varnakStopDistance)
                 {
                     behavior?.SetBehaviorStateForTests(CreatureBehaviorState.Chase, forced ? "player_combat_noise" : $"player_detected d:{distance:0.0}");
@@ -182,6 +189,42 @@ namespace ApexShift.Runtime.Creatures
 
             behavior?.SetBehaviorStateForTests(CreatureBehaviorState.Flee, reason);
             view.MoveTo(target);
+        }
+
+        private bool TryAvoidFire(float playerDistance)
+        {
+            if (!FireSourceRegistry.TryGetStrongestSource(transform.position, out FireSourceRuntime source))
+            {
+                return false;
+            }
+
+            Vector3 direction = transform.position - source.transform.position;
+            direction.y = 0f;
+            if (direction.sqrMagnitude < 0.001f)
+            {
+                direction = Random.insideUnitSphere;
+                direction.y = 0f;
+            }
+
+            float radius = Mathf.Max(1f, source.ProtectionRadius);
+            Vector3 target = transform.position + direction.normalized * Mathf.Max(6f, radius * 0.65f);
+            CreatureNavigationAdapter adapter = view.GetNavigationAdapter();
+            if (adapter != null && adapter.TrySamplePosition(target, out Vector3 sampled, navSampleDistance))
+            {
+                target = sampled;
+            }
+
+            behavior?.SetBehaviorStateForTests(CreatureBehaviorState.Flee, $"fire_source:{source.SourceId}");
+            view.MoveTo(target);
+            GameEventBus.PublishCreatureEvent(
+                GameplayEventKind.VarnakScaredByFire,
+                transform.position,
+                "global",
+                "varnak",
+                source.SourceId,
+                amount: Mathf.Max(0f, playerDistance),
+                message: "varnak_scared_by_fire");
+            return true;
         }
 
         private void RestoreWanderIfSafe(float distance, string id)

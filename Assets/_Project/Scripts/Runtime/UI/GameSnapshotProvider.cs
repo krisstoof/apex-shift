@@ -10,6 +10,7 @@ using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.DayNight;
 using ApexShift.Runtime.World.Generation;
+using ApexShift.Runtime.Fire;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -66,8 +67,10 @@ namespace ApexShift.Runtime.UI.Snapshots
             int creatureCount = ecosystem != null ? ecosystem.CreatureCount : creatures.Length;
             int navOnMesh = navAgents.Count(agent => agent != null && agent.isOnNavMesh);
             int hungryCreatures = needs.Count(need => need != null && need.State.IsHungry);
+            int fireSources = FireSourceRegistry.SourceCount;
+            int activeFireSources = FireSourceRegistry.ActiveSourceCount;
             string[] recentEvents = GameEventBus.GetRecentEventLines(8);
-            return new WorldDebugSnapshot(worldGenerator != null ? worldGenerator.Seed : 0, player != null ? player.position : Vector3.zero, player != null, resources.Length, creatureCount, foodCount, plantFood, meatFood, navOnMesh, Mathf.Max(0, navAgents.Length - navOnMesh), hungryCreatures, storageContainers, pickups.Length, smoothedFps, Time.realtimeSinceStartup, recentEvents);
+            return new WorldDebugSnapshot(worldGenerator != null ? worldGenerator.Seed : 0, player != null ? player.position : Vector3.zero, player != null, resources.Length, creatureCount, foodCount, plantFood, meatFood, navOnMesh, Mathf.Max(0, navAgents.Length - navOnMesh), hungryCreatures, storageContainers, pickups.Length, fireSources, activeFireSources, smoothedFps, Time.realtimeSinceStartup, recentEvents);
         }
         private void ResolveReferences()
         {

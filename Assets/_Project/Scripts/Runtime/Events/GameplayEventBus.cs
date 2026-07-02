@@ -25,7 +25,9 @@ namespace ApexShift.Runtime.Events
         PlayerMeleeHit,
         PlayerBowFired,
         PlayerProjectileHit,
-        TrapTriggered
+        TrapTriggered,
+        FireSourceActivated,
+        FireSourceExpired
     }
 
     [Serializable]
@@ -130,6 +132,11 @@ namespace ApexShift.Runtime.Events
         public static void PublishCreatureEvent(GameplayEventKind kind, Vector3 position, string biomeId, string actorSpecies, string targetKind, float amount = 0f, float nutrition = 0f, float biomassImpact = 0f, string message = null)
         {
             Publish(new GameplayEvent(kind, position, biomeId, actorSpecies, targetKind, amount: amount, nutrition: nutrition, biomassImpact: biomassImpact, message: message));
+        }
+
+        public static void PublishFireSourceEvent(GameplayEventKind kind, Vector3 position, string sourceId, float radius, string message = null)
+        {
+            Publish(new GameplayEvent(kind, position, "global", actorSpecies: "fire", targetKind: sourceId, amount: Mathf.Max(0f, radius), message: message ?? kind.ToString()));
         }
 
         public static void PublishBiomassChanged(Vector3 position, string biomeId, float biomassImpact, float remainingBiomass, string message = null)

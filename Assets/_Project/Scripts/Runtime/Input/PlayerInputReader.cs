@@ -56,6 +56,18 @@ namespace ApexShift.Runtime.PlayerInput
                 inputActions = InputSystem.actions;
                 if (inputActions != null) Debug.Log("[Input] Fallback to InputSystem.actions", this);
             }
+
+            if (inputActions == null)
+            {
+#if UNITY_EDITOR
+                inputActions = UnityEditor.AssetDatabase.LoadAssetAtPath<InputActionAsset>("Assets/_Project/Input/ApexShiftInputActions.inputactions");
+                if (inputActions == null)
+                {
+                    inputActions = UnityEditor.AssetDatabase.LoadAssetAtPath<InputActionAsset>("Assets/InputSystem_Actions.inputactions");
+                }
+#endif
+            }
+
             CacheActions();
         }
 
