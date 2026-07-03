@@ -128,6 +128,23 @@ namespace ApexShift.Presentation.HUD
             }
             else minimapPanel.SetActive(false);
 
+            GameObject mapScreenGo = hudGo.transform.Find("MapScreen")?.gameObject;
+            if (mapScreenGo == null)
+            {
+                mapScreenGo = new GameObject("MapScreen");
+                mapScreenGo.transform.SetParent(hudGo.transform, false);
+                RectTransform mapRt = mapScreenGo.AddComponent<RectTransform>();
+                mapRt.anchorMin = Vector2.zero;
+                mapRt.anchorMax = Vector2.one;
+                mapRt.offsetMin = Vector2.zero;
+                mapRt.offsetMax = Vector2.zero;
+            }
+
+            MapScreenUI mapScreen = mapScreenGo.GetComponent<MapScreenUI>() ?? mapScreenGo.AddComponent<MapScreenUI>();
+            mapScreen.Configure(player != null ? player.transform : null, uiFont);
+            mapScreen.SetVisible(false);
+            mapScreenGo.transform.SetAsLastSibling();
+
             // Group 4: FPS (Bottom Left)
             GameObject fpsPanel = CreateUIPanel(hudGo.transform, "FpsPanel", new Vector2(0, 0), new Vector2(0, 0), new Vector2(100, 30), new Vector2(20, 20));
             GameObject fpsLabelGo = CreateMenuText(fpsPanel.transform, "FpsLabel", "FPS 0", 12, TextAnchor.MiddleCenter, Vector2.zero, new Color(1f, 0.92f, 0.42f));

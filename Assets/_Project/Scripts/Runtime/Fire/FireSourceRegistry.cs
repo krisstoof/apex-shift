@@ -7,6 +7,15 @@ namespace ApexShift.Runtime.Fire
     {
         private static readonly List<FireSourceRuntime> sources = new List<FireSourceRuntime>();
 
+        public static IReadOnlyList<FireSourceRuntime> Sources
+        {
+            get
+            {
+                CleanupDeadSources();
+                return sources;
+            }
+        }
+
         public static int SourceCount => sources.Count;
 
         public static int ActiveSourceCount
