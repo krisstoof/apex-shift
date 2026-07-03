@@ -25,6 +25,7 @@ namespace ApexShift.Runtime.Save
         [SerializeField] private PlayerInventoryRuntime playerInventory;
         [SerializeField] private PlayerSurvivalRuntime playerSurvival;
         [SerializeField] private EcosystemDirectorRuntime ecosystemDirector;
+        [SerializeField] private EcosystemRuntime ecosystemRuntime;
         [SerializeField] private DayNightRuntime dayNightRuntime;
         [SerializeField] private BuildingRegistry buildingRegistry;
 
@@ -84,6 +85,11 @@ namespace ApexShift.Runtime.Save
                 ecosystemDirector = FindAnyObjectByType<EcosystemDirectorRuntime>();
             }
 
+            if (ecosystemRuntime == null)
+            {
+                ecosystemRuntime = EcosystemRuntime.Instance;
+            }
+
             if (dayNightRuntime == null)
             {
                 dayNightRuntime = FindAnyObjectByType<DayNightRuntime>();
@@ -111,7 +117,7 @@ namespace ApexShift.Runtime.Save
             int seed = worldGenerator != null ? worldGenerator.Seed : 0;
 
             List<ResourceSaveData> resources = new List<ResourceSaveData>();
-            foreach (ResourceNodeView node in FindObjectsByType<ResourceNodeView>(FindObjectsInactive.Include))
+            foreach (ResourceNodeView node in ResourceRegistry.Resources)
             {
                 if (node == null)
                 {
@@ -286,7 +292,7 @@ namespace ApexShift.Runtime.Save
         private List<CreatureSaveData> CaptureCreatureStates()
         {
             List<CreatureSaveData> creatures = new List<CreatureSaveData>();
-            foreach (CreatureAgentView agent in FindObjectsByType<CreatureAgentView>(FindObjectsInactive.Include))
+            foreach (CreatureAgentView agent in ecosystemRuntime != null ? ecosystemRuntime.Creatures : Array.Empty<CreatureAgentView>())
             {
                 if (agent == null)
                 {
@@ -348,7 +354,7 @@ namespace ApexShift.Runtime.Save
                 return;
             }
 
-            CreatureAgentView[] liveCreatures = FindObjectsByType<CreatureAgentView>(FindObjectsInactive.Include);
+            IReadOnlyList<CreatureAgentView> liveCreatures = ecosystemRuntime != null ? ecosystemRuntime.Creatures : Array.Empty<CreatureAgentView>();
             HashSet<CreatureAgentView> used = new HashSet<CreatureAgentView>();
 
             foreach (CreatureSaveData saved in savedCreatures.Where(item => item != null))
@@ -441,7 +447,7 @@ namespace ApexShift.Runtime.Save
 
         private static void CaptureDynamicMeatDrops(List<ResourceSaveData> resources)
         {
-            foreach (FoodSourceView food in FindObjectsByType<FoodSourceView>(FindObjectsInactive.Include))
+            foreach (FoodSourceView food in EcosystemRuntime.Instance != null ? EcosystemRuntime.Instance.FoodSources : Array.Empty<FoodSourceView>())
             {
                 if (food == null || !LooksLikeDynamicMeatDrop(food.gameObject))
                 {
@@ -477,8 +483,9 @@ namespace ApexShift.Runtime.Save
 
         private static void ClearExistingDynamicMeatDrops()
         {
-            foreach (GameObject go in FindObjectsByType<GameObject>(FindObjectsInactive.Include))
+            foreach (FoodSourceView food in EcosystemRuntime.Instance != null ? EcosystemRuntime.Instance.FoodSources.ToArray() : Array.Empty<FoodSourceView>())
             {
+                GameObject go = food != null ? food.gameObject : null;
                 if (LooksLikeDynamicMeatDrop(go))
                 {
                     DestroyImmediate(go);
@@ -516,7 +523,7 @@ namespace ApexShift.Runtime.Save
         private List<PickupSaveData> CapturePickupStates()
         {
             List<PickupSaveData> pickups = new List<PickupSaveData>();
-            foreach (ItemPickupView pickup in FindObjectsByType<ItemPickupView>(FindObjectsInactive.Include))
+            foreach (ItemPickupView pickup in ItemPickupRegistry.Pickups)
             {
                 if (pickup == null || string.IsNullOrWhiteSpace(pickup.ItemId) || pickup.Amount <= 0)
                 {
@@ -560,7 +567,7 @@ namespace ApexShift.Runtime.Save
             }
 
             ClearExistingDynamicMeatDrops();
-            ResourceNodeView[] nodes = FindObjectsByType<ResourceNodeView>(FindObjectsInactive.Include);
+            IReadOnlyList<ResourceNodeView> nodes = ResourceRegistry.Resources;
             Dictionary<Vector3Int, ResourceNodeView> lookup = new Dictionary<Vector3Int, ResourceNodeView>();
             foreach (ResourceNodeView node in nodes)
             {

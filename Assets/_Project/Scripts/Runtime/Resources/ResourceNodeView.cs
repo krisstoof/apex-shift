@@ -101,8 +101,19 @@ namespace ApexShift.Runtime.Resources
 
         private void Awake()
         {
+            ResourceRegistry.Register(this);
             EnsureState();
             EnsureInteractionCollider();
+        }
+
+        private void OnEnable()
+        {
+            ResourceRegistry.Register(this);
+        }
+
+        private void OnDestroy()
+        {
+            ResourceRegistry.Unregister(this);
         }
 
         private void Reset()

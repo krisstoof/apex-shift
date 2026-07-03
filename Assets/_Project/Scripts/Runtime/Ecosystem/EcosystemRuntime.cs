@@ -31,6 +31,8 @@ namespace ApexShift.Runtime.Ecosystem
 
         public int FoodSourceCount => _foodSources.Count;
         public int CreatureCount => _creatures.Count;
+        public IReadOnlyList<FoodSourceView> FoodSources => _foodSources;
+        public IReadOnlyList<CreatureAgentView> Creatures => _creatures;
         public int PlantFoodSourceCount => GetFoodSourceCount(FoodKind.Plants);
         public int MeatFoodSourceCount => GetFoodSourceCount(FoodKind.Meat);
 

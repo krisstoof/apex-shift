@@ -34,6 +34,21 @@ namespace ApexShift.Runtime.Items
             EnsureTrigger();
         }
 
+        private void OnEnable()
+        {
+            ItemPickupRegistry.Register(this);
+        }
+
+        private void OnDisable()
+        {
+            ItemPickupRegistry.Unregister(this);
+        }
+
+        private void OnDestroy()
+        {
+            ItemPickupRegistry.Unregister(this);
+        }
+
         private void Update()
         {
             if (maxLifetimeSeconds <= 0f)
