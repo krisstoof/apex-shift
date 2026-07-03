@@ -143,11 +143,13 @@ namespace ApexShift.Runtime.Player
 
             if (string.Equals(activeItemId, "bow", System.StringComparison.OrdinalIgnoreCase) && HasItem("bow"))
             {
+                TriggerUseAnimation("bow");
                 return TryFireBow(direction);
             }
 
             if (string.Equals(activeItemId, "spear", System.StringComparison.OrdinalIgnoreCase) && HasItem("spear"))
             {
+                TriggerUseAnimation("spear");
                 return TryMeleeAttack(direction, true);
             }
 
@@ -161,6 +163,12 @@ namespace ApexShift.Runtime.Player
         }
 
         private void HandleAttackPressed() => TriggerPrimaryAttack();
+
+        private void TriggerUseAnimation(string itemId)
+        {
+            PlayerAnimationDriver animationDriver = GetComponent<PlayerAnimationDriver>() ?? GetComponentInChildren<PlayerAnimationDriver>();
+            animationDriver?.TriggerItemUse(itemId);
+        }
 
         private bool TryMeleeAttack(Vector3 direction, bool hasSpear)
         {

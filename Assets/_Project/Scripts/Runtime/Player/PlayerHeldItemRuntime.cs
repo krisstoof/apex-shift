@@ -259,7 +259,7 @@ namespace ApexShift.Runtime.Player
             heldRoot.SetActive(true);
             ApplyAnchorPose();
 
-            if (currentItemId != "torch" && TryBuildAuthoredItemModel(currentItemId))
+            if (TryBuildAuthoredItemModel(currentItemId))
             {
                 return;
             }
@@ -349,20 +349,26 @@ namespace ApexShift.Runtime.Player
 
         private void BuildTorch()
         {
-            CreatePart("TorchHandle", PrimitiveType.Cylinder, new Vector3(0f, -0.06f, 0.05f), Quaternion.Euler(8f, 0f, 0f), new Vector3(0.045f, 0.56f, 0.045f), new Color(0.34f, 0.20f, 0.10f));
-            CreatePart("TorchWrap", PrimitiveType.Cube, new Vector3(0f, 0.22f, 0.04f), Quaternion.identity, new Vector3(0.12f, 0.16f, 0.12f), new Color(0.68f, 0.56f, 0.30f));
-            CreatePart("TorchHead", PrimitiveType.Cube, new Vector3(0f, 0.54f, 0.04f), Quaternion.identity, new Vector3(0.18f, 0.24f, 0.18f), new Color(0.42f, 0.24f, 0.12f));
-            CreatePart("TorchFlameCore", PrimitiveType.Sphere, new Vector3(0f, 0.72f, 0.04f), Quaternion.identity, new Vector3(0.16f, 0.24f, 0.16f), new Color(1f, 0.48f, 0.10f));
-            CreatePart("TorchFlameGlow", PrimitiveType.Sphere, new Vector3(0f, 0.80f, 0.04f), Quaternion.identity, new Vector3(0.10f, 0.16f, 0.10f), new Color(1f, 0.82f, 0.28f));
+            if (!TryBuildTorchModel())
+            {
+                CreatePart("TorchHandle", PrimitiveType.Cylinder, new Vector3(0f, -0.04f, 0.06f), Quaternion.Euler(10f, 0f, 0f), new Vector3(0.040f, 0.72f, 0.040f), new Color(0.31f, 0.18f, 0.09f));
+                CreatePart("TorchGripBandLower", PrimitiveType.Cube, new Vector3(0f, 0.08f, 0.05f), Quaternion.identity, new Vector3(0.11f, 0.03f, 0.11f), new Color(0.64f, 0.52f, 0.28f));
+                CreatePart("TorchGripBandUpper", PrimitiveType.Cube, new Vector3(0f, 0.18f, 0.05f), Quaternion.identity, new Vector3(0.10f, 0.03f, 0.10f), new Color(0.58f, 0.46f, 0.24f));
+                CreatePart("TorchHead", PrimitiveType.Cube, new Vector3(0f, 0.52f, 0.05f), Quaternion.Euler(0f, 0f, 7f), new Vector3(0.16f, 0.18f, 0.16f), new Color(0.40f, 0.22f, 0.11f));
+                CreatePart("TorchWrap", PrimitiveType.Cylinder, new Vector3(0f, 0.46f, 0.05f), Quaternion.Euler(90f, 0f, 0f), new Vector3(0.072f, 0.12f, 0.072f), new Color(0.72f, 0.58f, 0.32f));
+                CreatePart("TorchFlameCore", PrimitiveType.Sphere, new Vector3(0f, 0.78f, 0.05f), Quaternion.identity, new Vector3(0.15f, 0.22f, 0.15f), new Color(1f, 0.52f, 0.12f));
+                CreatePart("TorchFlameGlow", PrimitiveType.Sphere, new Vector3(0f, 0.86f, 0.05f), Quaternion.identity, new Vector3(0.09f, 0.14f, 0.09f), new Color(1f, 0.84f, 0.30f));
+                CreatePart("TorchEmberCap", PrimitiveType.Cube, new Vector3(0f, 0.64f, 0.05f), Quaternion.identity, new Vector3(0.12f, 0.05f, 0.12f), new Color(0.24f, 0.12f, 0.06f));
+            }
 
             GameObject lightGo = new GameObject("HeldTorchLight");
             lightGo.transform.SetParent(heldRoot.transform, false);
-            lightGo.transform.localPosition = new Vector3(0f, 0.74f, 0.04f);
+            lightGo.transform.localPosition = new Vector3(0f, 0.80f, 0.05f);
             torchLight = lightGo.AddComponent<Light>();
             torchLight.type = LightType.Point;
             torchLight.color = new Color(1f, 0.68f, 0.28f);
-            torchLight.range = 7.5f;
-            torchLight.intensity = 2.0f;
+            torchLight.range = 8.2f;
+            torchLight.intensity = 2.35f;
             torchLight.shadows = LightShadows.Soft;
             torchLight.bounceIntensity = 0.8f;
             torchBaseIntensity = torchLight.intensity;
@@ -385,7 +391,27 @@ namespace ApexShift.Runtime.Player
 
         private bool TryBuildAuthoredItemModel(string itemId)
         {
+            if (itemId == "torch")
+            {
+                return false;
+            }
+
             if (!ItemModelResolver.TryInstantiateItemModel(itemId, heldRoot.transform, out GameObject model))
+            {
+                return false;
+            }
+
+            return ItemModelResolver.NormalizeModelToBounds(
+                model,
+                heldRoot.transform,
+                1.55f,
+                new Vector3(0f, 0.72f, 0f),
+                Quaternion.identity);
+        }
+
+        private bool TryBuildTorchModel()
+        {
+            if (!ItemModelResolver.TryInstantiateItemModel("torch", heldRoot.transform, out GameObject model))
             {
                 return false;
             }

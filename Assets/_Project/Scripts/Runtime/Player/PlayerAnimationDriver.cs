@@ -42,6 +42,30 @@ namespace ApexShift.Runtime.Player
         private string swimmingParameter = "IsSwimming";
 
         [SerializeField]
+        private string gatherTrigger = "Gather";
+
+        [SerializeField]
+        private string spearAttackTrigger = "SpearAttack";
+
+        [SerializeField]
+        private string bowAttackTrigger = "BowAttack";
+
+        [SerializeField]
+        private string axeUseTrigger = "AxeUse";
+
+        [SerializeField]
+        private string pickaxeUseTrigger = "PickaxeUse";
+
+        [SerializeField]
+        private string torchUseTrigger = "TorchUse";
+
+        [SerializeField]
+        private string chopTrigger = "Chop";
+
+        [SerializeField]
+        private string mineTrigger = "Mine";
+
+        [SerializeField]
         private float crossFadeDuration = 0.12f;
 
         [SerializeField]
@@ -53,6 +77,14 @@ namespace ApexShift.Runtime.Player
         private bool hasAttack;
         private bool hasInteract;
         private bool hasSwimming;
+        private bool hasGather;
+        private bool hasSpearAttack;
+        private bool hasBowAttack;
+        private bool hasAxeUse;
+        private bool hasPickaxeUse;
+        private bool hasTorchUse;
+        private bool hasChop;
+        private bool hasMine;
         private bool hasStateFallback;
         private bool hasSwimmingStateFallback;
         private bool loggedMissingStateFallback;
@@ -79,6 +111,9 @@ namespace ApexShift.Runtime.Player
                     $"[PlayerAnimationDriver] Animator={(animator != null ? animator.name : "missing")}, " +
                     $"hasSpeed={hasSpeed}, hasMoving={hasMoving}, hasSprinting={hasSprinting}, " +
                     $"hasAttack={hasAttack}, hasInteract={hasInteract}, hasSwimming={hasSwimming}, " +
+                    $"hasGather={hasGather}, hasSpearAttack={hasSpearAttack}, hasBowAttack={hasBowAttack}, " +
+                    $"hasAxeUse={hasAxeUse}, hasPickaxeUse={hasPickaxeUse}, hasTorchUse={hasTorchUse}, " +
+                    $"hasChop={hasChop}, hasMine={hasMine}, " +
                     $"hasStateFallback={hasStateFallback}, hasSwimmingStateFallback={hasSwimmingStateFallback}",
                     this);
             }
@@ -159,6 +194,86 @@ namespace ApexShift.Runtime.Player
             }
         }
 
+        public void TriggerGather()
+        {
+            if (animator != null && hasGather)
+            {
+                animator.SetTrigger(gatherTrigger);
+            }
+            else
+            {
+                OnInteractPressed();
+            }
+        }
+
+        public void TriggerItemUse(string itemId)
+        {
+            string normalized = string.IsNullOrWhiteSpace(itemId) ? string.Empty : itemId.Trim().ToLowerInvariant();
+            switch (normalized)
+            {
+                case "spear":
+                    TriggerSpearAttack();
+                    break;
+                case "bow":
+                    TriggerBowAttack();
+                    break;
+                case "axe":
+                    TriggerAxeUse();
+                    break;
+                case "pickaxe":
+                    TriggerPickaxeUse();
+                    break;
+                case "torch":
+                    TriggerTorchUse();
+                    break;
+                default:
+                    TriggerGather();
+                    break;
+            }
+        }
+
+        public void TriggerSpearAttack()
+        {
+            if (TrySetTrigger(spearAttackTrigger, hasSpearAttack)) return;
+            OnAttackPressed();
+        }
+
+        public void TriggerBowAttack()
+        {
+            if (TrySetTrigger(bowAttackTrigger, hasBowAttack)) return;
+            OnAttackPressed();
+        }
+
+        public void TriggerAxeUse()
+        {
+            if (TrySetTrigger(axeUseTrigger, hasAxeUse)) return;
+            TriggerGather();
+        }
+
+        public void TriggerPickaxeUse()
+        {
+            if (TrySetTrigger(pickaxeUseTrigger, hasPickaxeUse)) return;
+            TriggerAxeUse();
+        }
+
+        public void TriggerTorchUse()
+        {
+            if (TrySetTrigger(torchUseTrigger, hasTorchUse)) return;
+            TriggerGather();
+        }
+
+        public void TriggerChop()
+        {
+            if (animator != null && hasChop) animator.SetTrigger(chopTrigger);
+            else TriggerGather();
+        }
+
+        public void TriggerMine()
+        {
+            if (animator != null && hasMine) animator.SetTrigger(mineTrigger);
+            else TriggerGather();
+        }
+
         /// <summary>
         /// Called by PlayerWaterDetector to enable or disable the swimming animation state.
         /// Has no effect if the Animator controller does not contain an "IsSwimming" bool parameter.
@@ -218,6 +333,14 @@ namespace ApexShift.Runtime.Player
             hasSprinting = false;
             hasAttack = false;
             hasInteract = false;
+            hasGather = false;
+            hasSpearAttack = false;
+            hasBowAttack = false;
+            hasAxeUse = false;
+            hasPickaxeUse = false;
+            hasTorchUse = false;
+            hasChop = false;
+            hasMine = false;
             hasStateFallback = false;
             hasSwimmingStateFallback = false;
 
@@ -251,6 +374,38 @@ namespace ApexShift.Runtime.Player
                 else if (parameter.name == swimmingParameter)
                 {
                     hasSwimming = parameter.type == AnimatorControllerParameterType.Bool;
+                }
+                else if (parameter.name == gatherTrigger)
+                {
+                    hasGather = parameter.type == AnimatorControllerParameterType.Trigger;
+                }
+                else if (parameter.name == spearAttackTrigger)
+                {
+                    hasSpearAttack = parameter.type == AnimatorControllerParameterType.Trigger;
+                }
+                else if (parameter.name == bowAttackTrigger)
+                {
+                    hasBowAttack = parameter.type == AnimatorControllerParameterType.Trigger;
+                }
+                else if (parameter.name == axeUseTrigger)
+                {
+                    hasAxeUse = parameter.type == AnimatorControllerParameterType.Trigger;
+                }
+                else if (parameter.name == pickaxeUseTrigger)
+                {
+                    hasPickaxeUse = parameter.type == AnimatorControllerParameterType.Trigger;
+                }
+                else if (parameter.name == torchUseTrigger)
+                {
+                    hasTorchUse = parameter.type == AnimatorControllerParameterType.Trigger;
+                }
+                else if (parameter.name == chopTrigger)
+                {
+                    hasChop = parameter.type == AnimatorControllerParameterType.Trigger;
+                }
+                else if (parameter.name == mineTrigger)
+                {
+                    hasMine = parameter.type == AnimatorControllerParameterType.Trigger;
                 }
             }
 
@@ -300,6 +455,17 @@ namespace ApexShift.Runtime.Player
             currentState = null;
             loggedMissingStateFallback = false;
             CacheParameters();
+        }
+
+        private bool TrySetTrigger(string triggerName, bool hasTrigger)
+        {
+            if (animator == null || !hasTrigger)
+            {
+                return false;
+            }
+
+            animator.SetTrigger(triggerName);
+            return true;
         }
     }
 }

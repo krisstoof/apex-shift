@@ -188,6 +188,8 @@ namespace ApexShift.Runtime.Resources
                 return false;
             }
 
+            TriggerHarvestAnimation(actor);
+
             HarvestResult result = harvestSystem.Harvest(state, inventoryRuntime.Inventory);
             if (!result.Success)
             {
@@ -267,6 +269,35 @@ namespace ApexShift.Runtime.Resources
 
             string biomeId = director.GetBiomeIdForPosition(transform.position);
             return string.IsNullOrWhiteSpace(biomeId) ? "default" : biomeId;
+        }
+
+        private void TriggerHarvestAnimation(GameObject actor)
+        {
+            if (actor == null)
+            {
+                return;
+            }
+
+            PlayerAnimationDriver animationDriver = actor.GetComponent<PlayerAnimationDriver>() ?? actor.GetComponentInChildren<PlayerAnimationDriver>();
+            if (animationDriver == null)
+            {
+                return;
+            }
+
+            string requiredTool = ResolveRequiredToolItemId();
+            if (string.Equals(requiredTool, "axe", System.StringComparison.OrdinalIgnoreCase))
+            {
+                animationDriver.TriggerAxeUse();
+                return;
+            }
+
+            if (string.Equals(requiredTool, "pickaxe", System.StringComparison.OrdinalIgnoreCase))
+            {
+                animationDriver.TriggerPickaxeUse();
+                return;
+            }
+
+            animationDriver.TriggerGather();
         }
 
         private void EnsureState()

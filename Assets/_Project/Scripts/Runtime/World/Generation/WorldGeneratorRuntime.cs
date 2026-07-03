@@ -1944,11 +1944,25 @@ if (renderer != null)
             PlayerAnimationDriver animDriver = player.GetComponent<PlayerAnimationDriver>();
             if (animDriver == null) animDriver = player.AddComponent<PlayerAnimationDriver>();
             animDriver.SetInputReader(inputReader);
-            
+
             Animator anim = player.GetComponentInChildren<Animator>();
             if (anim != null)
             {
                 if (playerAnimatorController != null) anim.runtimeAnimatorController = playerAnimatorController;
+            }
+
+            KevinIglesiasPlayerAnimationBinder animationBinder = player.GetComponent<KevinIglesiasPlayerAnimationBinder>();
+            if (animationBinder == null) animationBinder = player.AddComponent<KevinIglesiasPlayerAnimationBinder>();
+            animationBinder.Configure(inputReader, anim, playerAnimatorController);
+            anim = animationBinder.BoundAnimator;
+            if (anim != null)
+            {
+                animDriver.SetAnimator(anim);
+            }
+            else if (playerAnimatorController != null)
+            {
+                anim = player.GetComponent<Animator>() ?? player.AddComponent<Animator>();
+                anim.runtimeAnimatorController = playerAnimatorController;
                 animDriver.SetAnimator(anim);
             }
 
