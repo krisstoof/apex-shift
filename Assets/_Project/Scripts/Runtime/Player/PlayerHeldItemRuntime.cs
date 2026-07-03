@@ -1,4 +1,5 @@
 using System;
+using ApexShift.Runtime.Items;
 using UnityEngine;
 
 namespace ApexShift.Runtime.Player
@@ -258,6 +259,11 @@ namespace ApexShift.Runtime.Player
             heldRoot.SetActive(true);
             ApplyAnchorPose();
 
+            if (currentItemId != "torch" && TryBuildAuthoredItemModel(currentItemId))
+            {
+                return;
+            }
+
             switch (currentItemId)
             {
                 case "spear":
@@ -375,6 +381,21 @@ namespace ApexShift.Runtime.Player
             float flicker = Mathf.Clamp01((noise * 0.7f + pulse * 0.3f));
             torchLight.intensity = torchBaseIntensity * (1f - torchFlickerAmount) + torchBaseIntensity * torchFlickerAmount * flicker;
             torchLight.range = torchBaseRange * (1f - torchFlickerRangeAmount) + torchBaseRange * torchFlickerRangeAmount * flicker;
+        }
+
+        private bool TryBuildAuthoredItemModel(string itemId)
+        {
+            if (!ItemModelResolver.TryInstantiateItemModel(itemId, heldRoot.transform, out GameObject model))
+            {
+                return false;
+            }
+
+            return ItemModelResolver.NormalizeModelToBounds(
+                model,
+                heldRoot.transform,
+                1.55f,
+                new Vector3(0f, 0.72f, 0f),
+                Quaternion.identity);
         }
 
         private bool TryBuildCraftingModel(string itemId)

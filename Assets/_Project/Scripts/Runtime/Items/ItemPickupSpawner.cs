@@ -11,7 +11,7 @@ namespace ApexShift.Runtime.Items
             GameObject go = new GameObject($"Item_{normalizedItemId}");
             go.name = $"Item_{normalizedItemId}";
             go.transform.SetPositionAndRotation(position, rotation);
-            BuildPickupVisual(go.transform, normalizedItemId);
+            bool usedAuthoredModel = BuildPickupVisual(go.transform, normalizedItemId);
 
             SphereCollider collider = go.AddComponent<SphereCollider>();
             collider.isTrigger = true;
@@ -21,33 +21,37 @@ namespace ApexShift.Runtime.Items
             ItemPickupView pickup = go.GetComponent<ItemPickupView>() ?? go.AddComponent<ItemPickupView>();
             pickup.Configure(normalizedItemId, amount);
 
-            GameObject iconGo = new GameObject("Icon", typeof(SpriteRenderer));
-            iconGo.transform.SetParent(go.transform, false);
-            iconGo.transform.localPosition = new Vector3(0f, 0.22f, 0.01f);
-            iconGo.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            iconGo.transform.localScale = new Vector3(0.42f, 0.42f, 0.42f);
+            if (!usedAuthoredModel)
+            {
+                GameObject iconGo = new GameObject("Icon", typeof(SpriteRenderer));
+                iconGo.transform.SetParent(go.transform, false);
+                iconGo.transform.localPosition = new Vector3(0f, 0.22f, 0.01f);
+                iconGo.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                iconGo.transform.localScale = new Vector3(0.42f, 0.42f, 0.42f);
 
-            SpriteRenderer spriteRenderer = iconGo.GetComponent<SpriteRenderer>();
-            spriteRenderer.sprite = LoadPickupIcon(normalizedItemId);
-            spriteRenderer.color = Color.white;
-            spriteRenderer.sortingOrder = 10;
-            spriteRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            spriteRenderer.receiveShadows = false;
+                SpriteRenderer spriteRenderer = iconGo.GetComponent<SpriteRenderer>();
+                spriteRenderer.sprite = LoadPickupIcon(normalizedItemId);
+                spriteRenderer.color = Color.white;
+                spriteRenderer.sortingOrder = 10;
+                spriteRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                spriteRenderer.receiveShadows = false;
+            }
 
             return go;
         }
 
-        private static void BuildPickupVisual(Transform root, string itemId)
+        private static bool BuildPickupVisual(Transform root, string itemId)
         {
+            if (TryAddAuthoredItemModel(root, itemId)) return true;
             if (TryAddCraftingModel(root, itemId))
             {
-                return;
+                return true;
             }
 
             if (itemId == "axe" || itemId == "pickaxe" || itemId == "arrow")
             {
                 Debug.LogError($"[ItemPickup] Missing crafting model for '{itemId}'. Procedural fallback disabled.");
-                return;
+                return false;
             }
 
             switch (itemId)
@@ -71,6 +75,28 @@ namespace ApexShift.Runtime.Items
                     AddPart(root, "Body", PrimitiveType.Cube, new Vector3(0f, 0.08f, 0f), Quaternion.identity, new Vector3(0.34f, 0.12f, 0.34f), GetColor(itemId));
                     break;
             }
+
+            return false;
+        }
+
+        private static bool TryAddAuthoredItemModel(Transform root, string itemId)
+        {
+            if (itemId == "torch")
+            {
+                return false;
+            }
+
+            if (!ItemModelResolver.TryInstantiateItemModel(itemId, root, out GameObject model))
+            {
+                return false;
+            }
+
+            return ItemModelResolver.NormalizeModelToBounds(
+                model,
+                root,
+                0.72f,
+                new Vector3(0f, 0.20f, 0f),
+                Quaternion.identity);
         }
 
         private static bool TryAddCraftingModel(Transform root, string itemId)
