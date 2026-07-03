@@ -168,15 +168,14 @@ namespace ApexShift.Runtime.Buildings
             }
 
             GameObject prefab = ResolvePrefab(selectedDefinition);
-            GameObject instance = prefab != null
-                ? Instantiate(prefab, currentPosition, currentRotation, buildingParent)
-                : PlaceableFallbackFactory.CreateFallback(selectedDefinition.BuildingId, currentPosition, currentRotation, buildingParent);
-
-            if (instance == null)
+            if (prefab == null)
             {
-                currentValidation = PlacementValidationResult.Invalid("spawn failed");
+                currentValidation = PlacementValidationResult.Invalid("missing building prefab");
+                Debug.LogError($"[BuildingPlacement] Cannot place '{selectedDefinition.BuildingId}': no prefab is registered.", this);
                 return false;
             }
+
+            GameObject instance = Instantiate(prefab, currentPosition, currentRotation, buildingParent);
 
             PlaceableStructureRuntime structure = instance.GetComponent<PlaceableStructureRuntime>();
             if (structure == null)
@@ -697,5 +696,6 @@ namespace ApexShift.Runtime.Buildings
 
             return result;
         }
+
     }
 }

@@ -8,41 +8,18 @@ namespace ApexShift.Runtime.Items
         public static GameObject Spawn(string itemId, int amount, Vector3 position, Quaternion rotation)
         {
             string normalizedItemId = string.IsNullOrWhiteSpace(itemId) ? string.Empty : itemId.Trim().ToLowerInvariant();
-            GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            GameObject go = new GameObject($"Item_{normalizedItemId}");
             go.name = $"Item_{normalizedItemId}";
             go.transform.SetPositionAndRotation(position, rotation);
-            go.transform.localScale = new Vector3(0.34f, 0.12f, 0.34f);
+            BuildPickupVisual(go.transform, normalizedItemId);
 
-            Collider collider = go.GetComponent<Collider>();
-            if (collider != null)
-            {
-                collider.isTrigger = true;
-            }
+            SphereCollider collider = go.AddComponent<SphereCollider>();
+            collider.isTrigger = true;
+            collider.radius = 0.38f;
+            collider.center = new Vector3(0f, 0.18f, 0f);
 
             ItemPickupView pickup = go.GetComponent<ItemPickupView>() ?? go.AddComponent<ItemPickupView>();
             pickup.Configure(normalizedItemId, amount);
-
-            Renderer renderer = go.GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                if (mat.shader == null)
-                {
-                    mat.shader = Shader.Find("Standard");
-                }
-
-                Color color = GetColor(normalizedItemId);
-                if (mat.HasProperty("_BaseColor"))
-                {
-                    mat.SetColor("_BaseColor", color);
-                }
-                else
-                {
-                    mat.color = color;
-                }
-
-                renderer.sharedMaterial = mat;
-            }
 
             GameObject iconGo = new GameObject("Icon", typeof(SpriteRenderer));
             iconGo.transform.SetParent(go.transform, false);
@@ -56,6 +33,111 @@ namespace ApexShift.Runtime.Items
             spriteRenderer.sortingOrder = 10;
             spriteRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             spriteRenderer.receiveShadows = false;
+
+            return go;
+        }
+
+        private static void BuildPickupVisual(Transform root, string itemId)
+        {
+            if (TryAddCraftingModel(root, itemId))
+            {
+                return;
+            }
+
+            if (itemId == "axe" || itemId == "pickaxe" || itemId == "arrow")
+            {
+                Debug.LogError($"[ItemPickup] Missing crafting model for '{itemId}'. Procedural fallback disabled.");
+                return;
+            }
+
+            switch (itemId)
+            {
+                case "spear":
+                    AddPart(root, "Shaft", PrimitiveType.Cylinder, new Vector3(0f, 0.10f, 0f), Quaternion.Euler(90f, 0f, 28f), new Vector3(0.03f, 0.42f, 0.03f), new Color(0.50f, 0.33f, 0.17f));
+                    AddPart(root, "Tip", PrimitiveType.Cube, new Vector3(0.18f, 0.18f, 0f), Quaternion.Euler(0f, 0f, 45f), new Vector3(0.10f, 0.10f, 0.18f), new Color(0.74f, 0.78f, 0.80f));
+                    break;
+                case "bow":
+                    AddPart(root, "Grip", PrimitiveType.Cube, new Vector3(0f, 0.14f, 0f), Quaternion.identity, new Vector3(0.08f, 0.18f, 0.10f), new Color(0.36f, 0.22f, 0.12f));
+                    AddPart(root, "UpperLimb", PrimitiveType.Cylinder, new Vector3(-0.08f, 0.28f, 0f), Quaternion.Euler(0f, 0f, 30f), new Vector3(0.03f, 0.24f, 0.03f), new Color(0.48f, 0.28f, 0.14f));
+                    AddPart(root, "LowerLimb", PrimitiveType.Cylinder, new Vector3(-0.08f, 0.00f, 0f), Quaternion.Euler(0f, 0f, -30f), new Vector3(0.03f, 0.24f, 0.03f), new Color(0.48f, 0.28f, 0.14f));
+                    AddPart(root, "String", PrimitiveType.Cylinder, new Vector3(0.06f, 0.14f, 0f), Quaternion.identity, new Vector3(0.008f, 0.26f, 0.008f), new Color(0.86f, 0.82f, 0.70f));
+                    break;
+                case "torch":
+                    AddPart(root, "Handle", PrimitiveType.Cylinder, new Vector3(0f, 0.10f, 0f), Quaternion.Euler(90f, 0f, 18f), new Vector3(0.03f, 0.24f, 0.03f), new Color(0.34f, 0.20f, 0.10f));
+                    AddPart(root, "Head", PrimitiveType.Cube, new Vector3(0.10f, 0.22f, 0f), Quaternion.identity, new Vector3(0.10f, 0.12f, 0.10f), new Color(0.44f, 0.24f, 0.12f));
+                    AddPart(root, "Flame", PrimitiveType.Sphere, new Vector3(0.14f, 0.34f, 0f), Quaternion.identity, new Vector3(0.10f, 0.14f, 0.10f), new Color(1f, 0.56f, 0.14f));
+                    break;
+                default:
+                    AddPart(root, "Body", PrimitiveType.Cube, new Vector3(0f, 0.08f, 0f), Quaternion.identity, new Vector3(0.34f, 0.12f, 0.34f), GetColor(itemId));
+                    break;
+            }
+        }
+
+        private static bool TryAddCraftingModel(Transform root, string itemId)
+        {
+            if (itemId != "axe" && itemId != "pickaxe" && itemId != "arrow") return false;
+
+            GameObject prefab = UnityEngine.Resources.Load<GameObject>($"Crafting/Models/craft_{itemId}");
+            if (prefab == null)
+            {
+                return false;
+            }
+
+            GameObject model = Object.Instantiate(prefab, root, false);
+            model.name = $"CraftModel_{itemId}";
+            foreach (Collider modelCollider in model.GetComponentsInChildren<Collider>(true)) Object.Destroy(modelCollider);
+
+            Renderer[] renderers = model.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length == 0)
+            {
+                Object.Destroy(model);
+                return false;
+            }
+
+            Bounds bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
+            float scale = 0.72f / Mathf.Max(0.001f, bounds.size.y);
+            model.transform.localScale = Vector3.one * scale;
+            model.transform.localRotation = Quaternion.Euler(0f, 0f, -70f);
+            model.transform.localPosition = new Vector3(0f, 0.08f - bounds.min.y * scale, 0f);
+            return true;
+        }
+
+        private static GameObject AddPart(Transform parent, string name, PrimitiveType primitive, Vector3 localPosition, Quaternion localRotation, Vector3 localScale, Color color)
+        {
+            GameObject go = GameObject.CreatePrimitive(primitive);
+            go.name = name;
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPosition;
+            go.transform.localRotation = localRotation;
+            go.transform.localScale = localScale;
+
+            Collider partCollider = go.GetComponent<Collider>();
+            if (partCollider != null)
+            {
+                Object.Destroy(partCollider);
+            }
+
+            Renderer renderer = go.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                if (mat.shader == null)
+                {
+                    mat.shader = Shader.Find("Standard");
+                }
+
+                if (mat.HasProperty("_BaseColor"))
+                {
+                    mat.SetColor("_BaseColor", color);
+                }
+                else
+                {
+                    mat.color = color;
+                }
+
+                renderer.sharedMaterial = mat;
+            }
 
             return go;
         }

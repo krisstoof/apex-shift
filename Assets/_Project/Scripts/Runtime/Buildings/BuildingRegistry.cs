@@ -89,14 +89,13 @@ namespace ApexShift.Runtime.Buildings
                 Vector3 position = new Vector3(data.X, data.Y, data.Z);
                 Quaternion rotation = Quaternion.Euler(0f, data.RotationY, 0f);
                 GameObject prefab = ResolvePrefab(data.BuildingId);
-                GameObject instance = prefab != null
-                    ? Instantiate(prefab, position, rotation, targetParent)
-                    : PlaceableFallbackFactory.CreateFallback(data.BuildingId, position, rotation, targetParent);
-
-                if (instance == null)
+                if (prefab == null)
                 {
+                    Debug.LogError($"[BuildingRegistry] Cannot restore '{data.BuildingId}' ({data.InstanceId}): no prefab is registered.", this);
                     continue;
                 }
+
+                GameObject instance = Instantiate(prefab, position, rotation, targetParent);
 
                 instance.name = $"Building_{data.BuildingId}_{data.InstanceId}";
                 PlaceableStructureRuntime structure = instance.GetComponent<PlaceableStructureRuntime>();

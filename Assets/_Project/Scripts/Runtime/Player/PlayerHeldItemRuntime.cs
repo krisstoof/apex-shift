@@ -267,11 +267,23 @@ namespace ApexShift.Runtime.Player
                     BuildBow();
                     break;
                 case "axe":
-                    BuildAxe();
-                    break;
+                    if (TryBuildCraftingModel(currentItemId))
+                    {
+                        return;
+                    }
+
+                    Debug.LogError($"[HeldItem] Missing crafting model for '{currentItemId}'. Procedural fallback disabled.", this);
+                    heldRoot.SetActive(false);
+                    return;
                 case "pickaxe":
-                    BuildPickaxe();
-                    break;
+                    if (TryBuildCraftingModel(currentItemId))
+                    {
+                        return;
+                    }
+
+                    Debug.LogError($"[HeldItem] Missing crafting model for '{currentItemId}'. Procedural fallback disabled.", this);
+                    heldRoot.SetActive(false);
+                    return;
                 case "torch":
                     BuildTorch();
                     break;
@@ -310,36 +322,36 @@ namespace ApexShift.Runtime.Player
 
         private void BuildSpear()
         {
-            CreatePart("SpearShaft", PrimitiveType.Cylinder, new Vector3(0f, 0f, 0.22f), Quaternion.Euler(90f, 0f, 0f), new Vector3(0.05f, 1.18f, 0.05f), new Color(0.48f, 0.31f, 0.16f));
-            CreatePart("SpearTip", PrimitiveType.Cube, new Vector3(0f, 0f, 1.45f), Quaternion.Euler(45f, 0f, 0f), new Vector3(0.18f, 0.18f, 0.34f), new Color(0.78f, 0.82f, 0.78f));
+            CreatePart("SpearShaft", PrimitiveType.Cylinder, new Vector3(0f, -0.02f, 0.26f), Quaternion.Euler(90f, 0f, 0f), new Vector3(0.045f, 1.22f, 0.045f), new Color(0.50f, 0.33f, 0.17f));
+            CreatePart("SpearGrip", PrimitiveType.Cube, new Vector3(0f, -0.02f, 0.58f), Quaternion.identity, new Vector3(0.10f, 0.10f, 0.28f), new Color(0.34f, 0.22f, 0.12f));
+            CreatePart("SpearBinding", PrimitiveType.Cube, new Vector3(0f, 0.00f, 1.14f), Quaternion.identity, new Vector3(0.12f, 0.12f, 0.14f), new Color(0.74f, 0.66f, 0.42f));
+            CreatePart("SpearTipCore", PrimitiveType.Cube, new Vector3(0f, 0f, 1.42f), Quaternion.Euler(45f, 0f, 0f), new Vector3(0.16f, 0.16f, 0.30f), new Color(0.76f, 0.80f, 0.82f));
+            CreatePart("SpearTipBladeA", PrimitiveType.Cube, new Vector3(-0.06f, 0f, 1.35f), Quaternion.Euler(25f, 0f, 26f), new Vector3(0.05f, 0.20f, 0.18f), new Color(0.66f, 0.70f, 0.72f));
+            CreatePart("SpearTipBladeB", PrimitiveType.Cube, new Vector3(0.06f, 0f, 1.35f), Quaternion.Euler(25f, 0f, -26f), new Vector3(0.05f, 0.20f, 0.18f), new Color(0.66f, 0.70f, 0.72f));
         }
 
         private void BuildBow()
         {
-            CreatePart("BowBody", PrimitiveType.Cylinder, new Vector3(0.04f, 0f, 0.18f), Quaternion.Euler(0f, 0f, 0f), new Vector3(0.045f, 0.86f, 0.045f), new Color(0.42f, 0.24f, 0.10f));
-            CreatePart("BowString", PrimitiveType.Cylinder, new Vector3(0.22f, 0f, 0.18f), Quaternion.Euler(0f, 0f, 0f), new Vector3(0.012f, 0.78f, 0.012f), new Color(0.86f, 0.82f, 0.70f));
-        }
-
-        private void BuildAxe()
-        {
-            CreatePart("AxeHandle", PrimitiveType.Cylinder, new Vector3(0f, 0f, 0.14f), Quaternion.Euler(10f, 0f, 0f), new Vector3(0.05f, 0.66f, 0.05f), new Color(0.42f, 0.25f, 0.12f));
-            CreatePart("AxeHead", PrimitiveType.Cube, new Vector3(0f, 0.62f, 0.10f), Quaternion.identity, new Vector3(0.52f, 0.19f, 0.16f), new Color(0.68f, 0.70f, 0.66f));
-        }
-
-        private void BuildPickaxe()
-        {
-            CreatePart("PickaxeHandle", PrimitiveType.Cylinder, new Vector3(0f, 0f, 0.14f), Quaternion.Euler(10f, 0f, 0f), new Vector3(0.05f, 0.70f, 0.05f), new Color(0.38f, 0.23f, 0.12f));
-            CreatePart("PickaxeHead", PrimitiveType.Cube, new Vector3(0f, 0.66f, 0.10f), Quaternion.identity, new Vector3(0.76f, 0.12f, 0.14f), new Color(0.62f, 0.64f, 0.60f));
+            CreatePart("BowGrip", PrimitiveType.Cube, new Vector3(0.02f, -0.02f, 0.16f), Quaternion.identity, new Vector3(0.10f, 0.34f, 0.14f), new Color(0.34f, 0.20f, 0.11f));
+            CreatePart("BowLimbUpper", PrimitiveType.Cylinder, new Vector3(0.00f, 0.34f, 0.14f), Quaternion.Euler(0f, 0f, 24f), new Vector3(0.040f, 0.48f, 0.040f), new Color(0.48f, 0.28f, 0.14f));
+            CreatePart("BowLimbLower", PrimitiveType.Cylinder, new Vector3(0.00f, -0.34f, 0.14f), Quaternion.Euler(0f, 0f, -24f), new Vector3(0.040f, 0.48f, 0.040f), new Color(0.48f, 0.28f, 0.14f));
+            CreatePart("BowTipUpper", PrimitiveType.Cube, new Vector3(0.18f, 0.72f, 0.14f), Quaternion.Euler(0f, 0f, 34f), new Vector3(0.05f, 0.16f, 0.08f), new Color(0.58f, 0.36f, 0.18f));
+            CreatePart("BowTipLower", PrimitiveType.Cube, new Vector3(0.18f, -0.72f, 0.14f), Quaternion.Euler(0f, 0f, -34f), new Vector3(0.05f, 0.16f, 0.08f), new Color(0.58f, 0.36f, 0.18f));
+            CreatePart("BowString", PrimitiveType.Cylinder, new Vector3(0.24f, 0.00f, 0.14f), Quaternion.identity, new Vector3(0.010f, 0.74f, 0.010f), new Color(0.86f, 0.82f, 0.70f));
+            CreatePart("BowWrap", PrimitiveType.Cube, new Vector3(0.02f, 0.00f, 0.16f), Quaternion.identity, new Vector3(0.12f, 0.20f, 0.16f), new Color(0.70f, 0.58f, 0.34f));
         }
 
         private void BuildTorch()
         {
-            CreatePart("TorchHandle", PrimitiveType.Cylinder, new Vector3(0f, -0.02f, 0.05f), Quaternion.Euler(8f, 0f, 0f), new Vector3(0.045f, 0.50f, 0.045f), new Color(0.34f, 0.20f, 0.10f));
-            CreatePart("TorchFlame", PrimitiveType.Sphere, new Vector3(0f, 0.55f, 0.04f), Quaternion.identity, new Vector3(0.18f, 0.25f, 0.18f), new Color(1f, 0.42f, 0.08f));
+            CreatePart("TorchHandle", PrimitiveType.Cylinder, new Vector3(0f, -0.06f, 0.05f), Quaternion.Euler(8f, 0f, 0f), new Vector3(0.045f, 0.56f, 0.045f), new Color(0.34f, 0.20f, 0.10f));
+            CreatePart("TorchWrap", PrimitiveType.Cube, new Vector3(0f, 0.22f, 0.04f), Quaternion.identity, new Vector3(0.12f, 0.16f, 0.12f), new Color(0.68f, 0.56f, 0.30f));
+            CreatePart("TorchHead", PrimitiveType.Cube, new Vector3(0f, 0.54f, 0.04f), Quaternion.identity, new Vector3(0.18f, 0.24f, 0.18f), new Color(0.42f, 0.24f, 0.12f));
+            CreatePart("TorchFlameCore", PrimitiveType.Sphere, new Vector3(0f, 0.72f, 0.04f), Quaternion.identity, new Vector3(0.16f, 0.24f, 0.16f), new Color(1f, 0.48f, 0.10f));
+            CreatePart("TorchFlameGlow", PrimitiveType.Sphere, new Vector3(0f, 0.80f, 0.04f), Quaternion.identity, new Vector3(0.10f, 0.16f, 0.10f), new Color(1f, 0.82f, 0.28f));
 
             GameObject lightGo = new GameObject("HeldTorchLight");
             lightGo.transform.SetParent(heldRoot.transform, false);
-            lightGo.transform.localPosition = new Vector3(0f, 0.58f, 0.04f);
+            lightGo.transform.localPosition = new Vector3(0f, 0.74f, 0.04f);
             torchLight = lightGo.AddComponent<Light>();
             torchLight.type = LightType.Point;
             torchLight.color = new Color(1f, 0.68f, 0.28f);
@@ -363,6 +375,35 @@ namespace ApexShift.Runtime.Player
             float flicker = Mathf.Clamp01((noise * 0.7f + pulse * 0.3f));
             torchLight.intensity = torchBaseIntensity * (1f - torchFlickerAmount) + torchBaseIntensity * torchFlickerAmount * flicker;
             torchLight.range = torchBaseRange * (1f - torchFlickerRangeAmount) + torchBaseRange * torchFlickerRangeAmount * flicker;
+        }
+
+        private bool TryBuildCraftingModel(string itemId)
+        {
+            GameObject prefab = UnityEngine.Resources.Load<GameObject>($"Crafting/Models/craft_{itemId}");
+            if (prefab == null)
+            {
+                Debug.LogError($"[HeldItem] Missing crafting model resource: Crafting/Models/craft_{itemId}", this);
+                return false;
+            }
+
+            GameObject model = Instantiate(prefab, heldRoot.transform, false);
+            model.name = $"CraftModel_{itemId}";
+            foreach (Collider modelCollider in model.GetComponentsInChildren<Collider>(true)) Destroy(modelCollider);
+
+            Renderer[] renderers = model.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length == 0)
+            {
+                Destroy(model);
+                return false;
+            }
+
+            Bounds bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++) bounds.Encapsulate(renderers[i].bounds);
+            float scale = 1.55f / Mathf.Max(0.001f, bounds.size.y);
+            model.transform.localScale = Vector3.one * scale;
+            model.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            model.transform.localPosition = new Vector3(0f, -bounds.min.y * scale, 0f);
+            return true;
         }
 
         private GameObject CreatePart(string name, PrimitiveType primitive, Vector3 localPosition, Quaternion localRotation, Vector3 localScale, Color color)

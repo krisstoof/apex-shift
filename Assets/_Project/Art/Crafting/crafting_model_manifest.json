@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "models": [
+    {
+      "recipeId": "torch",
+      "itemId": "torch",
+      "model": "Models/craft_torch.obj",
+      "usage": "held_item"
+    },
+    {
+      "recipeId": "spear",
+      "itemId": "spear",
+      "model": "Models/craft_spear.obj",
+      "usage": "held_item"
+    },
+    {
+      "recipeId": "bow",
+      "itemId": "bow",
+      "model": "Models/craft_bow.obj",
+      "usage": "held_item"
+    },
+    {
+      "recipeId": "storage_box",
+      "itemId": "storage_box",
+      "model": "Models/craft_storage_box.obj",
+      "usage": "placeable_item"
+    },
+    {
+      "recipeId": "campfire",
+      "itemId": "campfire",
+      "model": "Models/craft_campfire.obj",
+      "usage": "placeable_item"
+    },
+    {
+      "recipeId": "wall",
+      "itemId": "wall",
+      "model": "Models/craft_wall.obj",
+      "usage": "placeable_item"
+    },
+    {
+      "recipeId": "trap",
+      "itemId": "trap",
+      "model": "Models/craft_trap.obj",
+      "usage": "placeable_item"
+    },
+    {
+      "recipeId": "tent",
+      "itemId": "tent",
+      "model": "Models/craft_tent.obj",
+      "usage": "placeable_item"
+    }
+  ]
+}
