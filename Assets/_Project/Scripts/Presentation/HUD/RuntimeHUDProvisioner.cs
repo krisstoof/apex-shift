@@ -143,7 +143,9 @@ namespace ApexShift.Presentation.HUD
             MapScreenUI mapScreen = mapScreenGo.GetComponent<MapScreenUI>() ?? mapScreenGo.AddComponent<MapScreenUI>();
             mapScreen.Configure(player != null ? player.transform : null, uiFont);
             mapScreen.SetVisible(false);
-            mapScreenGo.transform.SetAsLastSibling();
+
+            MapScreenToggleRuntime mapToggle = hudGo.GetComponent<MapScreenToggleRuntime>() ?? hudGo.AddComponent<MapScreenToggleRuntime>();
+            mapToggle.Configure(mapScreen);
 
             // Group 4: FPS (Bottom Left)
             GameObject fpsPanel = CreateUIPanel(hudGo.transform, "FpsPanel", new Vector2(0, 0), new Vector2(0, 0), new Vector2(100, 30), new Vector2(20, 20));

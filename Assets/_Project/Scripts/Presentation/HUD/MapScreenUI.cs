@@ -7,7 +7,6 @@ using ApexShift.Runtime.Fire;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.World.Topography;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace ApexShift.Presentation.HUD
@@ -20,8 +19,6 @@ namespace ApexShift.Presentation.HUD
     {
         [SerializeField] private Transform player;
         [SerializeField] private Font uiFont;
-        [SerializeField] private Key toggleKey = Key.M;
-        [SerializeField] private Key closeKey = Key.Escape;
         [SerializeField] private bool pauseWhileOpen = true;
         [SerializeField] private float fallbackWorldRadius = 140f;
         [SerializeField] private int maxTerrainCellsPerAxis = 72;
@@ -68,6 +65,7 @@ namespace ApexShift.Presentation.HUD
 
             ApplyFontToExistingText();
             terrainDirty = true;
+            RefreshNow();
             SetVisible(false);
         }
 
@@ -104,19 +102,6 @@ namespace ApexShift.Presentation.HUD
 
         private void Update()
         {
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard != null)
-            {
-                if (keyboard[toggleKey].wasPressedThisFrame)
-                {
-                    Toggle();
-                }
-                else if (isOpen && keyboard[closeKey].wasPressedThisFrame)
-                {
-                    SetVisible(false);
-                }
-            }
-
             if (!isOpen)
             {
                 return;
@@ -138,6 +123,7 @@ namespace ApexShift.Presentation.HUD
         public void SetVisible(bool visible)
         {
             isOpen = visible;
+            gameObject.SetActive(true);
             if (canvasGroup != null)
             {
                 canvasGroup.alpha = visible ? 1f : 0f;
@@ -149,11 +135,14 @@ namespace ApexShift.Presentation.HUD
             {
                 CaptureTimeScaleIfNeeded();
                 RefreshNow(true);
+                transform.SetAsLastSibling();
             }
             else
             {
                 RestoreTimeScaleIfNeeded();
             }
+
+            gameObject.SetActive(visible);
         }
 
         private void BuildVisuals()
