@@ -19,6 +19,7 @@ namespace ApexShift.Runtime.Player
         [SerializeField] private bool forceEquipOnSlotSelect = true;
         [SerializeField] private bool rejectNonActionItems = true;
         [SerializeField] private bool autoAssignTestItemsOnAwake = true;
+        [SerializeField] private bool autoAssignTestItemsInEditMode = false;
         [SerializeField] private Color normalSlotColor = new Color(0.10f, 0.12f, 0.09f, 0.82f);
         [SerializeField] private Color activeSlotColor = new Color(0.86f, 0.74f, 0.20f, 0.96f);
         [SerializeField] private Color emptyActiveSlotColor = new Color(0.48f, 0.42f, 0.14f, 0.96f);
@@ -67,13 +68,22 @@ namespace ApexShift.Runtime.Player
 
             if (autoAssignTestItemsOnAwake)
             {
-                Debug.Log("[ActionBar] Auto-assigning test items on awake...", this);
-                AssignItemToSlot(0, "spear");
-                AssignItemToSlot(1, "bow");
-                AssignItemToSlot(2, "axe");
-                AssignItemToSlot(3, "pickaxe");
-                AssignItemToSlot(4, "torch");
+                // Only auto-assign if explicitly enabled via inspector flag
+                if (autoAssignTestItemsInEditMode || Application.isPlaying)
+                {
+                    Debug.Log("[ActionBar] Auto-assigning test items on awake...", this);
+                    AssignItemToSlot(0, "spear");
+                    AssignItemToSlot(1, "bow");
+                    AssignItemToSlot(2, "axe");
+                    AssignItemToSlot(3, "pickaxe");
+                    AssignItemToSlot(4, "torch");
+                }
             }
+        }
+
+        private static bool IsInTestMode()
+        {
+            return false;  // Placeholder - not reliably detectable
         }
 
         private void OnEnable()
@@ -283,22 +293,18 @@ namespace ApexShift.Runtime.Player
 
         private void BuildIfNeeded()
         {
-            if (uiBuilt)
+            if (uiBuilt && uiRoot != null && slotViews.Count > 0)
             {
                 return;
             }
 
-            // Destroy ALL ActionBarUI objects first
-            GameObject[] allObjects = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include);
-            foreach (GameObject go in allObjects)
+            // Only destroy if we're starting fresh (uiRoot is null)
+            if (uiRoot == null)
             {
-                if (go != null && go.name == "ActionBarUI")
+                GameObject[] allObjects = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include);
+                foreach (GameObject go in allObjects)
                 {
-                    if (Application.isPlaying)
-                    {
-                        Destroy(go);
-                    }
-                    else
+                    if (go != null && go.name == "ActionBarUI")
                     {
                         DestroyImmediate(go);
                     }
@@ -306,8 +312,6 @@ namespace ApexShift.Runtime.Player
             }
 
             uiBuilt = true;
-            uiRoot = null;
-            slotViews.Clear();
 
             if (uiRoot == null)
             {

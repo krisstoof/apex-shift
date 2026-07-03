@@ -217,6 +217,7 @@ namespace ApexShift.Runtime.Save
             {
                 worldGenerator.SetSeed(saveData.World.Seed);
                 worldGenerator.Generate();
+                ClearRuntimeReferencesAfterWorldRegeneration();
                 ResolveReferences();
             }
 
@@ -277,6 +278,21 @@ namespace ApexShift.Runtime.Save
                 cameraFollow.SetTarget(playerSurvival.transform);
                 cameraFollow.SnapToTarget();
             }
+        }
+
+        private void ClearRuntimeReferencesAfterWorldRegeneration()
+        {
+            // WorldGeneratorRuntime.Generate() destroys and recreates Player, EcosystemRuntime,
+            // DayNightRuntime and BuildingRoot. Serialized references held by the save service
+            // can still point to the old destroyed objects in the same frame, especially in
+            // PlayMode where Destroy() used to be delayed. Force a clean re-resolve so loaded
+            // inventory/survival data is applied to the freshly generated player.
+            playerInventory = null;
+            playerSurvival = null;
+            ecosystemDirector = null;
+            ecosystemRuntime = null;
+            dayNightRuntime = null;
+            buildingRegistry = null;
         }
 
         public void DeleteGame(string slotName)
@@ -362,6 +378,11 @@ namespace ApexShift.Runtime.Save
                 CreatureAgentView agent = FindBestCreatureMatch(saved, liveCreatures, used);
                 if (agent == null)
                 {
+                    agent = CreateCreatureFromSaveData(saved);
+                }
+
+                if (agent == null)
+                {
                     continue;
                 }
 
@@ -398,6 +419,61 @@ namespace ApexShift.Runtime.Save
             }
 
             return best;
+        }
+
+        private CreatureAgentView CreateCreatureFromSaveData(CreatureSaveData saved)
+        {
+            if (saved == null)
+            {
+                return null;
+            }
+
+            string creatureId = CreatureSaveData.NormalizeCreatureId(saved.CreatureId);
+            if (string.IsNullOrWhiteSpace(creatureId))
+            {
+                creatureId = "creature";
+            }
+
+            Transform parent = ResolveCreatureRestoreParent();
+            GameObject go = new GameObject($"Creature_{creatureId}_restored");
+            if (parent != null)
+            {
+                go.transform.SetParent(parent, false);
+            }
+
+            go.transform.position = new Vector3(saved.x, saved.y, saved.z);
+
+            CreatureAgentView agent = go.AddComponent<CreatureAgentView>();
+            agent.Configure(creatureId);
+
+            CreatureNeedsRuntime needs = go.AddComponent<CreatureNeedsRuntime>();
+            needs.Configure(creatureId);
+
+            CreatureHealthRuntime health = go.AddComponent<CreatureHealthRuntime>();
+            health.Configure(creatureId);
+
+            go.AddComponent<CreatureSimulationLodRuntime>();
+            go.AddComponent<CreatureBehaviorBrain>();
+            go.AddComponent<CreatureBehaviorRuntime>();
+
+            if (ecosystemRuntime == null)
+            {
+                ecosystemRuntime = EcosystemRuntime.Instance;
+            }
+
+            ecosystemRuntime?.RegisterCreature(agent);
+            return agent;
+        }
+
+        private Transform ResolveCreatureRestoreParent()
+        {
+            GameObject creatureRoot = GameObject.Find("CreatureRoot");
+            if (creatureRoot != null)
+            {
+                return creatureRoot.transform;
+            }
+
+            return worldGenerator != null ? worldGenerator.transform : null;
         }
 
         private static void RestoreCreatureState(CreatureAgentView agent, CreatureSaveData saved)

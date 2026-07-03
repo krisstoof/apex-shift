@@ -88,6 +88,9 @@ namespace ApexShift.Runtime.World.Generation
         [SerializeField] private bool generateOnStart = false;
         [SerializeField] private int seed = 12345;
         [SerializeField] private bool useCinemachine = true;
+        [SerializeField]
+        [Tooltip("Destroy generated runtime objects immediately before rebuilding the world. This prevents delayed Destroy() from deleting or shadowing freshly regenerated objects during save/load and PlayMode smoke tests.")]
+        private bool destroyGeneratedObjectsImmediately = true;
         [SerializeField] private float clearingRadius = 8f;
 
         private WorldGenerationResult _lastResult;
@@ -259,10 +262,23 @@ namespace ApexShift.Runtime.World.Generation
         private void DestroyObject(GameObject obj)
         {
             if (obj == null) return;
-            if (Application.isPlaying)
-                Destroy(obj);
-            else
+
+            // Generate() is synchronous and immediately recreates roots with the same names
+            // (Player, TerrainRoot, CreatureRoot, etc.). Delayed Destroy() in PlayMode can
+            // leave old objects alive until the end of the frame, which makes save/load
+            // regeneration brittle and can even make tests observe "missing" freshly-created
+            // runtime objects after the delayed destroy queue flushes. For generated world
+            // objects we prefer deterministic teardown.
+            if (!Application.isPlaying || destroyGeneratedObjectsImmediately)
+            {
                 DestroyImmediate(obj);
+            }
+            else
+            {
+                obj.name = $"__Destroying_{obj.name}";
+                obj.SetActive(false);
+                Destroy(obj);
+            }
         }
 
         private void EnsureRoots()
