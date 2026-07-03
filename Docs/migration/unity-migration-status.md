@@ -15,6 +15,8 @@ This document is the current migration status matrix for the Unity version of Ap
 
 It complements #37 (`[MIGRATION] Verify intentional deviations from Godot and document them`). #37 should explain *why* a difference exists; this file records *what state each migrated system is currently in*.
 
+Related report: [`Docs/Migration/balance-parity-report.md`](balance-parity-report.md)
+
 ---
 
 ## Status legend

@@ -16,6 +16,7 @@ The foundation has since grown beyond a placeholder scene. Current Unity work sh
 - [Unity migration status matrix](migration/unity-migration-status.md)
 - [Intentional deviations from Godot parity](migration/intentional-deviations.md)
 - [Intentional deviations one-pager](migration/intentional-deviations-one-pager.md)
+- [Balance parity report](migration/balance-parity-report.md)
 - [Original Unity migration design document](../apex_shift_unity_migration_documentation.md)
 
 ## Technical Direction
