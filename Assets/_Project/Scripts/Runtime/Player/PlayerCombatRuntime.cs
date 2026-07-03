@@ -141,13 +141,13 @@ namespace ApexShift.Runtime.Player
 
             string activeItemId = ResolveActiveActionItemId();
 
-            if (string.Equals(activeItemId, "bow", System.StringComparison.OrdinalIgnoreCase) && HasItem("bow"))
+            if (string.Equals(activeItemId, "bow", System.StringComparison.OrdinalIgnoreCase) && HasEquippedOrOwned("bow"))
             {
                 TriggerUseAnimation("bow");
                 return TryFireBow(direction);
             }
 
-            if (string.Equals(activeItemId, "spear", System.StringComparison.OrdinalIgnoreCase) && HasItem("spear"))
+            if (string.Equals(activeItemId, "spear", System.StringComparison.OrdinalIgnoreCase) && HasEquippedOrOwned("spear"))
             {
                 TriggerUseAnimation("spear");
                 return TryMeleeAttack(direction, true);
@@ -410,6 +410,17 @@ namespace ApexShift.Runtime.Player
         private bool HasItem(string itemId)
         {
             return inventoryRuntime != null && inventoryRuntime.Inventory != null && inventoryRuntime.Inventory.HasItem(itemId, 1);
+        }
+
+        private bool HasEquippedOrOwned(string itemId)
+        {
+            string active = actionBarRuntime != null ? actionBarRuntime.ActiveItemId : string.Empty;
+            if (!string.IsNullOrWhiteSpace(active) && string.Equals(active.Trim(), itemId, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return HasItem(itemId);
         }
 
         private string ResolveActiveActionItemId()

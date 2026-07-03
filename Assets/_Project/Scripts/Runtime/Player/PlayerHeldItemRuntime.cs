@@ -10,12 +10,13 @@ namespace ApexShift.Runtime.Player
         [SerializeField] private ActionBarRuntime actionBarRuntime;
         [SerializeField] private PlayerInventoryRuntime inventoryRuntime;
         [SerializeField] private Transform handAnchor;
-        [SerializeField] private bool useExplicitHandBoneOnly = true;
+        [SerializeField] private bool preferRigHandAnchor = true;
         [SerializeField] private Vector3 fallbackLocalPosition = new Vector3(0.62f, 1.22f, 0.70f);
         [SerializeField] private Vector3 fallbackLocalEuler = new Vector3(8f, 32f, -12f);
         [SerializeField] private bool requireItemInInventory = false;
         [SerializeField] private bool logEquips;
-        [SerializeField] private float heldVisualScale = 1.6f;
+        [SerializeField] private float heldVisualScale = 1.0f;
+        [SerializeField] private bool logMissingAuthoredModels = true;
         [SerializeField] private float torchFlickerSpeed = 13f;
         [SerializeField] private float torchFlickerAmount = 0.22f;
         [SerializeField] private float torchFlickerRangeAmount = 0.35f;
@@ -124,7 +125,17 @@ namespace ApexShift.Runtime.Player
 
             if (handAnchor == null)
             {
-                handAnchor = useExplicitHandBoneOnly ? EnsureFallbackAnchor() : FindLikelyHandAnchor();
+                Transform rigHand = preferRigHandAnchor ? FindLikelyHandAnchor() : null;
+                handAnchor = rigHand != null ? rigHand : EnsureFallbackAnchor();
+            }
+            else if (preferRigHandAnchor && (handAnchor == transform || handAnchor == fallbackAnchor))
+            {
+                Transform rigHand = FindLikelyHandAnchor();
+                if (rigHand != null && rigHand != transform)
+                {
+                    handAnchor = rigHand;
+                    ApplyAnchorPose();
+                }
             }
         }
 
@@ -159,7 +170,7 @@ namespace ApexShift.Runtime.Player
                 }
             }
 
-            return transform;
+            return null;
         }
 
         private void EnsureHeldRoot()
@@ -259,6 +270,7 @@ namespace ApexShift.Runtime.Player
             heldRoot.SetActive(true);
             ApplyAnchorPose();
 
+            ItemModelResolver.ClearCache();
             if (TryBuildAuthoredItemModel(currentItemId))
             {
                 return;
@@ -278,7 +290,10 @@ namespace ApexShift.Runtime.Player
                         return;
                     }
 
-                    Debug.LogError($"[HeldItem] Missing crafting model for '{currentItemId}'. Procedural fallback disabled.", this);
+                    if (logMissingAuthoredModels)
+                    {
+                        Debug.LogError($"[HeldItem] Missing crafting model for '{currentItemId}'. Procedural fallback disabled.", this);
+                    }
                     heldRoot.SetActive(false);
                     return;
                 case "pickaxe":
@@ -287,7 +302,10 @@ namespace ApexShift.Runtime.Player
                         return;
                     }
 
-                    Debug.LogError($"[HeldItem] Missing crafting model for '{currentItemId}'. Procedural fallback disabled.", this);
+                    if (logMissingAuthoredModels)
+                    {
+                        Debug.LogError($"[HeldItem] Missing crafting model for '{currentItemId}'. Procedural fallback disabled.", this);
+                    }
                     heldRoot.SetActive(false);
                     return;
                 case "torch":
@@ -310,6 +328,7 @@ namespace ApexShift.Runtime.Player
             {
                 return;
             }
+            ApplyAnchorPose();
 
             torchLight = null;
             for (int i = heldRoot.transform.childCount - 1; i >= 0; i--)
@@ -401,12 +420,13 @@ namespace ApexShift.Runtime.Player
                 return false;
             }
 
-            return ItemModelResolver.NormalizeModelToBounds(
-                model,
-                heldRoot.transform,
-                1.55f,
-                new Vector3(0f, 0.72f, 0f),
-                Quaternion.identity);
+            bool normalized = NormalizeAuthoredHeldModel(itemId, model);
+            if (!normalized)
+            {
+                Destroy(model);
+            }
+
+            return normalized;
         }
 
         private bool TryBuildTorchModel()
@@ -416,12 +436,53 @@ namespace ApexShift.Runtime.Player
                 return false;
             }
 
-            return ItemModelResolver.NormalizeModelToBounds(
-                model,
-                heldRoot.transform,
-                1.55f,
-                new Vector3(0f, 0.72f, 0f),
-                Quaternion.identity);
+            bool normalized = NormalizeAuthoredHeldModel("torch", model);
+            if (!normalized)
+            {
+                Destroy(model);
+            }
+
+            return normalized;
+        }
+
+        private bool NormalizeAuthoredHeldModel(string itemId, GameObject model)
+        {
+            string normalized = Normalize(itemId);
+            float targetMaxDimension = ResolveHeldModelTargetSize(normalized);
+            Vector3 desiredCenter = ResolveHeldModelCenter(normalized);
+            Quaternion rotation = ResolveHeldModelRotation(normalized);
+            return ItemModelResolver.NormalizeModelToBounds(model, heldRoot.transform, targetMaxDimension, desiredCenter, rotation);
+        }
+
+        private static float ResolveHeldModelTargetSize(string itemId)
+        {
+            switch (itemId)
+            {
+                case "spear": return 1.75f;
+                case "bow": return 1.12f;
+                case "axe": return 1.10f;
+                case "pickaxe": return 1.16f;
+                case "torch": return 1.18f;
+                default: return 1.20f;
+            }
+        }
+
+        private static Vector3 ResolveHeldModelCenter(string itemId)
+        {
+            switch (itemId)
+            {
+                case "spear": return new Vector3(0f, 0.03f, 0.55f);
+                case "bow": return new Vector3(0.02f, 0.02f, 0.18f);
+                case "axe": return new Vector3(0f, 0.04f, 0.30f);
+                case "pickaxe": return new Vector3(0f, 0.04f, 0.32f);
+                case "torch": return new Vector3(0f, 0.05f, 0.36f);
+                default: return new Vector3(0f, 0.04f, 0.28f);
+            }
+        }
+
+        private static Quaternion ResolveHeldModelRotation(string itemId)
+        {
+            return Quaternion.identity;
         }
 
         private bool TryBuildCraftingModel(string itemId)

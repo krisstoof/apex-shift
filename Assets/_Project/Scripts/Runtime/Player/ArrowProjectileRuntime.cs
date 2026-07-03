@@ -1,6 +1,7 @@
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Audio;
+using ApexShift.Runtime.Items;
 using UnityEngine;
 
 namespace ApexShift.Runtime.Player
@@ -106,6 +107,18 @@ namespace ApexShift.Runtime.Player
         {
             if (transform.childCount > 0)
             {
+                return;
+            }
+
+            if (ItemModelResolver.TryInstantiateItemModel("arrow", transform, out GameObject arrowModel))
+            {
+                ItemModelResolver.NormalizeModelToBounds(
+                    arrowModel,
+                    transform,
+                    0.92f,
+                    Vector3.zero,
+                    Quaternion.identity);
+                arrowModel.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
                 return;
             }
 

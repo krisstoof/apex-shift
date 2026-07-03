@@ -30,7 +30,7 @@ namespace ApexShift.Runtime.Items
 
             model = UnityEngine.Object.Instantiate(prefab, parent, false);
             model.name = $"ItemModel_{normalized}";
-            StripRuntimeColliders(model);
+            SanitizeForItemVisual(model, normalized);
 
             Renderer[] renderers = model.GetComponentsInChildren<Renderer>(true);
             if (renderers.Length == 0)
@@ -79,6 +79,11 @@ namespace ApexShift.Runtime.Items
             return true;
         }
 
+        public static void ClearCache()
+        {
+            Cache.Clear();
+        }
+
         private static GameObject ResolvePrefab(string normalizedItemId)
         {
             if (Cache.TryGetValue(normalizedItemId, out GameObject cached))
@@ -108,10 +113,22 @@ namespace ApexShift.Runtime.Items
             {
                 $"Items/Models/{normalizedItemId}",
                 $"Items/Models/item_{normalizedItemId}",
+                $"Items/Models/tool_{normalizedItemId}",
+                $"Items/Models/weapon_{normalizedItemId}",
                 $"ItemModels/{normalizedItemId}",
                 $"ItemModels/item_{normalizedItemId}",
+                $"ItemModels/tool_{normalizedItemId}",
+                $"ItemModels/weapon_{normalizedItemId}",
                 $"Models/Items/{normalizedItemId}",
                 $"Models/Items/item_{normalizedItemId}",
+                $"Models/Items/tool_{normalizedItemId}",
+                $"Models/Items/weapon_{normalizedItemId}",
+                $"Models/Weapons/{normalizedItemId}",
+                $"Models/Weapons/item_{normalizedItemId}",
+                $"Models/Weapons/tool_{normalizedItemId}",
+                $"Models/Weapons/weapon_{normalizedItemId}",
+                $"Weapons/{normalizedItemId}",
+                $"Weapons/weapon_{normalizedItemId}",
                 $"Crafting/Models/{normalizedItemId}",
                 $"Crafting/Models/craft_{normalizedItemId}",
                 $"ApexShift/Items/{normalizedItemId}",
@@ -134,27 +151,38 @@ namespace ApexShift.Runtime.Items
         private static GameObject LoadFromAssetDatabase(string normalizedItemId)
         {
             List<Candidate> candidates = new List<Candidate>();
-            string[] guids = AssetDatabase.FindAssets($"{normalizedItemId} t:GameObject");
-            for (int i = 0; i < guids.Length; i++)
+            string[] searchTerms = GetAssetSearchTerms(normalizedItemId);
+            HashSet<string> visitedGuids = new HashSet<string>();
+
+            for (int termIndex = 0; termIndex < searchTerms.Length; termIndex++)
             {
-                string path = AssetDatabase.GUIDToAssetPath(guids[i]);
-                if (string.IsNullOrWhiteSpace(path))
+                string[] guids = AssetDatabase.FindAssets($"{searchTerms[termIndex]} t:GameObject");
+                for (int i = 0; i < guids.Length; i++)
                 {
-                    continue;
-                }
+                    if (!visitedGuids.Add(guids[i]))
+                    {
+                        continue;
+                    }
 
-                string fileName = Normalize(Path.GetFileNameWithoutExtension(path));
-                string normalizedPath = Normalize(path);
-                int score = ScoreCandidate(fileName, normalizedPath, normalizedItemId);
-                if (score <= 0)
-                {
-                    continue;
-                }
+                    string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                    if (string.IsNullOrWhiteSpace(path))
+                    {
+                        continue;
+                    }
 
-                GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-                if (asset != null)
-                {
-                    candidates.Add(new Candidate(asset, score, path));
+                    string fileName = Normalize(Path.GetFileNameWithoutExtension(path));
+                    string normalizedPath = Normalize(path);
+                    int score = ScoreCandidate(fileName, normalizedPath, normalizedItemId);
+                    if (score <= 0)
+                    {
+                        continue;
+                    }
+
+                    GameObject asset = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                    if (asset != null)
+                    {
+                        candidates.Add(new Candidate(asset, score, path));
+                    }
                 }
             }
 
@@ -169,20 +197,77 @@ namespace ApexShift.Runtime.Items
 
         private static int ScoreCandidate(string fileName, string path, string itemId)
         {
+            string singular = itemId.EndsWith("s", StringComparison.OrdinalIgnoreCase) ? itemId.Substring(0, itemId.Length - 1) : itemId;
             int score = 0;
             if (fileName == itemId) score += 100;
+            if (fileName == singular) score += 96;
             if (fileName == $"item{itemId}") score += 95;
             if (fileName == $"tool{itemId}") score += 95;
+            if (fileName == $"weapon{itemId}") score += 95;
             if (fileName == $"craft{itemId}") score += 90;
             if (fileName == $"resource{itemId}") score += 90;
             if (fileName.Contains(itemId)) score += 50;
+            if (fileName.Contains(singular)) score += 35;
             if (path.Contains("item")) score += 20;
+            if (path.Contains("tool")) score += 20;
+            if (path.Contains("weapon")) score += 20;
             if (path.Contains("model")) score += 20;
             if (path.Contains("lowpoly") || path.Contains("lowpoly")) score += 10;
             if (path.Contains("resources")) score += 10;
             if (path.Contains("editor")) score -= 30;
+            if (path.Contains("animation") || path.Contains("anim")) score -= 25;
             if (path.Contains("material") || path.EndsWith(".mat")) score -= 100;
             return score;
+        }
+
+        private static string[] GetAssetSearchTerms(string normalizedItemId)
+        {
+            List<string> terms = new List<string>();
+            AddIfMissing(terms, normalizedItemId);
+            AddIfMissing(terms, $"item {normalizedItemId}");
+            AddIfMissing(terms, $"tool {normalizedItemId}");
+            AddIfMissing(terms, $"weapon {normalizedItemId}");
+
+            switch (normalizedItemId)
+            {
+                case "bow":
+                    AddIfMissing(terms, "longbow");
+                    AddIfMissing(terms, "shortbow");
+                    AddIfMissing(terms, "bow weapon");
+                    break;
+                case "spear":
+                    AddIfMissing(terms, "javelin");
+                    AddIfMissing(terms, "polearm");
+                    AddIfMissing(terms, "spear weapon");
+                    break;
+                case "axe":
+                    AddIfMissing(terms, "hatchet");
+                    AddIfMissing(terms, "axe tool");
+                    AddIfMissing(terms, "axe weapon");
+                    break;
+                case "pickaxe":
+                    AddIfMissing(terms, "pick axe");
+                    AddIfMissing(terms, "pick");
+                    AddIfMissing(terms, "mining tool");
+                    break;
+                case "torch":
+                    AddIfMissing(terms, "fire torch");
+                    AddIfMissing(terms, "torch tool");
+                    break;
+                case "arrow":
+                    AddIfMissing(terms, "arrow projectile");
+                    break;
+            }
+
+            return terms.ToArray();
+        }
+
+        private static void AddIfMissing(List<string> terms, string value)
+        {
+            if (!string.IsNullOrWhiteSpace(value) && !terms.Contains(value))
+            {
+                terms.Add(value);
+            }
         }
 
         private readonly struct Candidate
@@ -199,6 +284,36 @@ namespace ApexShift.Runtime.Items
             }
         }
 #endif
+
+        private static void SanitizeForItemVisual(GameObject model, string itemId)
+        {
+            StripRuntimeColliders(model);
+
+            Rigidbody[] rigidbodies = model.GetComponentsInChildren<Rigidbody>(true);
+            for (int i = rigidbodies.Length - 1; i >= 0; i--) DestroyComponent(rigidbodies[i]);
+
+            Animator[] animators = model.GetComponentsInChildren<Animator>(true);
+            for (int i = animators.Length - 1; i >= 0; i--) DestroyComponent(animators[i]);
+
+            AudioSource[] audioSources = model.GetComponentsInChildren<AudioSource>(true);
+            for (int i = audioSources.Length - 1; i >= 0; i--) DestroyComponent(audioSources[i]);
+
+            UnityEngine.Camera[] cameras = model.GetComponentsInChildren<UnityEngine.Camera>(true);
+            for (int i = cameras.Length - 1; i >= 0; i--) DestroyComponent(cameras[i]);
+
+            SpriteRenderer[] sprites = model.GetComponentsInChildren<SpriteRenderer>(true);
+            for (int i = sprites.Length - 1; i >= 0; i--) DestroyComponent(sprites[i]);
+
+            Canvas[] canvases = model.GetComponentsInChildren<Canvas>(true);
+            for (int i = canvases.Length - 1; i >= 0; i--) DestroyComponent(canvases[i]);
+        }
+
+        private static void DestroyComponent(Component component)
+        {
+            if (component == null) return;
+            if (Application.isPlaying) UnityEngine.Object.Destroy(component);
+            else UnityEngine.Object.DestroyImmediate(component);
+        }
 
         private static void StripRuntimeColliders(GameObject model)
         {
