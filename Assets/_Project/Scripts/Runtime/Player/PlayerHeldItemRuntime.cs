@@ -74,6 +74,18 @@ namespace ApexShift.Runtime.Player
             RefreshHeldItem(force: true);
         }
 
+        public void RebindToRigHand()
+        {
+            Transform rigHand = FindLikelyHandAnchor();
+            if (rigHand == null || rigHand == transform)
+            {
+                return;
+            }
+
+            handAnchor = rigHand;
+            ApplyAnchorPose();
+        }
+
         public void ForceEquipActionItem(string itemId)
         {
             ResolveReferences();
@@ -123,24 +135,29 @@ namespace ApexShift.Runtime.Player
                 inventoryRuntime = GetComponent<PlayerInventoryRuntime>();
             }
 
-            if (handAnchor == null)
+            Transform rigHand = preferRigHandAnchor ? FindLikelyHandAnchor() : null;
+            if (rigHand != null && rigHand != transform)
             {
-                Transform rigHand = preferRigHandAnchor ? FindLikelyHandAnchor() : null;
-                handAnchor = rigHand != null ? rigHand : EnsureFallbackAnchor();
-            }
-            else if (preferRigHandAnchor && (handAnchor == transform || handAnchor == fallbackAnchor))
-            {
-                Transform rigHand = FindLikelyHandAnchor();
-                if (rigHand != null && rigHand != transform)
+                if (handAnchor != rigHand)
                 {
                     handAnchor = rigHand;
                     ApplyAnchorPose();
                 }
             }
+            else if (handAnchor == null)
+            {
+                handAnchor = EnsureFallbackAnchor();
+            }
         }
 
         private Transform FindLikelyHandAnchor()
         {
+            Transform humanoidRightHand = TryGetHumanoidRightHand();
+            if (humanoidRightHand != null)
+            {
+                return humanoidRightHand;
+            }
+
             Transform[] transforms = GetComponentsInChildren<Transform>(true);
             foreach (Transform t in transforms)
             {
@@ -150,7 +167,7 @@ namespace ApexShift.Runtime.Player
                 }
 
                 string n = NormalizeName(t.name);
-                if ((n.Contains("right") || n.Contains("r")) && n.Contains("hand"))
+                if ((n.Contains("righthand") || n.Contains("handr") || n.EndsWith("r")) && n.Contains("hand"))
                 {
                     return t;
                 }
@@ -171,6 +188,18 @@ namespace ApexShift.Runtime.Player
             }
 
             return null;
+        }
+
+        private Transform TryGetHumanoidRightHand()
+        {
+            Animator animator = GetComponentInChildren<Animator>(true);
+            if (animator == null || !animator.isHuman)
+            {
+                return null;
+            }
+
+            Transform rightHand = animator.GetBoneTransform(HumanBodyBones.RightHand);
+            return rightHand != null && rightHand != transform ? rightHand : null;
         }
 
         private void EnsureHeldRoot()

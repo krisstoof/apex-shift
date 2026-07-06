@@ -1958,6 +1958,7 @@ if (renderer != null)
             if (anim != null)
             {
                 animDriver.SetAnimator(anim);
+                heldItem.RebindToRigHand();
             }
             else if (playerAnimatorController != null)
             {

@@ -1,0 +1,461 @@
+{
+  "project": "Apex Shift",
+  "style": "hand-painted bushcraft stylized",
+  "generator": "Tools/Blender/bushcraft_asset_generator.py",
+  "assets": [
+    {
+      "asset_id": "wood",
+      "category": "item",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/wood_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/wood_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/wood_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/wood_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/wood_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/wood_stylized_roughness.png"
+      ],
+      "materials": [
+        "wood_bark_painted",
+        "wood_cut_painted"
+      ],
+      "polycount": 252,
+      "notes": "Stylized wood bundle with rope tie.",
+      "unity_usage": "Inventory pickup / world item."
+    },
+    {
+      "asset_id": "stone",
+      "category": "item",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/stone_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/stone_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/stone_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/stone_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/stone_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/stone_stylized_roughness.png"
+      ],
+      "materials": [
+        "stone_painted"
+      ],
+      "polycount": 320,
+      "notes": "Stone pickup cluster.",
+      "unity_usage": "Inventory pickup / crafting ingredient."
+    },
+    {
+      "asset_id": "fiber",
+      "category": "item",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/fiber_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/fiber_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/fiber_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/fiber_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/fiber_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/fiber_stylized_roughness.png"
+      ],
+      "materials": [
+        "rope_fiber_painted"
+      ],
+      "polycount": 648,
+      "notes": "Fiber bundle with visible strands.",
+      "unity_usage": "Inventory pickup / crafting ingredient."
+    },
+    {
+      "asset_id": "grass",
+      "category": "item",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/grass_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/grass_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/grass_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/grass_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/grass_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/grass_stylized_roughness.png"
+      ],
+      "materials": [
+        "leaf_green_painted",
+        "stone_painted"
+      ],
+      "polycount": 352,
+      "notes": "Readable grass pickup.",
+      "unity_usage": "Inventory pickup / crafting ingredient."
+    },
+    {
+      "asset_id": "meat",
+      "category": "item",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/meat_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/meat_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/meat_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/meat_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/meat_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/meat_stylized_roughness.png"
+      ],
+      "materials": [
+        "meat_painted",
+        "fat_painted"
+      ],
+      "polycount": 208,
+      "notes": "Stylized raw meat chunk.",
+      "unity_usage": "Loot drop / consumable pickup."
+    },
+    {
+      "asset_id": "hide",
+      "category": "item",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/hide_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/hide_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/hide_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/hide_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/hide_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/hide_stylized_roughness.png"
+      ],
+      "materials": [
+        "hide_painted"
+      ],
+      "polycount": 128,
+      "notes": "Folded hide sheet.",
+      "unity_usage": "Loot drop / crafting ingredient."
+    },
+    {
+      "asset_id": "bone",
+      "category": "item",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/bone_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/bone_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/bone_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/bone_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/bone_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/bone_stylized_roughness.png"
+      ],
+      "materials": [
+        "bone_painted"
+      ],
+      "polycount": 244,
+      "notes": "Stylized bone pickup.",
+      "unity_usage": "Loot drop / crafting ingredient."
+    },
+    {
+      "asset_id": "berries",
+      "category": "item",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/berries_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/berries_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/berries_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/berries_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/berries_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/berries_stylized_roughness.png"
+      ],
+      "materials": [
+        "berry_dark_painted",
+        "leaf_green_painted"
+      ],
+      "polycount": 1320,
+      "notes": "Berry cluster pickup.",
+      "unity_usage": "Food pickup / forage item."
+    },
+    {
+      "asset_id": "torch",
+      "category": "item",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/torch_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/torch_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/torch_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/torch_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/torch_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/torch_stylized_roughness.png"
+      ],
+      "materials": [
+        "wood_bark_painted",
+        "rope_fiber_painted",
+        "fire_painted"
+      ],
+      "polycount": 56,
+      "notes": "Torch with painted flame preview.",
+      "unity_usage": "Held item / placement preview."
+    },
+    {
+      "asset_id": "spear",
+      "category": "item",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/spear_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/spear_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/spear_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/spear_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/spear_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/spear_stylized_roughness.png"
+      ],
+      "materials": [
+        "wood_bark_painted",
+        "wood_cut_painted",
+        "rope_fiber_painted"
+      ],
+      "polycount": 72,
+      "notes": "Bushcraft spear with stone head.",
+      "unity_usage": "Weapon / held item."
+    },
+    {
+      "asset_id": "bow",
+      "category": "item",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/bow_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/bow_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/bow_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Models/bow_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/bow_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Items/Textures/bow_stylized_roughness.png"
+      ],
+      "materials": [
+        "wood_bark_painted",
+        "rope_fiber_painted"
+      ],
+      "polycount": 36,
+      "notes": "Handmade bow with wrapped grip.",
+      "unity_usage": "Weapon / held item."
+    },
+    {
+      "asset_id": "campfire",
+      "category": "placeable",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/campfire_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Models/campfire_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Models/campfire_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Models/campfire_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Textures/campfire_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Textures/campfire_stylized_roughness.png"
+      ],
+      "materials": [
+        "ash_painted",
+        "stone_painted",
+        "wood_bark_painted",
+        "fire_painted"
+      ],
+      "polycount": 1084,
+      "notes": "Campfire with stone ring and stylized flame.",
+      "unity_usage": "BuildingPrefabEntry / base camp."
+    },
+    {
+      "asset_id": "storage_box",
+      "category": "placeable",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/storage_box_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Models/storage_box_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Models/storage_box_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Models/storage_box_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Textures/storage_box_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Textures/storage_box_stylized_roughness.png"
+      ],
+      "materials": [
+        "wood_cut_painted",
+        "wood_bark_painted"
+      ],
+      "polycount": 132,
+      "notes": "Handmade open crate.",
+      "unity_usage": "BuildingPrefabEntry / storage."
+    },
+    {
+      "asset_id": "tent",
+      "category": "placeable",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/tent_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Models/tent_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Models/tent_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Models/tent_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Textures/tent_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Textures/tent_stylized_roughness.png"
+      ],
+      "materials": [
+        "wood_bark_painted",
+        "hide_painted",
+        "rope_fiber_painted"
+      ],
+      "polycount": 236,
+      "notes": "Bushcraft shelter with hide cover.",
+      "unity_usage": "BuildingPrefabEntry / shelter."
+    },
+    {
+      "asset_id": "wall",
+      "category": "placeable",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/wall_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Models/wall_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Models/wall_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Models/wall_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Textures/wall_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Textures/wall_stylized_roughness.png"
+      ],
+      "materials": [
+        "wood_bark_painted",
+        "rope_fiber_painted"
+      ],
+      "polycount": 360,
+      "notes": "Uneven palisade wall with bindings.",
+      "unity_usage": "BuildingPrefabEntry / defense."
+    },
+    {
+      "asset_id": "trap",
+      "category": "placeable",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/trap_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Models/trap_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Models/trap_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Models/trap_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Textures/trap_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Placeables/Textures/trap_stylized_roughness.png"
+      ],
+      "materials": [
+        "wood_bark_painted",
+        "rope_fiber_painted"
+      ],
+      "polycount": 360,
+      "notes": "Handmade trap with visible trigger ring.",
+      "unity_usage": "BuildingPrefabEntry / defense / hunting."
+    },
+    {
+      "asset_id": "conifer_tree",
+      "category": "resource",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/conifer_tree_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/conifer_tree_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/conifer_tree_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/conifer_tree_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/conifer_tree_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/conifer_tree_stylized_roughness.png"
+      ],
+      "materials": [
+        "wood_bark_painted",
+        "leaf_green_painted"
+      ],
+      "polycount": 3716,
+      "notes": "Layered conifer silhouette.",
+      "unity_usage": "ResourcePrefabEntry / world resource."
+    },
+    {
+      "asset_id": "leafy_tree",
+      "category": "resource",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/leafy_tree_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/leafy_tree_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/leafy_tree_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/leafy_tree_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/leafy_tree_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/leafy_tree_stylized_roughness.png"
+      ],
+      "materials": [
+        "wood_bark_painted",
+        "leaf_green_painted"
+      ],
+      "polycount": 4116,
+      "notes": "Broadleaf tree with crown breakup.",
+      "unity_usage": "ResourcePrefabEntry / world resource."
+    },
+    {
+      "asset_id": "dry_tree",
+      "category": "resource",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/dry_tree_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/dry_tree_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/dry_tree_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/dry_tree_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/dry_tree_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/dry_tree_stylized_roughness.png"
+      ],
+      "materials": [
+        "wood_bark_painted",
+        "leaf_dry_painted"
+      ],
+      "polycount": 900,
+      "notes": "Dead tree silhouette.",
+      "unity_usage": "ResourcePrefabEntry / world resource."
+    },
+    {
+      "asset_id": "rock",
+      "category": "resource",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/rock_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/rock_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/rock_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/rock_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/rock_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/rock_stylized_roughness.png"
+      ],
+      "materials": [
+        "stone_painted"
+      ],
+      "polycount": 400,
+      "notes": "Large stylized resource rock.",
+      "unity_usage": "ResourcePrefabEntry / world resource."
+    },
+    {
+      "asset_id": "green_bush",
+      "category": "resource",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/green_bush_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/green_bush_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/green_bush_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/green_bush_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/green_bush_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/green_bush_stylized_roughness.png"
+      ],
+      "materials": [
+        "leaf_green_painted"
+      ],
+      "polycount": 720,
+      "notes": "Dense green bush.",
+      "unity_usage": "ResourcePrefabEntry / gatherable foliage."
+    },
+    {
+      "asset_id": "dry_bush",
+      "category": "resource",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/dry_bush_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/dry_bush_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/dry_bush_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/dry_bush_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/dry_bush_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/dry_bush_stylized_roughness.png"
+      ],
+      "materials": [
+        "leaf_dry_painted"
+      ],
+      "polycount": 360,
+      "notes": "Dry brittle bush.",
+      "unity_usage": "ResourcePrefabEntry / gatherable foliage."
+    },
+    {
+      "asset_id": "grass_or_flower",
+      "category": "resource",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/grass_or_flower_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/grass_or_flower_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/grass_or_flower_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/grass_or_flower_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/grass_or_flower_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/grass_or_flower_stylized_roughness.png"
+      ],
+      "materials": [
+        "leaf_green_painted",
+        "berry_red_painted"
+      ],
+      "polycount": 636,
+      "notes": "Grass tuft with flowers.",
+      "unity_usage": "ResourcePrefabEntry / world dressing."
+    },
+    {
+      "asset_id": "berry_bush",
+      "category": "resource",
+      "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Source/Blend/berry_bush_stylized.blend",
+      "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/berry_bush_stylized.fbx",
+      "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/berry_bush_stylized.obj",
+      "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Models/berry_bush_stylized_preview.png",
+      "texture_paths": [
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/berry_bush_stylized_albedo.png",
+        "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft/Resources/Textures/berry_bush_stylized_roughness.png"
+      ],
+      "materials": [
+        "leaf_green_painted",
+        "berry_red_painted"
+      ],
+      "polycount": 2400,
+      "notes": "Bush with visible fruit clusters.",
+      "unity_usage": "ResourcePrefabEntry / gatherable food."
+    }
+  ]
+}

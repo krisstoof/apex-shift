@@ -72,10 +72,10 @@ namespace ApexShift.Runtime.Player
         }
 
 #if UNITY_EDITOR
-        private static RuntimeAnimatorController TryBuildKevinController()
+        public static RuntimeAnimatorController TryBuildKevinController()
         {
-            ClipSet clips = ResolveKevinClips();
-            if (clips.Idle == null || clips.Walk == null || clips.Run == null)
+            ClipResolution resolution = ResolveKevinClips();
+            if (resolution.Clips.Idle == null || resolution.Clips.Walk == null || resolution.Clips.Run == null)
             {
                 Debug.LogWarning("[KevinIglesiasAnimationBinder] Could not generate controller: missing Idle/Walk/Run clips.");
                 return null;
@@ -84,17 +84,17 @@ namespace ApexShift.Runtime.Player
             EnsureGeneratedDirectory();
             AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(GeneratedControllerPath);
             if (controller == null) controller = AnimatorController.CreateAnimatorControllerAtPath(GeneratedControllerPath);
-            RebuildController(controller, clips);
+            RebuildController(controller, resolution.Clips);
             EditorUtility.SetDirty(controller);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             return controller;
         }
 
-        private static ClipSet ResolveKevinClips()
+        public static ClipResolution ResolveKevinClips()
         {
             List<Candidate> candidates = FindAnimationCandidates();
-            return new ClipSet
+            ClipSet clips = new ClipSet
             {
                 Idle = FindBest(candidates, "Idle", "idle", "stand", "breathing"),
                 Walk = FindBest(candidates, "Walk", "walk", "walking"),
@@ -110,6 +110,8 @@ namespace ApexShift.Runtime.Player
                 Hurt = FindBest(candidates, "Hurt", "hurt", "hit", "damage"),
                 Death = FindBest(candidates, "Death", "death", "die", "dead")
             };
+
+            return new ClipResolution(clips, candidates);
         }
 
         private static List<Candidate> FindAnimationCandidates()
@@ -321,7 +323,7 @@ namespace ApexShift.Runtime.Player
             if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory)) Directory.CreateDirectory(directory);
         }
 
-        private readonly struct Candidate
+        public readonly struct Candidate
         {
             public readonly AnimationClip Clip;
             public readonly string Path;
@@ -329,7 +331,21 @@ namespace ApexShift.Runtime.Player
             public Candidate(AnimationClip clip, string path, int baseScore) { Clip = clip; Path = path; BaseScore = baseScore; }
         }
 
-        private struct ClipSet
+        public readonly struct ClipResolution
+        {
+            public readonly ClipSet Clips;
+            public readonly IReadOnlyList<Candidate> Candidates;
+
+            public int CandidateCount => Candidates != null ? Candidates.Count : 0;
+
+            public ClipResolution(ClipSet clips, IReadOnlyList<Candidate> candidates)
+            {
+                Clips = clips;
+                Candidates = candidates;
+            }
+        }
+
+        public struct ClipSet
         {
             public AnimationClip Idle;
             public AnimationClip Walk;

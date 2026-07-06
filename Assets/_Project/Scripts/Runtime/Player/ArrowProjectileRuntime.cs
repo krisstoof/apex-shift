@@ -24,6 +24,9 @@ namespace ApexShift.Runtime.Player
         private float age;
         private bool configured;
 
+        private static readonly Quaternion ArrowModelToFlightRotation =
+            Quaternion.FromToRotation(Vector3.up, Vector3.forward);
+
         public void Configure(GameObject owner, Vector3 direction, float damage, float speed, float lifetimeSeconds, float maxRange, float hitRadius, LayerMask creatureMask, AudioClip[] impactVoiceClips, float impactAudioVolume)
         {
             this.owner = owner;
@@ -37,7 +40,7 @@ namespace ApexShift.Runtime.Player
             this.impactVoiceClips = impactVoiceClips;
             this.impactAudioVolume = impactAudioVolume;
             startPosition = transform.position;
-            transform.rotation = Quaternion.LookRotation(this.direction, Vector3.up);
+            AlignWithFlightDirection();
             configured = true;
             EnsureVisual();
         }
@@ -60,6 +63,7 @@ namespace ApexShift.Runtime.Player
                 return;
             }
 
+            AlignWithFlightDirection();
             Vector3 nextPosition = transform.position + direction * (speed * Time.deltaTime);
             if (TryHitCreature(nextPosition))
             {
@@ -117,8 +121,7 @@ namespace ApexShift.Runtime.Player
                     transform,
                     0.92f,
                     Vector3.zero,
-                    Quaternion.identity);
-                arrowModel.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                    ArrowModelToFlightRotation);
                 return;
             }
 
@@ -126,7 +129,7 @@ namespace ApexShift.Runtime.Player
             shaft.name = "ArrowShaft";
             shaft.transform.SetParent(transform, false);
             shaft.transform.localPosition = Vector3.zero;
-            shaft.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            shaft.transform.localRotation = ArrowModelToFlightRotation;
             shaft.transform.localScale = new Vector3(0.035f, 0.42f, 0.035f);
             RemoveCollider(shaft);
             ApplyMaterial(shaft, new Color(0.42f, 0.25f, 0.10f));
@@ -155,6 +158,14 @@ namespace ApexShift.Runtime.Player
             featherB.transform.localScale = new Vector3(0.03f, 0.12f, 0.16f);
             RemoveCollider(featherB);
             ApplyMaterial(featherB, new Color(0.72f, 0.72f, 0.65f));
+        }
+
+        private void AlignWithFlightDirection()
+        {
+            if (direction.sqrMagnitude > 0.001f)
+            {
+                transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+            }
         }
 
         private static void RemoveCollider(GameObject go)

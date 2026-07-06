@@ -153,6 +153,16 @@ namespace ApexShift.Runtime.Player
                 return TryMeleeAttack(direction, true);
             }
 
+            if ((string.Equals(activeItemId, "axe", System.StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(activeItemId, "pickaxe", System.StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(activeItemId, "torch", System.StringComparison.OrdinalIgnoreCase)) &&
+                HasEquippedOrOwned(activeItemId))
+            {
+                TriggerUseAnimation(activeItemId);
+                cooldownRemaining = Mathf.Max(0.05f, meleeCooldownSeconds);
+                return true;
+            }
+
             if (allowPrototypeUnarmedAttack)
             {
                 return TryMeleeAttack(direction, false);

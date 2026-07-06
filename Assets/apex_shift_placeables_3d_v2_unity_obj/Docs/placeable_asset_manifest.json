@@ -73,7 +73,7 @@
     },
     {
       "id": "tent",
-      "file": "tent_low_poly.obj",
+      "file": "tent_stylized.obj",
       "suggested_collider": {
         "type": "BoxCollider",
         "center": [

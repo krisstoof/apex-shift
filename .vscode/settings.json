@@ -67,5 +67,14 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "apex-shift.slnx"
+    "dotnet.defaultSolution": "apex-shift.slnx",
+    "modelContextProtocol": {
+        "servers": {
+            "blender": {
+                "command": "uv",
+                "args": ["run", "-C", "${workspaceFolder}/Tools/blender-mcp", "python", "-m", "blender_mcp.server"],
+                "disabled": false
+            }
+        }
+    }
 }
