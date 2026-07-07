@@ -16,6 +16,7 @@ namespace ApexShift.Runtime.Player
         private Canvas canvas;
         private RectTransform gridRoot;
         private Text titleText;
+        private Text feedbackText;
         private Font font;
         private readonly List<GameObject> spawned = new List<GameObject>();
         private readonly Dictionary<string, Sprite> iconCache = new Dictionary<string, Sprite>(System.StringComparer.OrdinalIgnoreCase);
@@ -99,7 +100,7 @@ namespace ApexShift.Runtime.Player
                 for (int i = 0; i < inv.SlotCount; i++)
                 {
                     InventorySlotSnapshot slot = inv.PeekSlotStack(i);
-                    CreateSlot(gridRoot, slot.ItemId, slot.Amount);
+                    CreateSlot(gridRoot, i, slot.ItemId, slot.Amount);
                 }
             }
         }
@@ -126,18 +127,20 @@ namespace ApexShift.Runtime.Player
             rt.anchorMin = new Vector2(0.5f, 0.5f);
             rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = new Vector2(360f, 380f);
+            rt.sizeDelta = new Vector2(380f, 430f);
             panel.GetComponent<Image>().color = new Color(0.06f, 0.08f, 0.06f, 0.92f);
 
             titleText = CreateText(rt, "Title", "Inventory", 24, TextAnchor.MiddleLeft, new Vector2(18f, -18f), new Vector2(300f, 30f), true);
             CreateButton(rt, "CloseButton", "Close", new Vector2(92f, 30f), new Vector2(-52f, -18f), Close);
+            feedbackText = CreateText(rt, "Feedback", "Left click edible item to eat. Right click to drop.", 13, TextAnchor.MiddleLeft, new Vector2(18f, -386f), new Vector2(340f, 34f), false);
+            feedbackText.color = new Color(0.85f, 0.95f, 0.75f, 1f);
 
             GameObject gridGo = new GameObject("Grid", typeof(RectTransform), typeof(GridLayoutGroup));
             gridGo.transform.SetParent(rt, false);
             gridRoot = gridGo.GetComponent<RectTransform>();
             gridRoot.anchorMin = new Vector2(0f, 0f);
             gridRoot.anchorMax = new Vector2(1f, 1f);
-            gridRoot.offsetMin = new Vector2(18f, 18f);
+            gridRoot.offsetMin = new Vector2(18f, 58f);
             gridRoot.offsetMax = new Vector2(-18f, -60f);
 
             GridLayoutGroup grid = gridGo.GetComponent<GridLayoutGroup>();
@@ -147,7 +150,7 @@ namespace ApexShift.Runtime.Player
             grid.spacing = new Vector2(8f, 8f);
         }
 
-        private void CreateSlot(Transform parent, string itemId, int amount)
+        private void CreateSlot(Transform parent, int slotIndex, string itemId, int amount)
         {
             bool hasItem = amount > 0 && !string.IsNullOrWhiteSpace(itemId);
             GameObject slot = new GameObject("Slot", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(SlotClickHandler), typeof(SlotDragHandler));
@@ -182,7 +185,7 @@ namespace ApexShift.Runtime.Player
             amountRt.offsetMin = new Vector2(4f, 4f);
             amountRt.offsetMax = new Vector2(-4f, -4f);
 
-            slot.GetComponent<SlotClickHandler>().Bind(this, itemId, amount, icon, amountText);
+            slot.GetComponent<SlotClickHandler>().Bind(this, slotIndex, itemId, amount, icon, amountText);
             slot.GetComponent<SlotDragHandler>().Bind(this, itemId, amount, icon);
         }
 
@@ -205,6 +208,7 @@ namespace ApexShift.Runtime.Player
                 "stone" => "ApexShift2D/Art/Icons/Resources/resource_stone",
                 "fiber" => "ApexShift2D/Art/Icons/Resources/resource_fiber",
                 "meat" => "ApexShift2D/Art/Icons/Resources/resource_raw_meat",
+                "cooked_meat" => "ApexShift2D/Art/Icons/Resources/resource_raw_meat",
                 "hide" => "ApexShift2D/Art/Icons/Resources/resource_hide",
                 "bone" => "ApexShift2D/Art/Icons/Resources/resource_bone",
                 "berries" => "ApexShift2D/Art/Icons/Resources/resource_berries",
@@ -286,6 +290,18 @@ namespace ApexShift.Runtime.Player
             eventSystem.AddComponent<InputSystemUIInputModule>();
         }
 
+        public void EatSlot(int slotIndex)
+        {
+            if (inventoryRuntime == null || inventoryRuntime.Inventory == null)
+            {
+                return;
+            }
+
+            FoodConsumptionResult result = inventoryRuntime.TryEatSlot(slotIndex);
+            SetFeedback(result.Message, result.Success);
+            Refresh();
+        }
+
         public void DropItem(string itemId, int amount)
         {
             if (inventoryRuntime == null || inventoryRuntime.Inventory == null || string.IsNullOrWhiteSpace(itemId) || amount <= 0)
@@ -308,20 +324,34 @@ namespace ApexShift.Runtime.Player
                 + right * spread.x
                 + Vector3.up * (0.2f + Mathf.Abs(spread.y));
             ItemPickupSpawner.Spawn(itemId, removed, spawnPos, Quaternion.identity);
+            SetFeedback($"Dropped {removed}x {itemId}.", true);
             Refresh();
+        }
+
+        private void SetFeedback(string message, bool success)
+        {
+            if (feedbackText == null)
+            {
+                return;
+            }
+
+            feedbackText.text = string.IsNullOrWhiteSpace(message) ? string.Empty : message;
+            feedbackText.color = success ? new Color(0.85f, 0.95f, 0.75f, 1f) : new Color(1f, 0.62f, 0.50f, 1f);
         }
 
         private sealed class SlotClickHandler : MonoBehaviour, IPointerClickHandler
         {
             private InventoryPanelUI owner;
+            private int slotIndex;
             private string itemId;
             private int amount;
             private Image icon;
             private Text amountText;
 
-            public void Bind(InventoryPanelUI owner, string itemId, int amount, Image icon, Text amountText)
+            public void Bind(InventoryPanelUI owner, int slotIndex, string itemId, int amount, Image icon, Text amountText)
             {
                 this.owner = owner;
+                this.slotIndex = slotIndex;
                 this.itemId = itemId ?? string.Empty;
                 this.amount = amount;
                 this.icon = icon;
@@ -335,7 +365,11 @@ namespace ApexShift.Runtime.Player
                     return;
                 }
 
-                if (eventData.button == PointerEventData.InputButton.Right)
+                if (eventData.button == PointerEventData.InputButton.Left)
+                {
+                    owner.EatSlot(slotIndex);
+                }
+                else if (eventData.button == PointerEventData.InputButton.Right)
                 {
                     owner.DropItem(itemId, amount);
                 }
