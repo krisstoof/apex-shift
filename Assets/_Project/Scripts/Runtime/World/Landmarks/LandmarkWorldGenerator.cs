@@ -9,6 +9,7 @@ namespace ApexShift.Runtime.World.Landmarks
         public static void Generate(Transform parent, IslandTopographyRuntime topography, int seed)
         {
             LandmarkRegistry.ClearForWorldRegeneration();
+            ClearExistingLandmarkChildren(parent);
             if (parent == null || topography == null || !topography.IsBuilt || topography.GetGridReadOnly() == null) return;
 
             CreateLandmarkObject(parent, "old_tree", LandmarkType.OldTree, "Great Old Tree", "A huge ancient tree used as a natural orientation point.", PickCell(topography, c => c.IsLand && c.TerrainType == TerrainType.Forest, new Vector2(-46f, 8f), seed + 11), true);
@@ -27,6 +28,33 @@ namespace ApexShift.Runtime.World.Landmarks
             runtime.Configure(id, type, displayName, description, discovered);
             BuildVisual(runtime.transform, type);
             return runtime;
+        }
+
+        private static void ClearExistingLandmarkChildren(Transform parent)
+        {
+            if (parent == null)
+            {
+                return;
+            }
+
+            for (int i = parent.childCount - 1; i >= 0; i--)
+            {
+                Transform child = parent.GetChild(i);
+                if (child == null)
+                {
+                    continue;
+                }
+
+                GameObject go = child.gameObject;
+                if (Application.isPlaying)
+                {
+                    UnityEngine.Object.Destroy(go);
+                }
+                else
+                {
+                    UnityEngine.Object.DestroyImmediate(go);
+                }
+            }
         }
 
         private static Vector3 PickCell(IslandTopographyRuntime topography, Predicate<TopographyCell> predicate, Vector2 target, int salt)

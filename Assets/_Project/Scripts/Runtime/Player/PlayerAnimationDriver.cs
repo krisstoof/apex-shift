@@ -66,10 +66,16 @@ namespace ApexShift.Runtime.Player
         private string mineTrigger = "Mine";
 
         [SerializeField]
+        private string hurtTrigger = "Hurt";
+
+        [SerializeField]
+        private string deathTrigger = "Death";
+
+        [SerializeField]
         private float crossFadeDuration = 0.12f;
 
         [SerializeField]
-        private bool logAnimationSetup = true;
+        private bool logAnimationSetup = false;
 
         private bool hasSpeed;
         private bool hasMoving;
@@ -85,6 +91,8 @@ namespace ApexShift.Runtime.Player
         private bool hasTorchUse;
         private bool hasChop;
         private bool hasMine;
+        private bool hasHurt;
+        private bool hasDeath;
         private bool hasStateFallback;
         private bool hasSwimmingStateFallback;
         private bool loggedMissingStateFallback;
@@ -105,15 +113,16 @@ namespace ApexShift.Runtime.Player
 
             CacheParameters();
 
-            if (logAnimationSetup)
+            if (logAnimationSetup || animator == null || animator.runtimeAnimatorController == null)
             {
                 Debug.Log(
                     $"[PlayerAnimationDriver] Animator={(animator != null ? animator.name : "missing")}, " +
+                    $"controller={(animator != null && animator.runtimeAnimatorController != null ? animator.runtimeAnimatorController.name : "missing")}, " +
                     $"hasSpeed={hasSpeed}, hasMoving={hasMoving}, hasSprinting={hasSprinting}, " +
                     $"hasAttack={hasAttack}, hasInteract={hasInteract}, hasSwimming={hasSwimming}, " +
                     $"hasGather={hasGather}, hasSpearAttack={hasSpearAttack}, hasBowAttack={hasBowAttack}, " +
                     $"hasAxeUse={hasAxeUse}, hasPickaxeUse={hasPickaxeUse}, hasTorchUse={hasTorchUse}, " +
-                    $"hasChop={hasChop}, hasMine={hasMine}, " +
+                    $"hasChop={hasChop}, hasMine={hasMine}, hasHurt={hasHurt}, hasDeath={hasDeath}, " +
                     $"hasStateFallback={hasStateFallback}, hasSwimmingStateFallback={hasSwimmingStateFallback}",
                     this);
             }
@@ -274,6 +283,16 @@ namespace ApexShift.Runtime.Player
             else TriggerGather();
         }
 
+        public void TriggerHurt()
+        {
+            TrySetTrigger(hurtTrigger, hasHurt);
+        }
+
+        public void TriggerDeath()
+        {
+            TrySetTrigger(deathTrigger, hasDeath);
+        }
+
         /// <summary>
         /// Called by PlayerWaterDetector to enable or disable the swimming animation state.
         /// Has no effect if the Animator controller does not contain an "IsSwimming" bool parameter.
@@ -341,10 +360,12 @@ namespace ApexShift.Runtime.Player
             hasTorchUse = false;
             hasChop = false;
             hasMine = false;
+            hasHurt = false;
+            hasDeath = false;
             hasStateFallback = false;
             hasSwimmingStateFallback = false;
 
-            if (animator == null)
+            if (animator == null || animator.runtimeAnimatorController == null)
             {
                 return;
             }
@@ -406,6 +427,14 @@ namespace ApexShift.Runtime.Player
                 else if (parameter.name == mineTrigger)
                 {
                     hasMine = parameter.type == AnimatorControllerParameterType.Trigger;
+                }
+                else if (parameter.name == hurtTrigger)
+                {
+                    hasHurt = parameter.type == AnimatorControllerParameterType.Trigger;
+                }
+                else if (parameter.name == deathTrigger)
+                {
+                    hasDeath = parameter.type == AnimatorControllerParameterType.Trigger;
                 }
             }
 

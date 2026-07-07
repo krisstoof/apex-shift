@@ -101,10 +101,9 @@ namespace ApexShift.Runtime.UI.Snapshots
             int fireSources = FireSourceRegistry.SourceCount;
             int activeFireSources = FireSourceRegistry.ActiveSourceCount;
             int landmarkCount = LandmarkRegistry.LandmarkCount;
+            int discoveredLandmarks = LandmarkRegistry.DiscoveredCount;
             string[] recentEvents = GameEventBus.GetRecentEventLines(8);
-            var snapshot = new WorldDebugSnapshot(worldGenerator != null ? worldGenerator.Seed : 0, player != null ? player.position : Vector3.zero, player != null, resourceCount, creatureCount, foodCount, plantFood, meatFood, navOnMesh, Mathf.Max(0, navTotal - navOnMesh), hungryCreatures, storageContainers, pickupCount, fireSources, activeFireSources, smoothedFps, Time.realtimeSinceStartup, recentEvents);
-            snapshot.landmarkCount = landmarkCount;
-            return snapshot;
+            return new WorldDebugSnapshot(worldGenerator != null ? worldGenerator.Seed : 0, player != null ? player.position : Vector3.zero, player != null, resourceCount, creatureCount, foodCount, plantFood, meatFood, navOnMesh, Mathf.Max(0, navTotal - navOnMesh), hungryCreatures, storageContainers, pickupCount, fireSources, activeFireSources, landmarkCount, discoveredLandmarks, smoothedFps, Time.realtimeSinceStartup, recentEvents);
         }
         private void ResolveReferences()
         {
