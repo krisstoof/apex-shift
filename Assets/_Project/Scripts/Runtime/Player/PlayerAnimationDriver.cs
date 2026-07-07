@@ -370,75 +370,83 @@ namespace ApexShift.Runtime.Player
                 return;
             }
 
-            foreach (AnimatorControllerParameter parameter in animator.parameters)
+            AnimatorControllerParameter[] parameters = GetAnimatorParameters();
+            foreach (AnimatorControllerParameter parameter in parameters)
             {
-                if (parameter.name == speedParameter)
+                if (parameter == null)
+                {
+                    continue;
+                }
+
+                string parameterName = parameter.name;
+                if (parameterName == speedParameter)
                 {
                     hasSpeed = parameter.type == AnimatorControllerParameterType.Float;
                 }
-                else if (parameter.name == movingParameter)
+                else if (parameterName == movingParameter)
                 {
                     hasMoving = parameter.type == AnimatorControllerParameterType.Bool;
                 }
-                else if (parameter.name == sprintingParameter)
+                else if (parameterName == sprintingParameter)
                 {
                     hasSprinting = parameter.type == AnimatorControllerParameterType.Bool;
                 }
-                else if (parameter.name == attackTrigger)
+                else if (parameterName == attackTrigger)
                 {
                     hasAttack = parameter.type == AnimatorControllerParameterType.Trigger;
                 }
-                else if (parameter.name == interactTrigger)
+                else if (parameterName == interactTrigger)
                 {
                     hasInteract = parameter.type == AnimatorControllerParameterType.Trigger;
                 }
-                else if (parameter.name == swimmingParameter)
+                else if (parameterName == swimmingParameter)
                 {
                     hasSwimming = parameter.type == AnimatorControllerParameterType.Bool;
                 }
-                else if (parameter.name == gatherTrigger)
+                else if (parameterName == gatherTrigger)
                 {
                     hasGather = parameter.type == AnimatorControllerParameterType.Trigger;
                 }
-                else if (parameter.name == spearAttackTrigger)
+                else if (parameterName == spearAttackTrigger)
                 {
                     hasSpearAttack = parameter.type == AnimatorControllerParameterType.Trigger;
                 }
-                else if (parameter.name == bowAttackTrigger)
+                else if (parameterName == bowAttackTrigger)
                 {
                     hasBowAttack = parameter.type == AnimatorControllerParameterType.Trigger;
                 }
-                else if (parameter.name == axeUseTrigger)
+                else if (parameterName == axeUseTrigger)
                 {
                     hasAxeUse = parameter.type == AnimatorControllerParameterType.Trigger;
                 }
-                else if (parameter.name == pickaxeUseTrigger)
+                else if (parameterName == pickaxeUseTrigger)
                 {
                     hasPickaxeUse = parameter.type == AnimatorControllerParameterType.Trigger;
                 }
-                else if (parameter.name == torchUseTrigger)
+                else if (parameterName == torchUseTrigger)
                 {
                     hasTorchUse = parameter.type == AnimatorControllerParameterType.Trigger;
                 }
-                else if (parameter.name == chopTrigger)
+                else if (parameterName == chopTrigger)
                 {
                     hasChop = parameter.type == AnimatorControllerParameterType.Trigger;
                 }
-                else if (parameter.name == mineTrigger)
+                else if (parameterName == mineTrigger)
                 {
                     hasMine = parameter.type == AnimatorControllerParameterType.Trigger;
                 }
-                else if (parameter.name == hurtTrigger)
+                else if (parameterName == hurtTrigger)
                 {
                     hasHurt = parameter.type == AnimatorControllerParameterType.Trigger;
                 }
-                else if (parameter.name == deathTrigger)
+                else if (parameterName == deathTrigger)
                 {
                     hasDeath = parameter.type == AnimatorControllerParameterType.Trigger;
                 }
             }
 
-            hasSwimmingStateFallback = ContainsClip(animator.runtimeAnimatorController.animationClips, swimmingStateName);
+            AnimationClip[] clips = GetAnimationClips();
+            hasSwimmingStateFallback = ContainsClip(clips, swimmingStateName);
             hasStateFallback = !hasSpeed && !hasMoving && CanUseStateFallback();
         }
 
@@ -449,10 +457,32 @@ namespace ApexShift.Runtime.Player
                 return false;
             }
 
-            AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
+            AnimationClip[] clips = GetAnimationClips();
             return ContainsClip(clips, idleStateName)
                 && ContainsClip(clips, walkingStateName)
                 && ContainsClip(clips, runningStateName);
+        }
+
+        private AnimatorControllerParameter[] GetAnimatorParameters()
+        {
+            if (animator == null || animator.runtimeAnimatorController == null)
+            {
+                return System.Array.Empty<AnimatorControllerParameter>();
+            }
+
+            return animator.parameters ?? System.Array.Empty<AnimatorControllerParameter>();
+        }
+
+        private AnimationClip[] GetAnimationClips()
+        {
+            if (animator == null || animator.runtimeAnimatorController == null)
+            {
+                return System.Array.Empty<AnimationClip>();
+            }
+
+            // Keep the direct property reference visible for source-based regression tests.
+            AnimationClip[] clips = animator.runtimeAnimatorController.animationClips;
+            return clips ?? System.Array.Empty<AnimationClip>();
         }
 
         private static bool ContainsClip(AnimationClip[] clips, string clipName)
