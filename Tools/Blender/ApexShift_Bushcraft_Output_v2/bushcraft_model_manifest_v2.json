@@ -6,12 +6,12 @@
     "fbx_path": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\ApexShift_Bushcraft_Output_v2\\Placeables\\Models\\tent_stylized.fbx",
     "obj_path": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\ApexShift_Bushcraft_Output_v2\\Placeables\\Models\\tent_stylized.obj",
     "preview_path": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\ApexShift_Bushcraft_Output_v2\\Previews\\tent_stylized_preview.png",
-    "source_object_count": 34,
+    "source_object_count": 40,
     "joined_material_count": 9,
     "bounds": [
-      2.551055073738098,
-      2.2042346000671387,
-      1.7693322440609336
+      2.13010311126709,
+      2.1320878863334656,
+      1.8936755806207657
     ],
     "notes": "A-frame bushcraft shelter with entrance"
   }
