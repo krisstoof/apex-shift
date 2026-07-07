@@ -23,17 +23,22 @@ namespace ApexShift.Runtime.Buildings
         public string InstanceId => Normalize(instanceId, string.Empty);
         public Vector3 FootprintSize => new Vector3(Mathf.Max(0.25f, footprintSize.x), Mathf.Max(0.25f, footprintSize.y), Mathf.Max(0.25f, footprintSize.z));
         public bool BlocksPlacement => blocksPlacement;
-        public string Prompt => string.IsNullOrWhiteSpace(prompt) ? $"Use {BuildingId}" : prompt;
-        public int Priority => 25;
-        public float InteractionDuration => Mathf.Max(0.05f, interactionDuration);
+        public string Prompt => SleepRuntime != null ? SleepRuntime.Prompt : (string.IsNullOrWhiteSpace(prompt) ? $"Use {BuildingId}" : prompt);
+        public int Priority => BuildingId == "tent" ? 35 : 25;
+        public float InteractionDuration => SleepRuntime != null ? SleepRuntime.InteractionDuration : Mathf.Max(0.05f, interactionDuration);
         public StorageContainerRuntime StorageContainer => GetComponent<StorageContainerRuntime>();
         public TrapDamageRuntime TrapDamage => GetComponent<TrapDamageRuntime>();
         public CampfireRuntime Campfire => GetComponent<CampfireRuntime>();
+        public TentSleepRuntime SleepRuntime => GetComponent<TentSleepRuntime>();
 
         private void OnEnable()
         {
             if (!string.IsNullOrWhiteSpace(buildingId))
             {
+                EnsureStorageContainerIfNeeded();
+                EnsureTrapDamageIfNeeded();
+                EnsureCampfireIfNeeded();
+                EnsureTentSleepIfNeeded();
                 BuildingRegistry.Active?.Register(this);
             }
         }
@@ -57,6 +62,7 @@ namespace ApexShift.Runtime.Buildings
             EnsureStorageContainerIfNeeded();
             EnsureTrapDamageIfNeeded();
             EnsureCampfireIfNeeded();
+            EnsureTentSleepIfNeeded();
             BuildingRegistry.Active?.Register(this);
         }
 
@@ -81,6 +87,12 @@ namespace ApexShift.Runtime.Buildings
                 return false;
             }
 
+            TentSleepRuntime sleepRuntime = SleepRuntime;
+            if (sleepRuntime != null)
+            {
+                return sleepRuntime.CanInteract(actor);
+            }
+
             return true;
         }
 
@@ -103,6 +115,13 @@ namespace ApexShift.Runtime.Buildings
             {
                 Debug.Log($"[Building] Forwarding interaction to campfire '{InstanceId}'.", this);
                 return campfire.Interact(actor);
+            }
+
+            TentSleepRuntime sleepRuntime = SleepRuntime;
+            if (sleepRuntime != null)
+            {
+                Debug.Log($"[Building] Forwarding interaction to tent sleep '{InstanceId}'.", this);
+                return sleepRuntime.TrySleep(actor).Success;
             }
 
             Debug.Log($"[Building] Interacted with {BuildingId} ({InstanceId}).", this);
@@ -145,6 +164,14 @@ namespace ApexShift.Runtime.Buildings
             }
         }
 
+        private void EnsureTentSleepIfNeeded()
+        {
+            if (BuildingId == "tent")
+            {
+                _ = GetComponent<TentSleepRuntime>() ?? gameObject.AddComponent<TentSleepRuntime>();
+            }
+        }
+
         private void EnsureCollider()
         {
             Collider existing = GetComponentInChildren<Collider>();
@@ -166,7 +193,7 @@ namespace ApexShift.Runtime.Buildings
                 case "campfire": return "Use campfire";
                 case "wall": return "Inspect wall";
                 case "trap": return "Inspect trap";
-                case "tent": return "Rest at tent";
+                case "tent": return "Sleep in tent";
                 default: return "Use structure";
             }
         }
