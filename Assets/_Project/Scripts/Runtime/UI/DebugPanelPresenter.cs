@@ -57,6 +57,7 @@ namespace ApexShift.Runtime.UI.Debugging
             builder.AppendLine($"nav on/off: {world.navAgentsOnMesh}/{world.navAgentsOffMesh}");
             builder.AppendLine($"storage containers: {world.storageContainerCount}");
             builder.AppendLine($"fire sources active/all: {world.activeFireSourceCount}/{world.fireSourceCount}");
+            builder.AppendLine($"landmarks: {world.landmarkCount}");
             builder.AppendLine();
             builder.AppendLine("=== SURVIVAL ===");
             builder.AppendLine($"hp/hun/sta/rest: {survival.health:0}/{survival.hunger:0}/{survival.stamina:0}/{survival.rest:0}");

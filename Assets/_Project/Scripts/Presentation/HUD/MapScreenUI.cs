@@ -6,6 +6,7 @@ using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Fire;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.World.Topography;
+using ApexShift.Runtime.World.Landmarks;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -447,6 +448,21 @@ namespace ApexShift.Presentation.HUD
                 }
             }
 
+            if (showLandmarks)
+            {
+                IReadOnlyList<LandmarkRuntime> landmarks = LandmarkRegistry.Landmarks;
+                for (int i = 0; i < landmarks.Count; i++)
+                {
+                    LandmarkRuntime landmark = landmarks[i];
+                    if (landmark == null || landmark.gameObject == null || !landmark.gameObject.activeInHierarchy)
+                    {
+                        continue;
+                    }
+
+                    ShowMarker(ref index, landmark.transform.position, GetLandmarkColor(landmark), GetLandmarkSize(landmark), "landmark");
+                }
+            }
+
             ShowPlayerMarker(ref index);
 
             for (int i = index; i < markerPool.Count; i++)
@@ -787,6 +803,34 @@ namespace ApexShift.Presentation.HUD
             if (id == "storage_box") return new Color(0.55f, 0.34f, 0.14f, 1f);
             if (id == "trap") return new Color(0.78f, 0.18f, 0.86f, 1f);
             return new Color(0.56f, 0.62f, 0.68f, 1f);
+        }
+
+        private static Color GetLandmarkColor(LandmarkRuntime landmark)
+        {
+            if (landmark == null) return new Color(0.75f, 0.75f, 0.75f, 1f);
+            switch (landmark.Type)
+            {
+                case LandmarkType.OldTree: return new Color(0.18f, 0.72f, 0.18f, 1f);
+                case LandmarkType.Ruins: return new Color(0.68f, 0.68f, 0.68f, 1f);
+                case LandmarkType.Pond: return new Color(0.18f, 0.58f, 0.88f, 1f);
+                case LandmarkType.Camp: return new Color(1f, 0.68f, 0.28f, 1f);
+                case LandmarkType.CavePlaceholder: return new Color(0.38f, 0.38f, 0.38f, 1f);
+                default: return new Color(0.75f, 0.75f, 0.75f, 1f);
+            }
+        }
+
+        private static Vector2 GetLandmarkSize(LandmarkRuntime landmark)
+        {
+            if (landmark == null) return new Vector2(10f, 10f);
+            switch (landmark.Type)
+            {
+                case LandmarkType.OldTree: return new Vector2(14f, 14f);
+                case LandmarkType.Ruins: return new Vector2(12f, 12f);
+                case LandmarkType.Pond: return new Vector2(13f, 13f);
+                case LandmarkType.Camp: return new Vector2(11f, 11f);
+                case LandmarkType.CavePlaceholder: return new Vector2(10f, 10f);
+                default: return new Vector2(10f, 10f);
+            }
         }
 
         private static string Normalize(string value)

@@ -15,6 +15,7 @@ namespace ApexShift.Core.Save
         public List<BiomeEcosystemSaveData> biomeStates = new List<BiomeEcosystemSaveData>();
         public List<CreatureSaveData> creatureStates = new List<CreatureSaveData>();
         public List<BuildingSaveData> buildingStates = new List<BuildingSaveData>();
+        public List<LandmarkSaveData> landmarkStates = new List<LandmarkSaveData>();
         public float ecosystemTickTimer;
         public string ecosystemStateSource = "generated";
 
@@ -26,6 +27,7 @@ namespace ApexShift.Core.Save
         public IReadOnlyList<BiomeEcosystemSaveData> BiomeStates => biomeStates ?? (biomeStates = new List<BiomeEcosystemSaveData>());
         public IReadOnlyList<CreatureSaveData> CreatureStates => creatureStates ?? (creatureStates = new List<CreatureSaveData>());
         public IReadOnlyList<BuildingSaveData> BuildingStates => buildingStates ?? (buildingStates = new List<BuildingSaveData>());
+        public IReadOnlyList<LandmarkSaveData> LandmarkStates => landmarkStates ?? (landmarkStates = new List<LandmarkSaveData>());
         public float EcosystemTickTimer => ecosystemTickTimer;
         public string EcosystemStateSource => string.IsNullOrWhiteSpace(ecosystemStateSource) ? "generated" : ecosystemStateSource;
 
@@ -55,6 +57,7 @@ namespace ApexShift.Core.Save
         {
             this.creatureStates = creatureStates != null ? creatureStates.Where(state => state != null).ToList() : new List<CreatureSaveData>();
             this.buildingStates = buildingStates != null ? buildingStates.Where(state => state != null).ToList() : new List<BuildingSaveData>();
+            this.landmarkStates = new List<LandmarkSaveData>();
             this.ecosystemTickTimer = Math.Max(0f, ecosystemTickTimer);
             this.ecosystemStateSource = string.IsNullOrWhiteSpace(ecosystemStateSource) ? "generated" : ecosystemStateSource.Trim();
         }

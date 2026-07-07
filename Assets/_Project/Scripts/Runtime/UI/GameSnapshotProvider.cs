@@ -11,6 +11,7 @@ using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.DayNight;
 using ApexShift.Runtime.World.Generation;
+using ApexShift.Runtime.World.Landmarks;
 using ApexShift.Runtime.Fire;
 using UnityEngine;
 using UnityEngine.AI;
@@ -99,8 +100,11 @@ namespace ApexShift.Runtime.UI.Snapshots
             int storageContainers = registry != null ? registry.Structures.Count(structure => structure != null && structure.StorageContainer != null) : 0;
             int fireSources = FireSourceRegistry.SourceCount;
             int activeFireSources = FireSourceRegistry.ActiveSourceCount;
+            int landmarkCount = LandmarkRegistry.LandmarkCount;
             string[] recentEvents = GameEventBus.GetRecentEventLines(8);
-            return new WorldDebugSnapshot(worldGenerator != null ? worldGenerator.Seed : 0, player != null ? player.position : Vector3.zero, player != null, resourceCount, creatureCount, foodCount, plantFood, meatFood, navOnMesh, Mathf.Max(0, navTotal - navOnMesh), hungryCreatures, storageContainers, pickupCount, fireSources, activeFireSources, smoothedFps, Time.realtimeSinceStartup, recentEvents);
+            var snapshot = new WorldDebugSnapshot(worldGenerator != null ? worldGenerator.Seed : 0, player != null ? player.position : Vector3.zero, player != null, resourceCount, creatureCount, foodCount, plantFood, meatFood, navOnMesh, Mathf.Max(0, navTotal - navOnMesh), hungryCreatures, storageContainers, pickupCount, fireSources, activeFireSources, smoothedFps, Time.realtimeSinceStartup, recentEvents);
+            snapshot.landmarkCount = landmarkCount;
+            return snapshot;
         }
         private void ResolveReferences()
         {

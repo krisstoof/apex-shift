@@ -23,6 +23,7 @@ namespace ApexShift.Runtime.UI.Snapshots
         public int pickupCount;
         public int fireSourceCount;
         public int activeFireSourceCount;
+        public int landmarkCount;
         public float fps;
         public float realtimeSinceStartup;
         public string[] recentEvents = Array.Empty<string>();
@@ -56,6 +57,7 @@ namespace ApexShift.Runtime.UI.Snapshots
             this.pickupCount = Math.Max(0, pickupCount);
             this.fireSourceCount = Math.Max(0, fireSourceCount);
             this.activeFireSourceCount = Math.Max(0, activeFireSourceCount);
+            this.landmarkCount = 0;
             this.fps = Mathf.Max(0f, fps);
             this.realtimeSinceStartup = Mathf.Max(0f, realtimeSinceStartup);
             this.recentEvents = recentEvents != null ? recentEvents.Where(line => !string.IsNullOrWhiteSpace(line)).ToArray() : Array.Empty<string>();

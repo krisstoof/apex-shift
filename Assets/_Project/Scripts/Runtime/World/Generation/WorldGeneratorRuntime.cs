@@ -19,6 +19,7 @@ using ApexShift.Runtime.World.Query;
 using ApexShift.Runtime.DayNight;
 using ApexShift.Runtime.World.Sky;
 using ApexShift.Runtime.World.Topography;
+using ApexShift.Runtime.World.Landmarks;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
@@ -99,6 +100,7 @@ namespace ApexShift.Runtime.World.Generation
         private Transform _resourceRoot;
         private Transform _creatureRoot;
         private Transform _buildingRoot;
+        private Transform _landmarkRoot;
         private List<Vector3> _allTileCenters = new List<Vector3>();
         private List<Vector3> _landTileCenters = new List<Vector3>();
         private Transform _playerTransform;
@@ -158,6 +160,7 @@ namespace ApexShift.Runtime.World.Generation
             EnsureRoots();
             EnsureBuildingRegistry();
             GenerateIslandLayout();
+            GenerateLandmarks();
 
             GameObject player = CreatePlayer();
             _playerTransform = player != null ? player.transform : null;
@@ -288,6 +291,7 @@ namespace ApexShift.Runtime.World.Generation
             _resourceRoot = CreateRoot("ResourceRoot");
             _creatureRoot = CreateRoot("CreatureRoot");
             _buildingRoot = CreateRoot("BuildingRoot");
+            _landmarkRoot = CreateRoot("LandmarkRoot");
         }
 
         private void EnsureBuildingRegistry()
@@ -693,6 +697,14 @@ namespace ApexShift.Runtime.World.Generation
                 wall.transform.position = pos + direction * (tileSize * 0.5f) + Vector3.up * 5f;
                 BoxCollider col = wall.AddComponent<BoxCollider>();
                 col.size = (direction.x != 0) ? new Vector3(0.1f, 10f, tileSize) : new Vector3(tileSize, 10f, 0.1f);
+            }
+        }
+
+        private void GenerateLandmarks()
+        {
+            if (_landmarkRoot != null && _islandTopography != null)
+            {
+                LandmarkWorldGenerator.Generate(_landmarkRoot, _islandTopography, seed);
             }
         }
 
@@ -1748,7 +1760,8 @@ if (renderer != null)
             Vector3 spawnPos;
             if (_islandTopography != null && _islandTopography.IsBuilt)
             {
-                spawnPos = _islandTopography.GetSafePlayerSpawnPoint() + Vector3.up * 0.10f;
+                // GetSafePlayerSpawnPoint already returns correct terrain height
+                spawnPos = _islandTopography.GetSafePlayerSpawnPoint();
             }
             else if (_allTileCenters.Count > 0)
             {
@@ -1759,7 +1772,7 @@ if (renderer != null)
                     float d = new Vector2(center.x, center.z).sqrMagnitude;
                     if (d < minDist) { minDist = d; nearest = center; }
                 }
-                spawnPos = nearest + Vector3.up * 0.10f;
+                spawnPos = nearest;
             }
             else
             {
@@ -1782,8 +1795,7 @@ if (renderer != null)
             player.tag = "Player";
             player.SetActive(true);
             EnsurePlayerVisible(player);
-            SnapObjectToTerrainSurface(player, 0.10f);
-            Debug.Log($"[WorldGen] Player spawned: name={player.name}, pos={player.transform.position}, active={player.activeInHierarchy}, renderers={player.GetComponentsInChildren<Renderer>(true).Length}");
+            Debug.Log($"[WorldGen] Player spawned at: {player.transform.position}, topography built: {(_islandTopography?.IsBuilt ?? false)}");
             return player;
         }
 
@@ -1826,16 +1838,8 @@ if (renderer != null)
 
         private void SnapObjectToTerrainSurface(GameObject target, float surfaceOffset)
         {
-            if (target == null)
-            {
-                return;
-            }
-
-            Vector3 origin = target.transform.position + Vector3.up * 20f;
-            if (Physics.Raycast(origin, Vector3.down, out RaycastHit hit, 60f))
-            {
-                target.transform.position = hit.point + Vector3.up * Mathf.Max(0.02f, surfaceOffset);
-            }
+            // DEPRECATED: Topography already provides correct terrain height
+            // Snapping via raycast causes positioning issues
         }
 
         private void ConfigurePlayerRuntime(GameObject player, GameObject cameraGo)
@@ -1845,13 +1849,16 @@ if (renderer != null)
             {
                 cc = player.AddComponent<CharacterController>();
                 cc.height = 2f;
-                cc.radius = 0.5f;
-                cc.center = Vector3.up * (cc.height * 0.5f);
+                cc.radius = 0.4f;
+                cc.center = new Vector3(0f, cc.height * 0.5f, 0f);
+                cc.slopeLimit = 45f;
+                cc.stepOffset = 0.3f;
             }
             else
             {
-                cc.center = Vector3.up * (cc.height * 0.5f);
+                cc.center = new Vector3(0f, cc.height * 0.5f, 0f);
             }
+            Debug.Log($"[WorldGen] CharacterController configured: height={cc.height}, radius={cc.radius}, center={cc.center}");
 
             PlayerInputReader inputReader = player.GetComponent<PlayerInputReader>();
             if (inputReader == null) inputReader = player.AddComponent<PlayerInputReader>();
@@ -1948,7 +1955,19 @@ if (renderer != null)
             Animator anim = player.GetComponentInChildren<Animator>();
             if (anim != null)
             {
-                if (playerAnimatorController != null) anim.runtimeAnimatorController = playerAnimatorController;
+                if (playerAnimatorController != null)
+                {
+                    anim.runtimeAnimatorController = playerAnimatorController;
+                    Debug.Log($"[WorldGen] Animator controller assigned: {playerAnimatorController.name}");
+                }
+                else
+                {
+                    Debug.LogWarning("[WorldGen] No playerAnimatorController assigned in inspector!");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("[WorldGen] No Animator component found on player!");
             }
 
             KevinIglesiasPlayerAnimationBinder animationBinder = player.GetComponent<KevinIglesiasPlayerAnimationBinder>();
@@ -1959,12 +1978,18 @@ if (renderer != null)
             {
                 animDriver.SetAnimator(anim);
                 heldItem.RebindToRigHand();
+                Debug.Log("[WorldGen] Animation binder configured successfully");
             }
             else if (playerAnimatorController != null)
             {
                 anim = player.GetComponent<Animator>() ?? player.AddComponent<Animator>();
                 anim.runtimeAnimatorController = playerAnimatorController;
                 animDriver.SetAnimator(anim);
+                Debug.Log("[WorldGen] Fallback animator setup completed");
+            }
+            else
+            {
+                Debug.LogWarning("[WorldGen] Could not setup animations - no controller available");
             }
 
             // Disable demo scripts from asset packs

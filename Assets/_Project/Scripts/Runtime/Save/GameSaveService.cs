@@ -14,6 +14,7 @@ using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.DayNight;
 using ApexShift.Runtime.Camera;
 using ApexShift.Runtime.World.Generation;
+using ApexShift.Runtime.World.Landmarks;
 using UnityEngine;
 
 namespace ApexShift.Runtime.Save
@@ -150,6 +151,7 @@ namespace ApexShift.Runtime.Save
             List<BiomeEcosystemSaveData> biomeStates = CaptureBiomeStates();
             List<CreatureSaveData> creatureStates = CaptureCreatureStates();
             List<BuildingSaveData> buildingStates = CaptureBuildingStates();
+            List<LandmarkSaveData> landmarkStates = CaptureLandmarkStates();
             int day = dayNightRuntime != null ? dayNightRuntime.Day : 1;
             float timeOfDay = dayNightRuntime != null ? dayNightRuntime.TimeOfDay01 : 0f;
 
@@ -164,6 +166,8 @@ namespace ApexShift.Runtime.Save
                 buildingStates,
                 ecosystemDirector != null ? ecosystemDirector.TickTimer : 0f,
                 ecosystemDirector != null ? ecosystemDirector.EcosystemStateSource : "generated");
+            
+            world.landmarkStates = landmarkStates;
 
             return new GameSaveData(inventory, survival, world);
         }
@@ -227,6 +231,7 @@ namespace ApexShift.Runtime.Save
             ApplyEcosystemMetadata(saveData.World);
             RestoreCreatureStates(saveData.World.CreatureStates);
             RestoreBuildingStates(saveData.World.BuildingStates);
+            RestoreLandmarkStates(saveData.World.LandmarkStates);
             if (dayNightRuntime != null)
             {
                 dayNightRuntime.LoadFromWorldSaveData(saveData.World.Day, saveData.World.TimeOfDay);
@@ -361,6 +366,17 @@ namespace ApexShift.Runtime.Save
             }
 
             buildingRegistry.RestoreFromSaveData(buildingStates, worldGenerator != null ? worldGenerator.transform : null);
+        }
+
+        private List<LandmarkSaveData> CaptureLandmarkStates()
+        {
+            return LandmarkRegistry.CaptureSaveData();
+        }
+
+        private void RestoreLandmarkStates(IReadOnlyList<LandmarkSaveData> landmarkStates)
+        {
+            Transform landmarkRoot = worldGenerator != null ? worldGenerator.transform.Find("LandmarkRoot") : null;
+            LandmarkRegistry.RestoreFromSaveData(landmarkStates, landmarkRoot);
         }
 
         private void RestoreCreatureStates(IReadOnlyList<CreatureSaveData> savedCreatures)
