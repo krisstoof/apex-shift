@@ -32,7 +32,7 @@ namespace ApexShift.Runtime.Player
         public void EnsureInitialized()
         {
             if (inventory != null) return;
-            itemDatabase = ItemDatabase.CreateDefault();
+            itemDatabase = ApexShift.Core.Items.ItemDatabase.CreateDefault();
             inventory = new InventoryState(itemDatabase, slotCount);
         }
 
