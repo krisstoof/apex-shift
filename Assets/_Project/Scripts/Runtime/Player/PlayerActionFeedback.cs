@@ -114,6 +114,11 @@ namespace ApexShift.Runtime.Player
             }
         }
 
+        public void ShowMessage(string message, Color flashColor)
+        {
+            TriggerFeedback(string.IsNullOrWhiteSpace(message) ? "Action" : message, flashColor);
+        }
+
         private void OnInteract()
         {
             TriggerFeedback("Interact", new Color(0.2f, 0.8f, 1f));

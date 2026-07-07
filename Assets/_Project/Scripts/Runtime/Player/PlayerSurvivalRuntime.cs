@@ -1,6 +1,7 @@
 using System;
 using ApexShift.Core.Survival;
 using ApexShift.Core.Save;
+using ApexShift.Runtime.Buildings;
 using ApexShift.Runtime.Events;
 using ApexShift.Runtime.PlayerInput;
 using UnityEngine;
@@ -204,6 +205,51 @@ namespace ApexShift.Runtime.Player
             }
 
             return stats.ChangeStamina(amount);
+        }
+
+        public TentSleepResult ApplySleepRecovery(float minimumRest, float minimumStamina, float hungerCost, float healthBonus, float hoursAdvanced)
+        {
+            EnsureInitialized();
+            if (IsDead)
+            {
+                return TentSleepResult.Failed("Cannot sleep after death.");
+            }
+
+            float beforeRest = stats.Rest;
+            float beforeStamina = stats.Stamina;
+            float beforeHunger = stats.Hunger;
+            float beforeHealth = stats.Health;
+
+            float targetRest = Mathf.Clamp(minimumRest, 0f, rules.MaxRest);
+            if (stats.Rest < targetRest)
+            {
+                stats.ChangeRest(targetRest - stats.Rest);
+            }
+
+            float targetStamina = Mathf.Clamp(minimumStamina, 0f, rules.MaxStamina);
+            if (stats.Stamina < targetStamina)
+            {
+                stats.ChangeStamina(targetStamina - stats.Stamina);
+            }
+
+            if (healthBonus > 0f)
+            {
+                stats.ChangeHealth(healthBonus);
+            }
+
+            if (hungerCost > 0f && !stats.GodMode)
+            {
+                stats.ChangeHunger(-hungerCost);
+            }
+
+            return new TentSleepResult(
+                true,
+                "Slept in tent.",
+                Mathf.Max(0f, hoursAdvanced),
+                stats.Rest - beforeRest,
+                stats.Stamina - beforeStamina,
+                stats.Hunger - beforeHunger,
+                stats.Health - beforeHealth);
         }
 
         public void Restore(float health, float hunger, float stamina, float rest)
