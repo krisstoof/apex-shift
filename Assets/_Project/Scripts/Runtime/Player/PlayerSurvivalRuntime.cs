@@ -1,3 +1,4 @@
+using System;
 using ApexShift.Core.Survival;
 using ApexShift.Core.Save;
 using ApexShift.Runtime.Events;
@@ -33,6 +34,16 @@ namespace ApexShift.Runtime.Player
         [SerializeField] private float exhaustedSpeedMultiplier = 0.48f;
         [SerializeField] private float noStaminaSpeedMultiplier = 0.35f;
 
+        [Header("Fatigue / Exhaustion")]
+        [SerializeField] private float fatigueRestThreshold = 20f;
+        [SerializeField] private float exhaustionRestThreshold = 5f;
+        [SerializeField] private float lowHungerFatigueThreshold = 15f;
+        [SerializeField] private float exhaustedHealthDamagePerSecond = 0.35f;
+        [SerializeField] private float exhaustedStaminaDrainPerSecond = 2f;
+
+        [Header("Death")]
+        [SerializeField] private bool autoInstallDeathRuntime = true;
+
         [SerializeField]
         private float debugLogInterval = 2f;
 
@@ -40,14 +51,43 @@ namespace ApexShift.Runtime.Player
         private SurvivalSystem survivalSystem;
         private SurvivalStats stats;
         private float debugLogTimer;
+        private bool deathEventRaised;
+
+        public event Action<PlayerSurvivalRuntime, string> PlayerDied;
+
         public PlayerInputReader InputReader => inputReader;
         public SurvivalStats Stats => stats;
         public SurvivalSystem SurvivalSystem => survivalSystem;
         public bool WantsSprint { get; private set; }
         public bool IsSprinting { get; private set; }
-        public bool CanSprint => stats != null && survivalSystem != null && survivalSystem.CanSprint(stats);
+        public bool IsDead => stats != null && stats.Health <= 0f;
+        public bool IsFatigued => stats != null && (stats.Rest <= Mathf.Max(0f, fatigueRestThreshold) || stats.Hunger <= Mathf.Max(0f, lowHungerFatigueThreshold));
+        public bool IsExhausted => stats != null && (stats.Rest <= Mathf.Max(0f, exhaustionRestThreshold) || stats.Stamina <= 0.01f);
+        public string DeathReason { get; private set; } = string.Empty;
+        public bool CanSprint => !IsDead && stats != null && survivalSystem != null && survivalSystem.CanSprint(stats);
         public float SpeedMultiplier => stats != null && survivalSystem != null ? survivalSystem.GetSpeedMultiplier(stats) * GetStaminaSpeedMultiplier() : 1f;
-        public string ConditionText => stats != null && survivalSystem != null ? survivalSystem.GetConditionText(stats) : "uninitialized";
+        public string ConditionText
+        {
+            get
+            {
+                if (IsDead)
+                {
+                    return string.IsNullOrWhiteSpace(DeathReason) ? "dead" : "dead: " + DeathReason;
+                }
+
+                if (IsExhausted)
+                {
+                    return "exhausted";
+                }
+
+                if (IsFatigued)
+                {
+                    return "fatigued";
+                }
+
+                return stats != null && survivalSystem != null ? survivalSystem.GetConditionText(stats) : "uninitialized";
+            }
+        }
 
         private void Awake()
         {
@@ -57,15 +97,37 @@ namespace ApexShift.Runtime.Player
             }
 
             InitializeCore();
+            if (autoInstallDeathRuntime && GetComponent<PlayerDeathRuntime>() == null)
+            {
+                gameObject.AddComponent<PlayerDeathRuntime>();
+            }
         }
 
         private void Update()
         {
             EnsureInitialized();
 
+            if (IsDead)
+            {
+                WantsSprint = false;
+                IsSprinting = false;
+                RaiseDeathOnce(string.IsNullOrWhiteSpace(DeathReason) ? "unknown" : DeathReason);
+                return;
+            }
+
             WantsSprint = inputReader != null && inputReader.SprintHeld && inputReader.Move.sqrMagnitude > 0.0001f;
             SurvivalTickResult tickResult = survivalSystem.Tick(stats, Time.deltaTime, WantsSprint);
             IsSprinting = tickResult.IsSprinting;
+            ApplyFatiguePenalties(Time.deltaTime);
+
+            if (tickResult.Died)
+            {
+                RaiseDeathOnce(tickResult.DeathReason);
+            }
+            else if (stats.Health <= 0f)
+            {
+                RaiseDeathOnce(IsExhausted ? "exhaustion" : "damage");
+            }
 
             if (logToConsole)
             {
@@ -86,39 +148,80 @@ namespace ApexShift.Runtime.Player
         public SurvivalTickResult ApplyFood(float nutrition)
         {
             EnsureInitialized();
+            if (IsDead)
+            {
+                return SurvivalTickResult.NoChange(stats);
+            }
+
             return survivalSystem.ApplyFood(stats, nutrition);
         }
 
         public SurvivalTickResult EatMeat()
         {
             EnsureInitialized();
+            if (IsDead)
+            {
+                return SurvivalTickResult.NoChange(stats);
+            }
+
             return survivalSystem.ApplyFood(stats, rules.MeatNutrition);
         }
 
         public SurvivalTickResult Damage(float amount)
         {
             EnsureInitialized();
-            Debug.Log($"[PlayerSurvival] Damage called with amount: {amount}, current health: {stats.Health}");
+            if (IsDead)
+            {
+                return SurvivalTickResult.NoChange(stats);
+            }
+
             SurvivalTickResult result = survivalSystem.ApplyDamage(stats, amount);
-            Debug.Log($"[PlayerSurvival] After damage - new health: {stats.Health}, result: {result}");
+            if (result.Died || stats.Health <= 0f)
+            {
+                RaiseDeathOnce(result.Died ? result.DeathReason : "damage");
+            }
+
             return result;
         }
 
         public SurvivalTickResult Heal(float amount)
         {
             EnsureInitialized();
+            if (IsDead)
+            {
+                return SurvivalTickResult.NoChange(stats);
+            }
+
             return survivalSystem.ApplyHeal(stats, amount);
+        }
+
+        public float RestoreStamina(float amount)
+        {
+            EnsureInitialized();
+            if (amount <= 0f || IsDead)
+            {
+                return 0f;
+            }
+
+            return stats.ChangeStamina(amount);
         }
 
         public void Restore(float health, float hunger, float stamina, float rest)
         {
             EnsureInitialized();
             stats.Restore(health, hunger, stamina, rest);
+            DeathReason = string.Empty;
+            deathEventRaised = stats.Health <= 0f;
         }
 
         public void SetCampfireRegen(bool active, float nearestDistance = -1f)
         {
             EnsureInitialized();
+            if (IsDead)
+            {
+                return;
+            }
+
             stats.SetCampfireRegen(active, nearestDistance);
             if (active)
             {
@@ -149,6 +252,35 @@ namespace ApexShift.Runtime.Player
         {
             EnsureInitialized();
             stats.LoadFromSaveData(data);
+            DeathReason = stats.Health <= 0f ? "loaded_dead_state" : string.Empty;
+            deathEventRaised = stats.Health <= 0f;
+        }
+
+        private void ApplyFatiguePenalties(float deltaTime)
+        {
+            if (deltaTime <= 0f || stats == null || stats.GodMode || IsDead)
+            {
+                return;
+            }
+
+            if (!IsExhausted)
+            {
+                return;
+            }
+
+            if (exhaustedStaminaDrainPerSecond > 0f)
+            {
+                stats.ChangeStamina(-exhaustedStaminaDrainPerSecond * deltaTime);
+            }
+
+            if (stats.Rest <= Mathf.Max(0f, exhaustionRestThreshold) && exhaustedHealthDamagePerSecond > 0f)
+            {
+                SurvivalTickResult result = survivalSystem.ApplyDamage(stats, exhaustedHealthDamagePerSecond * deltaTime);
+                if (result.Died || stats.Health <= 0f)
+                {
+                    RaiseDeathOnce("exhaustion");
+                }
+            }
         }
 
         private float GetStaminaSpeedMultiplier()
@@ -176,11 +308,28 @@ namespace ApexShift.Runtime.Player
             return 1f;
         }
 
+        private void RaiseDeathOnce(string reason)
+        {
+            if (deathEventRaised)
+            {
+                return;
+            }
+
+            deathEventRaised = true;
+            DeathReason = string.IsNullOrWhiteSpace(reason) ? "unknown" : reason.Trim();
+            WantsSprint = false;
+            IsSprinting = false;
+            PlayerDied?.Invoke(this, DeathReason);
+            Debug.Log($"[PlayerSurvival] Player died: {DeathReason}", this);
+        }
+
         private void InitializeCore()
         {
             rules = SurvivalRules.CreateDefault();
             survivalSystem = new SurvivalSystem(rules);
             stats = new SurvivalStats(startingHealth, startingHunger, startingStamina, startingRest, rules);
+            DeathReason = stats.Health <= 0f ? "initial_dead_state" : string.Empty;
+            deathEventRaised = stats.Health <= 0f;
         }
 
         private void EnsureInitialized()

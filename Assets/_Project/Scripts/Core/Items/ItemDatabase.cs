@@ -28,7 +28,8 @@ namespace ApexShift.Core.Items
                 new ItemDefinition(new ItemId("wood"), "Wood", 20),
                 new ItemDefinition(new ItemId("stone"), "Stone", 20),
                 new ItemDefinition(new ItemId("fiber"), "Fiber", 20),
-                new ItemDefinition(new ItemId("meat"), "Meat", 20),
+                new ItemDefinition(new ItemId("meat"), "Meat", 20, isEdible: true, hungerRestore: 32f, healthRestore: 0f, staminaRestore: 6f, isUnsafeRawFood: true),
+                new ItemDefinition(new ItemId("cooked_meat"), "Cooked Meat", 20, isEdible: true, hungerRestore: 45f, healthRestore: 6f, staminaRestore: 10f),
                 new ItemDefinition(new ItemId("hide"), "Hide", 20),
                 new ItemDefinition(new ItemId("bone"), "Bone", 20),
                 new ItemDefinition(new ItemId("torch"), "Torch", 1),
@@ -41,7 +42,7 @@ namespace ApexShift.Core.Items
                 new ItemDefinition(new ItemId("trap"), "Trap", 1),
                 new ItemDefinition(new ItemId("wall"), "Wall", 20),
                 new ItemDefinition(new ItemId("storage_box"), "Storage Box", 1),
-                new ItemDefinition(new ItemId("berries"), "Berries", 20),
+                new ItemDefinition(new ItemId("berries"), "Berries", 20, isEdible: true, hungerRestore: 18f, healthRestore: 1f, staminaRestore: 4f),
                 new ItemDefinition(new ItemId("grass"), "Grass", 20),
                 new ItemDefinition(new ItemId("tent"), "Tent", 1)
             });
@@ -60,6 +61,12 @@ namespace ApexShift.Core.Items
         public bool HasItem(string itemId) => HasItem(NormalizeItemId(itemId));
 
         public bool HasItem(ItemId itemId) => itemId.IsValid && definitionsById.ContainsKey(itemId.ToString());
+
+        public bool IsEdible(string itemId)
+        {
+            ItemId itemIdValue = NormalizeItemId(itemId);
+            return HasItem(itemIdValue) && GetDefinition(itemIdValue).IsEdible;
+        }
 
         public ItemId NormalizeItemId(string value)
         {
