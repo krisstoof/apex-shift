@@ -1,5 +1,6 @@
 using ApexShift.Presentation.HUD;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace ApexShift.Runtime.Settings
 {
@@ -41,7 +42,7 @@ namespace ApexShift.Runtime.Settings
                 return;
             }
 
-            GameObject optionsMenu = GameObject.Find("OptionsMenu");
+            GameObject optionsMenu = FindOptionsMenuIncludingInactive();
             if (optionsMenu == null)
             {
                 return;
@@ -49,6 +50,27 @@ namespace ApexShift.Runtime.Settings
 
             boundOptionsMenu = optionsMenu.GetComponent<OptionsMenuController>() ?? optionsMenu.AddComponent<OptionsMenuController>();
             boundOptionsMenu.BuildIfNeeded(Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
+        }
+
+        private static GameObject FindOptionsMenuIncludingInactive()
+        {
+            foreach (GameObject candidate in Resources.FindObjectsOfTypeAll<GameObject>())
+            {
+                if (candidate == null || candidate.name != "OptionsMenu")
+                {
+                    continue;
+                }
+
+                Scene scene = candidate.scene;
+                if (!scene.IsValid() || !scene.isLoaded)
+                {
+                    continue;
+                }
+
+                return candidate;
+            }
+
+            return null;
         }
     }
 }
