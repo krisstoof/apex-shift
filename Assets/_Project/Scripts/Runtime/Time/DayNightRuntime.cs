@@ -98,6 +98,25 @@ namespace ApexShift.Runtime.DayNight
             DispatchEvents(result);
         }
 
+        public DayNightTickResult AdvanceHours(float hours)
+        {
+            EnsureState();
+            float safeHours = Mathf.Max(0f, hours);
+            if (safeHours <= 0f)
+            {
+                return new DayNightTickResult(0, false, false, state.TimeOfDay01, state.TimeOfDay01);
+            }
+
+            DayNightTickResult result = state.Advance(safeHours / 24f);
+            if (result.HasAnyEvent)
+            {
+                DispatchEvents(result);
+            }
+
+            Debug.Log($"[DayNight] Advanced time by {safeHours:0.00}h. Day={Day}, hour={Hour:0.00}", this);
+            return result;
+        }
+
         public void LoadFromWorldSaveData(int day, float timeOfDay01)
         {
             SetTime(day, timeOfDay01);
