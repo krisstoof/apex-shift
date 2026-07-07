@@ -649,7 +649,7 @@ namespace ApexShift.Runtime.Buildings
             string normalizedId = definition.BuildingId?.Trim().ToLowerInvariant();
             if (!string.IsNullOrWhiteSpace(normalizedId))
             {
-                string modelPath = $"Assets/apex_shift_bushcraft_stylized_unity_obj/Assets/_Project/Art/Placeables/Models/{normalizedId}_stylized.obj";
+                string modelPath = $"Assets/_Project/Art/Bushcraft/Placeables/Models/{normalizedId}_stylized.obj";
                 GameObject editorPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
                 if (editorPrefab != null)
                 {

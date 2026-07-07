@@ -9,7 +9,7 @@ namespace ApexShift.EditorTools.World
     internal static class VegetationPrefabSelectionRules
     {
         private const string EmbersStormNatureRoot = "embersstorm -  free nature pack";
-        private const string StylizedBushcraftRoot = "apex_shift_bushcraft_stylized_unity_obj";
+        private const string StylizedBushcraftRoot = "Assets/_Project/Art/Bushcraft";
 
         internal static IReadOnlyList<GameObject> FindPrefabsForRole(string roleName)
         {
