@@ -3,7 +3,7 @@
 **Issue:** #39 - `[MIGRATION] Update Unity migration status matrix`  
 **Repo:** `krisstoof/apex-shift`  
 **Reference project:** `krisstoof/apex-shift-2d`  
-**Status date:** 2026-06-29
+**Status date:** 2026-07-07
 
 This document is the current migration status matrix for the Unity version of Apex Shift. It is meant to prevent duplicate migration work by separating:
 
@@ -15,7 +15,7 @@ This document is the current migration status matrix for the Unity version of Ap
 
 It complements #37 (`[MIGRATION] Verify intentional deviations from Godot and document them`). #37 should explain *why* a difference exists; this file records *what state each migrated system is currently in*.
 
-Related report: [`Docs/Migration/balance-parity-report.md`](balance-parity-report.md)
+Related report: [`Docs/migration/balance-parity-report.md`](balance-parity-report.md)
 
 ---
 
@@ -42,12 +42,13 @@ Related report: [`Docs/Migration/balance-parity-report.md`](balance-parity-repor
 | Small prey / grazer / Varnak AI | `partial` | #29, #30, #31, #35 |
 | Save/load | `partial` | #32, #41, #42, #43 |
 | Debug/UI snapshots | `ported` | #33, #40 |
-| Minimap/map | `partial` | later UX task |
-| Day/night | `missing` | #41 |
-| Player combat | `missing` | #44 |
-| Torch/campfire runtime | `partial` | #45 |
-| Buildings/storage runtime | `missing` / `partial` | #42, #43 |
-| Tester build | `missing` | #48 |
+| Minimap/map | `partial` | #54, map UX polish |
+| Day/night | `ported` | sleep/time-skip polish only |
+| Player combat | `partial` | animation/feel/balance polish |
+| Torch/campfire runtime | `partial` | polish Varnak/fire balance |
+| Buildings/storage runtime | `ported` / `partial` | UX, persistence edge cases |
+| Options/settings | `partial` | authored graphics/audio settings service |
+| Tester build | `partial` | #59 checklist / build gate |
 | Automated tests | `partial` | #35, #47 |
 
 ---
@@ -64,27 +65,29 @@ Related report: [`Docs/Migration/balance-parity-report.md`](balance-parity-repor
 | Resource regrowth | `partial` | [`Assets/_Project/Scripts/Runtime/Resources/ResourceNodeView.cs`](../../Assets/_Project/Scripts/Runtime/Resources/ResourceNodeView.cs), [`Assets/_Project/Scripts/Tests/Unit/Resources/ResourceRegrowthSystemTests.cs`](../../Assets/_Project/Scripts/Tests/Unit/Resources/ResourceRegrowthSystemTests.cs) | #9, #27, #46 | Regrowth exists, but remaining scene scans should be moved to registries in #46. |
 | World generation | `partial` | [`Assets/_Project/Scripts/Runtime/World/Generation/WorldGeneratorRuntime.cs`](../../Assets/_Project/Scripts/Runtime/World/Generation/WorldGeneratorRuntime.cs), [`Assets/_Project/Scripts/Runtime/World/Generation/WorldGenerationResult.cs`](../../Assets/_Project/Scripts/Runtime/World/Generation/WorldGenerationResult.cs) | #10, #11, #20 | Unity has a generator/vertical slice, roots, player/camera spawn, NavMesh build and creature spawning. It is not a 1:1 Godot world port. |
 | Biomes | `ported` | [`Assets/_Project/Scripts/Core/World/Biomes/BiomeDefinition.cs`](../../Assets/_Project/Scripts/Core/World/Biomes/BiomeDefinition.cs), [`Assets/_Project/Data/Biomes/BiomeCatalog.asset`](../../Assets/_Project/Data/Biomes/BiomeCatalog.asset), [`Assets/_Project/Scripts/Runtime/World/Generation/GeneratedBiomeRegion.cs`](../../Assets/_Project/Scripts/Runtime/World/Generation/GeneratedBiomeRegion.cs) | #10, #11, #20 | Biome definitions and generated regions exist. Balance and density tuning belong to #49 or a later world-polish task. |
-| Landmarks | `missing` | Docs only: [`apex_shift_unity_migration_documentation.md`](../../apex_shift_unity_migration_documentation.md) | Godot: `scripts/world/world_config.gd`, `WorldConfig.LANDMARKS` | No clear Unity runtime landmark system was found. Keep this as a concrete missing area instead of another generic world task. |
+| Landmarks | `partial` | [`Assets/_Project/Scripts/Runtime/World/Landmarks/LandmarkRuntime.cs`](../../Assets/_Project/Scripts/Runtime/World/Landmarks/LandmarkRuntime.cs), [`Assets/_Project/Scripts/Runtime/World/Landmarks/LandmarkRegistry.cs`](../../Assets/_Project/Scripts/Runtime/World/Landmarks/LandmarkRegistry.cs), [`Assets/_Project/Scripts/Runtime/World/Landmarks/LandmarkWorldGenerator.cs`](../../Assets/_Project/Scripts/Runtime/World/Landmarks/LandmarkWorldGenerator.cs), [`Assets/_Project/Scripts/Presentation/HUD/MapScreenUI.cs`](../../Assets/_Project/Scripts/Presentation/HUD/MapScreenUI.cs), [`Assets/_Project/Scripts/Presentation/HUD/MiniMapUI.cs`](../../Assets/_Project/Scripts/Presentation/HUD/MiniMapUI.cs) | Godot: `scripts/world/world_config.gd`, `WorldConfig.LANDMARKS` | Landmark runtime exists, and map/minimap markers are present. Remaining work is UX, discovery, fog-of-war and content polish. |
 | Water / ponds | `partial` | [`Assets/_Project/Data/Biomes/water.asset`](../../Assets/_Project/Data/Biomes/water.asset), [`Assets/_Project/Materials/Biomes/Water_Material.mat`](../../Assets/_Project/Materials/Biomes/Water_Material.mat) | Godot: `World.is_position_in_water`, pond landmarks | Unity has water biome/data/material assets, but no full Godot-style pond landmark and water-query parity was found. |
 | Ecosystem state | `partial` | [`Assets/_Project/Scripts/Runtime/Ecosystem/EcosystemDirectorRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Ecosystem/EcosystemDirectorRuntime.cs), [`Assets/_Project/Scripts/Core/Ecosystem/BiomeEcosystemState.cs`](../../Assets/_Project/Scripts/Core/Ecosystem/BiomeEcosystemState.cs), [`Assets/_Project/Scripts/Runtime/Ecosystem/EcosystemRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Ecosystem/EcosystemRuntime.cs) | #21, #22, #28 | Biome ecosystem state exists and can be saved/restored. Full parity and balance validation remain covered by #28, #35 and #49. |
 | Creature needs | `ported` | [`Assets/_Project/Scripts/Runtime/Ecosystem/CreatureNeedsRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Ecosystem/CreatureNeedsRuntime.cs), [`Assets/_Project/Scripts/Core/Ecosystem/CreatureNeedsState.cs`](../../Assets/_Project/Scripts/Core/Ecosystem/CreatureNeedsState.cs) | #21, #22 | Runtime needs and Core state exist. |
 | Hunger/diet | `ported` | [`Assets/_Project/Scripts/Core/Ecosystem/HungerDietSystem.cs`](../../Assets/_Project/Scripts/Core/Ecosystem/HungerDietSystem.cs), [`Assets/_Project/Scripts/Core/Ecosystem/DietProfile.cs`](../../Assets/_Project/Scripts/Core/Ecosystem/DietProfile.cs), [`Assets/_Project/Scripts/Tests/Unit/Ecosystem/HungerDietSystemTests.cs`](../../Assets/_Project/Scripts/Tests/Unit/Ecosystem/HungerDietSystemTests.cs) | #13, #24 | Core hunger/diet model and tests exist. Further work should be parity/balance, not re-porting. |
 | Small prey behavior | `partial` | [`Assets/_Project/Scripts/Runtime/Creatures/CreatureBehaviorBrain.cs`](../../Assets/_Project/Scripts/Runtime/Creatures/CreatureBehaviorBrain.cs), [`Assets/_Project/Scripts/Tests/Regression/SmallPreyBehaviorParityTests.cs`](../../Assets/_Project/Scripts/Tests/Regression/SmallPreyBehaviorParityTests.cs) | #22, #29, #35 | Behavior exists in shared brain. Keep parity validation in #29/#35. |
 | Grazer behavior | `partial` | [`Assets/_Project/Scripts/Runtime/Creatures/CreatureBehaviorBrain.cs`](../../Assets/_Project/Scripts/Runtime/Creatures/CreatureBehaviorBrain.cs) | #22, #30, #35 | Grazer plant preference, scavenging and emergency predation are present, but parity should remain tracked by #30/#35. |
-| Varnak behavior | `partial` | [`Assets/_Project/Scripts/Runtime/Creatures/CreatureBehaviorBrain.cs`](../../Assets/_Project/Scripts/Runtime/Creatures/CreatureBehaviorBrain.cs), [`Assets/_Project/Scripts/Runtime/Creatures/CreatureHealthRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Creatures/CreatureHealthRuntime.cs) | #22, #31, #41, #44, #45 | Varnak can stalk/chase/attack, but night, fire/torch/campfire and final player-combat integration are still missing/partial. |
+| Varnak behavior | `partial` | [`Assets/_Project/Scripts/Runtime/Creatures/CreatureBehaviorBrain.cs`](../../Assets/_Project/Scripts/Runtime/Creatures/CreatureBehaviorBrain.cs), [`Assets/_Project/Scripts/Runtime/Creatures/CreatureHealthRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Creatures/CreatureHealthRuntime.cs) | #22, #31, #41, #44, #45 | Varnak can stalk/chase/attack. Remaining work is night/fire balance, combat feel and authored encounter polish. |
 | Creature navigation | `ported` | [`Assets/_Project/Scripts/Runtime/Creatures/CreatureAgentView.cs`](../../Assets/_Project/Scripts/Runtime/Creatures/CreatureAgentView.cs), [`Assets/_Project/Scripts/Runtime/Creatures/CreatureWanderBehavior.cs`](../../Assets/_Project/Scripts/Runtime/Creatures/CreatureWanderBehavior.cs), [`Assets/_Project/Scripts/Runtime/Creatures/CreatureSimulationLodRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Creatures/CreatureSimulationLodRuntime.cs) | #12, #25 | Unity intentionally uses NavMesh/agent-style movement rather than Godot 2D movement. This is an intentional engine adaptation. |
 | World query / spatial lookup | `partial` | [`Assets/_Project/Scripts/Runtime/World/Query/WorldQueryRuntime.cs`](../../Assets/_Project/Scripts/Runtime/World/Query/WorldQueryRuntime.cs), [`Assets/_Project/Scripts/Tests/Unit/World/WorldQueryRuntimeTests.cs`](../../Assets/_Project/Scripts/Tests/Unit/World/WorldQueryRuntimeTests.cs) | #26, #46 | A stable query facade exists. It still needs registry/spatial backing cleanup so save/regrowth/debug do not rely on scene scans. |
-| Save/load | `partial` | [`Assets/_Project/Scripts/Runtime/Save/GameSaveService.cs`](../../Assets/_Project/Scripts/Runtime/Save/GameSaveService.cs), [`Assets/_Project/Scripts/Core/Save/GameSaveData.cs`](../../Assets/_Project/Scripts/Core/Save/GameSaveData.cs), [`Assets/_Project/Scripts/Core/Save/WorldSaveData.cs`](../../Assets/_Project/Scripts/Core/Save/WorldSaveData.cs) | #14, #32, #41, #42, #43 | Save/load covers inventory, survival, resources, biome ecosystem state and creature state. Day/night and buildings/storage remain missing follow-ups. |
+| Save/load | `partial` | [`Assets/_Project/Scripts/Runtime/Save/GameSaveService.cs`](../../Assets/_Project/Scripts/Runtime/Save/GameSaveService.cs), [`Assets/_Project/Scripts/Core/Save/GameSaveData.cs`](../../Assets/_Project/Scripts/Core/Save/GameSaveData.cs), [`Assets/_Project/Scripts/Core/Save/WorldSaveData.cs`](../../Assets/_Project/Scripts/Core/Save/WorldSaveData.cs) | #14, #32, #41, #42, #43 | Save/load covers inventory, survival, resources, biome ecosystem state, creature state, day/night and building/storage foundations. Remaining work is edge-case validation. |
 | Debug panel | `ported` | [`Assets/_Project/Scripts/Runtime/UI/DebugPanelPresenter.cs`](../../Assets/_Project/Scripts/Runtime/UI/DebugPanelPresenter.cs), [`Assets/_Project/Scripts/Runtime/Debugging/WorldMapDebugWindow.cs`](../../Assets/_Project/Scripts/Runtime/Debugging/WorldMapDebugWindow.cs), [`Assets/_Project/Scripts/Runtime/Creatures/CreatureDebugOverlay.cs`](../../Assets/_Project/Scripts/Runtime/Creatures/CreatureDebugOverlay.cs) | #15, #33, #40 | Unity debug foundation exists. #40 should refresh outdated docs around this. |
 | UI snapshot | `ported` | [`Assets/_Project/Scripts/Runtime/UI/GameSnapshot.cs`](../../Assets/_Project/Scripts/Runtime/UI/GameSnapshot.cs), [`Assets/_Project/Scripts/Runtime/UI/GameSnapshotProvider.cs`](../../Assets/_Project/Scripts/Runtime/UI/GameSnapshotProvider.cs), [`Assets/_Project/Scripts/Runtime/UI/InventorySnapshot.cs`](../../Assets/_Project/Scripts/Runtime/UI/InventorySnapshot.cs) | #15, #33 | Snapshot model exists and should remain the source for HUD/debug instead of direct world scans. |
 | HUD | `ported` | [`Assets/_Project/Scripts/Presentation/HUD/PlayerHUDController.cs`](../../Assets/_Project/Scripts/Presentation/HUD/PlayerHUDController.cs), [`Assets/_Project/Scripts/Presentation/HUD/RuntimeHUDProvisioner.cs`](../../Assets/_Project/Scripts/Presentation/HUD/RuntimeHUDProvisioner.cs), [`Assets/_Project/Scripts/Presentation/HUD/PlayerSurvivalOverlay.cs`](../../Assets/_Project/Scripts/Presentation/HUD/PlayerSurvivalOverlay.cs) | #15, #18 | Runtime HUD exists. Polish should be separate from migration foundation. |
-| Minimap / map screen | `partial` | [`Assets/_Project/Scripts/Presentation/HUD/MiniMapUI.cs`](../../Assets/_Project/Scripts/Presentation/HUD/MiniMapUI.cs), [`Assets/_Project/Scripts/Runtime/Debugging/WorldMapDebugWindow.cs`](../../Assets/_Project/Scripts/Runtime/Debugging/WorldMapDebugWindow.cs) | Godot: `scripts/ui/minimap.gd`, `scripts/ui/map_screen.gd` | Minimap exists, but a final map screen equivalent is not clearly present. Current full-map work appears debug-oriented. |
-| Day/night | `missing` | Not found as Unity runtime code. | #41 | Add `DayNightRuntime`, persistence and AI/debug hooks in #41. |
-| Player combat | `missing` | Not found as dedicated player combat runtime. | #44 | Add spear, bow/projectile and damage flow in #44. Creature combat behavior already exists separately. |
-| Torch/campfire | `partial` | [`Assets/_Project/Data/Items/torch.asset`](../../Assets/_Project/Data/Items/torch.asset), [`Assets/_Project/Data/Recipes/torch.asset`](../../Assets/_Project/Data/Recipes/torch.asset), [`Assets/_Project/Data/Items/campfire.asset`](../../Assets/_Project/Data/Items/campfire.asset), [`Assets/_Project/Data/Recipes/campfire.asset`](../../Assets/_Project/Data/Recipes/campfire.asset), [`Assets/_Project/Scripts/Runtime/Player/PlayerSurvivalRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Player/PlayerSurvivalRuntime.cs) | #31, #41, #45 | Data and some fire-related events exist, but real fire-source gameplay objects and Varnak protection radius are still #45. |
-| Buildings | `missing` | Item/recipe data only for some building-like items. | #42 | Placement, validation, spawned structures and building save/load are missing. |
-| Storage box | `partial` | [`Assets/_Project/Data/Items/storage_box.asset`](../../Assets/_Project/Data/Items/storage_box.asset), [`Assets/_Project/Data/Recipes/storage_box.asset`](../../Assets/_Project/Data/Recipes/storage_box.asset) | #42, #43 | Item and recipe exist, but storage container runtime and transfer UI are missing. |
-| Tester build | `missing` | No Unity tester package evidence in code/docs. | #48 | Separate Unity tester package should be produced; Godot tester packages do not close this. |
+| Minimap / map screen | `partial` | [`Assets/_Project/Scripts/Presentation/HUD/MiniMapUI.cs`](../../Assets/_Project/Scripts/Presentation/HUD/MiniMapUI.cs), [`Assets/_Project/Scripts/Presentation/HUD/MapScreenUI.cs`](../../Assets/_Project/Scripts/Presentation/HUD/MapScreenUI.cs), [`Assets/_Project/Scripts/Runtime/UI/GameSnapshotProvider.cs`](../../Assets/_Project/Scripts/Runtime/UI/GameSnapshotProvider.cs) | Godot: `scripts/ui/minimap.gd`, `scripts/ui/map_screen.gd` | Map and minimap are runtime systems. Remaining work is UX polish, readability, markers and visual style. |
+| Day/night | `ported` | [`Assets/_Project/Scripts/Runtime/Time/DayNightRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Time/DayNightRuntime.cs), [`Assets/_Project/Scripts/Core/Time/DayNightState.cs`](../../Assets/_Project/Scripts/Core/Time/DayNightState.cs), [`Assets/_Project/Scripts/Tests/Unit/Time/DayNightRuntimeTests.cs`](../../Assets/_Project/Scripts/Tests/Unit/Time/DayNightRuntimeTests.cs) | #41, #71 | Runtime day/night exists, including day/night/morning events, save/load integration and `AdvanceHours()` support for tent sleep. Remaining work is day-length balance and content integration. |
+| Player combat | `partial` | [`Assets/_Project/Scripts/Runtime/Player/PlayerCombatRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Player/PlayerCombatRuntime.cs), [`Assets/_Project/Scripts/Runtime/Player/PlayerAnimationDriver.cs`](../../Assets/_Project/Scripts/Runtime/Player/PlayerAnimationDriver.cs), [`Assets/_Project/Scripts/Runtime/Creatures/CreatureHealthRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Creatures/CreatureHealthRuntime.cs) | #44 | Player combat foundation exists. Remaining work is feel, animation coverage, hit feedback and spear/bow balance. |
+| Torch/campfire | `partial` | [`Assets/_Project/Scripts/Runtime/Fire/CampfireRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Fire/CampfireRuntime.cs), [`Assets/_Project/Scripts/Runtime/Fire/FireSourceRegistry.cs`](../../Assets/_Project/Scripts/Runtime/Fire/FireSourceRegistry.cs), [`Assets/_Project/Scripts/Runtime/Player/PlayerSurvivalRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Player/PlayerSurvivalRuntime.cs), [`Assets/_Project/Data/Items/torch.asset`](../../Assets/_Project/Data/Items/torch.asset), [`Assets/_Project/Data/Recipes/campfire.asset`](../../Assets/_Project/Data/Recipes/campfire.asset) | #31, #41, #45 | Campfire and fire-source foundation exists. Remaining work is Varnak protection balance, audio/VFX and crafting UX. |
+| Buildings | `ported` / `partial` | [`Assets/_Project/Scripts/Runtime/Buildings/BuildingPlacementRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Buildings/BuildingPlacementRuntime.cs), [`Assets/_Project/Scripts/Runtime/Buildings/PlaceableStructureRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Buildings/PlaceableStructureRuntime.cs), [`Assets/_Project/Scripts/Runtime/Buildings/StorageContainerRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Buildings/StorageContainerRuntime.cs), [`Assets/_Project/Scripts/Runtime/Save/GameSaveService.cs`](../../Assets/_Project/Scripts/Runtime/Save/GameSaveService.cs) | #42, #43 | Placement, placeable runtime, storage and save/load exist. Remaining work is UX, edge cases and visual polish. |
+| Storage box | `ported` / `partial` | [`Assets/_Project/Scripts/Runtime/Buildings/StorageContainerRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Buildings/StorageContainerRuntime.cs), [`Assets/_Project/Scripts/Runtime/Save/GameSaveService.cs`](../../Assets/_Project/Scripts/Runtime/Save/GameSaveService.cs), [`Assets/_Project/Data/Items/storage_box.asset`](../../Assets/_Project/Data/Items/storage_box.asset), [`Assets/_Project/Data/Recipes/storage_box.asset`](../../Assets/_Project/Data/Recipes/storage_box.asset) | #42, #43 | Storage container runtime and data exist. Remaining work is transfer UX, persistence edge cases and authored presentation. |
+| Options/settings | `partial` | [`Assets/_Project/Scripts/Presentation/HUD/RuntimeHUDProvisioner.cs`](../../Assets/_Project/Scripts/Presentation/HUD/RuntimeHUDProvisioner.cs), [`Assets/_Project/Scripts/Presentation/HUD/GameMenuController.cs`](../../Assets/_Project/Scripts/Presentation/HUD/GameMenuController.cs), [`Assets/_Project/Scripts/Runtime/Debugging/RuntimeDebugSettings.cs`](../../Assets/_Project/Scripts/Runtime/Debugging/RuntimeDebugSettings.cs), [`Assets/_Project/Scripts/Runtime/Audio/AmbientMusicRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Audio/AmbientMusicRuntime.cs), [`Assets/_Project/Scripts/Runtime/Audio/AudioLibrary.cs`](../../Assets/_Project/Scripts/Runtime/Audio/AudioLibrary.cs) | #59 | Menu/settings foundation and runtime audio foundation exist, but authored player-facing graphics/audio settings service and final UI styling remain follow-up work. |
+| Survival loop | `partial` | [`Assets/_Project/Scripts/Runtime/Player/PlayerSurvivalRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Player/PlayerSurvivalRuntime.cs), [`Assets/_Project/Scripts/Runtime/Player/PlayerInventoryRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Player/PlayerInventoryRuntime.cs), [`Assets/_Project/Scripts/Core/Survival/SurvivalSystem.cs`](../../Assets/_Project/Scripts/Core/Survival/SurvivalSystem.cs), [`Assets/_Project/Scripts/Core/Survival/SurvivalStats.cs`](../../Assets/_Project/Scripts/Core/Survival/SurvivalStats.cs), [`Assets/_Project/Scripts/Runtime/Buildings/BuildingPlacementRuntime.cs`](../../Assets/_Project/Scripts/Runtime/Buildings/BuildingPlacementRuntime.cs) | #41, #59, #71 | Hunger, edible items, survival stats and tent placement/crafting foundations exist. Remaining work is fatigue/exhaustion/death/sleep polish, balance, UI polish and edge cases. |
+| Tester build | `partial` | [`Docs/testing/tester-build-checklist.md`](../testing/tester-build-checklist.md) | #48, #59 | Tester build work is now a release gate/checklist rather than a missing runtime system. Packaging remains follow-up work. |
 | Automated tests | `partial` | [`Assets/_Project/Scripts/Tests`](../../Assets/_Project/Scripts/Tests), [`Assets/_Project/Scripts/Tests/ApexShift.Tests.asmdef`](../../Assets/_Project/Scripts/Tests/ApexShift.Tests.asmdef) | #17, #35, #47 | Unit/regression tests exist. A PlayMode vertical-slice smoke test is still #47. |
 
 ---
@@ -158,7 +161,7 @@ These issues represent the remaining concrete migration-delta work after the bro
 
 1. Finish this matrix (#39).
 2. Refresh outdated docs (#40), especially files that still say inventory/crafting/ecosystem/save do not exist.
-3. Implement missing runtime foundations: day/night (#41), placement/buildings (#42), storage (#43), player combat (#44), torch/campfire (#45).
+3. Polish runtime foundations: day/night (#41), placement/buildings (#42), storage (#43), player combat (#44), torch/campfire (#45).
 4. Clean remaining scene scans (#46).
 5. Add PlayMode smoke (#47).
 6. Prepare tester build (#48).
@@ -181,3 +184,28 @@ Do not generate new generic tasks named:
 - `Add unit tests for inventory/crafting`.
 
 Those areas already exist in Unity. New tasks should target the remaining concrete gaps listed above or polish specific behavior with a named owner, expected result and test path.
+
+---
+
+## Current migration delta result
+
+Unity migration delta is now considered functionally closed for the current prototype milestone.
+
+Decision:
+
+- `apex-shift` is the active Unity mainline.
+- `apex-shift-2d` remains a historical/parity reference.
+- New gameplay work should target Unity unless an issue explicitly says otherwise.
+- Do not create new generic "port from Godot" issues.
+- Remaining work should be tracked as concrete gameplay, UX, content, polish, performance or test tasks.
+
+Known remaining gaps:
+
+- final combat feel and hit feedback,
+- animation polish,
+- map/minimap UX polish,
+- balance of first 15 minutes,
+- tester build packaging,
+- performance/stuttering validation,
+- visual/audio polish,
+- procedural world expansion.
