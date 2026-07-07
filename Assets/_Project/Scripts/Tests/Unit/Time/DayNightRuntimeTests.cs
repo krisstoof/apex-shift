@@ -75,5 +75,55 @@ namespace ApexShift.Tests.Unit.Time
                 Object.DestroyImmediate(go);
             }
         }
+
+        [Test]
+        public void AdvanceHours_AdvancesClockWithoutUsingRealSeconds()
+        {
+            GameObject go = new GameObject("DayNightRuntimeTest");
+            try
+            {
+                DayNightRuntime runtime = go.AddComponent<DayNightRuntime>();
+                runtime.SetAutoTick(false);
+                runtime.SetTickEcosystemOnDayChange(false);
+                runtime.LoadFromWorldSaveData(2, 0.25f);
+
+                runtime.AdvanceHours(3f);
+
+                Assert.AreEqual(2, runtime.Day);
+                Assert.AreEqual(9f, runtime.Hour, 0.01f);
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void AdvanceHours_WrapsDayAndPublishesDayChanged()
+        {
+            GameObject go = new GameObject("DayNightRuntimeTest");
+            List<GameplayEvent> received = new List<GameplayEvent>();
+            try
+            {
+                DayNightRuntime runtime = go.AddComponent<DayNightRuntime>();
+                runtime.SetAutoTick(false);
+                runtime.SetTickEcosystemOnDayChange(false);
+                runtime.LoadFromWorldSaveData(7, 23f / 24f);
+
+                using (GameEventBus.Subscribe(received.Add))
+                {
+                    runtime.AdvanceHours(8f);
+                }
+
+                Assert.AreEqual(8, runtime.Day);
+                Assert.AreEqual(7f, runtime.Hour, 0.01f);
+                Assert.IsTrue(received.Exists(evt => evt.kind == GameplayEventKind.DayChanged));
+                Assert.IsTrue(received.Exists(evt => evt.kind == GameplayEventKind.MorningStarted));
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
     }
 }
