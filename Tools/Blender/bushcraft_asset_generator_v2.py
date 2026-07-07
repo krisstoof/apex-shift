@@ -55,7 +55,7 @@ SAVE_BLEND = True
 RENDER_PREVIEWS = True
 GENERATE_ALL_ON_RUN = True
 
-ONLY_ASSETS: List[str] = []
+ONLY_ASSETS: List[str] = ["tent"]
 
 MATS: Dict[str, bpy.types.Material] = {}
 MANIFEST = []
@@ -521,63 +521,130 @@ def gen_tent() -> List[bpy.types.Object]:
     bpy.ops.mesh.primitive_cube_add(location=(0, 0.00, 0.08))
     base = bpy.context.object
     base.name = "tent_base"
-    base.scale = (1.18, 0.84, 0.06)
+    base.scale = (1.28, 0.90, 0.06)
     displace(base, 0.015, scale=1.0)
     bevel(base, 0.015, segments=2)
     assign(base, mat("dirt"))
     shade(base, True)
     objs.append(base)
 
-    left_frame = [
-        (Vector((-0.82, -0.10, 0.06)), Vector((-0.42, -0.02, 1.55)), 0.045),
-        (Vector((-0.42, -0.02, 1.55)), Vector((-0.02, 0.00, 2.02)), 0.038),
-        (Vector((-0.82, -0.10, 0.06)), Vector((-0.02, 0.00, 2.02)), 0.030),
-    ]
-    right_frame = [
-        (Vector((0.82, -0.10, 0.06)), Vector((0.42, -0.02, 1.55)), 0.045),
-        (Vector((0.42, -0.02, 1.55)), Vector((0.02, 0.00, 2.02)), 0.038),
-        (Vector((0.82, -0.10, 0.06)), Vector((0.02, 0.00, 2.02)), 0.030),
-    ]
-    for idx, (start, end, radius) in enumerate(left_frame + right_frame):
-        objs.append(cylinder_between(f"tent_frame_{idx}", start, end, radius, mat("bark"), radius2=radius * 0.8, vertices=10, bevel_width=0.01, deform=0.0))
+    front_y, back_y = -0.98, 1.12
+    opening_y = -0.20
+    ridge_z = 1.72
+    foot_x = 1.02
 
-    bpy.ops.mesh.primitive_cube_add(location=(0.0, -0.12, 1.16))
-    roof = bpy.context.object
-    roof.name = "tent_roof"
-    roof.scale = (1.08, 0.74, 0.82)
-    roof.rotation_euler = (math.radians(64), 0, 0)
-    displace(roof, 0.03, scale=1.15)
-    bevel(roof, 0.018, segments=2)
-    assign(roof, mat("hide"))
-    shade(roof, True)
-    objs.append(roof)
+    # Exposed frame: this should read clearly as an A-frame shelter.
+    for y, label in [(front_y, "front"), (back_y, "back")]:
+        objs.append(cylinder_between(f"tent_{label}_left_pole", Vector((-foot_x, y, 0.03)), Vector((-0.08, y, ridge_z)), 0.060, mat("bark"), radius2=0.042, vertices=10, bevel_width=0.010))
+        objs.append(cylinder_between(f"tent_{label}_right_pole", Vector((foot_x, y, 0.03)), Vector((0.08, y, ridge_z)), 0.060, mat("bark"), radius2=0.042, vertices=10, bevel_width=0.010))
+        objs.append(cylinder_between(f"tent_{label}_cross_sill", Vector((-0.92, y, 0.06)), Vector((0.92, y, 0.06)), 0.026, mat("rope_dark"), radius2=0.022, vertices=8, bevel_width=0.006))
 
-    bpy.ops.mesh.primitive_cube_add(location=(0.0, 0.46, 0.82))
-    back_wall = bpy.context.object
-    back_wall.name = "tent_back_wall"
-    back_wall.scale = (0.84, 0.08, 0.76)
-    assign(back_wall, mat("hide"))
-    shade(back_wall, True)
-    objs.append(back_wall)
+    objs.append(cylinder_between("tent_ridge_pole", Vector((0.0, front_y, ridge_z)), Vector((0.0, back_y, ridge_z)), 0.040, mat("wood_dark"), radius2=0.032, vertices=10, bevel_width=0.008))
+    objs.append(cylinder_between("tent_front_tie", Vector((-0.22, front_y + 0.02, 1.22)), Vector((0.22, front_y + 0.02, 1.22)), 0.018, mat("rope"), radius2=0.016, vertices=8, bevel_width=0.004))
+    objs.append(cylinder_between("tent_back_tie", Vector((-0.18, back_y - 0.03, 1.18)), Vector((0.18, back_y - 0.03, 1.18)), 0.018, mat("rope"), radius2=0.016, vertices=8, bevel_width=0.004))
 
-    bpy.ops.mesh.primitive_cube_add(location=(0.0, -0.02, 0.78))
+    def cloth_quad(name: str, pts: List[Vector], material_name: str) -> bpy.types.Object:
+        mesh = bpy.data.meshes.new(name + "Mesh")
+        mesh.from_pydata([tuple(p) for p in pts], [], [(0, 1, 2, 3)])
+        mesh.update()
+        obj = bpy.data.objects.new(name, mesh)
+        bpy.context.collection.objects.link(obj)
+        assign(obj, mat(material_name))
+        bevel(obj, 0.010, segments=1)
+        displace(obj, 0.014, scale=0.9)
+        shade(obj, True)
+        return obj
+
+    # Open entrance: the cloth starts behind the doorway, not over it.
+    left_roof = cloth_quad(
+        "tent_left_roof",
+        [
+            Vector((-foot_x, opening_y, 0.08)),
+            Vector((-foot_x, back_y - 0.02, 0.08)),
+            Vector((0.0, back_y - 0.02, ridge_z)),
+            Vector((0.0, opening_y + 0.10, ridge_z)),
+        ],
+        "hide",
+    )
+    right_roof = cloth_quad(
+        "tent_right_roof",
+        [
+            Vector((foot_x, opening_y, 0.08)),
+            Vector((0.0, opening_y + 0.10, ridge_z)),
+            Vector((0.0, back_y - 0.02, ridge_z)),
+            Vector((foot_x, back_y - 0.02, 0.08)),
+        ],
+        "hide",
+    )
+    objs.extend([left_roof, right_roof])
+
+    # Small front side pieces that frame the entrance and make it look like a shelter.
+    for side in (-1, 1):
+        flap = cloth_quad(
+            f"tent_front_flap_{'left' if side < 0 else 'right'}",
+            [
+                Vector((side * 0.90, front_y + 0.02, 0.10)),
+                Vector((side * 0.56, opening_y + 0.02, 0.18)),
+                Vector((side * 0.30, opening_y + 0.05, 1.02)),
+                Vector((side * 0.68, front_y + 0.00, 1.24)),
+            ],
+            "hide",
+        )
+        objs.append(flap)
+
+    # Keep the opening dark and clearly visible.
+    entrance_pts = [(-0.58, front_y + 0.01, 0.10), (0.58, front_y + 0.01, 0.10), (0.0, front_y + 0.01, 1.28)]
+    mesh = bpy.data.meshes.new("tent_entranceMesh")
+    mesh.from_pydata(entrance_pts, [], [(0, 1, 2)])
+    mesh.update()
+    entrance = bpy.data.objects.new("tent_entrance", mesh)
+    bpy.context.collection.objects.link(entrance)
+    assign(entrance, mat("entrance"))
+    shade(entrance, True)
+    objs.append(entrance)
+
+    # Dark floor shadow for depth.
+    bpy.ops.mesh.primitive_cube_add(location=(0.0, front_y + 0.36, 0.045))
     interior_shadow = bpy.context.object
     interior_shadow.name = "tent_interior_shadow"
-    interior_shadow.scale = (0.64, 0.18, 0.64)
+    interior_shadow.scale = (0.52, 0.34, 0.02)
     assign(interior_shadow, mat("entrance"))
     shade(interior_shadow, True)
     objs.append(interior_shadow)
 
-    bpy.ops.mesh.primitive_cube_add(location=(-0.48, 0.02, 1.10))
-    side_flap = bpy.context.object
-    side_flap.name = "tent_side_flap"
-    side_flap.scale = (0.28, 0.54, 0.84)
-    side_flap.rotation_euler = (math.radians(4), 0, math.radians(10))
-    displace(side_flap, 0.02, scale=1.05)
-    bevel(side_flap, 0.012, segments=2)
-    assign(side_flap, mat("hide"))
-    shade(side_flap, True)
-    objs.append(side_flap)
+    # Small tether stones, like the reference has at the base.
+    for x in (-0.82, 0.82):
+        for y in (front_y + 0.06, back_y - 0.06):
+            objs.append(irregular_rock(f"tent_anchor_stone_{x:.2f}_{y:.2f}", (x, y, 0.05), (0.12, 0.10, 0.06), mat("stone")))
+
+    # Rope lashings at the apex and the front posts.
+    for y in (front_y, back_y):
+        objs += handmade_branch(
+            f"tent_apex_lashing_{y:.2f}",
+            Vector((-0.12, y, ridge_z - 0.01)),
+            Vector((0.12, y, ridge_z - 0.01)),
+            0.018,
+            0.012,
+            mat("rope"),
+            segments=2,
+        )
+    for x in (-0.72, 0.72):
+        objs += handmade_branch(
+            f"tent_front_leg_lashing_{x:.2f}",
+            Vector((x, front_y + 0.04, 0.18)),
+            Vector((x, front_y + 0.10, 0.48)),
+            0.014,
+            0.010,
+            mat("rope_dark"),
+            segments=2,
+        )
+
+    # A few thin thatch strips so the roof reads as layered rather than as one boxy card.
+    for side in (-1, 1):
+        for i, y in enumerate([opening_y + 0.06, 0.18, 0.42, 0.68, 0.92]):
+            start = Vector((side * (0.96 - i * 0.04), y, 0.18 + i * 0.12))
+            end = Vector((side * 0.14, y + 0.03, ridge_z - 0.06 + i * 0.01))
+            objs += handmade_branch(f"tent_{'left' if side < 0 else 'right'}_thatch_{i}", start, end, 0.020, 0.012, random.choice([mat("leaf_dry"), mat("rope"), mat("wood_dark")]), segments=3)
     return objs
 
 
