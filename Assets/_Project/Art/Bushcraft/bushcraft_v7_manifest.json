@@ -1,0 +1,82 @@
+[
+  {
+    "asset_id": "wood",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\wood_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\wood_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\wood_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\wood_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 3,
+    "bounds": [
+      1.018,
+      0.5575,
+      0.2469
+    ],
+    "notes": "tied firewood bundle of short bark-covered logs with visible end grain | FAILED_BOUNDS required=(0.78, 0.4, 0.26) actual=(1.02, 0.56, 0.25)"
+  },
+  {
+    "asset_id": "bone",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\bone_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\bone_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\bone_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\bone_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      1.1786,
+      1.0785,
+      0.3789
+    ],
+    "notes": "single realistic long bone with rounded ends"
+  },
+  {
+    "asset_id": "berries",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\berries_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\berries_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\berries_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\berries_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 7,
+    "bounds": [
+      0.3964,
+      0.3326,
+      0.2475
+    ],
+    "notes": "berry sprig / pickup attached to twig and leaves"
+  },
+  {
+    "asset_id": "berry_bush",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\berry_bush_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\berry_bush_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\berry_bush_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\berry_bush_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 10,
+    "bounds": [
+      1.2747,
+      0.9038,
+      1.288
+    ],
+    "notes": "fruiting shrub with attached berry clusters | FAILED_BOUNDS required=(1.1, 1.1, 1.08) actual=(1.27, 0.9, 1.29)"
+  },
+  {
+    "asset_id": "tent",
+    "category": "placeable",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\tent_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Placeables\\Models\\tent_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Placeables\\Models\\tent_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\tent_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 9,
+    "bounds": [
+      2.35,
+      1.6158,
+      2.515
+    ],
+    "notes": "A-frame bushcraft shelter with bark / hide covering | FAILED_BOUNDS required=(2.2, 1.65, 1.55) actual=(2.35, 1.62, 2.51)"
+  }
+]

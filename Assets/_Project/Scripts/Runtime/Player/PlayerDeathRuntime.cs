@@ -162,7 +162,7 @@ namespace ApexShift.Runtime.Player
             GameObject go = new GameObject(name, typeof(RectTransform), typeof(Text));
             go.transform.SetParent(parent, false);
             Text label = go.GetComponent<Text>();
-            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            label.font = UnityEngine.Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             label.fontSize = fontSize;
             label.fontStyle = bold ? FontStyle.Bold : FontStyle.Normal;
             label.alignment = alignment;

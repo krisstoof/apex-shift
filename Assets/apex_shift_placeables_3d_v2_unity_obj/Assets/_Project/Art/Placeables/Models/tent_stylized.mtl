@@ -1,7 +1,7 @@
-# Blender 5.1.2 MTL File: 'tent_stylized.blend'
+# Blender 5.1.2 MTL File: 'None'
 # www.blender.org
 
-newmtl tent_hide_highlight
+newmtl tent_hide_highlight.001
 Ns 1.600002
 Ka 1.000000 1.000000 1.000000
 Kd 0.480000 0.220000 0.065000
@@ -11,7 +11,7 @@ Ni 1.500000
 d 1.000000
 illum 2
 
-newmtl tent_hide_painted
+newmtl tent_hide_painted.001
 Ns 0.399999
 Ka 1.000000 1.000000 1.000000
 Kd 0.280000 0.095000 0.025000
@@ -21,7 +21,7 @@ Ni 1.500000
 d 1.000000
 illum 2
 
-newmtl tent_interior_shadow
+newmtl tent_interior_shadow.001
 Ns 0.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.018000 0.006000 0.003000
@@ -31,7 +31,7 @@ Ni 1.500000
 d 1.000000
 illum 2
 
-newmtl tent_rope_fiber_painted
+newmtl tent_rope_fiber_painted.001
 Ns 0.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.420000 0.250000 0.075000
@@ -41,7 +41,7 @@ Ni 1.500000
 d 1.000000
 illum 2
 
-newmtl tent_wood_bark_painted
+newmtl tent_wood_bark_painted.001
 Ns 6.399997
 Ka 1.000000 1.000000 1.000000
 Kd 0.160000 0.045000 0.012000

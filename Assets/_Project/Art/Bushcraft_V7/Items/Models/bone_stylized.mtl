@@ -1,0 +1,12 @@
+# Blender 5.1.2 MTL File: 'wood_stylized.blend'
+# www.blender.org
+
+newmtl bone_old
+Ns 10.000005
+Ka 1.000000 1.000000 1.000000
+Kd 0.830000 0.780000 0.680000
+Ks 0.320000 0.320000 0.320000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
