@@ -1,0 +1,1058 @@
+[
+  {
+    "asset_id": "wood",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\wood_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\wood_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\wood_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\wood_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 2,
+    "bounds": [
+      0.484,
+      1.2113,
+      0.2552
+    ],
+    "notes": "bundle of gathered wood sticks/logs | FAILED_BOUNDS required=(0.55, 0.35, 0.2) actual=(0.48, 1.21, 0.26)"
+  },
+  {
+    "asset_id": "stone",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\stone_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\stone_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\stone_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\stone_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      0.4911,
+      0.4564,
+      0.2945
+    ],
+    "notes": "small irregular harvestable stones"
+  },
+  {
+    "asset_id": "fiber",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\fiber_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\fiber_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\fiber_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\fiber_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      0.9915,
+      1.1637,
+      0.183
+    ],
+    "notes": "tied plant fiber bundle"
+  },
+  {
+    "asset_id": "grass",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\grass_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\grass_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\grass_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\grass_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      0.297,
+      0.3058,
+      0.1983
+    ],
+    "notes": "grass tuft pickup | FAILED_BOUNDS required=(0.22, 0.22, 0.25) actual=(0.3, 0.31, 0.2)"
+  },
+  {
+    "asset_id": "meat",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\meat_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\meat_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\meat_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\meat_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 2,
+    "bounds": [
+      0.7248,
+      0.4608,
+      0.352
+    ],
+    "notes": "raw meat chunk"
+  },
+  {
+    "asset_id": "hide",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\hide_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\hide_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\hide_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\hide_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      1.2137,
+      1.1174,
+      0.02
+    ],
+    "notes": "irregular animal hide | FAILED_BOUNDS required=(0.55, 0.45, 0.04) actual=(1.21, 1.12, 0.02)"
+  },
+  {
+    "asset_id": "bone",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\bone_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\bone_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\bone_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\bone_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      1.3094,
+      1.2428,
+      0.4829
+    ],
+    "notes": "rounded animal bone with bulbous ends"
+  },
+  {
+    "asset_id": "berries",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\berries_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\berries_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\berries_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\berries_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 5,
+    "bounds": [
+      0.3336,
+      0.2228,
+      0.2833
+    ],
+    "notes": "berry cluster on stems with attached leaves"
+  },
+  {
+    "asset_id": "torch",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\torch_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\torch_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\torch_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\torch_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 5,
+    "bounds": [
+      0.1902,
+      0.2,
+      1.7492
+    ],
+    "notes": "primitive handheld torch"
+  },
+  {
+    "asset_id": "spear",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\spear_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\spear_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\spear_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\spear_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 3,
+    "bounds": [
+      0.108,
+      0.096,
+      2.2415
+    ],
+    "notes": "primitive spear with stone tip | FAILED_BOUNDS required=(0.12, 0.12, 2.0) actual=(0.11, 0.1, 2.24)"
+  },
+  {
+    "asset_id": "bow",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\bow_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\bow_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\bow_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\bow_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 3,
+    "bounds": [
+      0.6963,
+      1.1702,
+      0.99
+    ],
+    "notes": "primitive wooden bow | FAILED_BOUNDS required=(0.08, 0.08, 1.6) actual=(0.7, 1.17, 0.99)"
+  },
+  {
+    "asset_id": "axe",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\axe_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\axe_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\axe_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\axe_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 4,
+    "bounds": [
+      0.1556,
+      0.1707,
+      1.0374
+    ],
+    "notes": "stone axe with lashing | FAILED_BOUNDS required=(0.18, 0.12, 0.8) actual=(0.16, 0.17, 1.04)"
+  },
+  {
+    "asset_id": "pickaxe",
+    "category": "item",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\pickaxe_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\pickaxe_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Items\\Models\\pickaxe_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\pickaxe_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 4,
+    "bounds": [
+      0.603,
+      0.48,
+      1.06
+    ],
+    "notes": "primitive pickaxe with tied stone cross-head"
+  },
+  {
+    "asset_id": "campfire",
+    "category": "placeable",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\campfire_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Placeables\\Models\\campfire_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Placeables\\Models\\campfire_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\campfire_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 6,
+    "bounds": [
+      1.1265,
+      1.1232,
+      0.7032
+    ],
+    "notes": "stone ring campfire"
+  },
+  {
+    "asset_id": "storage_box",
+    "category": "placeable",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\storage_box_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Placeables\\Models\\storage_box_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Placeables\\Models\\storage_box_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\storage_box_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 4,
+    "bounds": [
+      1.22,
+      0.8692,
+      0.7
+    ],
+    "notes": "handmade storage chest from planks"
+  },
+  {
+    "asset_id": "tent",
+    "category": "placeable",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\tent_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Placeables\\Models\\tent_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Placeables\\Models\\tent_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\tent_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 6,
+    "bounds": [
+      3.7134,
+      1.9,
+      1.8528
+    ],
+    "notes": "A-frame bushcraft shelter with open flaps"
+  },
+  {
+    "asset_id": "wall",
+    "category": "placeable",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\wall_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Placeables\\Models\\wall_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Placeables\\Models\\wall_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\wall_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 3,
+    "bounds": [
+      2.8349,
+      0.1847,
+      1.9549
+    ],
+    "notes": "irregular lashed palisade wall"
+  },
+  {
+    "asset_id": "trap",
+    "category": "placeable",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\trap_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Placeables\\Models\\trap_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Placeables\\Models\\trap_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\trap_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 5,
+    "bounds": [
+      1.3024,
+      1.0344,
+      0.5731
+    ],
+    "notes": "realistic deadfall / figure-4 inspired trap"
+  },
+  {
+    "asset_id": "leafy_tree",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\leafy_tree_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\leafy_tree_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\leafy_tree_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\leafy_tree_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 7,
+    "bounds": [
+      3.7096,
+      4.0124,
+      5.8056
+    ],
+    "notes": "legacy leafy tree id mapped to variant A"
+  },
+  {
+    "asset_id": "conifer_tree",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\conifer_tree_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\conifer_tree_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\conifer_tree_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\conifer_tree_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 4,
+    "bounds": [
+      2.8798,
+      2.7307,
+      6.1111
+    ],
+    "notes": "legacy conifer tree id mapped to variant A"
+  },
+  {
+    "asset_id": "dry_tree",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\dry_tree_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_tree_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_tree_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\dry_tree_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      1.1513,
+      1.6378,
+      4.2984
+    ],
+    "notes": "legacy dry tree id mapped to variant A | FAILED_BOUNDS required=(1.6, 1.6, 3.8) actual=(1.15, 1.64, 4.3)"
+  },
+  {
+    "asset_id": "rock",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\rock_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\rock_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\rock_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\rock_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 3,
+    "bounds": [
+      1.971,
+      1.6782,
+      1.6813
+    ],
+    "notes": "harvestable boulder"
+  },
+  {
+    "asset_id": "green_bush",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\green_bush_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\green_bush_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\green_bush_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\green_bush_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 6,
+    "bounds": [
+      2.6056,
+      2.6098,
+      1.6043
+    ],
+    "notes": "legacy green bush id mapped to variant A"
+  },
+  {
+    "asset_id": "dry_bush",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\dry_bush_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_bush_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_bush_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\dry_bush_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      1.046,
+      1.2379,
+      0.964
+    ],
+    "notes": "legacy dry bush id mapped to variant A"
+  },
+  {
+    "asset_id": "berry_bush",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\berry_bush_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\berry_bush_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\berry_bush_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\berry_bush_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 8,
+    "bounds": [
+      2.2487,
+      1.5579,
+      2.0344
+    ],
+    "notes": "legacy berry bush id mapped to variant A"
+  },
+  {
+    "asset_id": "grass_or_flower",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\grass_or_flower_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\grass_or_flower_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\grass_or_flower_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\grass_or_flower_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 6,
+    "bounds": [
+      0.9109,
+      0.8743,
+      0.7823
+    ],
+    "notes": "wildflower patch with petals and grass blades"
+  },
+  {
+    "asset_id": "leafy_tree_a",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\leafy_tree_a_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\leafy_tree_a_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\leafy_tree_a_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\leafy_tree_a_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 7,
+    "bounds": [
+      3.5625,
+      3.1254,
+      5.8056
+    ],
+    "notes": "leafy tree variant A"
+  },
+  {
+    "asset_id": "conifer_tree_a",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\conifer_tree_a_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\conifer_tree_a_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\conifer_tree_a_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\conifer_tree_a_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 4,
+    "bounds": [
+      2.8849,
+      2.7573,
+      6.1111
+    ],
+    "notes": "conifer tree variant A"
+  },
+  {
+    "asset_id": "dry_tree_a",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\dry_tree_a_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_tree_a_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_tree_a_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\dry_tree_a_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      1.2169,
+      1.7501,
+      4.2984
+    ],
+    "notes": "dry tree variant A | FAILED_BOUNDS required=(1.4, 1.4, 3.8) actual=(1.22, 1.75, 4.3)"
+  },
+  {
+    "asset_id": "leafy_sapling_a",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\leafy_sapling_a_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\leafy_sapling_a_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\leafy_sapling_a_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\leafy_sapling_a_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 6,
+    "bounds": [
+      0.7757,
+      0.7463,
+      1.4593
+    ],
+    "notes": "young leafy sapling variant A"
+  },
+  {
+    "asset_id": "conifer_sapling_a",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\conifer_sapling_a_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\conifer_sapling_a_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\conifer_sapling_a_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\conifer_sapling_a_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 4,
+    "bounds": [
+      0.8234,
+      0.7819,
+      1.5763
+    ],
+    "notes": "young conifer sapling variant A"
+  },
+  {
+    "asset_id": "green_bush_a",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\green_bush_a_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\green_bush_a_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\green_bush_a_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\green_bush_a_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 6,
+    "bounds": [
+      1.5561,
+      1.9711,
+      1.4484
+    ],
+    "notes": "green bush variant A"
+  },
+  {
+    "asset_id": "berry_bush_a",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\berry_bush_a_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\berry_bush_a_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\berry_bush_a_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\berry_bush_a_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 8,
+    "bounds": [
+      2.6156,
+      2.5262,
+      1.7603
+    ],
+    "notes": "berry bush variant A"
+  },
+  {
+    "asset_id": "dry_bush_a",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\dry_bush_a_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_bush_a_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_bush_a_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\dry_bush_a_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      1.2841,
+      0.7926,
+      1.1103
+    ],
+    "notes": "dry bush variant A"
+  },
+  {
+    "asset_id": "leafy_tree_b",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\leafy_tree_b_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\leafy_tree_b_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\leafy_tree_b_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\leafy_tree_b_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 7,
+    "bounds": [
+      3.7325,
+      2.9924,
+      5.5045
+    ],
+    "notes": "leafy tree variant B"
+  },
+  {
+    "asset_id": "conifer_tree_b",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\conifer_tree_b_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\conifer_tree_b_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\conifer_tree_b_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\conifer_tree_b_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 4,
+    "bounds": [
+      2.3507,
+      2.2586,
+      6.4598
+    ],
+    "notes": "conifer tree variant B"
+  },
+  {
+    "asset_id": "dry_tree_b",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\dry_tree_b_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_tree_b_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_tree_b_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\dry_tree_b_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      1.2752,
+      1.5405,
+      4.7981
+    ],
+    "notes": "dry tree variant B | FAILED_BOUNDS required=(1.4, 1.4, 3.8) actual=(1.28, 1.54, 4.8)"
+  },
+  {
+    "asset_id": "leafy_sapling_b",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\leafy_sapling_b_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\leafy_sapling_b_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\leafy_sapling_b_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\leafy_sapling_b_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 6,
+    "bounds": [
+      0.7265,
+      0.7981,
+      1.4803
+    ],
+    "notes": "young leafy sapling variant B"
+  },
+  {
+    "asset_id": "conifer_sapling_b",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\conifer_sapling_b_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\conifer_sapling_b_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\conifer_sapling_b_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\conifer_sapling_b_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 4,
+    "bounds": [
+      0.8242,
+      0.7807,
+      1.743
+    ],
+    "notes": "young conifer sapling variant B"
+  },
+  {
+    "asset_id": "green_bush_b",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\green_bush_b_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\green_bush_b_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\green_bush_b_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\green_bush_b_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 6,
+    "bounds": [
+      2.037,
+      1.9866,
+      1.5636
+    ],
+    "notes": "green bush variant B"
+  },
+  {
+    "asset_id": "berry_bush_b",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\berry_bush_b_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\berry_bush_b_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\berry_bush_b_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\berry_bush_b_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 8,
+    "bounds": [
+      1.9596,
+      1.8447,
+      1.4087
+    ],
+    "notes": "berry bush variant B"
+  },
+  {
+    "asset_id": "dry_bush_b",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\dry_bush_b_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_bush_b_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_bush_b_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\dry_bush_b_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      0.9319,
+      0.5737,
+      1.0309
+    ],
+    "notes": "dry bush variant B"
+  },
+  {
+    "asset_id": "leafy_tree_c",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\leafy_tree_c_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\leafy_tree_c_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\leafy_tree_c_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\leafy_tree_c_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 7,
+    "bounds": [
+      2.9427,
+      3.274,
+      5.1031
+    ],
+    "notes": "leafy tree variant C"
+  },
+  {
+    "asset_id": "conifer_tree_c",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\conifer_tree_c_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\conifer_tree_c_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\conifer_tree_c_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\conifer_tree_c_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 4,
+    "bounds": [
+      3.2502,
+      3.0975,
+      5.7486
+    ],
+    "notes": "conifer tree variant C"
+  },
+  {
+    "asset_id": "dry_tree_c",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\dry_tree_c_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_tree_c_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_tree_c_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\dry_tree_c_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      1.268,
+      1.338,
+      4.0986
+    ],
+    "notes": "dry tree variant C | FAILED_BOUNDS required=(1.4, 1.4, 3.8) actual=(1.27, 1.34, 4.1)"
+  },
+  {
+    "asset_id": "leafy_sapling_c",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\leafy_sapling_c_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\leafy_sapling_c_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\leafy_sapling_c_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\leafy_sapling_c_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 6,
+    "bounds": [
+      0.7977,
+      0.7151,
+      1.4657
+    ],
+    "notes": "young leafy sapling variant C"
+  },
+  {
+    "asset_id": "conifer_sapling_c",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\conifer_sapling_c_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\conifer_sapling_c_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\conifer_sapling_c_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\conifer_sapling_c_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 4,
+    "bounds": [
+      0.8244,
+      0.7821,
+      1.5763
+    ],
+    "notes": "young conifer sapling variant C"
+  },
+  {
+    "asset_id": "green_bush_c",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\green_bush_c_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\green_bush_c_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\green_bush_c_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\green_bush_c_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 6,
+    "bounds": [
+      2.6954,
+      2.7171,
+      2.0962
+    ],
+    "notes": "green bush variant C"
+  },
+  {
+    "asset_id": "berry_bush_c",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\berry_bush_c_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\berry_bush_c_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\berry_bush_c_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\berry_bush_c_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 8,
+    "bounds": [
+      2.2449,
+      1.7896,
+      1.9344
+    ],
+    "notes": "berry bush variant C"
+  },
+  {
+    "asset_id": "dry_bush_c",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\dry_bush_c_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_bush_c_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_bush_c_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\dry_bush_c_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      1.3866,
+      1.5088,
+      1.3018
+    ],
+    "notes": "dry bush variant C"
+  },
+  {
+    "asset_id": "dry_sapling_a",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\dry_sapling_a_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_sapling_a_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_sapling_a_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\dry_sapling_a_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      0.6469,
+      0.681,
+      1.6144
+    ],
+    "notes": "dry sapling variant A"
+  },
+  {
+    "asset_id": "forest_shrub_a",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\forest_shrub_a_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\forest_shrub_a_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\forest_shrub_a_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\forest_shrub_a_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 6,
+    "bounds": [
+      1.9096,
+      1.7237,
+      1.8273
+    ],
+    "notes": "forest shrub variant A"
+  },
+  {
+    "asset_id": "tall_grass_clump_a",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\tall_grass_clump_a_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\tall_grass_clump_a_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\tall_grass_clump_a_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\tall_grass_clump_a_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      1.2521,
+      1.3581,
+      1.0774
+    ],
+    "notes": "tall grass clump variant A"
+  },
+  {
+    "asset_id": "wildflower_patch_a",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\wildflower_patch_a_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\wildflower_patch_a_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\wildflower_patch_a_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\wildflower_patch_a_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 6,
+    "bounds": [
+      0.8085,
+      0.8655,
+      0.6777
+    ],
+    "notes": "wildflower patch A with petaled flowers"
+  },
+  {
+    "asset_id": "dry_sapling_b",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\dry_sapling_b_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_sapling_b_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\dry_sapling_b_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\dry_sapling_b_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      0.8958,
+      0.4342,
+      1.7063
+    ],
+    "notes": "dry sapling variant B"
+  },
+  {
+    "asset_id": "forest_shrub_b",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\forest_shrub_b_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\forest_shrub_b_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\forest_shrub_b_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\forest_shrub_b_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 6,
+    "bounds": [
+      2.933,
+      2.8551,
+      2.2516
+    ],
+    "notes": "forest shrub variant B"
+  },
+  {
+    "asset_id": "tall_grass_clump_b",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\tall_grass_clump_b_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\tall_grass_clump_b_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\tall_grass_clump_b_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\tall_grass_clump_b_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 1,
+    "bounds": [
+      0.4785,
+      0.5871,
+      0.5658
+    ],
+    "notes": "tall grass clump variant B"
+  },
+  {
+    "asset_id": "wildflower_patch_b",
+    "category": "resource",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\wildflower_patch_b_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\wildflower_patch_b_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Resources\\Models\\wildflower_patch_b_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\wildflower_patch_b_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 6,
+    "bounds": [
+      0.5827,
+      0.5814,
+      0.5088
+    ],
+    "notes": "wildflower patch B with petaled flowers"
+  },
+  {
+    "asset_id": "small_prey",
+    "category": "creature",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\small_prey_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Creatures\\Models\\small_prey_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Creatures\\Models\\small_prey_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\small_prey_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 2,
+    "bounds": [
+      0.9331,
+      0.4368,
+      0.6036
+    ],
+    "notes": "hare-like small prey creature"
+  },
+  {
+    "asset_id": "grazer",
+    "category": "creature",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\grazer_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Creatures\\Models\\grazer_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Creatures\\Models\\grazer_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\grazer_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 4,
+    "bounds": [
+      2.5008,
+      0.928,
+      1.859
+    ],
+    "notes": "deer/goat-like grazer creature"
+  },
+  {
+    "asset_id": "varnak",
+    "category": "creature",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\varnak_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Creatures\\Models\\varnak_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Creatures\\Models\\varnak_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\varnak_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 5,
+    "bounds": [
+      2.6897,
+      0.8736,
+      1.3554
+    ],
+    "notes": "hunched wolf/hyena-like predator"
+  },
+  {
+    "asset_id": "old_tree_landmark",
+    "category": "landmark",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\old_tree_landmark_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Landmarks\\Models\\old_tree_landmark_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Landmarks\\Models\\old_tree_landmark_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\old_tree_landmark_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 7,
+    "bounds": [
+      3.8522,
+      3.6625,
+      5.8056
+    ],
+    "notes": "great old tree landmark"
+  },
+  {
+    "asset_id": "ruins_landmark",
+    "category": "landmark",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\ruins_landmark_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Landmarks\\Models\\ruins_landmark_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Landmarks\\Models\\ruins_landmark_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\ruins_landmark_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 5,
+    "bounds": [
+      3.6,
+      2.8,
+      1.5019
+    ],
+    "notes": "overgrown ruins landmark"
+  },
+  {
+    "asset_id": "pond_landmark",
+    "category": "landmark",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\pond_landmark_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Landmarks\\Models\\pond_landmark_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Landmarks\\Models\\pond_landmark_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\pond_landmark_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 4,
+    "bounds": [
+      4.2,
+      4.2,
+      0.574
+    ],
+    "notes": "freshwater pond landmark"
+  },
+  {
+    "asset_id": "camp_landmark",
+    "category": "landmark",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\camp_landmark_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Landmarks\\Models\\camp_landmark_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Landmarks\\Models\\camp_landmark_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\camp_landmark_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 12,
+    "bounds": [
+      4.6934,
+      1.9,
+      1.9048
+    ],
+    "notes": "abandoned camp landmark | FAILED_BOUNDS required=(4.0, 2.0, 1.4) actual=(4.69, 1.9, 1.9)"
+  },
+  {
+    "asset_id": "cave_landmark",
+    "category": "landmark",
+    "blend_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Source\\Blend\\cave_landmark_stylized.blend",
+    "fbx_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Landmarks\\Models\\cave_landmark_stylized.fbx",
+    "obj_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Landmarks\\Models\\cave_landmark_stylized.obj",
+    "preview_path": "C:/Users/kriss/apex-shift/Assets/_Project/Art/Bushcraft\\Previews\\cave_landmark_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 3,
+    "bounds": [
+      4.5906,
+      3.3547,
+      3.5131
+    ],
+    "notes": "sealed cave landmark"
+  }
+]

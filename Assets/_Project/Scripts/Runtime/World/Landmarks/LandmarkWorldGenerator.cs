@@ -123,7 +123,17 @@ namespace ApexShift.Runtime.World.Landmarks
             go.transform.localRotation = rot;
             go.transform.localScale = scale;
             Collider collider = go.GetComponent<Collider>();
-            if (collider != null) UnityEngine.Object.Destroy(collider);
+            if (collider != null)
+            {
+                if (Application.isPlaying)
+                {
+                    UnityEngine.Object.Destroy(collider);
+                }
+                else
+                {
+                    UnityEngine.Object.DestroyImmediate(collider);
+                }
+            }
             Renderer renderer = go.GetComponent<Renderer>();
             if (renderer != null)
             {
