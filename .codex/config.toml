@@ -1,0 +1,17 @@
+# Project-scoped Blender MCP configuration for trusted Apex Shift checkouts.
+# On Windows, wrapping uvx with cmd avoids PATH resolution problems in GUI clients.
+
+[mcp_servers.blender]
+command = "cmd"
+args = ["/c", "uvx", "--python", "3.11", "blender-mcp"]
+enabled = true
+required = false
+startup_timeout_sec = 30
+tool_timeout_sec = 300
+default_tools_approval_mode = "writes"
+
+[mcp_servers.blender.env]
+UV_PYTHON_PREFERENCE = "only-managed"
+BLENDER_HOST = "localhost"
+BLENDER_PORT = "9876"
+DISABLE_TELEMETRY = "true"
