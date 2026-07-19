@@ -2369,11 +2369,16 @@ namespace ApexShift.EditorTools.World
             countersProp.GetArrayElementAtIndex(2).objectReferenceValue = fiberCounter;
             so.ApplyModifiedProperties();
 
-            // Add EventSystem
-            GameObject es = new GameObject("EventSystem");
-            es.AddComponent<UnityEngine.EventSystems.EventSystem>();
-            es.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
-            es.transform.SetParent(uiGo.transform, false);
+            // Add EventSystem (only if the scene doesn't already have one - having more than one
+            // triggers Unity's "There are 2 event systems in the scene" warning at runtime).
+            UnityEngine.EventSystems.EventSystem existingEs = UnityEngine.Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>(FindObjectsInactive.Include);
+            if (existingEs == null)
+            {
+                GameObject es = new GameObject("EventSystem");
+                es.AddComponent<UnityEngine.EventSystems.EventSystem>();
+                es.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+                es.transform.SetParent(uiGo.transform, false);
+            }
 
             return uiGo;
         }

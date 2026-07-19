@@ -206,6 +206,25 @@ namespace ApexShift.Runtime.Player
             return stats.ChangeStamina(amount);
         }
 
+        public float RestoreRest(float amount)
+        {
+            EnsureInitialized();
+            if (amount <= 0f || IsDead)
+            {
+                return 0f;
+            }
+
+            return stats.ChangeRest(amount);
+        }
+
+        /// <summary>Absolute in-game time (day * 24 + hour) of the last tent sleep. Negative infinity when the player has not slept yet.</summary>
+        public float LastSleepGameHours { get; private set; } = float.NegativeInfinity;
+
+        public void MarkSlept(float totalGameHours)
+        {
+            LastSleepGameHours = totalGameHours;
+        }
+
         public void Restore(float health, float hunger, float stamina, float rest)
         {
             EnsureInitialized();

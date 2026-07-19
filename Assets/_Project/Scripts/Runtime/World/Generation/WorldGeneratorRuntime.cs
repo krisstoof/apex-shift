@@ -1953,6 +1953,17 @@ if (renderer != null)
             animDriver.SetInputReader(inputReader);
 
             Animator anim = player.GetComponentInChildren<Animator>();
+            if (anim == null)
+            {
+                // If no animator found in hierarchy, try to get or add it to the root player
+                anim = player.GetComponent<Animator>();
+                if (anim == null)
+                {
+                    anim = player.AddComponent<Animator>();
+                    Debug.Log("[WorldGen] Added missing Animator component to player");
+                }
+            }
+
             if (anim != null)
             {
                 if (playerAnimatorController != null)
@@ -1967,7 +1978,7 @@ if (renderer != null)
             }
             else
             {
-                Debug.LogWarning("[WorldGen] No Animator component found on player!");
+                Debug.LogWarning("[WorldGen] Could not ensure Animator component on player!");
             }
 
             KevinIglesiasPlayerAnimationBinder animationBinder = player.GetComponent<KevinIglesiasPlayerAnimationBinder>();

@@ -173,21 +173,6 @@ namespace ApexShift.Presentation.HUD
             DayNightClockUI clockUI = clockPanel.AddComponent<DayNightClockUI>();
             clockUI.Configure(timeLabelGo.GetComponent<Text>(), null, Object.FindAnyObjectByType<DayNightRuntime>());
 
-            // Group 5: Inventory (Bottom Center)
-            GameObject inventoryPanel = CreateUIPanel(hudGo.transform, "InventoryPanel", new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(380, 50), new Vector2(0, 40));
-            HorizontalLayoutGroup hlg = inventoryPanel.AddComponent<HorizontalLayoutGroup>();
-            hlg.padding = new RectOffset(10, 10, 5, 5);
-            hlg.spacing = 8;
-            hlg.childAlignment = TextAnchor.MiddleCenter;
-            hlg.childControlWidth = false;
-            hlg.childControlHeight = false;
-            hlg.childForceExpandWidth = false;
-            hlg.childForceExpandHeight = false;
-
-            List<InventorySlotUI> inventorySlots = new List<InventorySlotUI>();
-            for (int i = 0; i < 9; i++) 
-                inventorySlots.Add(CreateInventorySlot(inventoryPanel.transform, $"Slot{i + 1}", i));
-
             // Menus setup remains similar but scaled
             GameObject startMenu = CreateMenuPanel(menuGo.transform, "StartMenu", new Vector2(0.5f, 0.5f), new Vector2(980f, 620f), true);
             startMenu.SetActive(false); // Ensure starts hidden
@@ -237,9 +222,21 @@ CreateMenuBackdropFrame(optionsMenu.transform);
             CreateMenuText(optionsMenu.transform, "Eyebrow", "OPTIONS", 14, TextAnchor.UpperLeft, new Vector2(44, -38), new Color(0.74f, 0.9f, 0.74f, 0.95f));
             GameObject optionsTitle = CreateMenuText(optionsMenu.transform, "Title", "Settings", 52, TextAnchor.UpperLeft, new Vector2(42, -82), new Color(0.98f, 0.98f, 0.93f, 1f));
             optionsTitle.AddComponent<Outline>().effectColor = new Color(0f, 0f, 0f, 0.8f);
-            CreateMenuText(optionsMenu.transform, "Hint", "Basic menu page for future settings.", 18, TextAnchor.UpperLeft, new Vector2(46, -144), new Color(0.92f, 0.92f, 0.92f));
+            CreateMenuText(optionsMenu.transform, "Hint", "Adjust audio and graphics settings below.", 18, TextAnchor.UpperLeft, new Vector2(46, -144), new Color(0.92f, 0.92f, 0.92f));
             CreateMenuText(optionsMenu.transform, "Hint2", "Use Back to return to the previous menu.", 14, TextAnchor.UpperLeft, new Vector2(46, -180), new Color(0.84f, 0.86f, 0.84f, 0.9f));
             Button backButton = CreateMenuButton(optionsMenu.transform, "BackButton", "Back", new Vector2(40, -438));
+
+            // Build the actual audio/graphics controls immediately. Do not rely solely on
+            // OptionsMenuSettingsBootstrap's polling - this panel gets destroyed and recreated
+            // on every CreateHUD() call (boot, new game, load game), so a delayed poll can
+            // leave the panel showing only placeholder text if opened too soon.
+            // Skip this in edit mode (e.g. editor scene-building tools) since
+            // GameSettingsService.Instance calls DontDestroyOnLoad, which is play-mode only.
+            if (Application.isPlaying)
+            {
+                OptionsMenuController optionsController = optionsMenu.GetComponent<OptionsMenuController>() ?? optionsMenu.AddComponent<OptionsMenuController>();
+                optionsController.BuildIfNeeded(uiFont);
+            }
 
             CanvasGroup startGrp = startMenu.AddComponent<CanvasGroup>();
             CanvasGroup pauseGrp = pauseMenu.AddComponent<CanvasGroup>();
@@ -249,16 +246,12 @@ CreateMenuBackdropFrame(optionsMenu.transform);
             {
                 hudController.Configure(player.GetComponent<PlayerSurvivalRuntime>(), player.GetComponent<PlayerInventoryRuntime>(), healthBar, hungerBar, staminaBar, restBar,
                     new List<ResourceCounterUI> { woodCounter, stoneCounter, fiberCounter, meatCounter });
-                hudController.ConfigureInventorySlots(inventorySlots);
                 hudGo.SetActive(true);
             }
             else hudGo.SetActive(false);
 
-            GameObject esGo = uiRoot.transform.Find("EventSystem")?.gameObject ?? new GameObject("EventSystem");
-            esGo.transform.SetParent(uiRoot.transform, false);
-            esGo.transform.localPosition = Vector3.zero;
-            EventSystem es = esGo.GetComponent<EventSystem>() ?? esGo.AddComponent<EventSystem>();
-            InputSystemUIInputModule uiInput = esGo.GetComponent<InputSystemUIInputModule>() ?? esGo.AddComponent<InputSystemUIInputModule>();
+            EventSystem es = EnsureSingleEventSystem(uiRoot.transform);
+            InputSystemUIInputModule uiInput = es.GetComponent<InputSystemUIInputModule>() ?? es.gameObject.AddComponent<InputSystemUIInputModule>();
 
             InputActionAsset actions = (generator != null && generator.InputActions != null) ? generator.InputActions : InputSystem.actions;
             if (actions != null)
@@ -323,6 +316,34 @@ pauseOptionsButton.onClick.AddListener(() => { LogMenuClick("Pause Options"); st
 
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+        }
+
+        // Unity only ever wants ONE EventSystem active in the scene at a time (otherwise it
+        // logs "There are 2 event systems in the scene..." and input routing becomes ambiguous).
+        // CreateHUD() used to only check for an EventSystem local to its own generated uiRoot,
+        // which meant any EventSystem already baked into the scene (e.g. by an editor scene
+        // builder) or created by another bootstrapper would end up duplicated. Search the whole
+        // scene first, reuse whatever is found, and clean up any extras so exactly one remains.
+        private static EventSystem EnsureSingleEventSystem(Transform preferredParent)
+        {
+            EventSystem[] existing = FindObjectsByType<EventSystem>(FindObjectsInactive.Include);
+            if (existing.Length > 0)
+            {
+                for (int i = 1; i < existing.Length; i++)
+                {
+                    if (existing[i] != null)
+                    {
+                        Destroy(existing[i].gameObject);
+                    }
+                }
+
+                return existing[0];
+            }
+
+            GameObject esGo = new GameObject("EventSystem");
+            esGo.transform.SetParent(preferredParent, false);
+            esGo.transform.localPosition = Vector3.zero;
+            return esGo.AddComponent<EventSystem>();
         }
 
         private GameObject CreateUIPanel(Transform parent, string name, Vector2 anchorMin, Vector2 anchorMax, Vector2 size, Vector2 pos)

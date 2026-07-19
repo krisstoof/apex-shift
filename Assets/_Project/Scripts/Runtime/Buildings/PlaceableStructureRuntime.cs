@@ -29,6 +29,7 @@ namespace ApexShift.Runtime.Buildings
         public StorageContainerRuntime StorageContainer => GetComponent<StorageContainerRuntime>();
         public TrapDamageRuntime TrapDamage => GetComponent<TrapDamageRuntime>();
         public CampfireRuntime Campfire => GetComponent<CampfireRuntime>();
+        public TentRestRuntime TentRest => GetComponent<TentRestRuntime>();
 
         private void OnEnable()
         {
@@ -57,6 +58,7 @@ namespace ApexShift.Runtime.Buildings
             EnsureStorageContainerIfNeeded();
             EnsureTrapDamageIfNeeded();
             EnsureCampfireIfNeeded();
+            EnsureTentRestIfNeeded();
             BuildingRegistry.Active?.Register(this);
         }
 
@@ -105,6 +107,13 @@ namespace ApexShift.Runtime.Buildings
                 return campfire.Interact(actor);
             }
 
+            TentRestRuntime tentRest = TentRest;
+            if (tentRest != null)
+            {
+                Debug.Log($"[Building] Forwarding interaction to tent '{InstanceId}'.", this);
+                return tentRest.Interact(actor);
+            }
+
             Debug.Log($"[Building] Interacted with {BuildingId} ({InstanceId}).", this);
             return true;
         }
@@ -142,6 +151,14 @@ namespace ApexShift.Runtime.Buildings
             if (BuildingId == "campfire")
             {
                 _ = GetComponent<CampfireRuntime>() ?? gameObject.AddComponent<CampfireRuntime>();
+            }
+        }
+
+        private void EnsureTentRestIfNeeded()
+        {
+            if (BuildingId == "tent")
+            {
+                _ = GetComponent<TentRestRuntime>() ?? gameObject.AddComponent<TentRestRuntime>();
             }
         }
 

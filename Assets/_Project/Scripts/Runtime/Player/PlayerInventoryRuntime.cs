@@ -21,11 +21,7 @@ namespace ApexShift.Runtime.Player
 
         private void Awake()
         {
-            if (survivalRuntime == null)
-            {
-                survivalRuntime = GetComponent<PlayerSurvivalRuntime>();
-            }
-
+            EnsureSurvivalRuntime();
             EnsureInitialized();
         }
 
@@ -36,9 +32,18 @@ namespace ApexShift.Runtime.Player
             inventory = new InventoryState(itemDatabase, slotCount);
         }
 
+        private void EnsureSurvivalRuntime()
+        {
+            if (survivalRuntime == null)
+            {
+                survivalRuntime = GetComponent<PlayerSurvivalRuntime>();
+            }
+        }
+
         public bool CanEat(string itemId)
         {
             EnsureInitialized();
+            EnsureSurvivalRuntime();
             return !string.IsNullOrWhiteSpace(itemId)
                    && itemDatabase.HasItem(itemId)
                    && itemDatabase.IsEdible(itemId)
@@ -49,6 +54,7 @@ namespace ApexShift.Runtime.Player
         public FoodConsumptionResult TryEatItem(string itemId, int amount = 1)
         {
             EnsureInitialized();
+            EnsureSurvivalRuntime();
             if (string.IsNullOrWhiteSpace(itemId))
             {
                 return FoodConsumptionResult.Failed("Cannot eat empty item.");
@@ -97,6 +103,10 @@ namespace ApexShift.Runtime.Player
                 {
                     staminaDelta = survivalRuntime.RestoreStamina(definition.StaminaRestore * consumeAmount);
                 }
+            }
+            else
+            {
+                Debug.LogWarning($"[Inventory] PlayerSurvivalRuntime not found; ate {definition.DisplayName} but stats were not restored.", this);
             }
 
             string message = definition.IsUnsafeRawFood

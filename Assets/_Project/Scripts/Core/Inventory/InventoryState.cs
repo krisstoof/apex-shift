@@ -379,6 +379,89 @@ namespace ApexShift.Core.Inventory
             InventoryChanged?.Invoke();
         }
 
+        /// <summary>
+        /// Swaps the contents of two inventory slots (both items and amounts).
+        /// </summary>
+        public bool SwapSlots(int fromSlotIndex, int toSlotIndex)
+        {
+            if (!IsValidSlotIndex(fromSlotIndex) || !IsValidSlotIndex(toSlotIndex) || fromSlotIndex == toSlotIndex)
+            {
+                return false;
+            }
+
+            InventorySlot fromSlot = slots[fromSlotIndex];
+            InventorySlot toSlot = slots[toSlotIndex];
+
+            // Store the contents of the target slot temporarily
+            string toItemId = toSlot.ItemId;
+            int toAmount = toSlot.Amount;
+
+            // Move from slot to target slot
+            toSlot.Stack.SetStack(fromSlot.ItemId, fromSlot.Amount);
+
+            // Move the original target contents to the source slot
+            fromSlot.Stack.SetStack(toItemId, toAmount);
+
+            InventoryChanged?.Invoke();
+            return true;
+        }
+
+        /// <summary>
+        /// Moves items from one slot to another, handling stacking when items are identical.
+        /// If items are different and the target slot is not empty, they swap positions.
+        /// </summary>
+        public bool MoveSlotItem(int fromSlotIndex, int toSlotIndex)
+        {
+            if (!IsValidSlotIndex(fromSlotIndex) || !IsValidSlotIndex(toSlotIndex) || fromSlotIndex == toSlotIndex)
+            {
+                return false;
+            }
+
+            InventorySlot fromSlot = slots[fromSlotIndex];
+            InventorySlot toSlot = slots[toSlotIndex];
+
+            // If source is empty, nothing to move
+            if (fromSlot.IsEmpty)
+            {
+                return false;
+            }
+
+            string fromItemId = fromSlot.ItemId;
+            int fromAmount = fromSlot.Amount;
+
+            // If target is empty, just move everything
+            if (toSlot.IsEmpty)
+            {
+                toSlot.Stack.SetStack(fromItemId, fromAmount);
+                fromSlot.Stack.Clear();
+                InventoryChanged?.Invoke();
+                return true;
+            }
+
+            // If same item, try to stack
+            if (toSlot.ItemId == fromItemId)
+            {
+                int maxStack = itemDatabase.GetMaxStack(fromItemId);
+                int availableSpace = toSlot.Stack.GetAvailableSpace(maxStack);
+                
+                if (availableSpace <= 0)
+                {
+                    // Target slot is full, swap them
+                    return SwapSlots(fromSlotIndex, toSlotIndex);
+                }
+
+                int movedAmount = Math.Min(fromAmount, availableSpace);
+                toSlot.Stack.AddAmount(fromItemId, movedAmount, maxStack);
+                fromSlot.Stack.RemoveAmount(movedAmount);
+                
+                InventoryChanged?.Invoke();
+                return true;
+            }
+
+            // Different items and target is not empty - swap them
+            return SwapSlots(fromSlotIndex, toSlotIndex);
+        }
+
         private void ClearAllSlots(bool raiseEvent)
         {
             foreach (InventorySlot slot in slots)
