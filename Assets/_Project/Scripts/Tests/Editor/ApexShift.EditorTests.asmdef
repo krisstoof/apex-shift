@@ -4,7 +4,8 @@
     "ApexShift.Core",
     "ApexShift.Runtime",
     "ApexShift.Infrastructure",
-    "Assembly-CSharp-Editor"
+    "Assembly-CSharp-Editor",
+    "Unity.InputSystem"
   ],
   "optionalUnityReferences": [
     "TestAssemblies"

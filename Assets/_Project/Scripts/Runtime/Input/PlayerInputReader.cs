@@ -62,10 +62,6 @@ namespace ApexShift.Runtime.PlayerInput
             {
 #if UNITY_EDITOR
                 inputActions = UnityEditor.AssetDatabase.LoadAssetAtPath<InputActionAsset>("Assets/_Project/Input/ApexShiftInputActions.inputactions");
-                if (inputActions == null)
-                {
-                    inputActions = UnityEditor.AssetDatabase.LoadAssetAtPath<InputActionAsset>("Assets/InputSystem_Actions.inputactions");
-                }
 #endif
             }
 
@@ -87,7 +83,7 @@ namespace ApexShift.Runtime.PlayerInput
 
             if (!HasRequiredActions())
             {
-                Debug.LogWarning("PlayerInputReader is missing required Player action map/actions. Input will not work until a complete InputActionAsset is assigned.", this);
+                Debug.LogWarning("PlayerInputReader is missing required Gameplay action map/actions. Input will not work until the canonical ApexShiftInputActions asset is assigned.", this);
                 return;
             }
 
@@ -166,11 +162,7 @@ namespace ApexShift.Runtime.PlayerInput
                 return;
             }
 
-            gameplayMap = inputActions.FindActionMap("Player", false);
-            if (gameplayMap == null)
-            {
-                gameplayMap = inputActions.FindActionMap("Gameplay", false);
-            }
+            gameplayMap = inputActions.FindActionMap("Gameplay", false);
             moveAction = gameplayMap?.FindAction("Move", false);
             lookAction = gameplayMap?.FindAction("Look", false);
             interactAction = gameplayMap?.FindAction("Interact", false);

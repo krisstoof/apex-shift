@@ -17,11 +17,11 @@ namespace ApexShift.Presentation.HUD
                     uiMap.Enable();
                 }
                 
-                var playerMap = InputSystem.actions.FindActionMap("Player");
-                if (playerMap != null && !playerMap.enabled && GameSessionState.IsGameplayActive)
+                var gameplayMap = InputSystem.actions.FindActionMap("Gameplay");
+                if (gameplayMap != null && !gameplayMap.enabled && GameSessionState.IsGameplayActive)
                 {
-                    Debug.Log("[InputEnabler] Player Action Map was disabled. Enabling it.");
-                    playerMap.Enable();
+                    Debug.Log("[InputEnabler] Gameplay Action Map was disabled. Enabling it.");
+                    gameplayMap.Enable();
                 }
 
                 if (!InputSystem.actions.enabled)

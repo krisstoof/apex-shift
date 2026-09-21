@@ -1116,11 +1116,23 @@ MonoBehaviour:
   idleStateName: Idle
   walkingStateName: Walking
   runningStateName: Running
+  swimmingStateName: Swimming
   speedParameter: Speed
   movingParameter: IsMoving
   sprintingParameter: IsSprinting
   attackTrigger: Attack
   interactTrigger: Interact
+  swimmingParameter: IsSwimming
+  gatherTrigger: Gather
+  spearAttackTrigger: SpearAttack
+  bowAttackTrigger: BowAttack
+  axeUseTrigger: AxeUse
+  pickaxeUseTrigger: PickaxeUse
+  torchUseTrigger: TorchUse
+  chopTrigger: Chop
+  mineTrigger: Mine
+  hurtTrigger: Hurt
+  deathTrigger: Death
   crossFadeDuration: 0.12
   logAnimationSetup: 1
 --- !u!114 &2051338547
@@ -1212,6 +1224,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.Player.PlayerInventoryRuntime
   slotCount: 9
+  survivalRuntime: {fileID: 0}
 --- !u!114 &2051338552
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1231,6 +1244,15 @@ MonoBehaviour:
   turnSpeed: 18
   usePhysicsMovement: 1
   movementEnabled: 1
+  swimSpeed: 2.35
+  waterSurfaceY: -0.85
+  waterVerticalBlendSpeed: 10
+  visualRoot: {fileID: 0}
+  swimVisualYOffset: -0.62
+  swimVisualPitchDegrees: 58
+  swimVisualBlendSpeed: 8
+  useTopographyWaterState: 1
+  logWaterStateChanges: 0
 --- !u!114 &2051338553
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1243,7 +1265,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e8d6edff24d45f3a97a0f9ce0d0c402, type: 3}
   m_Name: 
   m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.PlayerInput.PlayerInputReader
-  inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  inputActions: {fileID: -944628639613478452, guid: 8d6b0c8f6d8244e09a9f2c6c19c2a671, type: 3}
+  buildingPlacementRuntime: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

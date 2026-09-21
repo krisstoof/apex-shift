@@ -1,8 +1,14 @@
 # Unity Input System
 
-Input action asset:
+Canonical InputActionAsset:
 
 `Assets/_Project/Input/ApexShiftInputActions.inputactions`
+
+`Gameplay` is the only gameplay action map. `PlayerInputReader` does not
+fall back to the legacy `Player` map or the removed template asset. The
+global `InputSystem.actions` configuration points to this same canonical
+asset, and `Assets/_Project/Scenes/Game.unity` is the canonical production
+and startup scene.
 
 ## Gameplay actions
 
@@ -84,7 +90,7 @@ This keeps player feedback visible even when final animation clips are not ready
 ## Manual test
 
 1. Open Unity.
-2. Generate or open `BiomeWorldTest.unity`.
+2. Open `Assets/_Project/Scenes/Game.unity`.
 3. Press Play.
 4. Move with WASD.
 5. Move with arrow keys.
