@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using ApexShift.Core.Ecosystem;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
@@ -14,6 +15,44 @@ namespace ApexShift.Tests.Unit.World
 {
     public sealed class WorldQueryRuntimeTests
     {
+        [Test]
+        public void GetCreaturesInRadiusUsesRegistryAndDropsDestroyedEntries()
+        {
+            GameObject ecosystemObject = new GameObject("Ecosystem");
+            GameObject nearObject = new GameObject("NearCreature");
+            GameObject farObject = new GameObject("FarCreature");
+            try
+            {
+                EcosystemRuntime ecosystem = ecosystemObject.AddComponent<EcosystemRuntime>();
+                WorldQueryRuntime query = WorldQueryRuntime.GetOrCreate(ecosystem);
+                nearObject.transform.position = new Vector3(2f, 0f, 0f);
+                CreatureAgentView near = nearObject.AddComponent<CreatureAgentView>();
+                near.Configure("small_prey");
+                ecosystem.RegisterCreature(near);
+
+                farObject.transform.position = new Vector3(20f, 0f, 0f);
+                CreatureAgentView far = farObject.AddComponent<CreatureAgentView>();
+                far.Configure("small_prey");
+                ecosystem.RegisterCreature(far);
+
+                List<CreatureAgentView> results = new List<CreatureAgentView>();
+                Assert.AreEqual(1, query.GetCreaturesInRadius(Vector3.zero, 5f, results));
+                Assert.That(results, Does.Contain(near));
+                Assert.IsFalse(results.Contains(far));
+
+                Object.DestroyImmediate(farObject);
+                results.Clear();
+                Assert.AreEqual(1, query.GetCreaturesInRadius(Vector3.zero, 30f, results));
+                Assert.That(results, Does.Contain(near));
+            }
+            finally
+            {
+                Object.DestroyImmediate(farObject);
+                Object.DestroyImmediate(nearObject);
+                Object.DestroyImmediate(ecosystemObject);
+            }
+        }
+
         [Test]
         public void TryFindNearestPlantFoodUsesRegisteredFoodSources()
         {

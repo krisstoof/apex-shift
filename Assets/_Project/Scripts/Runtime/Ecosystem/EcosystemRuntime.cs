@@ -77,12 +77,16 @@ namespace ApexShift.Runtime.Ecosystem
 
         public void RegisterCreature(CreatureAgentView creature)
         {
-            if (creature == null || _creatures.Contains(creature))
+            if (creature == null)
             {
                 return;
             }
 
-            _creatures.Add(creature);
+            creature.RefreshRuntimeReferences();
+            if (!_creatures.Contains(creature))
+            {
+                _creatures.Add(creature);
+            }
         }
 
         public void UnregisterCreature(CreatureAgentView creature)
@@ -93,6 +97,91 @@ namespace ApexShift.Runtime.Ecosystem
             }
 
             _creatures.Remove(creature);
+        }
+
+        public int GetCreaturesInRadius(Vector3 position, float radius, List<CreatureAgentView> results, string creatureId = null)
+        {
+            if (results == null)
+            {
+                return 0;
+            }
+
+            results.Clear();
+            float maxSqrDistance = Mathf.Max(0f, radius) * Mathf.Max(0f, radius);
+            string expectedId = string.IsNullOrWhiteSpace(creatureId) ? null : creatureId.Trim();
+
+            for (int i = _creatures.Count - 1; i >= 0; i--)
+            {
+                CreatureAgentView candidate = _creatures[i];
+                if (candidate == null)
+                {
+                    _creatures.RemoveAt(i);
+                    continue;
+                }
+
+                if (!candidate.isActiveAndEnabled)
+                {
+                    _creatures.RemoveAt(i);
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(expectedId) &&
+                    !string.Equals(candidate.CreatureId, expectedId, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if ((candidate.transform.position - position).sqrMagnitude <= maxSqrDistance)
+                {
+                    results.Add(candidate);
+                }
+            }
+
+            return results.Count;
+        }
+
+        public CreatureAgentView TryFindNearestLivingCreature(Vector3 position, float maxDistance, string creatureId = null)
+        {
+            CreatureAgentView nearest = null;
+            float minSqrDistance = Mathf.Max(0f, maxDistance) * Mathf.Max(0f, maxDistance);
+            string expectedId = string.IsNullOrWhiteSpace(creatureId) ? null : creatureId.Trim();
+
+            for (int i = _creatures.Count - 1; i >= 0; i--)
+            {
+                CreatureAgentView candidate = _creatures[i];
+                if (candidate == null)
+                {
+                    _creatures.RemoveAt(i);
+                    continue;
+                }
+
+                if (!candidate.isActiveAndEnabled)
+                {
+                    _creatures.RemoveAt(i);
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(expectedId) &&
+                    !string.Equals(candidate.CreatureId, expectedId, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                CreatureHealthRuntime health = candidate.CachedHealth;
+                if (health != null && health.IsDead)
+                {
+                    continue;
+                }
+
+                float sqrDistance = (candidate.transform.position - position).sqrMagnitude;
+                if (sqrDistance <= minSqrDistance)
+                {
+                    minSqrDistance = sqrDistance;
+                    nearest = candidate;
+                }
+            }
+
+            return nearest;
         }
 
         public bool TryFindNearestPlantFood(Vector3 position, float maxDistance, out FoodSourceView source)
@@ -177,7 +266,7 @@ namespace ApexShift.Runtime.Ecosystem
                     continue;
                 }
 
-                CreatureHealthRuntime health = candidate.GetComponent<CreatureHealthRuntime>();
+                CreatureHealthRuntime health = candidate.CachedHealth;
                 if (health != null && health.IsDead)
                 {
                     continue;
@@ -220,7 +309,7 @@ namespace ApexShift.Runtime.Ecosystem
                     continue;
                 }
 
-                CreatureHealthRuntime health = candidate.GetComponent<CreatureHealthRuntime>();
+                CreatureHealthRuntime health = candidate.CachedHealth;
                 if (health != null && health.IsDead)
                 {
                     continue;

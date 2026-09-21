@@ -52,6 +52,26 @@ namespace ApexShift.Tests.Unit
         }
 
         [Test]
+        public void DisabledDepletedResourceAdvancesGrowthThroughRegistry()
+        {
+            GameObject go = new GameObject("depleted-resource");
+            ResourceNodeView node = go.AddComponent<ResourceNodeView>();
+            node.ConfigureDefault("berry_bush");
+            node.LoadState(0, true, 0f);
+            go.SetActive(false);
+
+            Assert.That(ResourceRegistry.Resources, Does.Contain(node));
+            foreach (ResourceNodeView registeredNode in ResourceRegistry.Resources)
+            {
+                registeredNode.AdvanceGrowthDays(registeredNode.State.RegrowthDays);
+            }
+
+            Assert.IsFalse(node.State.IsDepleted);
+            Assert.That(node.State.Amount, Is.GreaterThan(0));
+            Object.DestroyImmediate(go);
+        }
+
+        [Test]
         public void ItemPickupRegistryUnregistersDisabledPickups()
         {
             GameObject go = new GameObject("pickup");

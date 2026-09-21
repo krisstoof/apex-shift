@@ -1,6 +1,7 @@
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Audio;
+using ApexShift.Runtime.World.Query;
 using ApexShift.Runtime.PlayerInput;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -53,6 +54,9 @@ namespace ApexShift.Runtime.Player
         [SerializeField] private float audioVolume = 0.9f;
 
         private float cooldownRemaining;
+        private WorldQueryRuntime worldQuery;
+        private UnityEngine.Camera aimCamera;
+        private readonly System.Collections.Generic.List<CreatureAgentView> creatureQueryBuffer = new System.Collections.Generic.List<CreatureAgentView>(32);
 
         public bool IsOnCooldown => cooldownRemaining > 0f;
 
@@ -122,6 +126,8 @@ namespace ApexShift.Runtime.Player
         public void SetSurvivalRuntime(PlayerSurvivalRuntime runtime) => survivalRuntime = runtime;
         public void SetActionBarRuntime(ActionBarRuntime runtime) => actionBarRuntime = runtime;
         public void SetAttackOrigin(Transform origin) => attackOrigin = origin != null ? origin : transform;
+        public void SetAimCamera(UnityEngine.Camera camera) => aimCamera = camera;
+        public void SetWorldQueryRuntime(WorldQueryRuntime query) => worldQuery = query;
 
         public bool TriggerPrimaryAttack()
         {
@@ -264,10 +270,14 @@ namespace ApexShift.Runtime.Player
 
             if (best == null && nearestFallback == null)
             {
-                CreatureHealthRuntime[] allCreatures = Object.FindObjectsByType<CreatureHealthRuntime>(FindObjectsInactive.Exclude);
-                foreach (CreatureHealthRuntime health in allCreatures)
+                if (worldQuery != null)
                 {
-                    ConsiderMeleeTarget(health, origin, direction, effectiveRange, halfArc, ref best, ref bestScore, ref nearestFallback, ref nearestScore);
+                    worldQuery.GetCreaturesInRadius(origin, effectiveRange, creatureQueryBuffer);
+                    for (int i = 0; i < creatureQueryBuffer.Count; i++)
+                    {
+                        CreatureHealthRuntime health = creatureQueryBuffer[i] != null ? creatureQueryBuffer[i].CachedHealth : null;
+                        ConsiderMeleeTarget(health, origin, direction, effectiveRange, halfArc, ref best, ref bestScore, ref nearestFallback, ref nearestScore);
+                    }
                 }
             }
 
@@ -282,17 +292,20 @@ namespace ApexShift.Runtime.Player
 
         private CreatureHealthRuntime FindNearestCreatureByDistance(float range)
         {
-            CreatureHealthRuntime[] allCreatures = Object.FindObjectsByType<CreatureHealthRuntime>(FindObjectsInactive.Exclude);
             CreatureHealthRuntime best = null;
             float bestDistance = float.PositiveInfinity;
             Vector3 playerPos = transform.position;
 
-            foreach (CreatureHealthRuntime health in allCreatures)
+            if (worldQuery == null)
             {
-                if (health == null || health.IsDead || health.transform == transform || health.transform.IsChildOf(transform))
-                {
-                    continue;
-                }
+                return null;
+            }
+
+            worldQuery.GetCreaturesInRadius(playerPos, range, creatureQueryBuffer);
+            for (int i = 0; i < creatureQueryBuffer.Count; i++)
+            {
+                CreatureHealthRuntime health = creatureQueryBuffer[i] != null ? creatureQueryBuffer[i].CachedHealth : null;
+                if (health == null || health.IsDead || health.transform == transform || health.transform.IsChildOf(transform)) continue;
 
                 Vector3 delta = health.transform.position - playerPos;
                 delta.y = 0f;
@@ -365,7 +378,7 @@ namespace ApexShift.Runtime.Player
         private Vector3 ResolveAimDirection()
         {
             Vector3 origin = GetAttackOrigin();
-            UnityEngine.Camera camera = UnityEngine.Camera.main != null ? UnityEngine.Camera.main : Object.FindAnyObjectByType<UnityEngine.Camera>();
+            UnityEngine.Camera camera = aimCamera != null ? aimCamera : UnityEngine.Camera.main;
             Vector2 screenPosition = Vector2.zero;
             bool hasScreenPosition = false;
 
@@ -460,6 +473,7 @@ namespace ApexShift.Runtime.Player
             if (inventoryRuntime == null) inventoryRuntime = GetComponent<PlayerInventoryRuntime>();
             if (survivalRuntime == null) survivalRuntime = GetComponent<PlayerSurvivalRuntime>();
             if (attackOrigin == null) attackOrigin = transform;
+            if (worldQuery == null) worldQuery = WorldQueryRuntime.Active;
         }
 
         private void ApplyCombatAudioProfile()

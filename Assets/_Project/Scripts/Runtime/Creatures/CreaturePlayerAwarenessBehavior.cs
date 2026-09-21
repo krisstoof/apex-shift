@@ -2,6 +2,8 @@ using UnityEngine;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Fire;
+using ApexShift.Runtime.World.Query;
+using System.Collections.Generic;
 
 namespace ApexShift.Runtime.Creatures
 {
@@ -26,6 +28,7 @@ namespace ApexShift.Runtime.Creatures
         private float decisionTimer;
         private float forcedThreatTimer;
         private string creatureId;
+        private static readonly List<CreatureAgentView> nearbyBuffer = new List<CreatureAgentView>(32);
 
         private void Awake()
         {
@@ -45,10 +48,18 @@ namespace ApexShift.Runtime.Creatures
                 return;
             }
 
-            CreaturePlayerAwarenessBehavior[] awareness = Object.FindObjectsByType<CreaturePlayerAwarenessBehavior>(FindObjectsInactive.Exclude);
-            foreach (CreaturePlayerAwarenessBehavior item in awareness)
+            WorldQueryRuntime query = WorldQueryRuntime.Active;
+            if (query == null || query.GetCreaturesInRadius(position, radius, nearbyBuffer) == 0)
             {
-                if (item == null || Vector3.Distance(position, item.transform.position) > radius)
+                return;
+            }
+
+            for (int i = 0; i < nearbyBuffer.Count; i++)
+            {
+                CreaturePlayerAwarenessBehavior item = nearbyBuffer[i] != null
+                    ? nearbyBuffer[i].CachedAwareness
+                    : null;
+                if (item == null)
                 {
                     continue;
                 }
@@ -249,7 +260,7 @@ namespace ApexShift.Runtime.Creatures
 
         private void ResolvePlayer()
         {
-            player = PlayerPresenceRuntime.ResolveFallback();
+            player = PlayerPresenceRuntime.ActiveTransform;
         }
 
         private string ResolveCreatureId()

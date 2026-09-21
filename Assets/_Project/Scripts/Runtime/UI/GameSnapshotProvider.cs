@@ -31,9 +31,11 @@ namespace ApexShift.Runtime.UI.Snapshots
         private float refreshTimer;
         private float smoothedFps;
         private GameSnapshot lastSnapshot = GameSnapshot.Empty;
+        private EcosystemRuntime ecosystemRuntime;
+        private BuildingRegistry buildingRegistry;
         public GameSnapshot LastSnapshot => lastSnapshot;
         public event Action<GameSnapshot> SnapshotUpdated;
-        private void Awake() { ResolveReferences(); CaptureNow(); }
+        private void Awake() { CaptureNow(); }
         private void Update()
         {
             UpdateFps();
@@ -41,9 +43,22 @@ namespace ApexShift.Runtime.UI.Snapshots
             refreshTimer -= Time.unscaledDeltaTime;
             if (refreshTimer <= 0f) { refreshTimer = Mathf.Max(0.1f, refreshIntervalSeconds); CaptureNow(); }
         }
+        public void Configure(WorldGeneratorRuntime generator, PlayerInventoryRuntime inventory,
+            PlayerSurvivalRuntime survival, Transform player, DayNightRuntime dayNight,
+            EcosystemRuntime ecosystem, BuildingRegistry buildings)
+        {
+            worldGenerator = generator;
+            playerInventory = inventory;
+            playerSurvival = survival;
+            playerTransform = player;
+            dayNightRuntime = dayNight;
+            ecosystemRuntime = ecosystem;
+            buildingRegistry = buildings;
+            CaptureNow();
+        }
+
         public GameSnapshot CaptureNow()
         {
-            ResolveReferences();
             InventorySnapshot inventory = InventorySnapshot.FromInventory(playerInventory != null ? playerInventory.Inventory : null);
             SurvivalSnapshot survival = playerSurvival != null ? SurvivalSnapshot.FromStats(playerSurvival.Stats, playerSurvival.ConditionText, playerSurvival.CanSprint, playerSurvival.IsSprinting) : SurvivalSnapshot.Empty;
             WorldDebugSnapshot world = CaptureWorldDebugSnapshot();
@@ -54,8 +69,8 @@ namespace ApexShift.Runtime.UI.Snapshots
         }
         private WorldDebugSnapshot CaptureWorldDebugSnapshot()
         {
-            Transform player = ResolvePlayerTransform();
-            EcosystemRuntime ecosystem = EcosystemRuntime.Instance;
+            Transform player = playerTransform;
+            EcosystemRuntime ecosystem = ecosystemRuntime;
             int resourceCount = ResourceRegistry.ActiveResourceCount;
             int pickupCount = ItemPickupRegistry.PickupCount;
 
@@ -78,7 +93,7 @@ namespace ApexShift.Runtime.UI.Snapshots
                         continue;
                     }
 
-                    NavMeshAgent agent = creature.GetComponent<NavMeshAgent>();
+                    NavMeshAgent agent = creature.CachedNavMeshAgent;
                     if (agent != null)
                     {
                         navTotal++;
@@ -88,7 +103,7 @@ namespace ApexShift.Runtime.UI.Snapshots
                         }
                     }
 
-                    CreatureNeedsRuntime need = creature.GetComponent<CreatureNeedsRuntime>();
+                    CreatureNeedsRuntime need = creature.CachedNeeds;
                     if (need != null && need.State.IsHungry)
                     {
                         hungryCreatures++;
@@ -96,7 +111,7 @@ namespace ApexShift.Runtime.UI.Snapshots
                 }
             }
 
-            BuildingRegistry registry = BuildingRegistry.Active;
+            BuildingRegistry registry = buildingRegistry;
             int storageContainers = registry != null ? registry.Structures.Count(structure => structure != null && structure.StorageContainer != null) : 0;
             int fireSources = FireSourceRegistry.SourceCount;
             int activeFireSources = FireSourceRegistry.ActiveSourceCount;
@@ -104,24 +119,6 @@ namespace ApexShift.Runtime.UI.Snapshots
             int discoveredLandmarks = LandmarkRegistry.DiscoveredCount;
             string[] recentEvents = GameEventBus.GetRecentEventLines(8);
             return new WorldDebugSnapshot(worldGenerator != null ? worldGenerator.Seed : 0, player != null ? player.position : Vector3.zero, player != null, resourceCount, creatureCount, foodCount, plantFood, meatFood, navOnMesh, Mathf.Max(0, navTotal - navOnMesh), hungryCreatures, storageContainers, pickupCount, fireSources, activeFireSources, landmarkCount, discoveredLandmarks, smoothedFps, Time.realtimeSinceStartup, recentEvents);
-        }
-        private void ResolveReferences()
-        {
-            if (worldGenerator == null) worldGenerator = UnityEngine.Object.FindAnyObjectByType<WorldGeneratorRuntime>();
-            if (playerInventory == null) playerInventory = UnityEngine.Object.FindAnyObjectByType<PlayerInventoryRuntime>();
-            if (playerSurvival == null) playerSurvival = UnityEngine.Object.FindAnyObjectByType<PlayerSurvivalRuntime>();
-            if (dayNightRuntime == null) dayNightRuntime = UnityEngine.Object.FindAnyObjectByType<DayNightRuntime>();
-            ResolvePlayerTransform();
-        }
-        private Transform ResolvePlayerTransform()
-        {
-            if (playerTransform != null && playerTransform.gameObject.activeInHierarchy) return playerTransform;
-            if (playerSurvival != null) { playerTransform = playerSurvival.transform; return playerTransform; }
-            GameObject player = GameObject.Find("Player");
-            if (player != null) { playerTransform = player.transform; return playerTransform; }
-            IsometricPlayerController controller = UnityEngine.Object.FindAnyObjectByType<IsometricPlayerController>();
-            if (controller != null) playerTransform = controller.transform;
-            return playerTransform;
         }
         private void UpdateFps()
         {

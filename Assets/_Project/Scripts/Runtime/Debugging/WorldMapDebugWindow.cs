@@ -22,6 +22,8 @@ namespace ApexShift.Runtime.Debugging
         private float refreshTimer;
         private GameSnapshotProvider snapshotProvider;
 
+        public void SetSnapshotProvider(GameSnapshotProvider provider) => snapshotProvider = provider;
+
         private void Update()
         {
             if (!GameSessionState.IsGameplayActive)
@@ -47,9 +49,8 @@ namespace ApexShift.Runtime.Debugging
             }
 
             refreshTimer -= Time.unscaledDeltaTime;
-            if (snapshotProvider == null || refreshTimer <= 0f)
+            if (refreshTimer <= 0f)
             {
-                snapshotProvider = Object.FindAnyObjectByType<GameSnapshotProvider>();
                 refreshTimer = Mathf.Max(0.1f, refreshIntervalSeconds);
             }
 

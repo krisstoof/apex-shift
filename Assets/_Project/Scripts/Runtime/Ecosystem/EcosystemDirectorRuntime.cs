@@ -247,8 +247,10 @@ namespace ApexShift.Runtime.Ecosystem
 
         private void AdvanceResourceRegrowth(int days)
         {
-            foreach (ResourceNodeView resourceNode in Object.FindObjectsByType<ResourceNodeView>())
+            IReadOnlyList<ResourceNodeView> registeredResources = ResourceRegistry.Resources;
+            for (int i = 0; i < registeredResources.Count; i++)
             {
+                ResourceNodeView resourceNode = registeredResources[i];
                 if (resourceNode != null)
                 {
                     resourceNode.AdvanceGrowthDays(days);

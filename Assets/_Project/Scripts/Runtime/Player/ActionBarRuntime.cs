@@ -29,6 +29,7 @@ namespace ApexShift.Runtime.Player
         private readonly string[] assignedItemIds = new string[9];
         private readonly List<SlotView> slotViews = new List<SlotView>();
         private GameObject uiRoot;
+        private Transform uiParent;
         private Canvas canvas;
         private Font font;
         private readonly Dictionary<string, Sprite> iconCache = new Dictionary<string, Sprite>(StringComparer.OrdinalIgnoreCase);
@@ -45,23 +46,6 @@ namespace ApexShift.Runtime.Player
             Active = this;
             font = UnityEngine.Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             EnsureEventSystem();
-            
-            // Destroy all existing ActionBarUI instances
-            GameObject[] allObjects = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include);
-            foreach (GameObject go in allObjects)
-            {
-                if (go != null && go.name == "ActionBarUI")
-                {
-                    if (Application.isPlaying)
-                    {
-                        Destroy(go);
-                    }
-                    else
-                    {
-                        DestroyImmediate(go);
-                    }
-                }
-            }
             
             BuildIfNeeded();
             Refresh();
@@ -154,6 +138,15 @@ namespace ApexShift.Runtime.Player
             UnsubscribeFromInput();
             inputReader = reader;
             SubscribeToInput();
+        }
+
+        public void SetUiParent(Transform parent)
+        {
+            uiParent = parent;
+            if (uiRoot != null && uiParent != null && uiRoot.transform.parent != uiParent)
+            {
+                uiRoot.transform.SetParent(uiParent, false);
+            }
         }
 
         public bool TryAssignItemAtScreenPosition(string itemId, Vector2 screenPosition)
@@ -298,25 +291,12 @@ namespace ApexShift.Runtime.Player
                 return;
             }
 
-            // Only destroy if we're starting fresh (uiRoot is null)
-            if (uiRoot == null)
-            {
-                GameObject[] allObjects = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include);
-                foreach (GameObject go in allObjects)
-                {
-                    if (go != null && go.name == "ActionBarUI")
-                    {
-                        DestroyImmediate(go);
-                    }
-                }
-            }
-
             uiBuilt = true;
 
             if (uiRoot == null)
             {
                 uiRoot = new GameObject("ActionBarUI", typeof(RectTransform));
-                uiRoot.transform.SetParent(null, false);
+                uiRoot.transform.SetParent(uiParent != null ? uiParent : transform, false);
                 uiRoot.hideFlags = HideFlags.None;
             }
 
@@ -552,32 +532,6 @@ namespace ApexShift.Runtime.Player
             GameObject eventSystem = new GameObject("EventSystem");
             eventSystem.AddComponent<EventSystem>();
             eventSystem.AddComponent<InputSystemUIInputModule>();
-        }
-
-        private void CleanupDuplicateActionBars()
-        {
-            GameObject[] allObjects = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include);
-            foreach (GameObject go in allObjects)
-            {
-                if (go == null || go.name != "ActionBarUI")
-                {
-                    continue;
-                }
-
-                if (uiRoot != null && go == uiRoot)
-                {
-                    continue;
-                }
-
-                if (Application.isPlaying)
-                {
-                    Destroy(go);
-                }
-                else
-                {
-                    DestroyImmediate(go);
-                }
-            }
         }
 
         private static void DestroyImmediateSafe(GameObject go)

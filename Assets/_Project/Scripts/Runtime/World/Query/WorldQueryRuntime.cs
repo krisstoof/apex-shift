@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ApexShift.Core.Ecosystem;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
@@ -150,6 +151,19 @@ namespace ApexShift.Runtime.World.Query
 
             prey = ecosystem.TryFindNearestPrey(position, hunterCreatureId, maxDistance);
             return prey != null;
+        }
+
+        public int GetCreaturesInRadius(Vector3 position, float radius, List<CreatureAgentView> results, string creatureId = null)
+        {
+            ResolveEcosystem();
+            return ecosystem != null ? ecosystem.GetCreaturesInRadius(position, radius, results, creatureId) : 0;
+        }
+
+        public bool TryFindNearestLivingCreature(Vector3 position, float maxDistance, out CreatureAgentView creature, string creatureId = null)
+        {
+            ResolveEcosystem();
+            creature = ecosystem != null ? ecosystem.TryFindNearestLivingCreature(position, maxDistance, creatureId) : null;
+            return creature != null;
         }
 
         public string GetBiomeIdForPosition(Vector3 position)

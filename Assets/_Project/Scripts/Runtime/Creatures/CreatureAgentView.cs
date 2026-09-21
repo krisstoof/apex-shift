@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.AI;
+using ApexShift.Runtime.Ecosystem;
 
 namespace ApexShift.Runtime.Creatures
 {
@@ -24,12 +26,26 @@ namespace ApexShift.Runtime.Creatures
     {
         [SerializeField] private string creatureId;
         private CreatureNavigationAdapter _navigationAdapter;
+        public CreatureHealthRuntime CachedHealth { get; private set; }
+        public CreatureNeedsRuntime CachedNeeds { get; private set; }
+        public NavMeshAgent CachedNavMeshAgent { get; private set; }
+        public CreaturePlayerAwarenessBehavior CachedAwareness { get; private set; }
 
         public string CreatureId => creatureId;
 
         private void Awake()
         {
             EnsureAdapter();
+            RefreshRuntimeReferences();
+        }
+
+        public void RefreshRuntimeReferences()
+        {
+            EnsureAdapter();
+            CachedHealth = GetComponent<CreatureHealthRuntime>();
+            CachedNeeds = GetComponent<CreatureNeedsRuntime>();
+            CachedNavMeshAgent = GetComponent<NavMeshAgent>();
+            CachedAwareness = GetComponent<CreaturePlayerAwarenessBehavior>();
         }
 
         private void EnsureAdapter()

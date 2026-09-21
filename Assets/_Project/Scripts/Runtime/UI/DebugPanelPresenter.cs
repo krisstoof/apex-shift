@@ -20,6 +20,7 @@ namespace ApexShift.Runtime.UI.Debugging
         [SerializeField] private float presentIntervalSeconds = 0.5f;
         private float presentTimer;
         private string cachedText = "Debug snapshot waiting...";
+        public void SetSnapshotProvider(GameSnapshotProvider provider) => snapshotProvider = provider;
         private void Awake() { ResolveReferences(); ApplyVisibility(); PresentNow(); }
         private void Update()
         {
@@ -31,7 +32,6 @@ namespace ApexShift.Runtime.UI.Debugging
         }
         public void PresentNow()
         {
-            ResolveReferences();
             GameSnapshot snapshot = snapshotProvider != null ? snapshotProvider.LastSnapshot : GameSnapshot.Empty;
             cachedText = FormatSnapshot(snapshot);
             if (debugText != null) debugText.text = cachedText;
@@ -84,7 +84,6 @@ namespace ApexShift.Runtime.UI.Debugging
         }
         private void ResolveReferences()
         {
-            if (snapshotProvider == null) snapshotProvider = Object.FindAnyObjectByType<GameSnapshotProvider>();
             if (debugText == null) debugText = GetComponentInChildren<Text>(true);
             if (panelRoot == null && debugText != null) panelRoot = debugText.transform.parent != null ? debugText.transform.parent.gameObject : debugText.gameObject;
             if (panelRoot == null) panelRoot = gameObject;

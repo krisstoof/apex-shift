@@ -1,4 +1,5 @@
 using UnityEngine;
+using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Config;
 
 namespace ApexShift.Runtime.Creatures
@@ -257,30 +258,7 @@ namespace ApexShift.Runtime.Creatures
                 return;
             }
 
-            GameObject playerObject = null;
-            try
-            {
-                playerObject = GameObject.FindWithTag("Player");
-            }
-            catch (UnityException)
-            {
-            }
-
-            if (playerObject == null)
-            {
-                playerObject = GameObject.Find("Player");
-            }
-
-            if (playerObject == null)
-            {
-                var controller = Object.FindAnyObjectByType<ApexShift.Runtime.Player.IsometricPlayerController>();
-                if (controller != null)
-                {
-                    playerObject = controller.gameObject;
-                }
-            }
-
-            _player = playerObject != null ? playerObject.transform : null;
+            _player = PlayerPresenceRuntime.ActiveTransform;
         }
 
         private static float HorizontalDistance(Vector3 a, Vector3 b)

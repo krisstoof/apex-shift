@@ -1595,6 +1595,7 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             if (actionBar == null) actionBar = player.AddComponent<ActionBarRuntime>();
             actionBar.SetInventoryRuntime(inventory);
             actionBar.SetInputReader(inputReader);
+            actionBar.SetUiParent(CurrentGenerationParent);
 
             PlayerHeldItemRuntime heldItem = player.GetComponent<PlayerHeldItemRuntime>();
             if (heldItem == null) heldItem = player.AddComponent<PlayerHeldItemRuntime>();
@@ -1617,6 +1618,8 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             combat.SetSurvivalRuntime(survival);
             combat.SetActionBarRuntime(actionBar);
             combat.SetAttackOrigin(player.transform);
+            combat.SetAimCamera(cameraGo != null ? cameraGo.GetComponent<UnityEngine.Camera>() : null);
+            combat.SetWorldQueryRuntime(_runtimeComposition != null ? _runtimeComposition.WorldQuery : null);
 
             PlayerCombatExperienceRuntime combatExperience = player.GetComponent<PlayerCombatExperienceRuntime>();
             if (combatExperience == null)
@@ -1737,6 +1740,18 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             buildingPlacement.SetBuildingParent(_buildingRoot);
             inputReader.SetBuildingPlacementRuntime(buildingPlacement);
             combatExperience.SetBuildingPlacementRuntime(buildingPlacement);
+
+            if (_runtimeComposition != null)
+            {
+                _runtimeComposition.SnapshotProvider?.Configure(
+                    this,
+                    inventory,
+                    survival,
+                    player.transform,
+                    _dayNightRuntime,
+                    _runtimeComposition.Ecosystem,
+                    _buildingRoot != null ? _buildingRoot.GetComponent<BuildingRegistry>() : null);
+            }
 
             BuildingSelectionPanelUI selectionPanel = player.GetComponent<BuildingSelectionPanelUI>();
             if (selectionPanel == null)
