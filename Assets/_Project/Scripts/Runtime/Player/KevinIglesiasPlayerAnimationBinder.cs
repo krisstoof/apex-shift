@@ -100,12 +100,12 @@ namespace ApexShift.Runtime.Player
                 Walk = FindBest(candidates, "Walk", "walk", "walking"),
                 Run = FindBest(candidates, "Run", "run", "running", "sprint", "jog"),
                 Swim = FindBest(candidates, "Swim", "swim", "swimming"),
-                SpearAttack = FindBest(candidates, "SpearAttack", "spear", "stab", "thrust", "pierce", "2hand", "twohand"),
-                BowAttack = FindBest(candidates, "BowAttack", "bow", "archery", "shoot", "arrow"),
-                AxeUse = FindBest(candidates, "AxeUse", "axe", "chop", "slash", "1hand", "onehand"),
+                SpearAttack = FindBest(candidates, "SpearAttack", "spear", "polearm", "stab", "thrust", "pierce", "2h", "2hand", "twohand"),
+                BowAttack = FindBest(candidates, "BowAttack", "bowshot", "release", "bow", "archery", "shoot", "arrow"),
+                AxeUse = FindBest(candidates, "AxeUse", "axe", "chop", "1h", "1hand", "onehand"),
                 PickaxeUse = FindBest(candidates, "PickaxeUse", "pickaxe", "pick", "mine", "mining"),
-                TorchUse = FindBest(candidates, "TorchUse", "torch", "use", "raise"),
-                Gather = FindBest(candidates, "Gather", "gather", "pickup", "pick_up", "interact", "use"),
+                TorchUse = FindBest(candidates, "TorchUse", "torch"),
+                Gather = FindBest(candidates, "Gather", "gather", "pickup", "pick_up", "gathering"),
                 Attack = FindBest(candidates, "Attack", "attack", "melee", "slash", "hit"),
                 Hurt = FindBest(candidates, "Hurt", "hurt", "hit", "damage"),
                 Death = FindBest(candidates, "Death", "death", "die", "dead")
@@ -139,15 +139,28 @@ namespace ApexShift.Runtime.Player
         {
             AnimationClip best = null;
             int bestScore = 0;
+            string normalizedRole = Normalize(role);
             for (int i = 0; i < candidates.Count; i++)
             {
                 Candidate candidate = candidates[i];
                 string haystack = Normalize(candidate.Path + " " + candidate.Clip.name);
-                int score = candidate.BaseScore + ScoreAliases(haystack, aliases);
-                if (haystack.Contains(Normalize(role))) score += 80;
+                int matchScore = ScoreAliases(haystack, aliases);
+                if (haystack.Contains(normalizedRole)) matchScore += 80;
+
+                // Require an actual keyword/role match. Without this guard, every
+                // candidate's generic "is this a player clip" base score alone was
+                // enough to win, so unrelated clips (e.g. Idle) could get selected
+                // for action roles like SpearAttack/AxeUse/TorchUse, causing the
+                // wrong (or no) animation to play when using held items.
+                if (matchScore <= 0)
+                {
+                    continue;
+                }
+
+                int score = matchScore * 10 + candidate.BaseScore;
                 if (score > bestScore) { bestScore = score; best = candidate.Clip; }
             }
-            return bestScore > 0 ? best : null;
+            return best;
         }
 
         private static int ScoreKevinClip(string path, string clipName)
@@ -165,6 +178,30 @@ namespace ApexShift.Runtime.Player
             if (normalized.Contains("varnak")) score -= 50;
             if (normalized.Contains("grazer")) score -= 50;
             if (normalized.Contains("prey")) score -= 50;
+
+            // "Masked Poses" clips (WeaponHold*, ObjectGrip*, HandsClosed*) are partial-body
+            // overlay poses meant to be blended additively on just the arms/hands while a
+            // separate full-body animation plays underneath - they were never authored with
+            // a sensible full-body lower body pose. If one of these wins a role search (e.g.
+            // "2h"/"polearm" aliases matching "WeaponHold2H01"/"WeaponHoldPolearm01") and gets
+            // played back as a standalone motion, the character's legs collapse into a
+            // crouched/seated-looking pose. Exclude them from candidacy entirely.
+            if (normalized.Contains("maskedposes") || normalized.Contains("weaponhold") ||
+                normalized.Contains("objectgrip") || normalized.Contains("handsclosed"))
+            {
+                score -= 200;
+            }
+
+            // "CombatIdle*"/"BowIdle*" clips are ready/stance poses (standing still holding
+            // the weapon), not attack actions - but they share the "1h"/"2h"/"polearm"/"bow"
+            // aliases with the real attack clips, so without this penalty they could tie with
+            // (or beat) the real swing/shot animation and get selected instead, making item
+            // use look like nothing happens (character just stands there in a ready stance).
+            if (normalized.Contains("combatidle") || normalized.Contains("bowidle"))
+            {
+                score -= 150;
+            }
+
             if (score <= 0 && ContainsAny(normalized, "idle", "walk", "run", "attack", "spear", "axe", "pickaxe", "bow", "gather", "mine", "chop")) score = 5;
             return score;
         }

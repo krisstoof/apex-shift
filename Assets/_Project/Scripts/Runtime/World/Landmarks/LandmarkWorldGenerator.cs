@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using ApexShift.Runtime.World.Topography;
 
@@ -77,8 +78,22 @@ namespace ApexShift.Runtime.World.Landmarks
             return (best != null ? best.WorldCenter : topography.GetSafePlayerSpawnPoint()) + Vector3.up * 0.08f;
         }
 
+        private static readonly Dictionary<LandmarkType, string> AuthoredModelNames = new Dictionary<LandmarkType, string>
+        {
+            { LandmarkType.OldTree, "old_tree_landmark" },
+            { LandmarkType.Ruins, "ruins_landmark" },
+            { LandmarkType.Pond, "pond_landmark" },
+            { LandmarkType.Camp, "camp_landmark" },
+            { LandmarkType.CavePlaceholder, "cave_landmark" }
+        };
+
         private static void BuildVisual(Transform root, LandmarkType type)
         {
+            if (TryBuildAuthoredVisual(root, type))
+            {
+                return;
+            }
+
             switch (type)
             {
                 case LandmarkType.OldTree:
@@ -107,6 +122,26 @@ namespace ApexShift.Runtime.World.Landmarks
                     AddSphere(root, "Marker", new Vector3(0f, 0.45f, 0f), Vector3.one * 0.6f, new Color(0.8f, 0.8f, 0.75f));
                     break;
             }
+        }
+
+        private static bool TryBuildAuthoredVisual(Transform root, LandmarkType type)
+        {
+            if (!AuthoredModelNames.TryGetValue(type, out string modelName))
+            {
+                return false;
+            }
+
+            GameObject prefab = UnityEngine.Resources.Load<GameObject>($"Landmarks/Models/{modelName}");
+            if (prefab == null)
+            {
+                return false;
+            }
+
+            GameObject model = UnityEngine.Object.Instantiate(prefab, root, false);
+            model.name = "AuthoredModel";
+            model.transform.localPosition = Vector3.zero;
+            model.transform.localRotation = Quaternion.identity;
+            return true;
         }
 
         private static GameObject AddCube(Transform parent, string name, Vector3 pos, Vector3 scale, Color color) => AddCube(parent, name, pos, Quaternion.identity, scale, color);

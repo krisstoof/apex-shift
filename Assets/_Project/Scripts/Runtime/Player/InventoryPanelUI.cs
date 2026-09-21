@@ -186,7 +186,7 @@ namespace ApexShift.Runtime.Player
             amountRt.offsetMax = new Vector2(-4f, -4f);
 
             slot.GetComponent<SlotClickHandler>().Bind(this, slotIndex, itemId, amount, icon, amountText);
-            slot.GetComponent<SlotDragHandler>().Bind(this, itemId, amount, icon);
+            slot.GetComponent<SlotDragHandler>().Bind(this, slotIndex, itemId, amount, icon);
         }
 
         private Sprite ResolveIcon(string itemId)
@@ -376,34 +376,40 @@ namespace ApexShift.Runtime.Player
             }
         }
 
-        private sealed class SlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+        private sealed class SlotDragHandler : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler
         {
+            private const float ClickDragToleranceSquared = 12f * 12f;
+
             private InventoryPanelUI owner;
+            private int sourceSlotIndex;
             private string itemId;
             private int amount;
             private Image sourceIcon;
             private CanvasGroup canvasGroup;
             private GameObject dragGhost;
+            private Vector2 pointerDownPosition;
+            private bool dropHandled;
 
-            public void Bind(InventoryPanelUI owner, string itemId, int amount, Image sourceIcon)
+            public void Bind(InventoryPanelUI owner, int slotIndex, string itemId, int amount, Image sourceIcon)
             {
                 this.owner = owner;
+                this.sourceSlotIndex = slotIndex;
                 this.itemId = itemId ?? string.Empty;
                 this.amount = amount;
                 this.sourceIcon = sourceIcon;
                 canvasGroup = GetComponent<CanvasGroup>();
             }
 
+            public void OnPointerDown(PointerEventData eventData)
+            {
+                pointerDownPosition = eventData != null ? eventData.position : Vector2.zero;
+                dropHandled = false;
+            }
+
             public void OnBeginDrag(PointerEventData eventData)
             {
                 if (owner == null || string.IsNullOrWhiteSpace(itemId) || amount <= 0 || sourceIcon == null || sourceIcon.sprite == null)
                 {
-                    return;
-                }
-
-                if (!ActionBarRuntime.IsActionBarItem(itemId))
-                {
-                    Debug.Log($"[Inventory] '{itemId}' is a resource/non-action item and cannot be assigned to action bar.");
                     return;
                 }
 
@@ -442,6 +448,53 @@ namespace ApexShift.Runtime.Player
                 }
             }
 
+            public void OnDrop(PointerEventData eventData)
+            {
+                if (owner == null || owner.inventoryRuntime == null || string.IsNullOrWhiteSpace(itemId) || eventData == null)
+                {
+                    return;
+                }
+
+                // Raycast to find what's under the drop position
+                List<RaycastResult> results = new List<RaycastResult>();
+                GraphicRaycaster raycaster = owner.GetComponentInParent<GraphicRaycaster>();
+                if (raycaster != null)
+                {
+                    raycaster.Raycast(eventData, results);
+                    
+                    // Find the first slot in the raycast results
+                    foreach (RaycastResult result in results)
+                    {
+                        SlotDragHandler targetHandler = result.gameObject.GetComponent<SlotDragHandler>();
+                        if (targetHandler != null && targetHandler != this)
+                        {
+                            // Found target slot - move or swap
+                            owner.inventoryRuntime.Inventory.MoveSlotItem(sourceSlotIndex, targetHandler.sourceSlotIndex);
+                            owner.Refresh();
+                            Debug.Log($"[Inventory] moved slot {sourceSlotIndex} to slot {targetHandler.sourceSlotIndex}");
+                            dropHandled = true;
+                            return;
+                        }
+                        
+                        // Check parent for slot in case we hit a child element
+                        Transform parent = result.gameObject.transform.parent;
+                        while (parent != null)
+                        {
+                            targetHandler = parent.GetComponent<SlotDragHandler>();
+                            if (targetHandler != null && targetHandler != this)
+                            {
+                                owner.inventoryRuntime.Inventory.MoveSlotItem(sourceSlotIndex, targetHandler.sourceSlotIndex);
+                                owner.Refresh();
+                                Debug.Log($"[Inventory] moved slot {sourceSlotIndex} to slot {targetHandler.sourceSlotIndex}");
+                                dropHandled = true;
+                                return;
+                            }
+                            parent = parent.parent;
+                        }
+                    }
+                }
+            }
+
             public void OnEndDrag(PointerEventData eventData)
             {
                 if (canvasGroup != null)
@@ -461,8 +514,29 @@ namespace ApexShift.Runtime.Player
                     return;
                 }
 
+                // The pointer barely moved (or didn't land on a valid drop target) -
+                // treat this as a plain click instead of a failed/aborted drag, so
+                // eating/dropping items still works even with tiny mouse jitter.
+                if (!dropHandled)
+                {
+                    float distanceSquared = (eventData.position - pointerDownPosition).sqrMagnitude;
+                    if (distanceSquared <= ClickDragToleranceSquared && owner != null && amount > 0)
+                    {
+                        if (eventData.button == PointerEventData.InputButton.Left)
+                        {
+                            owner.EatSlot(sourceSlotIndex);
+                        }
+                        else if (eventData.button == PointerEventData.InputButton.Right)
+                        {
+                            owner.DropItem(itemId, amount);
+                        }
+                        return;
+                    }
+                }
+
+                // If dropped outside inventory grid and it's an action bar item, assign to action bar
                 ActionBarRuntime actionBar = ActionBarRuntime.Active;
-                if (actionBar != null && actionBar.TryAssignItemAtScreenPosition(itemId, eventData.position))
+                if (actionBar != null && ActionBarRuntime.IsActionBarItem(itemId) && actionBar.TryAssignItemAtScreenPosition(itemId, eventData.position))
                 {
                     Debug.Log($"[Inventory] assigned {itemId} to action bar");
                 }

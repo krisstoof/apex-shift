@@ -701,6 +701,10 @@ namespace ApexShift.EditorTools.World
                 List<ScoredPrefab> found = new List<ScoredPrefab>();
                 HashSet<GameObject> seen = new HashSet<GameObject>();
 
+                // Bushcraft is the current vegetation source. Add it first so a rebuild
+                // cannot silently fall back to the legacy EmbersStorm low-poly set.
+                AddBushcraftModelsForRole(roleName, found, seen);
+
                 foreach (string exactName in GetManualOverrideNamesForRole(roleName))
                 {
                     string[] guids = AssetDatabase.FindAssets(exactName + " t:Prefab");
@@ -777,6 +781,44 @@ namespace ApexShift.EditorTools.World
                 }
 
                 return result;
+            }
+
+            private static void AddBushcraftModelsForRole(string roleName, List<ScoredPrefab> found, HashSet<GameObject> seen)
+            {
+                string[] modelNames = roleName switch
+                {
+                    nameof(VegetationRole.ConiferTree) => new[] { "conifer_tree", "conifer_tree_a", "conifer_tree_b", "conifer_tree_c", "conifer_tree_d", "conifer_sapling_a", "conifer_sapling_b", "conifer_sapling_c" },
+                    nameof(VegetationRole.LeafyTree) => new[] { "leafy_tree", "leafy_tree_a", "leafy_tree_b", "leafy_tree_c", "leafy_tree_d", "leafy_sapling_a", "leafy_sapling_b", "leafy_sapling_c" },
+                    nameof(VegetationRole.DryTree) => new[] { "dry_tree", "dry_tree_a", "dry_tree_b", "dry_tree_c", "dry_sapling_a", "dry_sapling_b" },
+                    nameof(VegetationRole.Rock) => new[] { "rock", "rock_cluster_small", "rock_cluster_large" },
+                    nameof(VegetationRole.GreenBush) => new[] { "green_bush", "green_bush_a", "green_bush_b", "green_bush_c", "green_bush_d", "forest_shrub_a", "forest_shrub_b", "forest_shrub_c" },
+                    nameof(VegetationRole.DryBush) => new[] { "dry_bush", "dry_bush_a", "dry_bush_b", "dry_bush_c", "dry_bush_d" },
+                    nameof(VegetationRole.BerryBush) => new[] { "berry_bush", "berry_bush_a", "berry_bush_b", "berry_bush_c", "berry_bush_d" },
+                    nameof(VegetationRole.GrassOrFlower) => new[] { "grass_or_flower", "herb_patch_a", "herb_patch_b", "mushroom_patch_a", "mushroom_patch_b", "reed_patch_a", "reed_patch_b", "tall_grass_clump_a", "tall_grass_clump_b", "tall_grass_clump_c", "wildflower_patch_a", "wildflower_patch_b", "wildflower_patch_c" },
+                    _ => Array.Empty<string>()
+                };
+
+                string[] roots =
+                {
+                    "Assets/_Project/Art/Bushcraft/Vegetation/Models",
+                    "Assets/_Project/Art/Bushcraft/WorldResources/Models"
+                };
+
+                foreach (string modelName in modelNames)
+                {
+                    foreach (string guid in AssetDatabase.FindAssets($"{modelName} t:Model", roots))
+                    {
+                        string path = AssetDatabase.GUIDToAssetPath(guid);
+                        GameObject model = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                        if (model == null || seen.Contains(model) || !Path.GetFileNameWithoutExtension(path).Equals(modelName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
+
+                        found.Add(new ScoredPrefab(model, int.MaxValue));
+                        seen.Add(model);
+                    }
+                }
             }
 
             internal static void LogManualVegetationOverrides()
@@ -2369,11 +2411,16 @@ namespace ApexShift.EditorTools.World
             countersProp.GetArrayElementAtIndex(2).objectReferenceValue = fiberCounter;
             so.ApplyModifiedProperties();
 
-            // Add EventSystem
-            GameObject es = new GameObject("EventSystem");
-            es.AddComponent<UnityEngine.EventSystems.EventSystem>();
-            es.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
-            es.transform.SetParent(uiGo.transform, false);
+            // Add EventSystem (only if the scene doesn't already have one - having more than one
+            // triggers Unity's "There are 2 event systems in the scene" warning at runtime).
+            UnityEngine.EventSystems.EventSystem existingEs = UnityEngine.Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>(FindObjectsInactive.Include);
+            if (existingEs == null)
+            {
+                GameObject es = new GameObject("EventSystem");
+                es.AddComponent<UnityEngine.EventSystems.EventSystem>();
+                es.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+                es.transform.SetParent(uiGo.transform, false);
+            }
 
             return uiGo;
         }

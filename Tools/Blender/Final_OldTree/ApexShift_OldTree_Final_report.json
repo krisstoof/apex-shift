@@ -1,0 +1,39 @@
+{
+  "asset": "ApexShift Old Tree",
+  "lods": [
+    {
+      "lod": 0,
+      "tris": 25084
+    },
+    {
+      "lod": 1,
+      "tris": 12039
+    },
+    {
+      "lod": 2,
+      "tris": 4514
+    }
+  ],
+  "exports": [
+    {
+      "lod": 0,
+      "tris": 25084,
+      "fbx": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\Final_OldTree\\ApexShift_OldTree_LOD0.fbx",
+      "obj": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\Final_OldTree\\ApexShift_OldTree_LOD0.obj"
+    },
+    {
+      "lod": 1,
+      "tris": 12039,
+      "fbx": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\Final_OldTree\\ApexShift_OldTree_LOD1.fbx",
+      "obj": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\Final_OldTree\\ApexShift_OldTree_LOD1.obj"
+    },
+    {
+      "lod": 2,
+      "tris": 4514,
+      "fbx": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\Final_OldTree\\ApexShift_OldTree_LOD2.fbx",
+      "obj": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\Final_OldTree\\ApexShift_OldTree_LOD2.obj"
+    }
+  ],
+  "render": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\Final_OldTree\\ApexShift_OldTree_Final_Render.png",
+  "trunk_material": "M_OldTree_Bark_Final"
+}

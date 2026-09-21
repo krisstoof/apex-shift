@@ -1,0 +1,18 @@
+[
+  {
+    "asset_id": "spear",
+    "category": "item",
+    "blend_path": "C:\\Users\\kriss\\apex-shift\\Tools\\ApexShift_Bushcraft_Output_v9_Smoke\\Source\\Blend\\spear_stylized.blend",
+    "fbx_path": "C:\\Users\\kriss\\apex-shift\\Tools\\ApexShift_Bushcraft_Output_v9_Smoke\\Items\\Models\\spear_stylized.fbx",
+    "obj_path": "C:\\Users\\kriss\\apex-shift\\Tools\\ApexShift_Bushcraft_Output_v9_Smoke\\Items\\Models\\spear_stylized.obj",
+    "preview_path": "C:\\Users\\kriss\\apex-shift\\Tools\\ApexShift_Bushcraft_Output_v9_Smoke\\Previews\\spear_stylized_preview.png",
+    "source_object_count": 2,
+    "joined_material_count": 4,
+    "bounds": [
+      0.3848,
+      0.1022,
+      1.7245
+    ],
+    "notes": "corrected stone spear with flatter flaked head and visible split-haft lashing | FAILED_BOUNDS required=(0.12, 0.12, 1.6) actual=(0.38, 0.1, 1.72)"
+  }
+]

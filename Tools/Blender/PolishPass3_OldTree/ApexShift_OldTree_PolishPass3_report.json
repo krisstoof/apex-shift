@@ -1,0 +1,30 @@
+{
+  "base_file": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\QualityPass_OldTree\\ApexShift_OldTree_QualityPass.blend",
+  "restart": false,
+  "changes": [
+    "compacted minor root tips",
+    "added four branch-following foliage masses",
+    "preserved trunk, branches and existing foliage"
+  ],
+  "exports": [
+    {
+      "lod": 0,
+      "tris": 28980,
+      "fbx": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\PolishPass3_OldTree\\ApexShift_OldTree_Polish3_LOD0.fbx",
+      "obj": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\PolishPass3_OldTree\\ApexShift_OldTree_Polish3_LOD0.obj"
+    },
+    {
+      "lod": 1,
+      "tris": 12457,
+      "fbx": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\PolishPass3_OldTree\\ApexShift_OldTree_Polish3_LOD1.fbx",
+      "obj": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\PolishPass3_OldTree\\ApexShift_OldTree_Polish3_LOD1.obj"
+    },
+    {
+      "lod": 2,
+      "tris": 4633,
+      "fbx": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\PolishPass3_OldTree\\ApexShift_OldTree_Polish3_LOD2.fbx",
+      "obj": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\PolishPass3_OldTree\\ApexShift_OldTree_Polish3_LOD2.obj"
+    }
+  ],
+  "render": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\PolishPass3_OldTree\\ApexShift_OldTree_PolishPass3_Render.png"
+}

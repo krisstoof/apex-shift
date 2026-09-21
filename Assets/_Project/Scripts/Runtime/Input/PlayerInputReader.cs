@@ -153,6 +153,12 @@ namespace ApexShift.Runtime.PlayerInput
             if (pauseAction != null) pauseAction.performed -= OnPause;
         }
 
+        private void OnDestroy()
+        {
+            // Ensure all input callbacks are cleaned up when object is destroyed
+            OnDisable();
+        }
+
         private void CacheActions()
         {
             if (inputActions == null)
@@ -190,38 +196,125 @@ namespace ApexShift.Runtime.PlayerInput
                    && pauseAction != null;
         }
 
-        private void OnMove(InputAction.CallbackContext context) => Move = context.ReadValue<Vector2>();
-        private void OnLook(InputAction.CallbackContext context)
+        private void OnMove(InputAction.CallbackContext context)
         {
-            LookScreenPosition = context.ReadValue<Vector2>();
-            if (Time.frameCount % 60 == 0)
+            try
             {
-                Debug.Log($"[Input] Look Position: {LookScreenPosition}");
+                Move = context.ReadValue<Vector2>();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[Input] Error in OnMove callback: {ex.Message}", this);
             }
         }
-        private void OnSprint(InputAction.CallbackContext context) => SprintHeld = context.ReadValueAsButton();
+
+        private void OnLook(InputAction.CallbackContext context)
+        {
+            try
+            {
+                LookScreenPosition = context.ReadValue<Vector2>();
+                if (Time.frameCount % 60 == 0)
+                {
+                    Debug.Log($"[Input] Look Position: {LookScreenPosition}");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[Input] Error in OnLook callback: {ex.Message}", this);
+            }
+        }
+
+        private void OnSprint(InputAction.CallbackContext context)
+        {
+            try
+            {
+                SprintHeld = context.ReadValueAsButton();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[Input] Error in OnSprint callback: {ex.Message}", this);
+            }
+        }
+
         private void OnInteract(InputAction.CallbackContext context)
         {
-            Debug.Log("[Input] Interact Key Pressed!");
-            InteractPressed?.Invoke();
+            try
+            {
+                Debug.Log("[Input] Interact Key Pressed!");
+                InteractPressed?.Invoke();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[Input] Error in OnInteract callback: {ex.Message}", this);
+            }
         }
         private void OnAttack(InputAction.CallbackContext context)
         {
-            if (buildingPlacementRuntime == null)
+            try
             {
-                buildingPlacementRuntime = GetComponent<ApexShift.Runtime.Buildings.BuildingPlacementRuntime>();
-            }
+                if (buildingPlacementRuntime == null)
+                {
+                    buildingPlacementRuntime = GetComponent<ApexShift.Runtime.Buildings.BuildingPlacementRuntime>();
+                }
 
-            if (buildingPlacementRuntime != null && buildingPlacementRuntime.BlocksPlayerPrimaryAction)
+                if (buildingPlacementRuntime != null && buildingPlacementRuntime.BlocksPlayerPrimaryAction)
+                {
+                    return;
+                }
+
+                AttackPressed?.Invoke();
+            }
+            catch (System.Exception ex)
             {
-                return;
+                Debug.LogError($"[Input] Error in OnAttack callback: {ex.Message}", this);
             }
-
-            AttackPressed?.Invoke();
         }
-        private void OnOpenInventory(InputAction.CallbackContext context) => OpenInventoryPressed?.Invoke();
-        private void OnOpenCrafting(InputAction.CallbackContext context) => OpenCraftingPressed?.Invoke();
-        private void OnToggleMap(InputAction.CallbackContext context) => ToggleMapPressed?.Invoke();
-        private void OnPause(InputAction.CallbackContext context) => PausePressed?.Invoke();
+        private void OnOpenInventory(InputAction.CallbackContext context)
+        {
+            try
+            {
+                OpenInventoryPressed?.Invoke();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[Input] Error in OnOpenInventory callback: {ex.Message}", this);
+            }
+        }
+
+        private void OnOpenCrafting(InputAction.CallbackContext context)
+        {
+            try
+            {
+                OpenCraftingPressed?.Invoke();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[Input] Error in OnOpenCrafting callback: {ex.Message}", this);
+            }
+        }
+
+        private void OnToggleMap(InputAction.CallbackContext context)
+        {
+            try
+            {
+                ToggleMapPressed?.Invoke();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[Input] Error in OnToggleMap callback: {ex.Message}", this);
+            }
+        }
+
+        private void OnPause(InputAction.CallbackContext context)
+        {
+            try
+            {
+                PausePressed?.Invoke();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[Input] Error in OnPause callback: {ex.Message}", this);
+            }
+        }
     }
 }

@@ -1652,11 +1652,20 @@ if (renderer != null)
             {
                 string normalizedResolved = resolvedKind.Trim().ToLowerInvariant();
                 
-                // Check resourcePrefabs list - prefab names should include the resolved kind
-                // For example: name a small tree prefab "tree_small" or "small_tree_variant"
-                var sizedMatches = resourcePrefabs
-                    .Where(p => p != null && p.Prefab != null && 
+                // Search both the legacy inspector list and the shared registry. New
+                // generated vegetation is stored in PrefabRegistry, so looking only at
+                // the legacy list silently makes those variants invisible to generation.
+                IEnumerable<ResourcePrefabEntry> candidates = resourcePrefabs ?? new List<ResourcePrefabEntry>();
+                if (prefabRegistry != null && prefabRegistry.ResourcePrefabs != null)
+                {
+                    candidates = candidates.Concat(prefabRegistry.ResourcePrefabs);
+                }
+
+                var sizedMatches = candidates
+                    .Where(p => p != null && p.Prefab != null &&
                            p.Prefab.name.ToLowerInvariant().Contains(normalizedResolved))
+                    .GroupBy(p => p.Prefab)
+                    .Select(group => group.First())
                     .ToList();
 
                 if (sizedMatches.Count > 0)
@@ -1953,6 +1962,17 @@ if (renderer != null)
             animDriver.SetInputReader(inputReader);
 
             Animator anim = player.GetComponentInChildren<Animator>();
+            if (anim == null)
+            {
+                // If no animator found in hierarchy, try to get or add it to the root player
+                anim = player.GetComponent<Animator>();
+                if (anim == null)
+                {
+                    anim = player.AddComponent<Animator>();
+                    Debug.Log("[WorldGen] Added missing Animator component to player");
+                }
+            }
+
             if (anim != null)
             {
                 if (playerAnimatorController != null)
@@ -1967,7 +1987,7 @@ if (renderer != null)
             }
             else
             {
-                Debug.LogWarning("[WorldGen] No Animator component found on player!");
+                Debug.LogWarning("[WorldGen] Could not ensure Animator component on player!");
             }
 
             KevinIglesiasPlayerAnimationBinder animationBinder = player.GetComponent<KevinIglesiasPlayerAnimationBinder>();

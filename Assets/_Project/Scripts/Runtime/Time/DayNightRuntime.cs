@@ -10,7 +10,7 @@ namespace ApexShift.Runtime.DayNight
     public sealed class DayNightRuntime : MonoBehaviour
     {
         [Header("Cycle")]
-        [SerializeField] private float dayLengthSeconds = 120f;
+        [SerializeField] private float dayLengthSeconds = 240f;
         [SerializeField] private int startingDay = 1;
         [SerializeField, Range(0f, 1f)] private float startingTimeOfDay01 = 0.25f;
         [SerializeField] private float nightStartHour = DayNightState.DefaultNightStartHour;
@@ -49,6 +49,8 @@ namespace ApexShift.Runtime.DayNight
         public float NightAmount { get { EnsureState(); return state.NightAmount; } }
         public string PhaseLabel { get { EnsureState(); return state.PhaseLabel; } }
         public float DayLengthSeconds => Mathf.Max(1f, dayLengthSeconds);
+        public float MorningStartHour => morningStartHour;
+        public float NightStartHour => nightStartHour;
         public DayNightState StateSnapshot { get { EnsureState(); return state.Clone(); } }
 
         private void Awake()

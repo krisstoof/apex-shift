@@ -81,7 +81,7 @@ namespace ApexShift.Runtime.World.Generation
             }
 
             string normalized = buildingId.Trim().ToLowerInvariant();
-            string path = $"Assets/_Project/Art/Bushcraft/Placeables/Models/{normalized}_stylized.obj";
+            string path = $"Assets/_Project/Art/Bushcraft/Placeables/Models/{normalized}.fbx";
             prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(path);
             return prefab != null;
         }

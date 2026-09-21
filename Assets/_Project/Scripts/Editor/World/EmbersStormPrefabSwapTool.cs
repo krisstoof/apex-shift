@@ -17,6 +17,10 @@ namespace ApexShift.Editor.World
         [MenuItem("Tools/Apex Shift/World/Generate EmbersStorm Wrappers")]
         public static void GenerateWrappers()
         {
+            Debug.LogWarning("Generate EmbersStorm Wrappers is obsolete. Use Apex Shift/Art/Bushcraft/Bind Existing Imported Assets To PrefabRegistry instead.");
+            return;
+
+#pragma warning disable CS0162
             EnsureFolder("Assets/_Project/Prefabs");
             EnsureFolder("Assets/_Project/Prefabs/World");
             EnsureFolder("Assets/_Project/Prefabs/World/Resources");
@@ -44,6 +48,7 @@ namespace ApexShift.Editor.World
             AssetDatabase.Refresh();
 
             Debug.Log($"EmbersStorm prefab wrappers generated and registry updated at {RegistryPath}");
+#pragma warning restore CS0162
         }
 
         private static void AddWrappersForKind(SerializedProperty resourcesProp, VegetationSpawnKind kind, string sourceFolder, string wrapperPrefix)
