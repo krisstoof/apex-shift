@@ -29,7 +29,7 @@ WorldRuntimeOwner
 
 `WorldGenerationContext` represents one generation session. `WorldRuntimeOwner` owns its `GenerationRoot` and clears only that hierarchy, so unrelated objects named `Player`, `TerrainRoot`, or `Main Camera` are not removed.
 
-The coordinator runs deterministic stages in order: preparation, roots, composition, terrain/biomes, landmarks, resources, player, camera, NavMesh, creatures, and finalization. Unity's random state is restored after every generation.
+The coordinator runs deterministic stages in order: preparation, roots, composition, terrain/biomes, resources, landmarks, player, camera, NavMesh, creatures, and finalization. Unity's random state is restored after every generation.
 
 The main facade still provides:
 - **Compatibility API**: `Generate()`, `ClearGeneratedWorld()`, `SetSeed()`, `SetBiomeCatalog()`, `GetLastResult()`, `OnGenerationComplete`.
@@ -61,4 +61,4 @@ Spawned resources are automatically configured with `ResourceNodeView`.
 ## Debugging
 
 - **Gizmos**: The generator draws colored wireframes in the Scene view to visualize biome region bounds.
-- **OnGUI**: A debug overlay displays the current seed and generated counts (biomes and resources) in the Game view.
+- **WorldGenerationDebugPresenter**: A debug overlay displays the current seed and generated counts (biomes and resources) in the Game view without coupling diagnostics to the generator facade.

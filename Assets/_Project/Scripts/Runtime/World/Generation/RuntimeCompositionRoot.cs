@@ -28,6 +28,7 @@ namespace ApexShift.Runtime.World.Generation
             Create<GameSnapshotProvider>("GameSnapshotProvider", parent);
             Create<DebugPanelPresenter>("DebugPanelPresenter", parent);
             Create<WorldMapDebugWindow>("WorldMapDebugWindow", parent);
+            Create<WorldGenerationDebugPresenter>("WorldGenerationDebugPresenter", parent);
         }
 
         private static T Create<T>(string name, Transform parent) where T : Component

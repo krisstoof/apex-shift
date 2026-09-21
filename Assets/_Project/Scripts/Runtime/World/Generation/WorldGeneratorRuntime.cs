@@ -170,8 +170,11 @@ namespace ApexShift.Runtime.World.Generation
                     EnsureBuildingRegistry();
                 }),
                 new WorldGenerationStage("GenerateTerrainAndBiomes", context => GenerateIslandLayout()),
+                // Resources historically spawned while regions were being added. They
+                // now have a real stage, while remaining before landmarks to preserve
+                // the previous seeded random sequence.
+                new WorldGenerationStage("SpawnResources", context => SpawnAllRegionResources()),
                 new WorldGenerationStage("GenerateLandmarks", context => GenerateLandmarks()),
-                new WorldGenerationStage("SpawnResources", context => { }),
                 new WorldGenerationStage("SpawnPlayer", context =>
                 {
                     context.Player = CreatePlayer();
@@ -200,6 +203,9 @@ namespace ApexShift.Runtime.World.Generation
                 new WorldGenerationStage("FinalizeGeneration", context =>
                 {
                     context.Result = _lastResult;
+                    WorldGenerationDebugPresenter debugPresenter = CurrentGenerationParent
+                        .GetComponentInChildren<WorldGenerationDebugPresenter>(true);
+                    if (debugPresenter != null) debugPresenter.Configure(_lastResult, _islandTopography);
                     Debug.Log($"World Generation Complete. Biomes: {_lastResult.BiomeCount}, Resources: {_lastResult.ResourceCount}, Seed: {seed}");
                     OnGenerationComplete?.Invoke(context.Player);
                 }));
@@ -591,6 +597,14 @@ namespace ApexShift.Runtime.World.Generation
                 // Player/creature/resource spawning relies on these centers.
                 _allTileCenters.Add(regionCenter);
 
+            }
+        }
+
+        private void SpawnAllRegionResources()
+        {
+            foreach (GeneratedBiomeRegion region in _lastResult.Regions)
+            {
+                if (region?.Biome == null || region.Biome.BiomeId == "water") continue;
                 SpawnRegionResources(region);
             }
         }
@@ -1143,17 +1157,8 @@ namespace ApexShift.Runtime.World.Generation
             GameObject prefab = GetPrefabForResolvedKind(resolvedKind, entry.Kind);
             GameObject instance;
 
-            if (prefab != null)
-            {
-                float yaw = Random.Range(0f, 360f);
-                instance = _worldSpawnService.Spawn(prefab, position, yaw, _resourceRoot);
-            }
-            else
-            {
-                instance = CreateFallbackPrimitive(entry.Kind, position);
-                instance.transform.SetParent(_resourceRoot);
-                instance.transform.rotation = Quaternion.Euler(0, Random.Range(0, 360), 0);
-            }
+            float yaw = Random.Range(0f, 360f);
+            instance = _worldSpawnService.SpawnResource(prefab, position, yaw, _resourceRoot, entry.Kind);
 
             instance.name = $"{resolvedKind}_{_lastResult.ResourceCount}";
 
@@ -1305,16 +1310,8 @@ namespace ApexShift.Runtime.World.Generation
             GameObject prefab = GetPrefabForCreature(entry.CreatureId);
             GameObject instance;
 
-            if (prefab != null)
-            {
-                float yaw = Random.Range(0f, 360f);
-                instance = _worldSpawnService.Spawn(prefab, position, yaw, _creatureRoot);
-            }
-            else
-            {
-                instance = CreateCreatureFallback(entry.CreatureId, position);
-                instance.transform.SetParent(_creatureRoot);
-            }
+            float yaw = Random.Range(0f, 360f);
+            instance = _worldSpawnService.SpawnCreature(prefab, entry.CreatureId, position, yaw, _creatureRoot);
 
             instance.name = $"Creature_{entry.CreatureId}";
             if (NormalizeCreatureId(entry.CreatureId) == "varnak")
@@ -1407,66 +1404,6 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             ecosystem?.RegisterCreature(view);
         }
 
-        private GameObject CreateCreatureFallback(string creatureId, Vector3 position)
-        {
-            GameObject root = new GameObject($"Creature_{creatureId}_Fallback");
-            root.transform.position = position;
-
-            GameObject visual;
-            Color color = Color.white;
-            Vector3 scale = Vector3.one;
-
-            switch (creatureId)
-            {
-                case "small_prey":
-                    visual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                    color = new Color(0.9f, 0.9f, 0.9f); // Brighter small sphere
-                    scale = Vector3.one * 0.5f;
-                    break;
-                case "grazer":
-                    visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                    color = new Color(0.6f, 0.4f, 0.2f); // Lighter brown
-                    scale = new Vector3(0.8f, 0.8f, 0.8f);
-                    break;
-                case "varnak":
-                    visual = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-                    color = Color.red;
-                    scale = new Vector3(1.0f, 1.2f, 1.0f);
-                    break;
-                default:
-                    visual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                    color = Color.magenta;
-                    break;
-            }
-
-            visual.transform.SetParent(root.transform);
-            visual.transform.localPosition = Vector3.up * (scale.y * 0.5f);
-            visual.transform.localScale = scale;
-
-            Collider coll = visual.GetComponent<Collider>();
-            if (coll != null)
-            {
-                if (Application.isPlaying) Destroy(coll);
-                else DestroyImmediate(coll);
-            }
-            
-            Renderer renderer = visual.GetComponent<Renderer>();
-if (renderer != null)
-            {
-                Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                if (mat.shader == null) mat.shader = Shader.Find("Standard");
-                
-                if (mat.HasProperty("_BaseColor"))
-                    mat.SetColor("_BaseColor", color);
-                else
-                    mat.color = color;
-                
-                renderer.sharedMaterial = mat;
-            }
-
-            return root;
-        }
-
         private void ConfigureCreatureMovement(string creatureId, CreatureNavigationAdapter adapter, CreatureWanderBehavior wander)
         {
             switch (creatureId)
@@ -1541,73 +1478,6 @@ if (renderer != null)
             }
 
             return null;
-        }
-
-        private GameObject CreateFallbackPrimitive(VegetationSpawnKind kind, Vector3 position)
-        {
-            GameObject go;
-            Color color = Color.green;
-
-            switch (kind)
-            {
-                case VegetationSpawnKind.ConiferTree:
-                    go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                    go.transform.position = position + Vector3.up * 1f;
-                    go.transform.localScale = new Vector3(0.5f, 1f, 0.5f);
-                    color = new Color(0.06f, 0.24f, 0.10f);
-                    break;
-                case VegetationSpawnKind.LeafyTree:
-                    go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                    go.transform.position = position + Vector3.up * 1f;
-                    go.transform.localScale = new Vector3(0.5f, 1f, 0.5f);
-                    color = new Color(0.16f, 0.46f, 0.16f);
-                    break;
-                case VegetationSpawnKind.DryTree:
-                    go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                    go.transform.position = position + Vector3.up * 1f;
-                    go.transform.localScale = new Vector3(0.5f, 1f, 0.5f);
-                    color = new Color(0.52f, 0.34f, 0.16f);
-                    break;
-                case VegetationSpawnKind.Rock:
-                    go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    go.transform.position = position + Vector3.up * 0.5f;
-                    color = new Color(0.45f, 0.45f, 0.42f);
-                    break;
-                case VegetationSpawnKind.BerryBush:
-                    go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                    go.transform.position = position + Vector3.up * 0.25f;
-                    go.transform.localScale = Vector3.one * 0.6f;
-                    color = new Color(0.20f, 0.50f, 0.20f);
-                    break;
-                case VegetationSpawnKind.DryBush:
-                    go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                    go.transform.position = position + Vector3.up * 0.25f;
-                    go.transform.localScale = Vector3.one * 0.5f;
-                    color = new Color(0.48f, 0.33f, 0.14f);
-                    break;
-                default:
-                    go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                    go.transform.position = position + Vector3.up * 0.25f;
-                    go.transform.localScale = Vector3.one * 0.5f;
-                    color = new Color(0.35f, 0.65f, 0.22f);
-                    break;
-            }
-
-            Renderer renderer = go.GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                Material mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                if (mat.shader == null) mat.shader = Shader.Find("Standard");
-                
-                if (mat.HasProperty("_BaseColor"))
-                    mat.SetColor("_BaseColor", color);
-                else
-                    mat.color = color;
-                
-                renderer.sharedMaterial = mat;
-            }
-
-            return go;
         }
 
         private GameObject CreatePlayer()
@@ -1966,12 +1836,6 @@ if (renderer != null)
             }
         }
 
-        private GameObject CreateCamera(Transform target)
-        {
-            if (_runtimeCamera == null) _runtimeCamera = new RuntimeCameraSetup();
-            return _runtimeCamera.Create(CurrentGenerationParent, target, useCinemachine);
-        }
-
         private void CreateWorldBounds()
         {
             GameObject go = new GameObject("WorldBounds");
@@ -1999,7 +1863,9 @@ if (renderer != null)
             }
         }
 
-        private void OnGUI()
+        // Runtime diagnostics are rendered by WorldGenerationDebugPresenter.
+#if false
+        private void LegacyDebugOverlayDisabled()
         {
             if (_lastResult == null) return;
 
@@ -2022,5 +1888,6 @@ if (renderer != null)
             }
             GUILayout.EndArea();
         }
+#endif
 }
 }
