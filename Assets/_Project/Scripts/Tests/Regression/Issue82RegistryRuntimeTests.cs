@@ -47,7 +47,7 @@ namespace ApexShift.Tests.Regression
         }
 
         [Test]
-        public void CombatRegistryFallbackTargetsRegisteredCreatureOnly()
+        public void CombatRegistryMembershipDoesNotReplaceMissingHitbox()
         {
             GameObject ecosystemObject = new GameObject("Issue82_CombatEcosystem");
             GameObject playerObject = new GameObject("Issue82_Player");
@@ -56,7 +56,7 @@ namespace ApexShift.Tests.Regression
             try
             {
                 EcosystemRuntime ecosystem = ecosystemObject.AddComponent<EcosystemRuntime>();
-                WorldQueryRuntime query = ecosystemObject.AddComponent<WorldQueryRuntime>();
+                ecosystemObject.AddComponent<WorldQueryRuntime>();
                 registeredObject = CreateCreature("small_prey", false);
                 registeredObject.transform.position = new Vector3(0f, 0f, 1.1f);
                 CreatureAgentView registered = registeredObject.GetComponent<CreatureAgentView>();
@@ -70,12 +70,10 @@ namespace ApexShift.Tests.Regression
                 playerObject.transform.forward = Vector3.forward;
                 PlayerCombatRuntime combat = playerObject.AddComponent<PlayerCombatRuntime>();
                 combat.SetAttackOrigin(playerObject.transform);
-                combat.SetWorldQueryRuntime(query);
-
                 CreatureHealthRuntime registeredHealth = registeredObject.GetComponent<CreatureHealthRuntime>();
                 float before = registeredHealth.CurrentHealth;
-                Assert.IsTrue(combat.TriggerPrimaryAttack(), "The registry fallback should find a target without a collider.");
-                Assert.Less(registeredHealth.CurrentHealth, before);
+                Assert.IsFalse(combat.TriggerPrimaryAttack(), "A registered creature without an authoritative hitbox must not be selected.");
+                Assert.AreEqual(before, registeredHealth.CurrentHealth);
                 Assert.AreEqual(registeredHealth.MaxHealth, unregisteredObject.GetComponent<CreatureHealthRuntime>().CurrentHealth,
                     "An unregistered creature must not be selected by the registry fallback.");
             }

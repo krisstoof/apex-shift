@@ -13,6 +13,8 @@ namespace ApexShift.Runtime.Creatures
 
         private void Awake() => EnsureHitbox();
 
+        public Collider CombatCollider => hitbox;
+
         public void Configure(string creatureId)
         {
             string id = string.IsNullOrWhiteSpace(creatureId) ? string.Empty : creatureId.Trim().ToLowerInvariant();

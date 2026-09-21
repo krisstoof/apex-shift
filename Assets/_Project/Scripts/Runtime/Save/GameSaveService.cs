@@ -468,6 +468,9 @@ namespace ApexShift.Runtime.Save
             CreatureHealthRuntime health = go.AddComponent<CreatureHealthRuntime>();
             health.Configure(creatureId);
 
+            CreatureHitboxRuntime hitbox = go.AddComponent<CreatureHitboxRuntime>();
+            hitbox.Configure(creatureId);
+
             go.AddComponent<CreatureSimulationLodRuntime>();
             go.AddComponent<CreatureBehaviorBrain>();
             go.AddComponent<CreatureBehaviorRuntime>();

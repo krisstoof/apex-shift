@@ -1,4 +1,5 @@
 using ApexShift.Runtime.Events;
+using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Player;
 using NUnit.Framework;
 using UnityEngine;
@@ -31,14 +32,14 @@ namespace ApexShift.Tests.Regression
                 player.AddComponent<PlayerCombatRuntime>().SetAttackOrigin(player.transform);
 
                 target.transform.position = new Vector3(0f, 0f, 1.1f);
-                target.AddComponent<CapsuleCollider>();
-                target.AddComponent<ApexShift.Runtime.Creatures.CreatureHealthRuntime>().Configure("small_prey");
+                target.AddComponent<CreatureHealthRuntime>().Configure("small_prey");
+                target.AddComponent<CreatureHitboxRuntime>().Configure("small_prey");
 
                 PlayerCombatRuntime combat = player.GetComponent<PlayerCombatRuntime>();
                 bool attacked = combat.TriggerPrimaryAttack();
 
                 Assert.IsTrue(attacked);
-                Assert.Less(target.GetComponent<ApexShift.Runtime.Creatures.CreatureHealthRuntime>().CurrentHealth, target.GetComponent<ApexShift.Runtime.Creatures.CreatureHealthRuntime>().MaxHealth);
+                Assert.Less(target.GetComponent<CreatureHealthRuntime>().CurrentHealth, target.GetComponent<CreatureHealthRuntime>().MaxHealth);
                 Assert.AreEqual(1, GameEventBus.RecentEventCount);
                 Assert.AreEqual(GameplayEventKind.PlayerMeleeHit, GameEventBus.RecentEvents[0].kind);
             }

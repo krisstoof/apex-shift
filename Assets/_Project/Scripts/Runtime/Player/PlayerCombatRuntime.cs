@@ -1,7 +1,6 @@
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Audio;
-using ApexShift.Runtime.World.Query;
 using ApexShift.Runtime.PlayerInput;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -27,8 +26,6 @@ namespace ApexShift.Runtime.Player
         [SerializeField] private float spearRange = 2.25f;
         [SerializeField] private float unarmedRange = 1.35f;
         [SerializeField] private float attackArcDegrees = 145f;
-        [SerializeField] private float meleeForgivenessRange = 0.85f;
-        [SerializeField] private float prototypeGuaranteedMeleeHitRange = 4.75f;
         [SerializeField] private float meleeCooldownSeconds = 0.55f;
         [SerializeField] private float meleeStaminaCost = 8f;
 
@@ -54,9 +51,8 @@ namespace ApexShift.Runtime.Player
         [SerializeField] private float audioVolume = 0.9f;
 
         private float cooldownRemaining;
-        private WorldQueryRuntime worldQuery;
         private UnityEngine.Camera aimCamera;
-        private readonly System.Collections.Generic.List<CreatureAgentView> creatureQueryBuffer = new System.Collections.Generic.List<CreatureAgentView>(32);
+        private readonly MeleeTargetSelector meleeTargetSelector = new MeleeTargetSelector(32);
 
         public bool IsOnCooldown => cooldownRemaining > 0f;
 
@@ -127,7 +123,6 @@ namespace ApexShift.Runtime.Player
         public void SetActionBarRuntime(ActionBarRuntime runtime) => actionBarRuntime = runtime;
         public void SetAttackOrigin(Transform origin) => attackOrigin = origin != null ? origin : transform;
         public void SetAimCamera(UnityEngine.Camera camera) => aimCamera = camera;
-        public void SetWorldQueryRuntime(WorldQueryRuntime query) => worldQuery = query;
 
         public bool TriggerPrimaryAttack()
         {
@@ -249,130 +244,9 @@ namespace ApexShift.Runtime.Player
 
         private CreatureHealthRuntime FindMeleeTarget(Vector3 origin, Vector3 direction, float range, float arcDegrees)
         {
-            float effectiveRange = Mathf.Max(0.5f, range + meleeForgivenessRange);
-            Collider[] hits = Physics.OverlapSphere(transform.position + Vector3.up * 0.75f, effectiveRange, creatureMask, QueryTriggerInteraction.Collide);
-            CreatureHealthRuntime best = null;
-            CreatureHealthRuntime nearestFallback = null;
-            float bestScore = float.PositiveInfinity;
-            float nearestScore = float.PositiveInfinity;
-            float halfArc = Mathf.Max(1f, arcDegrees * 0.5f);
-
-            foreach (Collider hit in hits)
-            {
-                if (hit == null)
-                {
-                    continue;
-                }
-
-                CreatureHealthRuntime health = hit.GetComponentInParent<CreatureHealthRuntime>();
-                ConsiderMeleeTarget(health, origin, direction, effectiveRange, halfArc, ref best, ref bestScore, ref nearestFallback, ref nearestScore);
-            }
-
-            if (best == null && nearestFallback == null)
-            {
-                if (worldQuery != null)
-                {
-                    worldQuery.GetCreaturesInRadius(origin, effectiveRange, creatureQueryBuffer);
-                    for (int i = 0; i < creatureQueryBuffer.Count; i++)
-                    {
-                        CreatureHealthRuntime health = creatureQueryBuffer[i] != null ? creatureQueryBuffer[i].CachedHealth : null;
-                        ConsiderMeleeTarget(health, origin, direction, effectiveRange, halfArc, ref best, ref bestScore, ref nearestFallback, ref nearestScore);
-                    }
-                }
-            }
-
-            if (best != null) return best;
-            if (nearestFallback != null) return nearestFallback;
-
-            // Last-resort prototype fallback: if the player is physically close to a creature,
-            // deal damage even when collider/layer/aim arc checks missed. This prevents the
-            // most frustrating failure mode: slash effect appears but the animal cannot be harmed.
-            return FindNearestCreatureByDistance(Mathf.Max(range, prototypeGuaranteedMeleeHitRange));
-        }
-
-        private CreatureHealthRuntime FindNearestCreatureByDistance(float range)
-        {
-            CreatureHealthRuntime best = null;
-            float bestDistance = float.PositiveInfinity;
-            Vector3 playerPos = transform.position;
-
-            if (worldQuery == null)
-            {
-                return null;
-            }
-
-            worldQuery.GetCreaturesInRadius(playerPos, range, creatureQueryBuffer);
-            for (int i = 0; i < creatureQueryBuffer.Count; i++)
-            {
-                CreatureHealthRuntime health = creatureQueryBuffer[i] != null ? creatureQueryBuffer[i].CachedHealth : null;
-                if (health == null || health.IsDead || health.transform == transform || health.transform.IsChildOf(transform)) continue;
-
-                Vector3 delta = health.transform.position - playerPos;
-                delta.y = 0f;
-                float distance = delta.magnitude;
-                if (distance <= range && distance < bestDistance)
-                {
-                    best = health;
-                    bestDistance = distance;
-                }
-            }
-
-            return best;
-        }
-
-        private void ConsiderMeleeTarget(CreatureHealthRuntime health, Vector3 origin, Vector3 direction, float range, float halfArc, ref CreatureHealthRuntime best, ref float bestScore, ref CreatureHealthRuntime nearestFallback, ref float nearestScore)
-        {
-            if (health == null || health.IsDead)
-            {
-                return;
-            }
-
-            if (health.transform == transform || health.transform.IsChildOf(transform))
-            {
-                return;
-            }
-
-            Vector3 targetPoint = health.transform.position + Vector3.up * 0.55f;
-            Vector3 toTarget = targetPoint - origin;
-            toTarget.y = 0f;
-            float distance = toTarget.magnitude;
-            if (distance > range)
-            {
-                return;
-            }
-
-            if (distance < nearestScore)
-            {
-                nearestFallback = health;
-                nearestScore = distance;
-            }
-
-            if (distance <= Mathf.Max(0.45f, meleeForgivenessRange))
-            {
-                float closeScore = distance * 0.2f;
-                if (closeScore < bestScore)
-                {
-                    best = health;
-                    bestScore = closeScore;
-                }
-                return;
-            }
-
-            if (toTarget.sqrMagnitude <= 0.001f)
-            {
-                return;
-            }
-
-            float angle = Vector3.Angle(direction, toTarget.normalized);
-            if (angle <= halfArc)
-            {
-                float score = angle * 0.7f + distance * 0.3f;
-                if (score < bestScore)
-                {
-                    best = health;
-                    bestScore = score;
-                }
-            }
+            return meleeTargetSelector.TrySelectTarget(origin, direction, range, arcDegrees, creatureMask, transform, out MeleeTargetSelector.Result result)
+                ? result.Health
+                : null;
         }
 
         private Vector3 ResolveAimDirection()
@@ -473,7 +347,6 @@ namespace ApexShift.Runtime.Player
             if (inventoryRuntime == null) inventoryRuntime = GetComponent<PlayerInventoryRuntime>();
             if (survivalRuntime == null) survivalRuntime = GetComponent<PlayerSurvivalRuntime>();
             if (attackOrigin == null) attackOrigin = transform;
-            if (worldQuery == null) worldQuery = WorldQueryRuntime.Active;
         }
 
         private void ApplyCombatAudioProfile()

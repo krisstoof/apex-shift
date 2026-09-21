@@ -1619,7 +1619,6 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             combat.SetActionBarRuntime(actionBar);
             combat.SetAttackOrigin(player.transform);
             combat.SetAimCamera(cameraGo != null ? cameraGo.GetComponent<UnityEngine.Camera>() : null);
-            combat.SetWorldQueryRuntime(_runtimeComposition != null ? _runtimeComposition.WorldQuery : null);
 
             PlayerCombatExperienceRuntime combatExperience = player.GetComponent<PlayerCombatExperienceRuntime>();
             if (combatExperience == null)
