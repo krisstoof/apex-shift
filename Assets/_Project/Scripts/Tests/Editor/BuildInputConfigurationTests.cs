@@ -1,5 +1,7 @@
 using System.Linq;
 using ApexShift.Runtime.PlayerInput;
+using ApexShift.Runtime.Player;
+using ApexShift.Runtime.World.Generation;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -11,18 +13,92 @@ namespace ApexShift.Tests.Editor
 {
     public sealed class BuildInputConfigurationTests
     {
-        private const string CanonicalScenePath = "Assets/_Project/Scenes/Game.unity";
+        private const string ProductionScenePath = "Assets/_Project/Scenes/RuntimeWorld.unity";
         private const string CanonicalInputPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
         private const string LegacyInputPath = "Assets/InputSystem_Actions.inputactions";
         private const string InputActionsConfigKey = "com.unity.input.settings.actions";
 
         [Test]
-        public void BuildSettings_ContainsOnlyCanonicalGameScene()
+        public void BuildSettings_ContainsOnlyProductionWorldScene()
         {
             EditorBuildSettingsScene[] enabledScenes = EditorBuildSettings.scenes.Where(scene => scene.enabled).ToArray();
 
-            Assert.That(enabledScenes.Select(scene => scene.path), Is.EqualTo(new[] { CanonicalScenePath }));
+            Assert.That(enabledScenes.Select(scene => scene.path), Is.EqualTo(new[] { ProductionScenePath }));
             Assert.That(enabledScenes.Any(scene => scene.path == "Assets/Scenes/SampleScene.unity"), Is.False);
+        }
+
+        [Test]
+        public void ProductionScene_ContainsAuthoredBiomeWorldAndGameplayFlow()
+        {
+            Scene previousScene = SceneManager.GetActiveScene();
+            string previousPath = previousScene.IsValid() ? previousScene.path : string.Empty;
+            Scene productionScene = EditorSceneManager.OpenScene(ProductionScenePath, OpenSceneMode.Single);
+
+            try
+            {
+                Transform[] transforms = productionScene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
+                    .ToArray();
+                foreach (string objectName in new[] { "RuntimeWorldGenerator", "Player", "Main Camera", "PlayerFollowCamera", "UI", "TerrainRoot", "ResourceRoot", "CreatureRoot" })
+                {
+                    Assert.That(transforms.Any(transform => transform.name == objectName), Is.True,
+                        $"Production scene is missing gameplay/world object: {objectName}");
+                }
+
+                Assert.That(productionScene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<WorldGeneratorRuntime>(true)).Any(), Is.True);
+                Assert.That(productionScene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<MonoBehaviour>(true))
+                    .Any(component => component != null && component.GetType().Name == "ResourceNodeView"), Is.True);
+                Assert.That(productionScene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<MonoBehaviour>(true))
+                    .Any(component => component != null && component.GetType().Name == "CreatureAgentView"), Is.True);
+
+                foreach (string populatedRoot in new[] { "TerrainRoot", "ResourceRoot", "CreatureRoot" })
+                {
+                    Transform root = transforms.First(transform => transform.name == populatedRoot);
+                    Assert.That(root.childCount, Is.GreaterThan(0), $"Production scene root is empty: {populatedRoot}");
+                }
+            }
+            finally
+            {
+                if (!string.IsNullOrEmpty(previousPath) && previousPath != ProductionScenePath)
+                {
+                    EditorSceneManager.OpenScene(previousPath, OpenSceneMode.Single);
+                }
+            }
+        }
+
+        [Test]
+        public void ProductionScene_PlayerAnimationHasControllerAndLocomotionTransitions()
+        {
+            Scene previousScene = SceneManager.GetActiveScene();
+            string previousPath = previousScene.IsValid() ? previousScene.path : string.Empty;
+            Scene productionScene = EditorSceneManager.OpenScene(ProductionScenePath, OpenSceneMode.Single);
+
+            try
+            {
+                GameObject player = productionScene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
+                    .First(transform => transform.name == "Player")
+                    .gameObject;
+                Animator animator = player.GetComponentInChildren<Animator>(true);
+                PlayerAnimationDriver driver = player.GetComponentInChildren<PlayerAnimationDriver>(true);
+
+                Assert.That(animator, Is.Not.Null);
+                Assert.That(driver, Is.Not.Null);
+                Assert.That(animator.runtimeAnimatorController, Is.Not.Null);
+                RuntimeAnimatorController prototype = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(
+                    "Assets/_Project/Animations/Player/PlayerPrototype.controller");
+                Assert.That(animator.runtimeAnimatorController, Is.SameAs(prototype));
+                Assert.That(animator.runtimeAnimatorController.animationClips.Any(clip => clip.name == "Idle"), Is.True);
+                Assert.That(animator.runtimeAnimatorController.animationClips.Any(clip => clip.name == "Walking"), Is.True);
+                Assert.That(animator.runtimeAnimatorController.animationClips.Any(clip => clip.name == "Running"), Is.True);
+            }
+            finally
+            {
+                if (!string.IsNullOrEmpty(previousPath) && previousPath != ProductionScenePath)
+                {
+                    EditorSceneManager.OpenScene(previousPath, OpenSceneMode.Single);
+                }
+            }
         }
 
         [Test]
@@ -65,11 +141,11 @@ namespace ApexShift.Tests.Editor
         }
 
         [Test]
-        public void GameScene_PlayerInputReaderUsesCanonicalInputActions()
+        public void ProductionScene_PlayerInputReaderUsesCanonicalInputActions()
         {
             Scene previousScene = SceneManager.GetActiveScene();
             string previousPath = previousScene.IsValid() ? previousScene.path : string.Empty;
-            Scene gameScene = EditorSceneManager.OpenScene(CanonicalScenePath, OpenSceneMode.Single);
+            Scene gameScene = EditorSceneManager.OpenScene(ProductionScenePath, OpenSceneMode.Single);
 
             try
             {
@@ -77,7 +153,7 @@ namespace ApexShift.Tests.Editor
                 PlayerInputReader reader = Resources.FindObjectsOfTypeAll<PlayerInputReader>()
                     .FirstOrDefault(candidate => candidate.gameObject.scene == gameScene);
 
-                Assert.That(reader, Is.Not.Null, "Game.unity does not contain a PlayerInputReader.");
+                Assert.That(reader, Is.Not.Null, "RuntimeWorld.unity does not contain a PlayerInputReader.");
                 SerializedObject serializedReader = new SerializedObject(reader);
                 SerializedProperty inputActions = serializedReader.FindProperty("inputActions");
 
@@ -86,7 +162,7 @@ namespace ApexShift.Tests.Editor
             }
             finally
             {
-                if (!string.IsNullOrEmpty(previousPath) && previousPath != CanonicalScenePath)
+                if (!string.IsNullOrEmpty(previousPath) && previousPath != ProductionScenePath)
                 {
                     EditorSceneManager.OpenScene(previousPath, OpenSceneMode.Single);
                 }

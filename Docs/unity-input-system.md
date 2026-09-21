@@ -7,8 +7,11 @@ Canonical InputActionAsset:
 `Gameplay` is the only gameplay action map. `PlayerInputReader` does not
 fall back to the legacy `Player` map or the removed template asset. The
 global `InputSystem.actions` configuration points to this same canonical
-asset, and `Assets/_Project/Scenes/Game.unity` is the canonical production
-and startup scene.
+asset, and `Assets/_Project/Scenes/RuntimeWorld.unity` is the canonical
+production/startup scene. It contains the runtime world generator, authored
+terrain/resources, creatures, player, camera and survival HUD. `Game.unity`
+remains the base playable prototype scene used by `ApexShiftSceneBuilder`, not
+the production world build scene.
 
 Project-owned runtime content is kept under `_Project`: audio is in
 `Assets/_Project/Audio`, placeable models in
@@ -96,7 +99,7 @@ This keeps player feedback visible even when final animation clips are not ready
 ## Manual test
 
 1. Open Unity.
-2. Open `Assets/_Project/Scenes/Game.unity`.
+2. Open `Assets/_Project/Scenes/RuntimeWorld.unity`.
 3. Press Play.
 4. Move with WASD.
 5. Move with arrow keys.
