@@ -13,4 +13,4 @@ Migration notes:
 - [Intentional deviations from Godot parity](Docs/migration/intentional-deviations.md)
 - [Intentional deviations one-pager](Docs/migration/intentional-deviations-one-pager.md)
 - [Unity project foundation](Docs/unity-project-foundation.md)
-- [Original Unity migration design document](apex_shift_unity_migration_documentation.md)
+- [Original Unity migration design document](Docs/migration/unity-migration-design-history.md)
