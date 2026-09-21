@@ -17,7 +17,7 @@ namespace ApexShift.Runtime.Audio
         private void AutoAssign()
         {
             string basePath = "Assets/_Project/Audio/SFX/combat/";
-            string packagedBasePath = "Assets/apex_shift_audio_assets_v3_realistic/apex_shift_audio_assets_v3_realistic/Assets/_Project/Audio/SFX/combat/";
+            string packagedBasePath = "Assets/_Project/Audio/SFX/combat/";
             trapTriggerVoiceClips = LoadClips(new[]
             {
                 basePath + "traps/trap_snap_real_01.wav",

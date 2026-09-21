@@ -154,7 +154,7 @@ namespace ApexShift.Runtime.Buildings
 #if UNITY_EDITOR
         private void AutoAssignTrapAudio()
         {
-            string basePath = "Assets/apex_shift_audio_assets_v3_realistic/apex_shift_audio_assets_v3_realistic/Assets/_Project/Audio/SFX/combat/";
+            string basePath = "Assets/_Project/Audio/SFX/combat/";
             triggerVoiceClips = LoadClips(new[]
             {
                 basePath + "traps/trap_snap_real_01.wav",

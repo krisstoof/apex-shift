@@ -44,7 +44,7 @@ namespace ApexShift.Runtime.UI
 
         private void AutoAssignMenuAudio()
         {
-            string basePath = "Assets/apex_shift_audio_assets_v3_realistic/apex_shift_audio_assets_v3_realistic/Assets/_Project/Audio/SFX/ui/";
+            string basePath = "Assets/_Project/Audio/SFX/ui/";
             uiClickClips = LoadClips(new[] { basePath + "ui_click_real_01.wav" }, uiClickClips);
             uiInvalidClips = LoadClips(new[] { basePath + "ui_invalid_real_01.wav" }, uiInvalidClips);
         }

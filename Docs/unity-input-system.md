@@ -10,6 +10,12 @@ global `InputSystem.actions` configuration points to this same canonical
 asset, and `Assets/_Project/Scenes/Game.unity` is the canonical production
 and startup scene.
 
+Project-owned runtime content is kept under `_Project`: audio is in
+`Assets/_Project/Audio`, placeable models in
+`Assets/_Project/Art/Placeables/Models`, and icon resources in
+`Assets/_Project/Resources/ApexShift2D/Art/Icons`. The old Unity template and
+import wrappers are not runtime asset locations.
+
 ## Gameplay actions
 
 - Move

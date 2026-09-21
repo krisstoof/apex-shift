@@ -5,6 +5,7 @@
     "ApexShift.Runtime",
     "ApexShift.Infrastructure",
     "Assembly-CSharp-Editor",
+    "ApexShift.Editor",
     "Unity.InputSystem"
   ],
   "optionalUnityReferences": [

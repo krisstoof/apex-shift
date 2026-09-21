@@ -22,7 +22,7 @@ namespace ApexShift.Runtime.Audio
 
         private void AutoAssign()
         {
-            string basePath = "Assets/apex_shift_audio_assets_v3_realistic/apex_shift_audio_assets_v3_realistic/Assets/_Project/Audio/SFX/combat/";
+            string basePath = "Assets/_Project/Audio/SFX/combat/";
             attackVoiceClips = LoadClips(new[]
             {
                 basePath + "player/spear_swing_real_01.wav",

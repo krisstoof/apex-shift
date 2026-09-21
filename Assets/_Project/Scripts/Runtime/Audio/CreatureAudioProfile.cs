@@ -21,7 +21,7 @@ namespace ApexShift.Runtime.Audio
 
         private void AutoAssign()
         {
-            string basePath = "Assets/apex_shift_audio_assets_v3_realistic/apex_shift_audio_assets_v3_realistic/Assets/_Project/Audio/SFX/creatures/";
+            string basePath = "Assets/_Project/Audio/SFX/creatures/";
             smallPreyAlarmClips = LoadClips(new[]
             {
                 basePath + "small_prey/small_prey_alarm_real_01.wav",
@@ -65,15 +65,15 @@ namespace ApexShift.Runtime.Audio
 
             footstepClips = LoadClips(new[]
             {
-                "Assets/apex_shift_audio_assets_v3_realistic/apex_shift_audio_assets_v3_realistic/Assets/_Project/Audio/SFX/footsteps/footstep_grass_real_01.wav",
-                "Assets/apex_shift_audio_assets_v3_realistic/apex_shift_audio_assets_v3_realistic/Assets/_Project/Audio/SFX/footsteps/footstep_grass_real_02.wav",
-                "Assets/apex_shift_audio_assets_v3_realistic/apex_shift_audio_assets_v3_realistic/Assets/_Project/Audio/SFX/footsteps/footstep_grass_real_03.wav",
-                "Assets/apex_shift_audio_assets_v3_realistic/apex_shift_audio_assets_v3_realistic/Assets/_Project/Audio/SFX/footsteps/footstep_dirt_real_01.wav",
-                "Assets/apex_shift_audio_assets_v3_realistic/apex_shift_audio_assets_v3_realistic/Assets/_Project/Audio/SFX/footsteps/footstep_dirt_real_02.wav",
-                "Assets/apex_shift_audio_assets_v3_realistic/apex_shift_audio_assets_v3_realistic/Assets/_Project/Audio/SFX/footsteps/footstep_dirt_real_03.wav",
-                "Assets/apex_shift_audio_assets_v3_realistic/apex_shift_audio_assets_v3_realistic/Assets/_Project/Audio/SFX/footsteps/footstep_stone_real_01.wav",
-                "Assets/apex_shift_audio_assets_v3_realistic/apex_shift_audio_assets_v3_realistic/Assets/_Project/Audio/SFX/footsteps/footstep_stone_real_02.wav",
-                "Assets/apex_shift_audio_assets_v3_realistic/apex_shift_audio_assets_v3_realistic/Assets/_Project/Audio/SFX/footsteps/footstep_stone_real_03.wav"
+                "Assets/_Project/Audio/SFX/footsteps/footstep_grass_real_01.wav",
+                "Assets/_Project/Audio/SFX/footsteps/footstep_grass_real_02.wav",
+                "Assets/_Project/Audio/SFX/footsteps/footstep_grass_real_03.wav",
+                "Assets/_Project/Audio/SFX/footsteps/footstep_dirt_real_01.wav",
+                "Assets/_Project/Audio/SFX/footsteps/footstep_dirt_real_02.wav",
+                "Assets/_Project/Audio/SFX/footsteps/footstep_dirt_real_03.wav",
+                "Assets/_Project/Audio/SFX/footsteps/footstep_stone_real_01.wav",
+                "Assets/_Project/Audio/SFX/footsteps/footstep_stone_real_02.wav",
+                "Assets/_Project/Audio/SFX/footsteps/footstep_stone_real_03.wav"
             }, footstepClips);
         }
 

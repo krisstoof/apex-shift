@@ -11,7 +11,7 @@ namespace ApexShift.Editor.World
     public static class PrefabRegistryBuildingBinder
     {
         private const string RegistryAssetPath = "Assets/_Project/Data/World/PrefabRegistry.asset";
-        private const string ModelsRoot = "Assets/apex_shift_placeables_3d_v2_unity_obj/Assets/_Project/Art/Placeables/Models";
+        private const string ModelsRoot = "Assets/_Project/Art/Placeables/Models";
 
         [MenuItem("Apex Shift/World/Refresh Building Prefabs")]
         public static void RefreshBuildingPrefabs()
