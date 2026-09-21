@@ -50,6 +50,9 @@ namespace ApexShift.Tests.Regression
 
                 Assert.NotNull(generator.GetLastResult(), "WorldGeneratorRuntime did not produce a generation result.");
                 Assert.GreaterOrEqual(generator.GetLastResult().BiomeCount, 0, "World generation returned an invalid biome count.");
+                WorldRuntimeOwner generationOwner = generator.GetComponent<WorldRuntimeOwner>();
+                Transform firstGenerationRoot = generationOwner != null ? generationOwner.GenerationRoot : null;
+                Assert.IsNotNull(firstGenerationRoot, "Generated world has no owned GenerationRoot.");
 
                 // 3. Spawn player.
                 GameObject player = FindRuntimePlayer();
@@ -67,6 +70,7 @@ namespace ApexShift.Tests.Regression
 
                 // 4. Spawn resource in a deterministic location.
                 ResourceNodeView resource = SpawnSmokeResourceNear(player.transform.position);
+                resource.transform.SetParent(firstGenerationRoot, true);
                 yield return null;
 
                 Assert.That(ResourceRegistry.Resources, Does.Contain(resource), "Spawned resource did not register in ResourceRegistry.");
@@ -98,6 +102,7 @@ namespace ApexShift.Tests.Regression
 
                 CreatureAgentView creature = EnsureCreatureRuntime(ecosystem, player.transform.position + Vector3.right * 6f);
                 Assert.NotNull(creature, "Could not create or find a creature runtime.");
+                creature.transform.SetParent(firstGenerationRoot, true);
                 Assert.That(ecosystem.Creatures, Does.Contain(creature), "Creature runtime is not registered in EcosystemRuntime.");
 
                 // 9. Ecosystem tick.
@@ -162,6 +167,32 @@ namespace ApexShift.Tests.Regression
                 Assert.NotNull(
                     FindRuntimePlayer(),
                     "After load, player lookup fallback still failed even though the runtime regenerated successfully.");
+
+                Transform loadedGenerationRoot = generator.GetComponent<WorldRuntimeOwner>()?.GenerationRoot;
+                Assert.IsNotNull(loadedGenerationRoot, "After load, the current GenerationRoot is missing.");
+                Assert.IsTrue(firstGenerationRoot == null, "The previous GenerationRoot survived save/load regeneration.");
+                foreach (ResourceNodeView currentResource in ResourceRegistry.Resources)
+                {
+                    Assert.IsNotNull(currentResource);
+                    Assert.IsTrue(currentResource.transform.IsChildOf(loadedGenerationRoot),
+                        "ResourceRegistry contains a resource from outside the current GenerationRoot.");
+                }
+
+                EcosystemRuntime currentEcosystem = EcosystemRuntime.Instance;
+                foreach (CreatureAgentView currentCreature in currentEcosystem.Creatures)
+                {
+                    Assert.IsNotNull(currentCreature);
+                    Assert.IsTrue(currentCreature.transform.IsChildOf(loadedGenerationRoot),
+                        "EcosystemRuntime contains a creature from outside the current GenerationRoot.");
+                }
+
+                WorldQueryRuntime currentQuery = loadedGenerationRoot.GetComponentInChildren<WorldQueryRuntime>(true);
+                Assert.IsNotNull(currentQuery);
+                if (currentQuery.TryFindNearestLivingCreature(loadedPlayer.transform.position, 100f, out CreatureAgentView queriedCreature))
+                {
+                    Assert.IsTrue(queriedCreature.transform.IsChildOf(loadedGenerationRoot),
+                        "WorldQueryRuntime returned a creature from the previous generation.");
+                }
             }
             finally
             {

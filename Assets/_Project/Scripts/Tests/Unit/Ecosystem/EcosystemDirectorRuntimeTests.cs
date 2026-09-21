@@ -49,6 +49,7 @@ namespace ApexShift.Tests.Unit.Ecosystem
                 ResourceNodeView node = resourceObject.AddComponent<ResourceNodeView>();
                 node.ConfigureDefault("berry_bush");
                 node.LoadState(0, depleted: true, growthProgress: 0f);
+                resourceObject.SetActive(false);
 
                 director.TickDay(1);
                 Assert.IsTrue(node.State.IsDepleted);
