@@ -34,7 +34,6 @@ namespace ApexShift.Tests.Regression
                 Assert.IsFalse(query.TryFindNearestCreatureById(Vector3.zero, "small_prey", 10f, out _));
 
                 creatureObject.SetActive(true);
-                ecosystem.RegisterCreature(view);
                 Assert.That(ecosystem.Creatures, Does.Contain(view));
 
                 Object.DestroyImmediate(creatureObject);

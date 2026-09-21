@@ -42,10 +42,10 @@ namespace ApexShift.Tests.Regression
                 BuildingRegistry firstBuildings = firstRoot.GetComponentInChildren<BuildingRegistry>(true);
                 AssertSnapshotBindings(firstSnapshot, generator, firstInventory, firstSurvival, firstDayNight, firstEcosystem, firstBuildings);
 
-                Vector3 firstPlayerPosition = firstInventory.transform.position;
+                Vector3 stalePlayerPosition = new Vector3(987f, 123f, 654f);
+                firstInventory.transform.position = stalePlayerPosition;
                 generator.ClearGeneratedWorld();
                 yield return null;
-                generator.SetSeed(820083);
                 generator.Generate();
                 yield return null;
                 yield return null;
@@ -65,8 +65,8 @@ namespace ApexShift.Tests.Regression
 
                 Assert.AreNotSame(firstInventory, secondInventory);
                 Assert.AreNotSame(firstEcosystem, secondEcosystem);
-                Assert.AreNotEqual(firstPlayerPosition, secondInventory.transform.position,
-                    "The second snapshot generation unexpectedly reused the first player's position.");
+                Assert.AreNotEqual(stalePlayerPosition, secondInventory.transform.position,
+                    "The second snapshot retained the stale first-generation player position.");
                 foreach (ResourceNodeView resource in ResourceRegistry.Resources)
                 {
                     Assert.IsNotNull(resource);
@@ -80,7 +80,7 @@ namespace ApexShift.Tests.Regression
 
                 WorldQueryRuntime query = secondRoot.GetComponentInChildren<WorldQueryRuntime>(true);
                 Assert.IsNotNull(query);
-                if (query.TryFindNearestLivingCreature(firstPlayerPosition, 100f, out CreatureAgentView queriedCreature))
+                if (query.TryFindNearestLivingCreature(stalePlayerPosition, 100f, out CreatureAgentView queriedCreature))
                 {
                     Assert.IsTrue(queriedCreature.transform.IsChildOf(secondRoot));
                 }
