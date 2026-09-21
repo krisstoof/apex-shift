@@ -126,28 +126,4 @@ MonoBehaviour:
   - kind: 6
     prefab: {fileID: 919132149155446097, guid: d5a090224b4ad16499908f9772e3ec81, type: 3}
   creaturePrefabs: []
-  buildingPrefabs:
-  - buildingId: campfire
-    prefab: {fileID: 919132149155446097, guid: 308e7caac46be4f4a86521f44490cb2b, type: 3}
-  - buildingId: campfire_burned
-    prefab: {fileID: 919132149155446097, guid: ba29abe87d0878848b0a5eec1a052465, type: 3}
-  - buildingId: storage_box
-    prefab: {fileID: 919132149155446097, guid: 619988031d8581840b25c02c0d7fdf1b, type: 3}
-  - buildingId: tent
-    prefab: {fileID: 919132149155446097, guid: 0525dd0ce99bc3e42a8936737c7baf78, type: 3}
-  - buildingId: wall
-    prefab: {fileID: 919132149155446097, guid: 3ba883ed6a553f64c93ea38c47fc4df8, type: 3}
-  - buildingId: trap
-    prefab: {fileID: 919132149155446097, guid: 486677ba8122a10448451e5ae6d68fd8, type: 3}
-  - buildingId: deadfall_trap_heavy
-    prefab: {fileID: 919132149155446097, guid: da2dcd14570a0f64291a7b6c789a16e5, type: 3}
-  - buildingId: snare_trap
-    prefab: {fileID: 919132149155446097, guid: d25a156298c6af04aa02448e19433354, type: 3}
-  - buildingId: spike_barrier
-    prefab: {fileID: 919132149155446097, guid: f5826b482e9073f499cd5f5972a79ae1, type: 3}
-  - buildingId: lean_to_shelter
-    prefab: {fileID: 919132149155446097, guid: 7a20fed391b739f4dbf9c9bea5c0e650, type: 3}
-  - buildingId: tanning_rack
-    prefab: {fileID: 919132149155446097, guid: 51cd552fd2cb6784e82d5f8fa8803f4f, type: 3}
-  - buildingId: drying_rack
-    prefab: {fileID: 919132149155446097, guid: 4f3b78cb0646eda469c3b1c60d59e2d5, type: 3}
+  buildingPrefabs: []

@@ -41,6 +41,7 @@ namespace ApexShift.Runtime.Buildings
         private PlacementValidationResult currentValidation = PlacementValidationResult.Invalid("nothing selected");
         private Vector3 currentPosition;
         private Quaternion currentRotation;
+        private float currentYaw;
 
         public string SelectedItemId => selectedDefinition != null ? selectedDefinition.ItemId : string.Empty;
         public string SelectedBuildingId => selectedDefinition != null ? selectedDefinition.BuildingId : string.Empty;
@@ -175,7 +176,8 @@ namespace ApexShift.Runtime.Buildings
                 return false;
             }
 
-            GameObject instance = Instantiate(prefab, currentPosition, currentRotation, buildingParent);
+            Quaternion spawnRotation = WorldSpawnRotation.ComposeYawWithPrefabRotation(prefab, currentYaw);
+            GameObject instance = Instantiate(prefab, currentPosition, spawnRotation, buildingParent);
 
             PlaceableStructureRuntime structure = instance.GetComponent<PlaceableStructureRuntime>();
             if (structure == null)
@@ -334,7 +336,9 @@ namespace ApexShift.Runtime.Buildings
             }
 
             currentPosition = target;
-            currentRotation = Quaternion.Euler(0f, origin.eulerAngles.y, 0f);
+            GameObject previewPrefab = selectedDefinition != null ? ResolvePrefab(selectedDefinition) : null;
+            currentYaw = origin.eulerAngles.y;
+            currentRotation = WorldSpawnRotation.ComposeYawWithPrefabRotation(previewPrefab, currentYaw);
             return WorldBounds.Active == null || WorldBounds.Active.Contains(currentPosition);
         }
 

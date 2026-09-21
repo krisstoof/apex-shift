@@ -1288,7 +1288,8 @@ namespace ApexShift.Runtime.World.Generation
 
             if (prefab != null)
             {
-                instance = Instantiate(prefab, position, Quaternion.Euler(0, Random.Range(0, 360), 0), _resourceRoot);
+                float yaw = Random.Range(0f, 360f);
+                instance = Instantiate(prefab, position, WorldSpawnRotation.ComposeYawWithPrefabRotation(prefab, yaw), _resourceRoot);
             }
             else
             {
@@ -1449,7 +1450,8 @@ namespace ApexShift.Runtime.World.Generation
 
             if (prefab != null)
             {
-                instance = Instantiate(prefab, position, Quaternion.Euler(0, Random.Range(0, 360), 0), _creatureRoot);
+                float yaw = Random.Range(0f, 360f);
+                instance = Instantiate(prefab, position, WorldSpawnRotation.ComposeYawWithPrefabRotation(prefab, yaw), _creatureRoot);
             }
             else
             {

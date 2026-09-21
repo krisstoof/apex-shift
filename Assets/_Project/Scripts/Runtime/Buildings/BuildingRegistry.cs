@@ -87,7 +87,6 @@ namespace ApexShift.Runtime.Buildings
             foreach (BuildingSaveData data in savedBuildings.Where(data => data != null && data.Active))
             {
                 Vector3 position = new Vector3(data.X, data.Y, data.Z);
-                Quaternion rotation = Quaternion.Euler(0f, data.RotationY, 0f);
                 GameObject prefab = ResolvePrefab(data.BuildingId);
                 if (prefab == null)
                 {
@@ -95,6 +94,7 @@ namespace ApexShift.Runtime.Buildings
                     continue;
                 }
 
+                Quaternion rotation = WorldSpawnRotation.ComposeYawWithPrefabRotation(prefab, data.RotationY);
                 GameObject instance = Instantiate(prefab, position, rotation, targetParent);
 
                 instance.name = $"Building_{data.BuildingId}_{data.InstanceId}";

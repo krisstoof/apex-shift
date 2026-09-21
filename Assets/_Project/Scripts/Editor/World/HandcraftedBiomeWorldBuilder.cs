@@ -11,6 +11,7 @@ using ApexShift.Runtime.World;
 using ApexShift.Runtime.Interaction;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.World.Biomes;
+using ApexShift.Runtime.World.Generation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -198,7 +199,7 @@ namespace ApexShift.EditorTools.World
 
                 instance.transform.SetParent(parent, false);
                 instance.transform.position = position;
-                instance.transform.rotation = Quaternion.Euler(0f, RandomRange(0f, 360f), 0f);
+                instance.transform.rotation = WorldSpawnRotation.ComposeYawWithPrefabRotation(prefab, RandomRange(0f, 360f));
 
                 float scale = larger ? RandomRange(0.85f, 1.35f) : RandomRange(0.45f, 0.9f);
                 instance.transform.localScale = Vector3.one * scale;
@@ -234,7 +235,7 @@ namespace ApexShift.EditorTools.World
 
                 instance.transform.SetParent(parent, false);
                 instance.transform.position = position;
-                instance.transform.rotation = Quaternion.Euler(0f, RandomRange(0f, 360f), 0f);
+                instance.transform.rotation = WorldSpawnRotation.ComposeYawWithPrefabRotation(prefab, RandomRange(0f, 360f));
                 float scale = larger ? RandomRange(0.80f, 1.20f) : RandomRange(0.45f, 0.85f);
                 instance.transform.localScale = Vector3.one * scale;
             }
@@ -1287,7 +1288,7 @@ namespace ApexShift.EditorTools.World
                     RandomRange(-TileSize * 0.3f, TileSize * 0.3f),
                     0f,
                     RandomRange(-TileSize * 0.3f, TileSize * 0.3f));
-                rock.transform.rotation = Quaternion.Euler(0f, RandomRange(0f, 360f), 0f);
+                rock.transform.rotation = WorldSpawnRotation.ComposeYawWithPrefabRotation(prefab, RandomRange(0f, 360f));
                 rock.transform.localScale = Vector3.one * RandomRange(0.7f, 1.3f);
             }
         }
@@ -1645,7 +1646,7 @@ namespace ApexShift.EditorTools.World
 
                 instance.transform.SetParent(parent, false);
                 instance.transform.position = position;
-                instance.transform.rotation = Quaternion.Euler(0f, RandomRange(0f, 360f), 0f);
+                instance.transform.rotation = WorldSpawnRotation.ComposeYawWithPrefabRotation(prefab, RandomRange(0f, 360f));
                 instance.transform.localScale = Vector3.one * RandomRange(minScale, maxScale);
                 BindAsResource(instance, role);
                 spawned++;
