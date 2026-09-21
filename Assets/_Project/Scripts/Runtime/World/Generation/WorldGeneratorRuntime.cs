@@ -23,9 +23,6 @@ using ApexShift.Runtime.World.Landmarks;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
-using Unity.Cinemachine;
-using Unity.AI.Navigation;
-using CameraComponent = UnityEngine.Camera;
 
 namespace ApexShift.Runtime.World.Generation
 {
@@ -35,10 +32,6 @@ namespace ApexShift.Runtime.World.Generation
         [SerializeField] private BiomeCatalogAsset biomeCatalog;
         [SerializeField] private WorldGenerationSettings settings;
         [SerializeField] private PrefabRegistry prefabRegistry;
-
-        [Header("Legacy Prefab Lists - prefer PrefabRegistry")]
-        [SerializeField] private List<ResourcePrefabEntry> resourcePrefabs = new List<ResourcePrefabEntry>();
-        [SerializeField] private List<CreaturePrefabEntry> creaturePrefabs = new List<CreaturePrefabEntry>();
 
         [Header("Assets")]
         [SerializeField] private InputActionAsset inputActions;
@@ -108,12 +101,27 @@ namespace ApexShift.Runtime.World.Generation
         private int _currentSpawnDay = 1;
         private IslandTopographyRuntime _islandTopography;
         private DayNightRuntime _dayNightRuntime;
+        private WorldRuntimeOwner _runtimeOwner;
+        private WorldGenerationContext _generationContext;
+        private WorldGenerationCoordinator _generationCoordinator;
+        private RuntimeCompositionRoot _runtimeComposition;
+        private RuntimeAudioSetup _runtimeAudio;
+        private RuntimeCameraSetup _runtimeCamera;
+        private WorldSpawnService _worldSpawnService;
 
         private const string DefaultInputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
 
         public event System.Action<GameObject> OnGenerationComplete;
         public int Seed => seed;
         public InputActionAsset InputActions => inputActions;
+        public WorldGenerationContext CurrentGeneration => _generationContext;
+        public IReadOnlyList<string> LastGenerationStageOrder => _generationCoordinator != null
+            ? _generationCoordinator.LastStageOrder
+            : System.Array.Empty<string>();
+
+        private Transform CurrentGenerationParent => _runtimeOwner != null && _runtimeOwner.GenerationRoot != null
+            ? _runtimeOwner.GenerationRoot
+            : transform;
 
         private void Start()
         {
@@ -139,54 +147,62 @@ namespace ApexShift.Runtime.World.Generation
             Clear();
             _allTileCenters.Clear();
             _landTileCenters.Clear();
-
-            Random.State oldState = Random.state;
-            Random.InitState(seed);
+            EnsureRuntimeOwner();
+            _generationContext = _runtimeOwner.BeginGeneration(seed);
+            _generationCoordinator = new WorldGenerationCoordinator();
+            _worldSpawnService = new WorldSpawnService();
 
             _lastResult = new WorldGenerationResult { Seed = seed };
-
-            CreateBootstrapper();
-            EnsureEcosystemRuntime();
-            EnsureDayNightRuntime();
-            EnsureGameSnapshotProvider();
-            EnsureDebugPanelPresenter();
-            EnsureWorldMapDebugWindow();
-            UnsubscribeFromDayNightRuntime();
-            _dayNightRuntime = DayNightRuntime.Active;
-            if (_dayNightRuntime != null)
-            {
-                _dayNightRuntime.DayChanged += HandleDayChanged;
-            }
-            EnsureRoots();
-            EnsureBuildingRegistry();
-            GenerateIslandLayout();
-            GenerateLandmarks();
-
-            GameObject player = CreatePlayer();
-            _playerTransform = player != null ? player.transform : null;
-            _currentSpawnDay = ResolveCurrentDay();
-            _spawnedVarnakCount = 0;
-            GameObject cameraGo = CreateCamera(player.transform);
-            EnsureAmbientMusicRuntime();
-            CreateWorldBounds();
-
-            ConfigurePlayerRuntime(player, cameraGo);
-            InitializeEcosystemDirector();
-
-            // Add and build NavMesh
-            NavMeshSurface surface = _terrainRoot.GetComponent<NavMeshSurface>();
-            if (surface == null) surface = _terrainRoot.gameObject.AddComponent<NavMeshSurface>();
-            surface.collectObjects = CollectObjects.Children;
-            surface.BuildNavMesh();
-            EnsureCreatureIslandBoundsRuntime();
-
-            SpawnAllRegionCreatures();
-
-            Random.state = oldState;
-
-            Debug.Log($"World Generation Complete. Biomes: {_lastResult.BiomeCount}, Resources: {_lastResult.ResourceCount}, Seed: {seed}");
-            
-            OnGenerationComplete?.Invoke(player);
+            _generationContext.Result = _lastResult;
+            _generationCoordinator.Generate(_generationContext,
+                new WorldGenerationStage("PrepareGeneration", context =>
+                {
+                    _runtimeComposition = new RuntimeCompositionRoot();
+                    _runtimeComposition.Compose(CurrentGenerationParent);
+                    UnsubscribeFromDayNightRuntime();
+                    _dayNightRuntime = CurrentGenerationParent.GetComponentInChildren<DayNightRuntime>(true);
+                    if (_dayNightRuntime != null) _dayNightRuntime.DayChanged += HandleDayChanged;
+                    context.DayNight = _dayNightRuntime;
+                }),
+                new WorldGenerationStage("CreateWorldRoots", context =>
+                {
+                    EnsureRoots();
+                    EnsureBuildingRegistry();
+                }),
+                new WorldGenerationStage("GenerateTerrainAndBiomes", context => GenerateIslandLayout()),
+                new WorldGenerationStage("GenerateLandmarks", context => GenerateLandmarks()),
+                new WorldGenerationStage("SpawnResources", context => { }),
+                new WorldGenerationStage("SpawnPlayer", context =>
+                {
+                    context.Player = CreatePlayer();
+                    _playerTransform = context.Player != null ? context.Player.transform : null;
+                    _currentSpawnDay = ResolveCurrentDay();
+                    _spawnedVarnakCount = 0;
+                }),
+                new WorldGenerationStage("ConfigureCamera", context =>
+                {
+                    _runtimeAudio = new RuntimeAudioSetup();
+                    _runtimeAudio.Compose(CurrentGenerationParent, biomeCatalog, enableAmbientMusic, ambientMusicVolume);
+                    _runtimeCamera = new RuntimeCameraSetup();
+                    context.MainCamera = _runtimeCamera.Create(CurrentGenerationParent,
+                        context.Player != null ? context.Player.transform : null, useCinemachine);
+                    CreateWorldBounds();
+                    context.WorldBounds = GetComponentInChildren<WorldBounds>(true);
+                    ConfigurePlayerRuntime(context.Player, context.MainCamera);
+                    InitializeEcosystemDirector();
+                }),
+                new WorldGenerationStage("BuildNavMesh", context => WorldNavMeshBuildStage.Execute(context)),
+                new WorldGenerationStage("SpawnCreatures", context =>
+                {
+                    EnsureCreatureIslandBoundsRuntime();
+                    SpawnAllRegionCreatures();
+                }),
+                new WorldGenerationStage("FinalizeGeneration", context =>
+                {
+                    context.Result = _lastResult;
+                    Debug.Log($"World Generation Complete. Biomes: {_lastResult.BiomeCount}, Resources: {_lastResult.ResourceCount}, Seed: {seed}");
+                    OnGenerationComplete?.Invoke(context.Player);
+                }));
         }
 
         public void SetBiomeCatalog(BiomeCatalogAsset catalog)
@@ -211,55 +227,26 @@ namespace ApexShift.Runtime.World.Generation
                 _dayNightRuntime.DayChanged -= HandleDayChanged;
                 _dayNightRuntime = null;
             }
-            if (_terrainRoot != null) DestroyObject(_terrainRoot.gameObject);
-            if (_biomeRoot != null) DestroyObject(_biomeRoot.gameObject);
-            if (_resourceRoot != null) DestroyObject(_resourceRoot.gameObject);
-            if (_creatureRoot != null) DestroyObject(_creatureRoot.gameObject);
-            if (_buildingRoot != null) DestroyObject(_buildingRoot.gameObject);
-
-            DestroyAllByName("TerrainRoot");
-            DestroyAllByName("BiomeRoot");
-            DestroyAllByName("ResourceRoot");
-            DestroyAllByName("CreatureRoot");
-            DestroyAllByName("BuildingRoot");
-            DestroyAllByName("GameBootstrapper");
-            DestroyAllByName("EcosystemRuntime");
-            DestroyAllByName("DayNightRuntime");
-            DestroyAllByName("DayNightSkyRuntime");
-            DestroyAllByName("WorldMapDebugWindow");
-            DestroyAllByName("Player");
-            DestroyAllByName("Main Camera");
-            DestroyAllByName("PlayerFollowCamera");
-            DestroyAllByName("Directional Light");
-            DestroyAllByName("WorldBounds");
-            DestroyAllByName("ActionBarUI");
-            DestroyAllByName("CreatureIslandBoundsRuntime");
-            DestroyAllByName("AmbientMusicRuntime");
-            DestroyAllByName("AmbientSoundController");
-            DestroyAllByName("IslandTopographyRuntime");
-            DestroyAllByName("IslandTerrainMesh");
-            DestroyAllByName("WaterSurfaceMesh");
-            DestroyAllByName("SeabedMesh");
-            DestroyAllByName("CliffWallsMesh");
-
-            // Do not destroy generic menu objects here. Main menu / start screen
-            // often uses roots named "UI" and a shared EventSystem.
+            if (_runtimeOwner != null) _runtimeOwner.Clear();
+            _generationContext = null;
+            _terrainRoot = null;
+            _biomeRoot = null;
+            _resourceRoot = null;
+            _creatureRoot = null;
+            _buildingRoot = null;
+            _landmarkRoot = null;
+            _playerTransform = null;
+            _islandTopography = null;
         }
 
-        private void DestroyAllByName(string name)
+        private void EnsureRuntimeOwner()
         {
-            var objects = GameObject.FindObjectsByType<GameObject>(FindObjectsInactive.Include);
-            foreach (var go in objects)
+            if (_runtimeOwner == null)
             {
-                if (go != null && go.name == name)
-                {
-                    // Only destroy if it's a root or child of the generator/parent
-                    if (go.transform.parent == null || go.transform.parent == transform || (transform.parent != null && go.transform.parent == transform.parent))
-                    {
-                        DestroyObject(go);
-                    }
-                }
+                _runtimeOwner = GetComponent<WorldRuntimeOwner>();
+                if (_runtimeOwner == null) _runtimeOwner = gameObject.AddComponent<WorldRuntimeOwner>();
             }
+            _runtimeOwner.Configure(destroyGeneratedObjectsImmediately);
         }
 
         private void DestroyObject(GameObject obj)
@@ -292,6 +279,15 @@ namespace ApexShift.Runtime.World.Generation
             _creatureRoot = CreateRoot("CreatureRoot");
             _buildingRoot = CreateRoot("BuildingRoot");
             _landmarkRoot = CreateRoot("LandmarkRoot");
+            if (_generationContext != null)
+            {
+                _generationContext.TerrainRoot = _terrainRoot;
+                _generationContext.BiomeRoot = _biomeRoot;
+                _generationContext.ResourceRoot = _resourceRoot;
+                _generationContext.CreatureRoot = _creatureRoot;
+                _generationContext.BuildingRoot = _buildingRoot;
+                _generationContext.LandmarkRoot = _landmarkRoot;
+            }
         }
 
         private void EnsureBuildingRegistry()
@@ -313,22 +309,27 @@ namespace ApexShift.Runtime.World.Generation
         private void EnsureIslandTopographyRuntime()
         {
             if (_islandTopography != null) return;
-            _islandTopography = Object.FindAnyObjectByType<IslandTopographyRuntime>();
+            _islandTopography = _runtimeOwner != null && _runtimeOwner.GenerationRoot != null
+                ? _runtimeOwner.GenerationRoot.GetComponentInChildren<IslandTopographyRuntime>(true)
+                : null;
             if (_islandTopography == null)
             {
                 GameObject go = new GameObject("IslandTopographyRuntime");
-                go.transform.SetParent(transform);
+                go.transform.SetParent(CurrentGenerationParent, false);
                 _islandTopography = go.AddComponent<IslandTopographyRuntime>();
             }
+            if (_generationContext != null) _generationContext.IslandTopography = _islandTopography;
         }
 
         private void EnsureCreatureIslandBoundsRuntime()
         {
-            CreatureIslandBoundsRuntime bounds = Object.FindAnyObjectByType<CreatureIslandBoundsRuntime>();
+            CreatureIslandBoundsRuntime bounds = _runtimeOwner != null && _runtimeOwner.GenerationRoot != null
+                ? _runtimeOwner.GenerationRoot.GetComponentInChildren<CreatureIslandBoundsRuntime>(true)
+                : null;
             if (bounds == null)
             {
                 GameObject go = new GameObject("CreatureIslandBoundsRuntime");
-                go.transform.SetParent(transform);
+                go.transform.SetParent(CurrentGenerationParent, false);
                 bounds = go.AddComponent<CreatureIslandBoundsRuntime>();
             }
 
@@ -340,168 +341,24 @@ namespace ApexShift.Runtime.World.Generation
             bounds.Configure(creatureCenters, 5.85f);
         }
 
-        private void EnsureAmbientMusicRuntime()
-        {
-            if (!enableAmbientMusic)
-            {
-                return;
-            }
-
-            AmbientMusicRuntime ambient = Object.FindAnyObjectByType<AmbientMusicRuntime>();
-            if (ambient == null)
-            {
-                GameObject go = new GameObject("AmbientMusicRuntime");
-                go.transform.SetParent(transform);
-                ambient = go.AddComponent<AmbientMusicRuntime>();
-            }
-
-            ambient.SetVolume(ambientMusicVolume);
-
-            // Ensure ambient sound controller that routes clips per biome/time-of-day
-            AmbientSoundController controller = Object.FindAnyObjectByType<AmbientSoundController>();
-            if (controller == null)
-            {
-                GameObject controllerGo = new GameObject("AmbientSoundController");
-                controllerGo.transform.SetParent(transform);
-                controller = controllerGo.AddComponent<AmbientSoundController>();
-            }
-
-            // Auto-register per-biome ambient profiles from the biome catalog
-            if (biomeCatalog != null)
-            {
-                foreach (BiomeDefinitionAsset biome in biomeCatalog.Biomes)
-                {
-                    if (biome != null && biome.AmbientProfile != null)
-                    {
-                        controller.RegisterProfile(biome.AmbientProfile);
-                    }
-                }
-            }
-
-            // The controller drives AmbientMusicRuntime clip selection.
-            // Fall back to generic Play() if no profiles are registered so music still plays.
-            if (biomeCatalog == null || !HasAnyAmbientProfiles())
-            {
-                ambient.Play();
-            }
-        }
-
-        private bool HasAnyAmbientProfiles()
-        {
-            if (biomeCatalog == null) return false;
-            foreach (BiomeDefinitionAsset biome in biomeCatalog.Biomes)
-            {
-                if (biome != null && biome.AmbientProfile != null && biome.AmbientProfile.HasAnyClips())
-                    return true;
-            }
-            return false;
-        }
-
         private Transform CreateRoot(string name)
         {
             GameObject go = new GameObject(name);
-            go.transform.SetParent(transform);
+            go.transform.SetParent(_runtimeOwner != null && _runtimeOwner.GenerationRoot != null
+                ? _runtimeOwner.GenerationRoot
+                : transform, false);
             return go.transform;
-        }
-
-        private void CreateBootstrapper()
-        {
-            GameObject go = new GameObject("GameBootstrapper");
-            go.transform.SetParent(transform);
-            go.AddComponent<GameBootstrapper>();
-        }
-
-        private void EnsureEcosystemRuntime()
-        {
-            EcosystemRuntime existing = Object.FindAnyObjectByType<EcosystemRuntime>();
-            if (existing != null)
-            {
-                EnsureEcosystemComponents(existing);
-                return;
-            }
-
-            GameObject go = new GameObject("EcosystemRuntime");
-            go.transform.SetParent(transform);
-            EcosystemRuntime runtime = go.AddComponent<EcosystemRuntime>();
-            EnsureEcosystemComponents(runtime);
-        }
-
-        private void EnsureEcosystemComponents(EcosystemRuntime runtime)
-        {
-            if (runtime == null) return;
-            if (runtime.GetComponent<EcosystemDirectorRuntime>() == null) runtime.gameObject.AddComponent<EcosystemDirectorRuntime>();
-            if (runtime.GetComponent<WorldQueryRuntime>() == null) runtime.gameObject.AddComponent<WorldQueryRuntime>();
         }
 
         private void InitializeEcosystemDirector()
         {
-            EcosystemDirectorRuntime director = Object.FindAnyObjectByType<EcosystemDirectorRuntime>();
+            EcosystemDirectorRuntime director = _runtimeOwner != null && _runtimeOwner.GenerationRoot != null
+                ? _runtimeOwner.GenerationRoot.GetComponentInChildren<EcosystemDirectorRuntime>(true)
+                : null;
             if (director != null && _lastResult != null)
             {
                 director.InitializeFromRegions(_lastResult.Regions);
             }
-        }
-
-        private void EnsureWorldMapDebugWindow()
-        {
-            if (Object.FindAnyObjectByType<WorldMapDebugWindow>() != null)
-            {
-                return;
-            }
-
-            GameObject go = new GameObject("WorldMapDebugWindow");
-            go.transform.SetParent(transform);
-            go.AddComponent<WorldMapDebugWindow>();
-        }
-
-        private void EnsureGameSnapshotProvider()
-        {
-            if (Object.FindAnyObjectByType<ApexShift.Runtime.UI.Snapshots.GameSnapshotProvider>() != null)
-            {
-                return;
-            }
-
-            GameObject go = new GameObject("GameSnapshotProvider");
-            go.transform.SetParent(transform);
-            go.AddComponent<ApexShift.Runtime.UI.Snapshots.GameSnapshotProvider>();
-        }
-
-        private void EnsureDayNightRuntime()
-        {
-            if (Object.FindAnyObjectByType<DayNightRuntime>() != null)
-            {
-                EnsureDayNightSkyRuntime();
-                return;
-            }
-
-            GameObject go = new GameObject("DayNightRuntime");
-            go.transform.SetParent(transform);
-            go.AddComponent<DayNightRuntime>();
-            EnsureDayNightSkyRuntime();
-        }
-
-        private void EnsureDayNightSkyRuntime()
-        {
-            if (Object.FindAnyObjectByType<DayNightSkyRuntime>() != null)
-            {
-                return;
-            }
-
-            GameObject go = new GameObject("DayNightSkyRuntime");
-            go.transform.SetParent(transform);
-            go.AddComponent<DayNightSkyRuntime>();
-        }
-
-        private void EnsureDebugPanelPresenter()
-        {
-            if (Object.FindAnyObjectByType<ApexShift.Runtime.UI.Debugging.DebugPanelPresenter>() != null)
-            {
-                return;
-            }
-
-            GameObject go = new GameObject("DebugPanelPresenter");
-            go.transform.SetParent(transform);
-            go.AddComponent<ApexShift.Runtime.UI.Debugging.DebugPanelPresenter>();
         }
 
         private bool IsInsideIsland(float x, float z)
@@ -1289,7 +1146,7 @@ namespace ApexShift.Runtime.World.Generation
             if (prefab != null)
             {
                 float yaw = Random.Range(0f, 360f);
-                instance = Instantiate(prefab, position, WorldSpawnRotation.ComposeYawWithPrefabRotation(prefab, yaw), _resourceRoot);
+                instance = _worldSpawnService.Spawn(prefab, position, yaw, _resourceRoot);
             }
             else
             {
@@ -1451,7 +1308,7 @@ namespace ApexShift.Runtime.World.Generation
             if (prefab != null)
             {
                 float yaw = Random.Range(0f, 360f);
-                instance = Instantiate(prefab, position, WorldSpawnRotation.ComposeYawWithPrefabRotation(prefab, yaw), _creatureRoot);
+                instance = _worldSpawnService.Spawn(prefab, position, yaw, _creatureRoot);
             }
             else
             {
@@ -1639,10 +1496,7 @@ if (renderer != null)
             {
                 return registryPrefab;
             }
-
-            var matches = resourcePrefabs.Where(p => p != null && p.Prefab != null && p.Kind == kind).ToList();
-            if (matches.Count == 0) return null;
-            return matches[Random.Range(0, matches.Count)].Prefab;
+            return null;
         }
 
         private GameObject GetPrefabForResolvedKind(string resolvedKind, VegetationSpawnKind fallbackKind)
@@ -1657,11 +1511,9 @@ if (renderer != null)
                 // Search both the legacy inspector list and the shared registry. New
                 // generated vegetation is stored in PrefabRegistry, so looking only at
                 // the legacy list silently makes those variants invisible to generation.
-                IEnumerable<ResourcePrefabEntry> candidates = resourcePrefabs ?? new List<ResourcePrefabEntry>();
-                if (prefabRegistry != null && prefabRegistry.ResourcePrefabs != null)
-                {
-                    candidates = candidates.Concat(prefabRegistry.ResourcePrefabs);
-                }
+                IEnumerable<ResourcePrefabEntry> candidates = prefabRegistry != null && prefabRegistry.ResourcePrefabs != null
+                    ? prefabRegistry.ResourcePrefabs
+                    : Enumerable.Empty<ResourcePrefabEntry>();
 
                 var sizedMatches = candidates
                     .Where(p => p != null && p.Prefab != null &&
@@ -1688,14 +1540,7 @@ if (renderer != null)
                 return registryPrefab;
             }
 
-            var matches = creaturePrefabs
-                .Where(p => p != null
-                            && p.Prefab != null
-                            && string.Equals(p.CreatureId.Trim(), (creatureId ?? string.Empty).Trim(), System.StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            if (matches.Count == 0) return null;
-            return matches[Random.Range(0, matches.Count)].Prefab;
+            return null;
         }
 
         private GameObject CreateFallbackPrimitive(VegetationSpawnKind kind, Vector3 position)
@@ -1802,6 +1647,8 @@ if (renderer != null)
                 player.name = "Player";
                 player.transform.position = spawnPos;
             }
+
+            player.transform.SetParent(CurrentGenerationParent, true);
 
             player.tag = "Player";
             player.SetActive(true);
@@ -2121,127 +1968,14 @@ if (renderer != null)
 
         private GameObject CreateCamera(Transform target)
         {
-            if (useCinemachine)
-            {
-                Debug.Log($"[WorldGen] Creating Cinemachine camera for target={(target != null ? target.name : "<null>")} at {(target != null ? target.position.ToString() : "<null>")}");
-                return CreateCinemachineRig(target);
-            }
-
-            GameObject go = new GameObject("Main Camera");
-            go.tag = "MainCamera";
-            CameraComponent cam = go.AddComponent<CameraComponent>();
-            cam.orthographic = true;
-            cam.orthographicSize = 14f;
-            EnsureSingleAudioListener(go);
-            
-            System.Type cameraDataType = System.Type.GetType("UnityEngine.Rendering.Universal.UniversalAdditionalCameraData, Unity.RenderPipelines.Universal.Runtime");
-            if (cameraDataType != null) {
-                var data = go.AddComponent(cameraDataType);
-                var prop = cameraDataType.GetProperty("renderType");
-                if (prop != null) prop.SetValue(data, 0);
-            }
-
-            IsometricCameraFollow follow = go.AddComponent<IsometricCameraFollow>();
-            follow.SetTarget(target);
-            follow.SetInitialRotation(Quaternion.Euler(35.264f, 45f, 0f));
-            follow.SnapToTarget();
-            Debug.Log($"[WorldGen] Main Camera positioned at {go.transform.position}, target={(target != null ? target.name : "<null>")} targetPos={(target != null ? target.position.ToString() : "<null>")}");
-
-            return go;
-        }
-
-        private GameObject CreateCinemachineRig(Transform target)
-        {
-            float pitch = 35.264f;
-            float yaw = 45f;
-            float orthographicSize = 14f;
-            float followDistance = 20f;
-            Vector3 focusOffset = new Vector3(0f, 1.25f, 0f);
-            Quaternion rigRotation = Quaternion.Euler(pitch, yaw, 0f);
-
-            GameObject cameraObject = new GameObject("Main Camera");
-            cameraObject.tag = "MainCamera";
-            cameraObject.transform.rotation = rigRotation;
-
-            CameraComponent camera = cameraObject.AddComponent<CameraComponent>();
-            camera.orthographic = true;
-            camera.orthographicSize = orthographicSize;
-            EnsureSingleAudioListener(cameraObject);
-            
-            // Add URP data safely via reflection
-            System.Type cameraDataType = System.Type.GetType("UnityEngine.Rendering.Universal.UniversalAdditionalCameraData, Unity.RenderPipelines.Universal.Runtime");
-            if (cameraDataType != null) {
-                var data = cameraObject.AddComponent(cameraDataType);
-                var prop = cameraDataType.GetProperty("renderType");
-                if (prop != null) prop.SetValue(data, 0);
-            }
-
-            cameraObject.AddComponent<CinemachineBrain>();
-
-            GameObject followCamera = new GameObject("PlayerFollowCamera");
-            followCamera.transform.rotation = rigRotation;
-
-            Vector3 cameraOffset = -(rigRotation * Vector3.forward) * followDistance + focusOffset;
-            followCamera.transform.position = target != null ? target.position + cameraOffset : cameraOffset;
-
-            CinemachineCamera cinemachineCamera = followCamera.AddComponent<CinemachineCamera>();
-            cinemachineCamera.Target.TrackingTarget = target;
-            cinemachineCamera.Target.LookAtTarget = target;
-            
-            LensSettings lens = LensSettings.FromCamera(camera);
-            lens.ModeOverride = LensSettings.OverrideModes.Orthographic;
-            lens.OrthographicSize = orthographicSize;
-            cinemachineCamera.Lens = lens;
-            cinemachineCamera.Priority.Value = 20;
-
-            CinemachineFollow follow = followCamera.AddComponent<CinemachineFollow>();
-            follow.FollowOffset = cameraOffset;
-            followCamera.AddComponent<CinemachineOrthographicZoom>();
-            Debug.Log($"[WorldGen] Cinemachine rig created. MainCamera={cameraObject.transform.position}, FollowCamera={followCamera.transform.position}, target={(target != null ? target.name : "<null>")} targetPos={(target != null ? target.position.ToString() : "<null>")}");
-
-            return cameraObject;
-        }
-
-        private static void EnsureSingleAudioListener(GameObject cameraObject)
-        {
-            if (cameraObject == null)
-            {
-                return;
-            }
-
-            AudioListener listener = cameraObject.GetComponent<AudioListener>();
-            if (listener == null)
-            {
-                listener = cameraObject.AddComponent<AudioListener>();
-            }
-
-            AudioListener[] allListeners = UnityEngine.Object.FindObjectsByType<AudioListener>(FindObjectsInactive.Include);
-            bool keptFirst = false;
-            foreach (AudioListener item in allListeners)
-            {
-                if (item == null)
-                {
-                    continue;
-                }
-
-                if (!keptFirst)
-                {
-                    keptFirst = true;
-                    item.enabled = true;
-                    continue;
-                }
-
-                if (item.gameObject != cameraObject)
-                {
-                    item.enabled = false;
-                }
-            }
+            if (_runtimeCamera == null) _runtimeCamera = new RuntimeCameraSetup();
+            return _runtimeCamera.Create(CurrentGenerationParent, target, useCinemachine);
         }
 
         private void CreateWorldBounds()
         {
             GameObject go = new GameObject("WorldBounds");
-            go.transform.SetParent(transform);
+            go.transform.SetParent(CurrentGenerationParent, false);
             WorldBounds bounds = go.AddComponent<WorldBounds>();
 
             // Include land + shallow water (3 tiles from shore) so the player
@@ -2251,6 +1985,7 @@ if (renderer != null)
                 : _allTileCenters;
 
             bounds.Configure(8f, navigable);
+            if (_generationContext != null) _generationContext.WorldBounds = bounds;
         }
 
         private void OnDrawGizmos()

@@ -101,16 +101,13 @@ namespace ApexShift.Editor.World
                 so.FindProperty("playerAnimatorController").objectReferenceValue = playerAC;
             }
 
-            PopulateResourcePrefabs(so, registry);
-            PopulateCreaturePrefabs(so);
+            PopulateResourcePrefabs(registry);
+            PopulateCreaturePrefabs(registry);
             
             so.ApplyModifiedProperties();
 
             // Generate once in Edit mode
             generator.Generate();
-
-            // Build NavMesh
-            BuildNavMesh(generatorGo);
 
             // Manually trigger HUD creation for Edit Mode visibility
 GameObject player = GameObject.Find("Player");
@@ -155,10 +152,8 @@ GameObject player = GameObject.Find("Player");
             return registry;
         }
 
-        private static void PopulateResourcePrefabs(SerializedObject so, PrefabRegistry registry)
+        private static void PopulateResourcePrefabs(PrefabRegistry registry)
         {
-            var prop = so.FindProperty("resourcePrefabs");
-            prop.ClearArray();
             if (registry != null)
             {
                 var registrySo = new SerializedObject(registry);
@@ -167,21 +162,21 @@ GameObject player = GameObject.Find("Player");
 
                 // Runtime world can be procedural, but vegetation identity must use the same
                 // role resolver as HandcraftedBiomeWorldBuilder.
-                AddResourceEntries(prop, registryProp, VegetationSpawnKind.ConiferTree);
-                AddResourceEntries(prop, registryProp, VegetationSpawnKind.LeafyTree);
-                AddResourceEntries(prop, registryProp, VegetationSpawnKind.DryTree);
-                AddResourceEntries(prop, registryProp, VegetationSpawnKind.Rock);
-                AddResourceEntries(prop, registryProp, VegetationSpawnKind.GreenBush);
-                AddResourceEntries(prop, registryProp, VegetationSpawnKind.DryBush);
-                AddResourceEntries(prop, registryProp, VegetationSpawnKind.BerryBush);
-                AddResourceEntries(prop, registryProp, VegetationSpawnKind.GrassOrFlower);
+                AddResourceEntries(registryProp, VegetationSpawnKind.ConiferTree);
+                AddResourceEntries(registryProp, VegetationSpawnKind.LeafyTree);
+                AddResourceEntries(registryProp, VegetationSpawnKind.DryTree);
+                AddResourceEntries(registryProp, VegetationSpawnKind.Rock);
+                AddResourceEntries(registryProp, VegetationSpawnKind.GreenBush);
+                AddResourceEntries(registryProp, VegetationSpawnKind.DryBush);
+                AddResourceEntries(registryProp, VegetationSpawnKind.BerryBush);
+                AddResourceEntries(registryProp, VegetationSpawnKind.GrassOrFlower);
                 registrySo.ApplyModifiedProperties();
                 EditorUtility.SetDirty(registry);
                 AssetDatabase.SaveAssets();
             }
         }
 
-        private static void AddResourceEntries(SerializedProperty legacyListProp, SerializedProperty registryListProp, VegetationSpawnKind kind)
+        private static void AddResourceEntries(SerializedProperty registryListProp, VegetationSpawnKind kind)
         {
             Shader urpLit = Shader.Find("Universal Render Pipeline/Lit");
             List<ScoredResourcePrefab> prefabs = FindResourcePrefabsForKind(kind);
@@ -195,12 +190,6 @@ GameObject player = GameObject.Find("Player");
             foreach (ScoredResourcePrefab scored in prefabs)
             {
                 UpgradeMaterialsToURP(scored.Prefab, urpLit);
-
-                int legacyIndex = legacyListProp.arraySize;
-                legacyListProp.InsertArrayElementAtIndex(legacyIndex);
-                var legacyEntry = legacyListProp.GetArrayElementAtIndex(legacyIndex);
-                legacyEntry.FindPropertyRelative("kind").enumValueIndex = (int)kind;
-                legacyEntry.FindPropertyRelative("prefab").objectReferenceValue = scored.Prefab;
 
                 int registryIndex = registryListProp.arraySize;
                 registryListProp.InsertArrayElementAtIndex(registryIndex);
@@ -460,35 +449,20 @@ GameObject player = GameObject.Find("Player");
             public int Score { get; }
         }
 
-        private static void BuildNavMesh(GameObject generatorGo)
+        private static void PopulateCreaturePrefabs(PrefabRegistry registry)
         {
-            Transform terrainRoot = generatorGo.transform.Find("TerrainRoot");
-            if (terrainRoot == null) return;
-
-            NavMeshSurface surface = terrainRoot.gameObject.GetComponent<NavMeshSurface>();
-            if (surface == null) surface = terrainRoot.gameObject.AddComponent<NavMeshSurface>();
-
-            surface.collectObjects = CollectObjects.Children;
-            surface.useGeometry = NavMeshCollectGeometry.RenderMeshes;
-            surface.BuildNavMesh();
-
-            // Warp creatures to nearest NavMesh
-            var adapters = GameObject.FindObjectsByType<CreatureNavigationAdapter>(FindObjectsInactive.Exclude);
-            foreach (var adapter in adapters)
-            {
-                adapter.WarpToNearestNavMesh();
-            }
-        }
-
-        private static void PopulateCreaturePrefabs(SerializedObject so)
-        {
-            var prop = so.FindProperty("creaturePrefabs");
+            if (registry == null) return;
+            var registrySo = new SerializedObject(registry);
+            var prop = registrySo.FindProperty("creaturePrefabs");
             prop.ClearArray();
 
             // Using reliable animal models from ithappy Animals_FREE
             AddCreatureEntries(prop, "small_prey", "Chicken_001", "Dog_001");
             AddCreatureEntries(prop, "grazer", "Deer_001");
             AddCreatureEntries(prop, "varnak", "Tiger_001");
+            registrySo.ApplyModifiedProperties();
+            EditorUtility.SetDirty(registry);
+            AssetDatabase.SaveAssets();
         }
 
         private static void AddCreatureEntries(SerializedProperty listProp, string creatureId, params string[] searchNames)

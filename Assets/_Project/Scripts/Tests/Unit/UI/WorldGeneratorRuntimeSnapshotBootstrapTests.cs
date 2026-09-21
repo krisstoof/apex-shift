@@ -1,4 +1,3 @@
-using System.Reflection;
 using ApexShift.Runtime.UI.Debugging;
 using ApexShift.Runtime.UI.Snapshots;
 using ApexShift.Runtime.World.Generation;
@@ -10,15 +9,13 @@ namespace ApexShift.Tests.Unit.UI
     public class WorldGeneratorRuntimeSnapshotBootstrapTests
     {
         [Test]
-        public void EnsureMethods_CreateSnapshotRuntimeComponents()
+        public void RuntimeCompositionRoot_CreatesSnapshotAndDebugComponents()
         {
             GameObject root = new GameObject("GeneratorRoot");
             try
             {
-                WorldGeneratorRuntime generator = root.AddComponent<WorldGeneratorRuntime>();
-
-                InvokePrivate(generator, "EnsureGameSnapshotProvider");
-                InvokePrivate(generator, "EnsureDebugPanelPresenter");
+                var composition = new RuntimeCompositionRoot();
+                composition.Compose(root.transform);
 
                 Assert.That(Object.FindObjectsByType<GameSnapshotProvider>(FindObjectsInactive.Include), Is.Not.Empty);
                 Assert.That(Object.FindObjectsByType<DebugPanelPresenter>(FindObjectsInactive.Include), Is.Not.Empty);
@@ -36,13 +33,6 @@ namespace ApexShift.Tests.Unit.UI
                     Object.DestroyImmediate(presenter.gameObject);
                 }
             }
-        }
-
-        private static void InvokePrivate(object target, string methodName)
-        {
-            MethodInfo method = target.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.IsNotNull(method, "Could not resolve " + methodName + ".");
-            method.Invoke(target, null);
         }
     }
 }

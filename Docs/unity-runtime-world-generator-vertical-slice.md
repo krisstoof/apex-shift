@@ -9,7 +9,30 @@ The `WorldGeneratorRuntime` component provides a data-driven way to generate gam
 ## Key Components
 
 ### WorldGeneratorRuntime
-The main `MonoBehaviour` responsible for orchestration.
+The compatibility `MonoBehaviour` facade. Its public generation/save API remains stable, while lifecycle work is delegated to:
+
+```text
+WorldGeneratorRuntime
+        |
+        v
+WorldGenerationCoordinator
+        +-- RuntimeCompositionRoot
+        +-- terrain/biome generation
+        +-- WorldSpawnService
+        +-- RuntimeCameraSetup
+        +-- RuntimeAudioSetup
+        +-- WorldNavMeshBuildStage
+        |
+        v
+WorldRuntimeOwner
+```
+
+`WorldGenerationContext` represents one generation session. `WorldRuntimeOwner` owns its `GenerationRoot` and clears only that hierarchy, so unrelated objects named `Player`, `TerrainRoot`, or `Main Camera` are not removed.
+
+The coordinator runs deterministic stages in order: preparation, roots, composition, terrain/biomes, landmarks, resources, player, camera, NavMesh, creatures, and finalization. Unity's random state is restored after every generation.
+
+The main facade still provides:
+- **Compatibility API**: `Generate()`, `ClearGeneratedWorld()`, `SetSeed()`, `SetBiomeCatalog()`, `GetLastResult()`, `OnGenerationComplete`.
 - **Fixed Layout**: Generates five regions (Westwood, Stoneback Ridge, Hearth Meadow, South Thicket, Redfang Wilds) in a cross formation.
 - **Terrain Generation**: Creates terrain planes using biome-specific colors or materials.
 - **Resource Spawning**: Spawns vegetation and resources within each biome region based on its definition.
@@ -17,7 +40,7 @@ The main `MonoBehaviour` responsible for orchestration.
 
 ### Data Structures
 - **WorldGenerationSettings**: Controls region size and padding.
-- **ResourcePrefabEntry**: Maps `VegetationSpawnKind` to Unity prefabs.
+- **PrefabRegistry**: The canonical source for resource and creature prefabs.
 - **WorldGenerationResult**: Stores metadata about the last generation pass (seed, biome count, resource count).
 
 ## How to Use
@@ -26,7 +49,7 @@ The main `MonoBehaviour` responsible for orchestration.
 2. **Manual Setup**:
    - Add a `WorldGeneratorRuntime` component to a GameObject.
    - Assign a `BiomeCatalogAsset`.
-   - Configure `ResourcePrefabEntry` list with your desired prefabs.
+   - Configure the project `PrefabRegistry` with your desired prefabs.
    - Press "Generate World" in the component's context menu or enable "Generate On Start".
 
 ## Interaction Integration
