@@ -4,6 +4,7 @@ using ApexShift.Core.Save;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Save;
+using ApexShift.Runtime.Player;
 using ApexShift.Runtime.World.Query;
 using NUnit.Framework;
 using UnityEngine;
@@ -163,6 +164,58 @@ namespace ApexShift.Tests.Regression
             {
                 DestroyIfNotNull(serviceObject);
                 DestroyIfNotNull(creature);
+                DestroyIfNotNull(ecosystemObject);
+            }
+        }
+
+        [Test]
+        public void RestoredCreatureHasAuthoritativeHitboxAndCanBeHit()
+        {
+            GameObject ecosystemObject = new GameObject("RestoreCombatEcosystem");
+            GameObject serviceObject = null;
+            GameObject player = null;
+            try
+            {
+                EcosystemRuntime ecosystem = ecosystemObject.AddComponent<EcosystemRuntime>();
+                ecosystemObject.AddComponent<WorldQueryRuntime>();
+                serviceObject = new GameObject("RestoreCombatSaveService");
+                GameSaveService save = serviceObject.AddComponent<GameSaveService>();
+
+                WorldSaveData world = new WorldSaveData(
+                    0,
+                    1,
+                    0f,
+                    new List<ResourceSaveData>(),
+                    new List<BiomeEcosystemSaveData>(),
+                    new[]
+                    {
+                        new CreatureSaveData("small_prey", "small_prey", 1, 0f, 0f, 1.1f, 0f, 30f, false, 100f, 0.2f, "Idle", "default", "default", "default", "restored", "none", 0f, "HERBIVORE", 0f)
+                    },
+                    new List<BuildingSaveData>(),
+                    0f,
+                    "combat-restore");
+
+                Assert.IsTrue(save.ApplyLoadedState(new GameSaveData(InventorySaveData.Empty, SurvivalSaveData.Default, world)));
+                CreatureAgentView restored = ecosystem.Creatures[0];
+                CreatureHitboxRuntime hitbox = restored.GetComponent<CreatureHitboxRuntime>();
+                Assert.IsNotNull(hitbox);
+                Assert.IsNotNull(hitbox.CombatCollider);
+                Assert.IsTrue(hitbox.CombatCollider.enabled);
+                Assert.IsTrue(hitbox.IsValidForMask(Physics.DefaultRaycastLayers, out string reason), reason);
+
+                player = new GameObject("RestoreCombatPlayer");
+                player.transform.forward = Vector3.forward;
+                PlayerCombatRuntime combat = player.AddComponent<PlayerCombatRuntime>();
+                combat.SetAttackOrigin(player.transform);
+                Physics.SyncTransforms();
+                float before = restored.GetComponent<CreatureHealthRuntime>().CurrentHealth;
+                Assert.IsTrue(combat.TriggerPrimaryAttack());
+                Assert.Less(restored.GetComponent<CreatureHealthRuntime>().CurrentHealth, before);
+            }
+            finally
+            {
+                DestroyIfNotNull(player);
+                DestroyIfNotNull(serviceObject);
                 DestroyIfNotNull(ecosystemObject);
             }
         }

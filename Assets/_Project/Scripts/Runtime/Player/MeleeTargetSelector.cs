@@ -53,7 +53,7 @@ namespace ApexShift.Runtime.Player
             int seenCount = 0;
             float halfArc = Mathf.Clamp(arcDegrees, 0f, 360f) * 0.5f;
             bool found = false;
-            int bestId = int.MaxValue;
+            ulong bestId = ulong.MaxValue;
 
             for (int i = 0; i < count; i++)
             {
@@ -64,7 +64,7 @@ namespace ApexShift.Runtime.Player
                 }
 
                 CreatureHitboxRuntime hitbox = candidate.GetComponentInParent<CreatureHitboxRuntime>();
-                if (hitbox == null || hitbox.CombatCollider != candidate || Contains(seenHitboxes, seenCount, hitbox))
+                if (hitbox == null || hitbox.CombatCollider != candidate || !hitbox.IsValidForMask(creatureMask, out _) || Contains(seenHitboxes, seenCount, hitbox))
                 {
                     continue;
                 }
@@ -102,7 +102,9 @@ namespace ApexShift.Runtime.Player
                     continue;
                 }
 
-                int instanceId = health.GetHashCode();
+                // Unity 6.6 hard-errors the obsolete GetInstanceID API. EntityId is the
+                // supported native instance identity and is stable for this runtime object.
+                ulong instanceId = EntityId.ToULong(health.GetEntityId());
                 bool better = !found || distance < result.Distance - 0.0001f ||
                     (Mathf.Abs(distance - result.Distance) <= 0.0001f &&
                      (angle < result.Angle - 0.0001f ||

@@ -15,6 +15,42 @@ namespace ApexShift.Runtime.Creatures
 
         public Collider CombatCollider => hitbox;
 
+        public bool IsValidForMask(LayerMask mask, out string reason)
+        {
+            if (hitbox == null)
+            {
+                reason = "CreatureHitboxRuntime has no combat collider.";
+                return false;
+            }
+
+            if (hitbox.gameObject == gameObject || !hitbox.transform.IsChildOf(transform) || hitbox.gameObject.name != "ApexShiftCombatHitbox")
+            {
+                reason = "Combat collider is not the dedicated ApexShiftCombatHitbox child.";
+                return false;
+            }
+
+            if (!hitbox.enabled)
+            {
+                reason = "Combat collider is disabled.";
+                return false;
+            }
+
+            if (!hitbox.isTrigger || hitbox.direction != 1)
+            {
+                reason = "Combat collider is not configured as a Y-axis trigger.";
+                return false;
+            }
+
+            if ((mask.value & (1 << hitbox.gameObject.layer)) == 0)
+            {
+                reason = "Combat collider layer is not included in the melee mask.";
+                return false;
+            }
+
+            reason = string.Empty;
+            return true;
+        }
+
         public void Configure(string creatureId)
         {
             string id = string.IsNullOrWhiteSpace(creatureId) ? string.Empty : creatureId.Trim().ToLowerInvariant();
@@ -47,15 +83,26 @@ namespace ApexShift.Runtime.Creatures
 
         private void EnsureHitbox()
         {
-            if (hitbox == null)
+            if (hitbox == null || hitbox.gameObject == gameObject || !hitbox.transform.IsChildOf(transform) || hitbox.gameObject.name != "ApexShiftCombatHitbox")
             {
-                hitbox = GetComponent<CapsuleCollider>();
+                Transform child = transform.Find("ApexShiftCombatHitbox");
+                if (child == null)
+                {
+                    GameObject childObject = new GameObject("ApexShiftCombatHitbox");
+                    childObject.layer = gameObject.layer;
+                    child = childObject.transform;
+                    child.SetParent(transform, false);
+                }
+
+                hitbox = child.GetComponent<CapsuleCollider>();
                 if (hitbox == null)
                 {
-                    hitbox = gameObject.AddComponent<CapsuleCollider>();
+                    hitbox = child.gameObject.AddComponent<CapsuleCollider>();
                 }
             }
 
+            hitbox.gameObject.layer = gameObject.layer;
+            hitbox.enabled = true;
             hitbox.isTrigger = true;
             hitbox.direction = 1;
             hitbox.radius = Mathf.Max(0.10f, radius);

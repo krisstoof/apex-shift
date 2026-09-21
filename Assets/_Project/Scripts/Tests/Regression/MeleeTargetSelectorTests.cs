@@ -39,6 +39,40 @@ namespace ApexShift.Tests.Regression
         }
 
         [Test]
+        public void UnarmedBoundaryUsesHitboxSurface()
+        {
+            GameObject inside = CreateCreature("unarmed-inside", new Vector3(0f, 0f, 1.35f + 0.35f - 0.01f));
+            GameObject outside = CreateCreature("unarmed-outside", new Vector3(0f, 0f, 1.35f + 0.35f + 0.01f));
+            try
+            {
+                Physics.SyncTransforms();
+                Assert.IsTrue(TrySelect(Vector3.forward, 1.35f, 145f, out MeleeTargetSelector.Result result));
+                Assert.AreSame(inside.GetComponent<CreatureHealthRuntime>(), result.Health);
+                inside.SetActive(false);
+                Physics.SyncTransforms();
+                Assert.IsFalse(TrySelect(Vector3.forward, 1.35f, 145f, out _));
+            }
+            finally { Destroy(inside, outside); }
+        }
+
+        [Test]
+        public void SpearBoundaryUsesHitboxSurface()
+        {
+            GameObject inside = CreateCreature("spear-inside", new Vector3(0f, 0f, 2.25f + 0.35f - 0.01f));
+            GameObject outside = CreateCreature("spear-outside", new Vector3(0f, 0f, 2.25f + 0.35f + 0.01f));
+            try
+            {
+                Physics.SyncTransforms();
+                Assert.IsTrue(TrySelect(Vector3.forward, 2.25f, 145f, out MeleeTargetSelector.Result result));
+                Assert.AreSame(inside.GetComponent<CreatureHealthRuntime>(), result.Health);
+                inside.SetActive(false);
+                Physics.SyncTransforms();
+                Assert.IsFalse(TrySelect(Vector3.forward, 2.25f, 145f, out _));
+            }
+            finally { Destroy(inside, outside); }
+        }
+
+        [Test]
         public void RejectsTargetOutsideAttackArcEvenWhenClose()
         {
             GameObject target = CreateCreature("behind", new Vector3(0f, 0f, -0.65f));
@@ -48,6 +82,20 @@ namespace ApexShift.Tests.Regression
                 Assert.IsFalse(TrySelect(Vector3.forward, 1.5f, 90f, out _));
             }
             finally { Destroy(target); }
+        }
+
+        [Test]
+        public void SkipsNearestInvalidTargetAndSelectsFartherValidTarget()
+        {
+            GameObject behind = CreateCreature("nearest-behind", new Vector3(0f, 0f, -0.8f));
+            GameObject valid = CreateCreature("farther-front", new Vector3(0f, 0f, 1.4f));
+            try
+            {
+                Physics.SyncTransforms();
+                Assert.IsTrue(TrySelect(Vector3.forward, 2f, 90f, out MeleeTargetSelector.Result result));
+                Assert.AreSame(valid.GetComponent<CreatureHealthRuntime>(), result.Health);
+            }
+            finally { Destroy(behind, valid); }
         }
 
         [Test]
@@ -126,6 +174,8 @@ namespace ApexShift.Tests.Regression
                 Physics.SyncTransforms();
                 Assert.IsTrue(TrySelect(Vector3.forward, 2f, 145f, out MeleeTargetSelector.Result result));
                 Assert.AreSame(centered.GetComponent<CreatureHealthRuntime>(), result.Health);
+                Assert.IsTrue(centered.GetComponent<CreatureHitboxRuntime>().CombatCollider.isTrigger);
+                Assert.IsTrue(centered.GetComponent<CreatureHitboxRuntime>().IsValidForMask(Physics.DefaultRaycastLayers, out string reason), reason);
             }
             finally { Destroy(centered, angled); }
         }

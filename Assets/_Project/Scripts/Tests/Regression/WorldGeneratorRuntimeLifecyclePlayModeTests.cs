@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Linq;
+using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.World.Generation;
 using NUnit.Framework;
 using UnityEngine;
@@ -45,6 +46,15 @@ namespace ApexShift.Tests.Regression
                 Assert.AreEqual(1, CountNamed(first.GenerationRoot, "CreatureRoot"));
                 Assert.AreEqual(1, CountNamed(first.GenerationRoot, "EcosystemRuntime"));
                 Assert.AreEqual(1, CountNamed(first.GenerationRoot, "DayNightRuntime"));
+                foreach (CreatureAgentView creature in first.GenerationRoot.GetComponentsInChildren<CreatureAgentView>(true))
+                {
+                    CreatureHitboxRuntime hitbox = creature.GetComponent<CreatureHitboxRuntime>();
+                    Assert.IsNotNull(hitbox, $"Generated creature {creature.CreatureId} has no CreatureHitboxRuntime.");
+                    Assert.IsNotNull(hitbox.CombatCollider, $"Generated creature {creature.CreatureId} has no combat collider.");
+                    Assert.IsTrue(hitbox.CombatCollider.enabled);
+                    Assert.IsTrue(hitbox.CombatCollider.isTrigger);
+                    Assert.IsTrue(hitbox.IsValidForMask(Physics.DefaultRaycastLayers, out string reason), reason);
+                }
 
                 Transform firstGenerationRoot = first.GenerationRoot;
                 generator.ClearGeneratedWorld();
