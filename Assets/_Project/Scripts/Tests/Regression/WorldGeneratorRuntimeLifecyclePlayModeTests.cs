@@ -9,6 +9,7 @@ namespace ApexShift.Tests.Regression
 {
     public sealed class WorldGeneratorRuntimeLifecyclePlayModeTests
     {
+        // Lifecycle regression coverage for serialized world ownership.
         [UnityTest]
         public IEnumerator GenerateClearGenerate_UsesOneOwnedRuntimeAndPreservesUnrelatedRoots()
         {
@@ -70,7 +71,6 @@ namespace ApexShift.Tests.Regression
                 Object.Destroy(unrelatedPlayer);
                 Object.Destroy(unrelatedTerrain);
                 Object.Destroy(unrelatedCamera);
-                yield return null;
             }
         }
 

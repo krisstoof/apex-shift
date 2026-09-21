@@ -228,6 +228,11 @@ namespace ApexShift.Runtime.World.Generation
 
         private void Clear()
         {
+            if (_runtimeOwner == null)
+            {
+                _runtimeOwner = GetComponent<WorldRuntimeOwner>();
+            }
+
             if (_dayNightRuntime != null)
             {
                 _dayNightRuntime.DayChanged -= HandleDayChanged;
@@ -253,28 +258,6 @@ namespace ApexShift.Runtime.World.Generation
                 if (_runtimeOwner == null) _runtimeOwner = gameObject.AddComponent<WorldRuntimeOwner>();
             }
             _runtimeOwner.Configure(destroyGeneratedObjectsImmediately);
-        }
-
-        private void DestroyObject(GameObject obj)
-        {
-            if (obj == null) return;
-
-            // Generate() is synchronous and immediately recreates roots with the same names
-            // (Player, TerrainRoot, CreatureRoot, etc.). Delayed Destroy() in PlayMode can
-            // leave old objects alive until the end of the frame, which makes save/load
-            // regeneration brittle and can even make tests observe "missing" freshly-created
-            // runtime objects after the delayed destroy queue flushes. For generated world
-            // objects we prefer deterministic teardown.
-            if (!Application.isPlaying || destroyGeneratedObjectsImmediately)
-            {
-                DestroyImmediate(obj);
-            }
-            else
-            {
-                obj.name = $"__Destroying_{obj.name}";
-                obj.SetActive(false);
-                Destroy(obj);
-            }
         }
 
         private void EnsureRoots()
@@ -935,16 +918,6 @@ namespace ApexShift.Runtime.World.Generation
             return false;
         }
 
-        private void SubscribeToDayNightRuntime()
-        {
-            UnsubscribeFromDayNightRuntime();
-            _dayNightRuntime = DayNightRuntime.Active;
-            if (_dayNightRuntime != null)
-            {
-                _dayNightRuntime.DayChanged += HandleDayChanged;
-            }
-        }
-
         private void UnsubscribeFromDayNightRuntime()
         {
             if (_dayNightRuntime != null)
@@ -1562,12 +1535,6 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             {
                 Destroy(collider);
             }
-        }
-
-        private void SnapObjectToTerrainSurface(GameObject target, float surfaceOffset)
-        {
-            // DEPRECATED: Topography already provides correct terrain height
-            // Snapping via raycast causes positioning issues
         }
 
         private void ConfigurePlayerRuntime(GameObject player, GameObject cameraGo)

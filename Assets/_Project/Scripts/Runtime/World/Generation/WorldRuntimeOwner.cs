@@ -6,8 +6,11 @@ namespace ApexShift.Runtime.World.Generation
     public sealed class WorldRuntimeOwner : MonoBehaviour
     {
         public const string GenerationRootName = "GenerationRoot";
+        [SerializeField, HideInInspector]
+        private Transform generationRoot;
+
         public WorldGenerationContext CurrentContext { get; private set; }
-        public Transform GenerationRoot => CurrentContext != null ? CurrentContext.GenerationRoot : null;
+        public Transform GenerationRoot => generationRoot;
         private bool destroyImmediately = true;
 
         public void Configure(bool destroyObjectsImmediately)
@@ -20,6 +23,7 @@ namespace ApexShift.Runtime.World.Generation
             Clear();
             var root = new GameObject(GenerationRootName).transform;
             root.SetParent(transform, false);
+            generationRoot = root;
             CurrentContext = new WorldGenerationContext(seed, root);
             return CurrentContext;
         }
@@ -34,11 +38,12 @@ namespace ApexShift.Runtime.World.Generation
 
         public void Clear()
         {
-            if (CurrentContext != null && CurrentContext.GenerationRoot != null)
+            if (generationRoot != null)
             {
-                DestroyObject(CurrentContext.GenerationRoot.gameObject);
+                DestroyObject(generationRoot.gameObject);
             }
 
+            generationRoot = null;
             CurrentContext = null;
         }
 

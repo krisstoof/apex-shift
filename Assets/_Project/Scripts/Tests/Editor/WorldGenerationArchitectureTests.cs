@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEditor;
 using ApexShift.Runtime.World.Generation;
 
 namespace ApexShift.Tests.Editor
@@ -95,6 +96,33 @@ namespace ApexShift.Tests.Editor
                 Assert.IsTrue(firstRoot == null, "The first generation root must be destroyed.");
                 Assert.That(second.GenerationRoot, Is.Not.Null);
                 Assert.That(ownerObject.GetComponentsInChildren<Transform>(true), Has.Length.EqualTo(2));
+            }
+            finally
+            {
+                Object.DestroyImmediate(ownerObject);
+            }
+        }
+
+        [Test]
+        public void Owner_Clear_DestroysSerializedRootWhenCurrentContextIsUnavailable()
+        {
+            var ownerObject = new GameObject("SerializedOwnershipTestOwner");
+            try
+            {
+                var owner = ownerObject.AddComponent<WorldRuntimeOwner>();
+                var serializedRoot = new GameObject(WorldRuntimeOwner.GenerationRootName).transform;
+                serializedRoot.SetParent(ownerObject.transform, false);
+
+                SerializedObject serializedOwner = new SerializedObject(owner);
+                SerializedProperty rootProperty = serializedOwner.FindProperty("generationRoot");
+                Assert.That(rootProperty, Is.Not.Null, "WorldRuntimeOwner must serialize its owned GenerationRoot.");
+                rootProperty.objectReferenceValue = serializedRoot;
+                serializedOwner.ApplyModifiedPropertiesWithoutUndo();
+
+                owner.Clear();
+
+                Assert.IsTrue(serializedRoot == null, "Clear must destroy the serialized root without CurrentContext.");
+                Assert.That(owner.GenerationRoot, Is.Null);
             }
             finally
             {
