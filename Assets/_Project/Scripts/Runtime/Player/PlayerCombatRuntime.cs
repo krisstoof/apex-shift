@@ -530,17 +530,12 @@ namespace ApexShift.Runtime.Player
         private void AutoAssignCombatAudio()
         {
             string basePath = "Assets/_Project/Audio/SFX/combat/";
-            string packagedBasePath = "Assets/_Project/Audio/SFX/combat/";
             attackVoiceClips = LoadClips(new[]
             {
                 basePath + "player/spear_swing_real_01.wav",
                 basePath + "player/spear_swing_real_02.wav",
                 basePath + "player/spear_swing_real_03.wav",
                 basePath + "player/spear_swing_real_04.wav",
-                packagedBasePath + "player/spear_swing_real_01.wav",
-                packagedBasePath + "player/spear_swing_real_02.wav",
-                packagedBasePath + "player/spear_swing_real_03.wav",
-                packagedBasePath + "player/spear_swing_real_04.wav",
                 basePath + "player/bow_release_real_01.wav",
                 basePath + "player/bow_release_real_02.wav",
                 basePath + "player/bow_release_real_03.wav",
@@ -553,10 +548,6 @@ namespace ApexShift.Runtime.Player
                 basePath + "player/spear_hit_flesh_real_02.wav",
                 basePath + "player/spear_hit_flesh_real_03.wav",
                 basePath + "player/spear_hit_flesh_real_04.wav",
-                packagedBasePath + "player/spear_hit_flesh_real_01.wav",
-                packagedBasePath + "player/spear_hit_flesh_real_02.wav",
-                packagedBasePath + "player/spear_hit_flesh_real_03.wav",
-                packagedBasePath + "player/spear_hit_flesh_real_04.wav",
                 basePath + "player/arrow_hit_flesh_real_01.wav"
             }, meleeHitVoiceClips);
 
@@ -569,23 +560,14 @@ namespace ApexShift.Runtime.Player
                 basePath + "player/arrow_fly_real_01.wav",
                 basePath + "player/arrow_fly_real_02.wav",
                 basePath + "player/arrow_fly_real_03.wav",
-                basePath + "player/arrow_fly_real_04.wav",
-                packagedBasePath + "player/bow_release_real_01.wav",
-                packagedBasePath + "player/bow_release_real_02.wav",
-                packagedBasePath + "player/bow_release_real_03.wav",
-                packagedBasePath + "player/bow_release_real_04.wav",
-                packagedBasePath + "player/arrow_fly_real_01.wav",
-                packagedBasePath + "player/arrow_fly_real_02.wav"
+                basePath + "player/arrow_fly_real_04.wav"
             }, bowVoiceClips);
 
             bowHitVoiceClips = LoadClips(new[]
             {
                 basePath + "player/arrow_hit_flesh_real_01.wav",
                 basePath + "player/arrow_hit_wood_real_01.wav",
-                basePath + "player/arrow_hit_stone_real_01.wav",
-                packagedBasePath + "player/arrow_hit_flesh_real_01.wav",
-                packagedBasePath + "player/arrow_hit_wood_real_01.wav",
-                packagedBasePath + "player/arrow_hit_stone_real_01.wav"
+                basePath + "player/arrow_hit_stone_real_01.wav"
             }, bowHitVoiceClips);
         }
 

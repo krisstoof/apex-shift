@@ -6,7 +6,7 @@ at the repository root until a separate, dependency-safe migration is justified.
 
 | Root/package | Current use | Source/license evidence | Status |
 | --- | --- | --- | --- |
-| `Assets/_Project/Audio` | Runtime UI, combat, creature, footsteps and ambience audio | Generated procedural WAV pack; `SourceAssets/Audio/OGAReference/SOURCES.md` records OpenGameArt CC0 reference pages | Migrated from realistic audio wrapper; production paths updated |
+| `Assets/_Project/Audio` | Runtime UI, combat, creature, footsteps and ambience audio | Generated procedural WAV pack; `SourceAssets/Audio/OGAReference/apex_shift_audio_assets_v3_oga_ref/SOURCES.md` records OpenGameArt CC0 reference pages | Migrated from realistic audio wrapper; production paths updated |
 | `Assets/_Project/Art/Placeables/Models` | `PrefabRegistry` building model lookup | Project-generated low-poly OBJ/MTL pack; source README described import and model mapping | Migrated from placeables wrapper; binder path updated |
 | `Assets/_Project/Resources/ApexShift2D/Art/Icons` | Runtime `Resources.Load` item/resource/tool/UI icons | Icon wrapper README; exact upstream license not recorded in repository | Migrated; license UNKNOWN and must be verified before release |
 | `SourceAssets/Audio/OGAReference` | Non-runtime OGA references, manifest and validation metadata | `SOURCES.md` lists OpenGameArt CC0 references | Outside `Assets`; never loaded by Unity |

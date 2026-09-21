@@ -1,4 +1,6 @@
 using NUnit.Framework;
+using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using ApexShift.EditorTools.Validation;
@@ -52,9 +54,18 @@ namespace ApexShift.EditorTools.Validation.Tests
         [Test]
         public void CanonicalPlaceableModels_Exist()
         {
-            string[] models = AssetDatabase.FindAssets("t:Model", new[] { AssetRepositoryLayoutValidator.CanonicalPlaceablesPath });
-            Assert.That(models, Is.Not.Empty);
-            Assert.That(AssetDatabase.GUIDToAssetPath(models[0]), Does.StartWith(AssetRepositoryLayoutValidator.CanonicalPlaceablesPath + "/"));
+            Assert.That(HasModel("campfire_low_poly"), Is.True, "campfire_low_poly model is missing.");
+            Assert.That(HasModel("storage_box_low_poly"), Is.True, "storage_box_low_poly model is missing.");
+            Assert.That(HasModel("tent_low_poly") || HasModel("tent_stylized"), Is.True, "A tent model is missing.");
+            Assert.That(HasModel("trap_low_poly"), Is.True, "trap_low_poly model is missing.");
+            Assert.That(HasModel("wall_low_poly"), Is.True, "wall_low_poly model is missing.");
+        }
+
+        private static bool HasModel(string modelName)
+        {
+            return AssetDatabase.FindAssets(modelName + " t:Model", new[] { AssetRepositoryLayoutValidator.CanonicalPlaceablesPath })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Any(path => Path.GetFileNameWithoutExtension(path) == modelName);
         }
     }
 }

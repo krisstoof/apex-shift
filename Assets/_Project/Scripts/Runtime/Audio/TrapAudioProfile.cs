@@ -17,17 +17,12 @@ namespace ApexShift.Runtime.Audio
         private void AutoAssign()
         {
             string basePath = "Assets/_Project/Audio/SFX/combat/";
-            string packagedBasePath = "Assets/_Project/Audio/SFX/combat/";
             trapTriggerVoiceClips = LoadClips(new[]
             {
                 basePath + "traps/trap_snap_real_01.wav",
                 basePath + "traps/trap_snap_real_02.wav",
                 basePath + "traps/trap_snap_real_03.wav",
-                basePath + "traps/trap_snap_real_04.wav",
-                packagedBasePath + "traps/trap_snap_real_01.wav",
-                packagedBasePath + "traps/trap_snap_real_02.wav",
-                packagedBasePath + "traps/trap_snap_real_03.wav",
-                packagedBasePath + "traps/trap_snap_real_04.wav"
+                basePath + "traps/trap_snap_real_04.wav"
             }, trapTriggerVoiceClips);
         }
 
