@@ -379,6 +379,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ApexShift.Presentation::ApexShift.Presentation.HUD.RuntimeHUDProvisioner
   generator: {fileID: 0}
   uiFont: {fileID: 0}
+  itemIconCatalog: {fileID: 11400000, guid: 1eb64e2daed149c8a94b8df7c4d8f8ae, type: 2}
 --- !u!1 &840144668
 GameObject:
   m_ObjectHideFlags: 0

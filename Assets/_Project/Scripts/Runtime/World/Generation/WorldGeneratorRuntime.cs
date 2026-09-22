@@ -1595,18 +1595,11 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             if (actionBar == null) actionBar = player.AddComponent<ActionBarRuntime>();
             actionBar.SetInventoryRuntime(inventory);
             actionBar.SetInputReader(inputReader);
-            actionBar.SetUiParent(CurrentGenerationParent);
 
             PlayerHeldItemRuntime heldItem = player.GetComponent<PlayerHeldItemRuntime>();
             if (heldItem == null) heldItem = player.AddComponent<PlayerHeldItemRuntime>();
             heldItem.SetActionBarRuntime(actionBar);
             heldItem.SetInventoryRuntime(inventory);
-
-            CraftingPanelUI craftingPanel = player.GetComponent<CraftingPanelUI>();
-            if (craftingPanel == null) craftingPanel = player.AddComponent<CraftingPanelUI>();
-            craftingPanel.SetInputReader(inputReader);
-            craftingPanel.SetCraftingRuntime(crafting);
-            craftingPanel.SetInventoryRuntime(inventory);
 
             PlayerCombatRuntime combat = player.GetComponent<PlayerCombatRuntime>();
             if (combat == null)

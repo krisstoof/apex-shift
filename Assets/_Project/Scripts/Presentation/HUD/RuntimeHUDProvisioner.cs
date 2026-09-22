@@ -6,6 +6,7 @@ using ApexShift.Runtime.Flow;
 using ApexShift.Runtime.UI;
 using ApexShift.Runtime.DayNight;
 using ApexShift.Presentation.Icons;
+using ApexShift.Presentation.Crafting;
 using ApexShift.Runtime.Debugging;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -19,6 +20,7 @@ namespace ApexShift.Presentation.HUD
     {
         [SerializeField] private WorldGeneratorRuntime generator;
         [SerializeField] private Font uiFont;
+        [SerializeField] private ItemIconCatalog itemIconCatalog;
 
         private void Awake()
         {
@@ -102,6 +104,11 @@ namespace ApexShift.Presentation.HUD
                 if (t.name.EndsWith("Panel")) DestroyImmediate(t.gameObject);
             foreach (Transform t in menuGo.transform) 
                 DestroyImmediate(t.gameObject);
+
+            foreach (ActionBarView oldView in hudGo.GetComponentsInChildren<ActionBarView>(true))
+                if (oldView != null) DestroyImmediate(oldView.gameObject);
+            foreach (CraftingPanelView oldView in hudGo.GetComponentsInChildren<CraftingPanelView>(true))
+                if (oldView != null) DestroyImmediate(oldView.gameObject);
 
             PlayerHUDController hudController = hudGo.GetComponent<PlayerHUDController>() ?? hudGo.AddComponent<PlayerHUDController>();
 
@@ -247,6 +254,19 @@ CreateMenuBackdropFrame(optionsMenu.transform);
                 hudController.Configure(player.GetComponent<PlayerSurvivalRuntime>(), player.GetComponent<PlayerInventoryRuntime>(), healthBar, hungerBar, staminaBar, restBar,
                     new List<ResourceCounterUI> { woodCounter, stoneCounter, fiberCounter, meatCounter });
                 hudGo.SetActive(true);
+
+                ActionBarRuntime actionBar = player.GetComponent<ActionBarRuntime>();
+                PlayerCraftingRuntime craftingRuntime = player.GetComponent<PlayerCraftingRuntime>();
+                PlayerInventoryRuntime inventoryRuntime = player.GetComponent<PlayerInventoryRuntime>();
+                PlayerInputReader inputReader = player.GetComponent<PlayerInputReader>();
+
+                GameObject actionBarObject = new GameObject("ActionBarView");
+                actionBarObject.transform.SetParent(hudGo.transform, false);
+                actionBarObject.AddComponent<ActionBarView>().Bind(actionBar, itemIconCatalog);
+
+                GameObject craftingObject = new GameObject("CraftingPanelView");
+                craftingObject.transform.SetParent(hudGo.transform, false);
+                craftingObject.AddComponent<CraftingPanelView>().Bind(craftingRuntime, inventoryRuntime, inputReader);
             }
             else hudGo.SetActive(false);
 

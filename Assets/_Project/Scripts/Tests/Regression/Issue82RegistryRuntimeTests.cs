@@ -146,34 +146,21 @@ namespace ApexShift.Tests.Regression
         }
 
         [Test]
-        public void ActionBarOwnsOnlyItsOwnUiRoot()
+        public void ActionBarRuntimeOwnsStateWithoutCreatingUi()
         {
-            GameObject unrelated = new GameObject("ActionBarUI");
-            GameObject firstPlayer = new GameObject("Issue82_FirstPlayer");
-            GameObject secondPlayer = null;
+            GameObject player = new GameObject("Issue82_ActionBarPlayer");
             try
             {
-                firstPlayer.AddComponent<ActionBarRuntime>();
-                Assert.AreEqual(1, OwnedActionBars(firstPlayer).Count());
-
-                Object.DestroyImmediate(firstPlayer);
-                Assert.IsNotNull(unrelated, "ActionBarRuntime destroyed an unrelated same-named object.");
-
-                secondPlayer = new GameObject("Issue82_SecondPlayer");
-                secondPlayer.AddComponent<ActionBarRuntime>();
-                Assert.AreEqual(1, OwnedActionBars(secondPlayer).Count());
+                ActionBarRuntime actionBar = player.AddComponent<ActionBarRuntime>();
+                Assert.AreEqual(0, player.GetComponentsInChildren<Canvas>(true).Length);
+                Assert.IsTrue(actionBar.AssignItemToSlot(0, "spear"));
+                Assert.AreEqual("spear", actionBar.ActiveItemId);
+                Assert.IsTrue(actionBar.SetActiveSlot(0));
             }
             finally
             {
-                Object.DestroyImmediate(secondPlayer);
-                Object.DestroyImmediate(firstPlayer);
-                Object.DestroyImmediate(unrelated);
+                Object.DestroyImmediate(player);
             }
-        }
-
-        private static IEnumerable<Transform> OwnedActionBars(GameObject player)
-        {
-            return player.GetComponentsInChildren<Transform>(true).Where(transform => transform.name == "ActionBarUI");
         }
 
         private static GameObject CreateCreature(string creatureId, bool addBrain)

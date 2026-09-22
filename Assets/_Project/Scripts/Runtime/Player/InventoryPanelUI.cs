@@ -534,12 +534,25 @@ namespace ApexShift.Runtime.Player
                     }
                 }
 
-                // If dropped outside inventory grid and it's an action bar item, assign to action bar
-                ActionBarRuntime actionBar = ActionBarRuntime.Active;
-                if (actionBar != null && ActionBarRuntime.IsActionBarItem(itemId) && actionBar.TryAssignItemAtScreenPosition(itemId, eventData.position))
+                // Presentation action-bar slots own their screen geometry. Runtime only
+                // discovers the neutral drop-target interface through the existing UI raycast.
+                if (ActionBarRuntime.IsActionBarItem(itemId) && TryDropOnActionBar(itemId, eventData))
                 {
                     Debug.Log($"[Inventory] assigned {itemId} to action bar");
                 }
+            }
+
+            private static bool TryDropOnActionBar(string itemId, PointerEventData eventData)
+            {
+                if (EventSystem.current == null) return false;
+                List<RaycastResult> results = new List<RaycastResult>();
+                EventSystem.current.RaycastAll(eventData, results);
+                foreach (RaycastResult result in results)
+                {
+                    IActionBarItemDropTarget target = result.gameObject.GetComponentInParent<IActionBarItemDropTarget>();
+                    if (target != null && target.TryAssignItem(itemId)) return true;
+                }
+                return false;
             }
         }
     }

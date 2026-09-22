@@ -3,7 +3,8 @@
   "references": [
     "ApexShift.Core",
     "ApexShift.Runtime",
-    "ApexShift.Infrastructure"
+    "ApexShift.Infrastructure",
+    "ApexShift.Presentation"
   ],
   "optionalUnityReferences": [
     "TestAssemblies"

@@ -24,7 +24,6 @@ namespace ApexShift.Runtime.Player
         private ItemDatabase itemDatabase;
         private RecipeDatabase recipeDatabase;
         private CraftingSystem craftingSystem;
-        private bool subscribed;
 
         public string DefaultRecipeId => string.IsNullOrWhiteSpace(defaultRecipeId) ? "spear" : defaultRecipeId.Trim();
         public CraftingResult LastResult { get; private set; }
@@ -35,17 +34,6 @@ namespace ApexShift.Runtime.Player
             EnsureCore();
         }
 
-        private void OnEnable()
-        {
-            ResolveReferences();
-            SubscribeInput();
-        }
-
-        private void OnDisable()
-        {
-            UnsubscribeInput();
-        }
-
         public void SetInputReader(PlayerInputReader reader)
         {
             if (inputReader == reader)
@@ -53,12 +41,7 @@ namespace ApexShift.Runtime.Player
                 return;
             }
 
-            UnsubscribeInput();
             inputReader = reader;
-            if (enabled)
-            {
-                SubscribeInput();
-            }
         }
 
         public void SetInventoryRuntime(PlayerInventoryRuntime runtime)
@@ -108,11 +91,6 @@ namespace ApexShift.Runtime.Player
             return LastResult;
         }
 
-        private void OnOpenCraftingPressed()
-        {
-            CraftingPanelUI panel = GetComponent<CraftingPanelUI>();
-            if (panel == null) CraftDefaultRecipe();
-        }
 
         private void ResolveReferences()
         {
@@ -172,29 +150,6 @@ namespace ApexShift.Runtime.Player
             LastResult = CraftingResult.Success(normalizedRecipeId, recipe.ResultItemId, recipe.ResultAmount, new RecipeIngredient[0]);
             LogCraftingResult(LastResult);
             return LastResult;
-        }
-
-        private void SubscribeInput()
-        {
-            if (subscribed || inputReader == null)
-            {
-                return;
-            }
-
-            inputReader.OpenCraftingPressed += OnOpenCraftingPressed;
-            subscribed = true;
-        }
-
-        private void UnsubscribeInput()
-        {
-            if (!subscribed || inputReader == null)
-            {
-                subscribed = false;
-                return;
-            }
-
-            inputReader.OpenCraftingPressed -= OnOpenCraftingPressed;
-            subscribed = false;
         }
 
         private void LogCraftingResult(CraftingResult result)

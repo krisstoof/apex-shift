@@ -351,7 +351,7 @@ namespace ApexShift.Tests.Regression
                 "PlayerFollowCamera",
                 "Directional Light",
                 "WorldBounds",
-                "ActionBarUI",
+                "ActionBarView",
                 "CreatureIslandBoundsRuntime",
                 "AmbientMusicRuntime",
                 "AmbientSoundController",
