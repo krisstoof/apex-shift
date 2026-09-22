@@ -116,6 +116,7 @@ namespace ApexShift.Tests.Unit.Debug
                 Assert.IsNotNull(generationRoot.GetComponent<DebugPanelPresenter>());
                 Assert.IsNotNull(generationRoot.GetComponent<WorldMapDebugWindow>());
                 Assert.IsNotNull(generationRoot.GetComponent<WorldGenerationDebugPresenter>());
+                Assert.AreEqual(1, generationRoot.GetComponents<EcosystemDebugOverlay>().Length);
                 Assert.IsNotNull(creature.GetComponent<CreatureDebugOverlay>());
 
                 RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(false);
@@ -126,11 +127,13 @@ namespace ApexShift.Tests.Unit.Debug
                 Assert.IsNull(generationRoot.GetComponent<DebugPanelPresenter>());
                 Assert.IsNull(generationRoot.GetComponent<WorldMapDebugWindow>());
                 Assert.IsNull(generationRoot.GetComponent<WorldGenerationDebugPresenter>());
+                Assert.IsEmpty(generationRoot.GetComponents<EcosystemDebugOverlay>());
                 Assert.IsNull(creature.GetComponent<CreatureDebugOverlay>());
 
                 RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(true);
                 Assert.IsNotNull(player.GetComponent<PlayerActionDebugLog>());
                 Assert.IsNotNull(ui.GetComponent<UIDebugger>());
+                Assert.AreEqual(1, generationRoot.GetComponents<EcosystemDebugOverlay>().Length);
                 Assert.IsNotNull(creature.GetComponent<CreatureDebugOverlay>());
             }
             finally
@@ -159,6 +162,7 @@ namespace ApexShift.Tests.Unit.Debug
             string generator = File.ReadAllText("Assets/_Project/Scripts/Runtime/World/Generation/WorldGeneratorRuntime.cs");
             string composition = File.ReadAllText("Assets/_Project/Scripts/Runtime/World/Generation/RuntimeCompositionRoot.cs");
             string hud = File.ReadAllText("Assets/_Project/Scripts/Presentation/HUD/RuntimeHUDProvisioner.cs");
+            string ecosystem = File.ReadAllText("Assets/_Project/Scripts/Runtime/Ecosystem/EcosystemRuntime.cs");
 
             Assert.IsFalse(generator.Contains("PlayerActionDebugLog"));
             Assert.IsFalse(generator.Contains("CreatureDebugOverlay"));
@@ -169,6 +173,10 @@ namespace ApexShift.Tests.Unit.Debug
             Assert.IsFalse(composition.Contains("WorldMapDebugWindow"));
             Assert.IsFalse(composition.Contains("WorldGenerationDebugPresenter"));
             Assert.IsFalse(hud.Contains("UIDebugger"));
+            Assert.IsFalse(ecosystem.Contains("OnGUI"));
+            Assert.IsFalse(ecosystem.Contains("GUI.Box"));
+            Assert.IsFalse(ecosystem.Contains("showDebugOverlay"));
+            Assert.IsFalse(ecosystem.Contains("Ecosystem Debug"));
         }
     }
 }

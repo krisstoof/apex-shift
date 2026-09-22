@@ -22,6 +22,7 @@ namespace ApexShift.Presentation.Debugging
         private DebugPanelPresenter debugPanel;
         private WorldMapDebugWindow worldMapDebug;
         private WorldGenerationDebugPresenter generationPresenter;
+        private EcosystemDebugOverlay ecosystemOverlay;
         private EcosystemRuntime ecosystem;
         private readonly List<CreatureDebugOverlay> ownedCreatureOverlays = new List<CreatureDebugOverlay>();
         private bool ownsPlayerDiagnostics;
@@ -98,6 +99,8 @@ namespace ApexShift.Presentation.Debugging
             ecosystem = generationRoot.GetComponentInChildren<EcosystemRuntime>(true);
             if (ecosystem != null)
             {
+                ecosystemOverlay = generationRoot.gameObject.AddComponent<EcosystemDebugOverlay>();
+                ecosystemOverlay.Configure(ecosystem);
                 ecosystem.CreatureRegistered += HandleCreatureRegistered;
                 ecosystem.CreatureUnregistered += HandleCreatureUnregistered;
                 foreach (CreatureAgentView creature in ecosystem.Creatures)
@@ -152,6 +155,7 @@ namespace ApexShift.Presentation.Debugging
             if (debugPanel != null) DestroyOwned(debugPanel);
             if (worldMapDebug != null) DestroyOwned(worldMapDebug);
             if (generationPresenter != null) DestroyOwned(generationPresenter);
+            if (ecosystemOverlay != null) DestroyOwned(ecosystemOverlay);
             if (playerDiagnostics != null)
             {
                 PlayerActionDebugLog log = playerDiagnostics.GetComponent<PlayerActionDebugLog>();
@@ -172,6 +176,7 @@ namespace ApexShift.Presentation.Debugging
             debugPanel = null;
             worldMapDebug = null;
             generationPresenter = null;
+            ecosystemOverlay = null;
             playerDiagnostics = null;
             ownsPlayerDiagnostics = false;
             ownsUiDebugger = false;
