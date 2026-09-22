@@ -41,8 +41,8 @@ namespace ApexShift.Tests.Regression
         [Test]
         public void UnarmedBoundaryUsesHitboxSurface()
         {
-            GameObject inside = CreateCreature("unarmed-inside", new Vector3(0f, 0f, 1.35f + 0.35f - 0.01f));
-            GameObject outside = CreateCreature("unarmed-outside", new Vector3(0f, 0f, 1.35f + 0.35f + 0.01f));
+            GameObject inside = CreateCreature("unarmed-inside", CreatureAtBoundary(1.35f, 0.35f, -0.01f));
+            GameObject outside = CreateCreature("unarmed-outside", CreatureAtBoundary(1.35f, 0.35f, 0.01f));
             try
             {
                 Physics.SyncTransforms();
@@ -58,8 +58,8 @@ namespace ApexShift.Tests.Regression
         [Test]
         public void SpearBoundaryUsesHitboxSurface()
         {
-            GameObject inside = CreateCreature("spear-inside", new Vector3(0f, 0f, 2.25f + 0.35f - 0.01f));
-            GameObject outside = CreateCreature("spear-outside", new Vector3(0f, 0f, 2.25f + 0.35f + 0.01f));
+            GameObject inside = CreateCreature("spear-inside", CreatureAtBoundary(2.25f, 0.35f, -0.01f));
+            GameObject outside = CreateCreature("spear-outside", CreatureAtBoundary(2.25f, 0.35f, 0.01f));
             try
             {
                 Physics.SyncTransforms();
@@ -183,6 +183,12 @@ namespace ApexShift.Tests.Regression
         private bool TrySelect(Vector3 direction, float range, float arc, out MeleeTargetSelector.Result result)
         {
             return selector.TrySelectTarget(Vector3.up * 0.9f, direction, range, arc, Physics.DefaultRaycastLayers, null, out result);
+        }
+
+        private static Vector3 CreatureAtBoundary(float range, float radius, float epsilon)
+        {
+            // small_prey's collider center is local Y=0.38 and the selector origin is Y=0.9.
+            return new Vector3(0f, 0.52f, range + radius + epsilon);
         }
 
         private static GameObject CreateCreature(string id, Vector3 position)
