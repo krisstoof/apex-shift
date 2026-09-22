@@ -59,6 +59,7 @@ namespace ApexShift.Runtime.Player
 
         public bool SetActiveSlot(int slotIndex) { EnsureState(); return state.SetActiveSlot(slotIndex); }
         public void ClearActiveSlot() { EnsureState(); state.ClearActiveSlot(); }
+        public void ClearSlot(int slotIndex) { EnsureState(); state.ClearSlot(slotIndex); }
         public bool IsSlotActive(int slotIndex) => ActiveSlotIndex == slotIndex;
         public string GetAssignedItemInSlot(int slotIndex) { EnsureState(); return state.GetItem(slotIndex); }
 

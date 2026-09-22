@@ -125,5 +125,13 @@ MonoBehaviour:
     prefab: {fileID: 919132149155446097, guid: 545e5e8fe4461994c88ac6fe55360415, type: 3}
   - kind: 6
     prefab: {fileID: 919132149155446097, guid: d5a090224b4ad16499908f9772e3ec81, type: 3}
-  creaturePrefabs: []
+  creaturePrefabs:
+  - creatureId: small_prey
+    prefab: {fileID: 8073443194988779917, guid: 6b0b0b098177a3b439c80991ec9deacc, type: 3}
+  - creatureId: small_prey
+    prefab: {fileID: 2629182449500102118, guid: 15ca4494f24bf9741a48b37ec2c4c632, type: 3}
+  - creatureId: grazer
+    prefab: {fileID: 7402009758359158996, guid: 4ecab060b0afb5d4db61f7f1311b9e24, type: 3}
+  - creatureId: varnak
+    prefab: {fileID: 5883155896844355918, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
   buildingPrefabs: []

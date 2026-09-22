@@ -13,6 +13,7 @@ using ApexShift.Runtime.Creatures;
 using ApexShift.EditorTools.Data;
 using ApexShift.Presentation.Interaction;
 using ApexShift.Presentation.HUD;
+using ApexShift.Presentation.Icons;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -28,6 +29,7 @@ namespace ApexShift.EditorTools
         private const string PlayerPrefabPath = "Assets/StylizedCore/StylizedWoodMonsters/URP/AnimationGallery/Prefab/Player.prefab";
         private const string InputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
         private const string PlayerControllerPath = "Assets/_Project/Animations/Player/PlayerPrototype.controller";
+        private const string ItemIconCatalogPath = "Assets/_Project/Data/UI/ItemIconCatalog.asset";
         private static readonly Quaternion PlayerFacingRotation = Quaternion.Euler(0f, 45f, 0f);
 
         [MenuItem("Tools/Apex Shift/Create Base Playable Scene")]
@@ -84,7 +86,8 @@ namespace ApexShift.EditorTools
             light.type = LightType.Directional;
 
             GameObject uiRoot = CreateChild(gameRoot.transform, "UI");
-            uiRoot.AddComponent<RuntimeHUDProvisioner>();
+            RuntimeHUDProvisioner hudProvisioner = uiRoot.AddComponent<RuntimeHUDProvisioner>();
+            hudProvisioner.SetItemIconCatalog(AssetDatabase.LoadAssetAtPath<ItemIconCatalog>(ItemIconCatalogPath));
             CreateChild(gameRoot.transform, "DebugRoot");
 
             EditorSceneManager.MarkSceneDirty(scene);

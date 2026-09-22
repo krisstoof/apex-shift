@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using ApexShift.Runtime.Player;
+using UnityEngine;
 
 namespace ApexShift.Tests.Unit
 {
@@ -40,6 +41,45 @@ namespace ApexShift.Tests.Unit
             Assert.IsEmpty(state.GetItem(0));
             state.ClearActiveSlot();
             Assert.AreEqual(-1, state.ActiveSlotIndex);
+        }
+
+        [Test]
+        public void ClearingActiveSlotRaisesEmptyActiveSlotEvent()
+        {
+            ActionBarState state = new ActionBarState();
+            int activeSlot = -2;
+            string activeItem = "not-empty";
+            state.AssignItem(0, "spear");
+            state.ActiveSlotChanged += (slot, item) => { activeSlot = slot; activeItem = item; };
+
+            state.ClearSlot(0);
+
+            Assert.AreEqual(-1, state.ActiveSlotIndex);
+            Assert.IsEmpty(state.ActiveItemId);
+            Assert.AreEqual(-1, activeSlot);
+            Assert.IsEmpty(activeItem);
+        }
+
+        [Test]
+        public void ClearingActiveSlotUpdatesHeldItemRuntime()
+        {
+            GameObject player = new GameObject("ActionBarHeldItemTestPlayer");
+            try
+            {
+                ActionBarRuntime actionBar = player.AddComponent<ActionBarRuntime>();
+                PlayerHeldItemRuntime held = player.GetComponent<PlayerHeldItemRuntime>() ?? player.AddComponent<PlayerHeldItemRuntime>();
+                Assert.IsNotNull(held);
+                actionBar.AssignItemToSlot(0, "spear");
+                Assert.AreEqual("spear", held.CurrentItemId);
+
+                actionBar.ClearSlot(0);
+
+                Assert.IsEmpty(held.CurrentItemId);
+            }
+            finally
+            {
+                Object.DestroyImmediate(player);
+            }
         }
     }
 }

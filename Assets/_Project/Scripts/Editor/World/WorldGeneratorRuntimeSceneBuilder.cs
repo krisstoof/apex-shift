@@ -5,6 +5,7 @@ using ApexShift.Runtime.PlayerInput;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Debugging;
 using ApexShift.Presentation.HUD;
+using ApexShift.Presentation.Icons;
 using ApexShift.Runtime.Audio;
 using ApexShift.EditorTools.Data;
 using UnityEditor;
@@ -29,6 +30,7 @@ namespace ApexShift.Editor.World
         private const string GameBalanceConfigPath = "Assets/_Project/Config/GameBalanceConfig.asset";
         private const string PlayerPrefabPath = "Assets/StylizedCore/StylizedWoodMonsters/URP/AnimationGallery/Prefab/Player.prefab";
         private const string PlayerACPath = "Assets/StylizedCore/StylizedWoodMonsters/URP/AnimationGallery/Animations/Animations Controllers/AC_Player.controller";
+        private const string ItemIconCatalogPath = "Assets/_Project/Data/UI/ItemIconCatalog.asset";
 
         [MenuItem("Tools/Apex Shift/World/Create Runtime World Generator Scene")]
         public static void CreateScene()
@@ -54,6 +56,12 @@ namespace ApexShift.Editor.World
             generatorGo.AddComponent<WorldMapDebugWindow>();
 
             generator.SetBiomeCatalog(catalog);
+            ItemIconCatalog itemIconCatalog = AssetDatabase.LoadAssetAtPath<ItemIconCatalog>(ItemIconCatalogPath);
+            RuntimeHUDProvisioner hudProvisioner = generatorGo.GetComponent<RuntimeHUDProvisioner>();
+            if (hudProvisioner != null)
+            {
+                hudProvisioner.SetItemIconCatalog(itemIconCatalog);
+            }
             PrefabRegistry registry = EnsurePrefabRegistry();
             
             // Disable auto-generate on start to prevent double generation in Play mode

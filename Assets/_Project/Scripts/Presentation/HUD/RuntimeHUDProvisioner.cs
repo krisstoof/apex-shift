@@ -22,6 +22,11 @@ namespace ApexShift.Presentation.HUD
         [SerializeField] private Font uiFont;
         [SerializeField] private ItemIconCatalog itemIconCatalog;
 
+        public void SetItemIconCatalog(ItemIconCatalog catalog)
+        {
+            itemIconCatalog = catalog;
+        }
+
         private void Awake()
         {
             if (generator == null) generator = FindAnyObjectByType<WorldGeneratorRuntime>();

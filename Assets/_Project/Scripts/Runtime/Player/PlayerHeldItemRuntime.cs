@@ -29,6 +29,8 @@ namespace ApexShift.Runtime.Player
         private string currentItemId = string.Empty;
         private int lastSlotIndex = -2;
 
+        public string CurrentItemId => currentItemId;
+
         private void Awake()
         {
             ResolveReferences();

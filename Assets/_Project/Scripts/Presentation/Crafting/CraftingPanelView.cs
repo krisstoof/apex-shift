@@ -20,6 +20,7 @@ namespace ApexShift.Presentation.Crafting
         private Text statusText;
         private readonly Dictionary<string, Text> labels = new Dictionary<string, Text>();
         public bool IsVisible => panel != null && panel.activeSelf;
+        public string StatusMessage => statusText != null ? statusText.text : string.Empty;
 
         public void Bind(PlayerCraftingRuntime crafting, PlayerInventoryRuntime inventory, PlayerInputReader input)
         {
@@ -37,6 +38,16 @@ namespace ApexShift.Presentation.Crafting
         public void Toggle()
         {
             EnsureUI(); panel.SetActive(!panel.activeSelf); if (panel.activeSelf) Refresh();
+        }
+
+        public CraftingResult CraftRecipe(string recipeId)
+        {
+            if (craftingRuntime == null) return null;
+            CraftingResult result = craftingRuntime.CraftRecipe(recipeId);
+            if (statusText != null)
+                statusText.text = result != null && result.Succeeded ? $"Crafted {result.ResultItemId} x{result.CraftedAmount}" : $"Cannot craft {recipeId}";
+            Refresh();
+            return result;
         }
 
         private void OnDestroy() => Unbind();
@@ -61,14 +72,6 @@ namespace ApexShift.Presentation.Crafting
             }
         }
 
-        private void Craft(string recipeId)
-        {
-            if (craftingRuntime == null) return;
-            CraftingResult result = craftingRuntime.CraftRecipe(recipeId);
-            if (statusText != null) statusText.text = result != null && result.Succeeded ? $"Crafted {result.ResultItemId} x{result.CraftedAmount}" : $"Cannot craft {recipeId}";
-            Refresh();
-        }
-
         private void EnsureUI()
         {
             if (panel != null) return;
@@ -82,7 +85,7 @@ namespace ApexShift.Presentation.Crafting
             for (int i = 0; i < RecipeIds.Length; i++)
             {
                 string recipeId = RecipeIds[i]; Button button = CreateButton(recipeId, panel.transform);
-                button.onClick.AddListener(() => Craft(recipeId));
+                button.onClick.AddListener(() => CraftRecipe(recipeId));
                 RectTransform buttonRect = button.GetComponent<RectTransform>();
                 buttonRect.anchorMin = new Vector2(0f, 1f); buttonRect.anchorMax = new Vector2(1f, 1f); buttonRect.sizeDelta = new Vector2(-48f, 54f); buttonRect.anchoredPosition = new Vector2(0f, -78f - i * 62f);
             }

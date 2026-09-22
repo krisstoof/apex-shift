@@ -26,7 +26,17 @@ namespace ApexShift.Runtime.Player
             if (slotIndex < -1 || slotIndex >= items.Length) return false;
             activeSlotIndex = slotIndex; ActiveSlotChanged?.Invoke(activeSlotIndex, ActiveItemId); Changed?.Invoke(); return true;
         }
-        public void ClearSlot(int slotIndex) { if (slotIndex < 0 || slotIndex >= items.Length) return; items[slotIndex] = string.Empty; if (activeSlotIndex == slotIndex) activeSlotIndex = -1; Changed?.Invoke(); }
+        public void ClearSlot(int slotIndex)
+        {
+            if (slotIndex < 0 || slotIndex >= items.Length) return;
+            items[slotIndex] = string.Empty;
+            if (activeSlotIndex == slotIndex)
+            {
+                activeSlotIndex = -1;
+                ActiveSlotChanged?.Invoke(-1, string.Empty);
+            }
+            Changed?.Invoke();
+        }
         public void ClearActiveSlot() => SetActiveSlot(-1);
         private static string Normalize(string value) => string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim().ToLowerInvariant();
     }
