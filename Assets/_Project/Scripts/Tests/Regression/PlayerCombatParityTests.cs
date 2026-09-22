@@ -79,9 +79,10 @@ namespace ApexShift.Tests.Regression
                 player.transform.forward = Vector3.forward;
                 PlayerInventoryRuntime inventory = player.AddComponent<PlayerInventoryRuntime>();
                 inventory.EnsureInitialized();
-                ActionBarRuntime actionBar = player.AddComponent<ActionBarRuntime>();
+                ActionBarRuntime actionBar = null;
                 if (spear)
                 {
+                    actionBar = player.AddComponent<ActionBarRuntime>();
                     inventory.Inventory.AddItem("spear", 1);
                     actionBar.AssignItemToSlot(0, "spear");
                 }
@@ -89,7 +90,10 @@ namespace ApexShift.Tests.Regression
                 PlayerCombatRuntime combat = player.AddComponent<PlayerCombatRuntime>();
                 combat.SetAttackOrigin(player.transform);
                 combat.SetInventoryRuntime(inventory);
-                combat.SetActionBarRuntime(actionBar);
+                if (actionBar != null)
+                {
+                    combat.SetActionBarRuntime(actionBar);
+                }
 
                 target.transform.position = new Vector3(0f, 0f, targetZ);
                 target.AddComponent<CreatureHealthRuntime>().Configure("small_prey");

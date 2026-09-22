@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using ApexShift.Core.Inventory;
 using ApexShift.Core.Save;
@@ -8,6 +9,7 @@ using ApexShift.Runtime.Player;
 using ApexShift.Runtime.World.Query;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace ApexShift.Tests.Regression
 {
@@ -168,8 +170,8 @@ namespace ApexShift.Tests.Regression
             }
         }
 
-        [Test]
-        public void RestoredCreatureHasAuthoritativeHitboxAndCanBeHit()
+        [UnityTest]
+        public IEnumerator RestoredCreatureHasAuthoritativeHitboxAndCanBeHit()
         {
             GameObject ecosystemObject = new GameObject("RestoreCombatEcosystem");
             GameObject serviceObject = null;
@@ -180,6 +182,7 @@ namespace ApexShift.Tests.Regression
                 ecosystemObject.AddComponent<WorldQueryRuntime>();
                 serviceObject = new GameObject("RestoreCombatSaveService");
                 GameSaveService save = serviceObject.AddComponent<GameSaveService>();
+                yield return null;
 
                 WorldSaveData world = new WorldSaveData(
                     0,
@@ -196,6 +199,8 @@ namespace ApexShift.Tests.Regression
                     "combat-restore");
 
                 Assert.IsTrue(save.ApplyLoadedState(new GameSaveData(InventorySaveData.Empty, SurvivalSaveData.Default, world)));
+                yield return null;
+                Assert.IsNotEmpty(ecosystem.Creatures);
                 CreatureAgentView restored = ecosystem.Creatures[0];
                 CreatureHitboxRuntime hitbox = restored.GetComponent<CreatureHitboxRuntime>();
                 Assert.IsNotNull(hitbox);
