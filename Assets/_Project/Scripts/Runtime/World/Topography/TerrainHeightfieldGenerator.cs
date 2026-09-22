@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace ApexShift.Runtime.World.Topography
@@ -36,7 +37,7 @@ namespace ApexShift.Runtime.World.Topography
 
             float ridgeNoise = Mathf.PerlinNoise(warpedX * settings.RidgeFrequency + offsetX, warpedZ * settings.RidgeFrequency + offsetZ);
             float ridge = (1f - Mathf.Abs(2f * ridgeNoise - 1f)) * settings.RidgeAmplitude;
-            float ridgeMask = Mathf.Clamp01((macro + 0.18f) / 0.55f);
+            float ridgeMask = Mathf.Clamp01((macro / Mathf.Max(0.001f, settings.MacroAmplitude) + 0.25f) / 1.25f);
 
             float valleyNoise = CenteredNoise(warpedX * settings.ValleyFrequency + warpOffsetX, warpedZ * settings.ValleyFrequency + warpOffsetZ);
             float valleys = valleyNoise * settings.ValleyStrength;
@@ -49,6 +50,31 @@ namespace ApexShift.Runtime.World.Topography
             height = Mathf.Lerp(height, settings.SpawnTargetElevation, flatten);
 
             return Mathf.Clamp(height, settings.MinimumHeight, settings.MaximumHeight);
+        }
+
+        /// <summary>
+        /// Samples the authoritative walkable surface. Land is never below sea level
+        /// and the same deterministic coastal falloff is used by mesh and topography.
+        /// </summary>
+        public float SampleSurfaceHeight(float worldX, float worldZ, Func<float, float, bool> isInsideIsland)
+        {
+            float height = Mathf.Max(0f, SampleHeight(worldX, worldZ));
+            if (isInsideIsland == null || !isInsideIsland(worldX, worldZ))
+                return height;
+
+            float edgeBlend = 0f;
+            const float nearProbe = 4f;
+            const float farProbe = 8f;
+            if (!isInsideIsland(worldX + nearProbe, worldZ)) edgeBlend = Mathf.Max(edgeBlend, 0.5f);
+            if (!isInsideIsland(worldX - nearProbe, worldZ)) edgeBlend = Mathf.Max(edgeBlend, 0.5f);
+            if (!isInsideIsland(worldX, worldZ + nearProbe)) edgeBlend = Mathf.Max(edgeBlend, 0.5f);
+            if (!isInsideIsland(worldX, worldZ - nearProbe)) edgeBlend = Mathf.Max(edgeBlend, 0.5f);
+            if (!isInsideIsland(worldX + farProbe, worldZ)) edgeBlend = Mathf.Max(edgeBlend, 1f);
+            if (!isInsideIsland(worldX - farProbe, worldZ)) edgeBlend = Mathf.Max(edgeBlend, 1f);
+            if (!isInsideIsland(worldX, worldZ + farProbe)) edgeBlend = Mathf.Max(edgeBlend, 1f);
+            if (!isInsideIsland(worldX, worldZ - farProbe)) edgeBlend = Mathf.Max(edgeBlend, 1f);
+
+            return Mathf.Lerp(height, 0f, edgeBlend * 0.72f);
         }
 
         private static float CenteredNoise(float x, float z)

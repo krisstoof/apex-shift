@@ -36,6 +36,25 @@ namespace ApexShift.Tests.Editor
             Assert.That(differences, Is.GreaterThan(0));
         }
 
+        [TestCase(101)]
+        [TestCase(202)]
+        [TestCase(303)]
+        public void Heightfield_DefaultScaleProducesMacroLandforms(int seed)
+        {
+            var generator = new TerrainHeightfieldGenerator(seed, new TerrainHeightfieldSettings());
+            float min = float.MaxValue;
+            float max = float.MinValue;
+            for (int z = -80; z <= 80; z += 8)
+                for (int x = -104; x <= 104; x += 8)
+                {
+                    float height = generator.SampleHeight(x, z);
+                    min = Mathf.Min(min, height);
+                    max = Mathf.Max(max, height);
+                }
+
+            Assert.That(max - min, Is.GreaterThan(2f), $"Seed {seed} did not produce multi-unit macro relief.");
+        }
+
         [Test]
         public void Topography_ConstantHeightHasZeroSlopeAndNormalizedElevation()
         {
@@ -73,6 +92,33 @@ namespace ApexShift.Tests.Editor
                 Assert.That(center.IsSafeForPlayerSpawn, Is.False);
                 Assert.That(topography.GetCell(0, 2).NormalizedElevation, Is.EqualTo(0f).Within(0.001f));
                 Assert.That(topography.GetCell(4, 2).NormalizedElevation, Is.EqualTo(1f).Within(0.001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void Topography_UsesSameAuthoritativeSurfaceHeightAsTerrainSampler()
+        {
+            var generator = new TerrainHeightfieldGenerator(2468, new TerrainHeightfieldSettings());
+            System.Func<float, float, bool> island = (x, z) => Mathf.Abs(x) <= 8f && Mathf.Abs(z) <= 8f;
+            GameObject go = new GameObject("SurfaceContractTest");
+            try
+            {
+                IslandTopographyRuntime topography = go.AddComponent<IslandTopographyRuntime>();
+                topography.Build(
+                    4,
+                    4f,
+                    island,
+                    p => generator.SampleSurfaceHeight(p.x, p.z, island),
+                    p => "hearth_meadow");
+
+                TopographyCell center = topography.GetCell(1, 1);
+                float expected = generator.SampleSurfaceHeight(center.WorldCenter.x, center.WorldCenter.z, island);
+                Assert.That(center.Height, Is.EqualTo(expected).Within(0.000001f));
+                Assert.That(center.Height, Is.GreaterThanOrEqualTo(0f));
             }
             finally
             {

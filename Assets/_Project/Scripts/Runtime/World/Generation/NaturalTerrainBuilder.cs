@@ -57,9 +57,8 @@ namespace ApexShift.Runtime.World.Generation
             Vector3 halfSize = new Vector3(gridSize * tileSize * 0.5f, 0f, gridSize * tileSize * 0.5f);
             int vWidth       = resolution + 1;
 
-            // ── Pass 1: compute per-vertex heights, land flags, and original heights ──
+            // ── Pass 1: compute authoritative per-vertex surface heights and land flags ──
             var heightArr    = new float[vWidth, vWidth];
-            var origHeight   = new float[vWidth, vWidth];   // unsmoothed, used for cliff detection
             var isLandArr    = new bool[vWidth, vWidth];
 
             for (int vz = 0; vz <= resolution; vz++)
@@ -75,34 +74,8 @@ namespace ApexShift.Runtime.World.Generation
                     if (land)
                     {
                         Vector3 p = new Vector3(wx, 0f, wz);
-                        float h = Mathf.Max(getTerrainHeight(p), 0.01f);
+                        float h = getTerrainHeight(p);
                         heightArr[vx, vz] = h;
-                        origHeight[vx, vz] = h;
-                    }
-                }
-            }
-
-            // ── Pass 2: coastal beach smoothing (beach only – cliffs are exempt) ──────
-            // Low-lying coastal vertices blend to y=0 → gentle beach ramp.
-            // High-elevation coastal vertices keep their height → cliff wall covers transition.
-            for (int pass = 0; pass < 4; pass++)
-            {
-                for (int vz = 0; vz <= resolution; vz++)
-                {
-                    for (int vx = 0; vx <= resolution; vx++)
-                    {
-                        if (!isLandArr[vx, vz]) continue;
-                        if (origHeight[vx, vz] > CliffHeightThreshold) continue;  // cliff – skip
-
-                        bool adjWater =
-                            (vx > 0          && !isLandArr[vx - 1, vz]) ||
-                            (vx < resolution && !isLandArr[vx + 1, vz]) ||
-                            (vz > 0          && !isLandArr[vx, vz - 1]) ||
-                            (vz < resolution && !isLandArr[vx, vz + 1]) ||
-                            (vx == 0 || vx == resolution || vz == 0 || vz == resolution);
-
-                        if (adjWater)
-                            heightArr[vx, vz] = Mathf.Lerp(heightArr[vx, vz], 0f, 0.72f);
                     }
                 }
             }
@@ -506,7 +479,7 @@ namespace ApexShift.Runtime.World.Generation
                     if (!isInsideIsland(cx, cz)) continue;
 
                     Vector3 p = new Vector3(cx, 0f, cz);
-                    float h = Mathf.Max(getTerrainHeight(p), 0.01f);
+                    float h = getTerrainHeight(p);
 
                     if (h <= CliffHeightThreshold) continue;  // beach area – no cliff
 

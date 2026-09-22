@@ -595,7 +595,7 @@ namespace ApexShift.Runtime.World.Generation
         {
             if (_terrainHeightfield == null)
                 _terrainHeightfield = new TerrainHeightfieldGenerator(seed, settings != null ? settings.Terrain : null);
-            return _terrainHeightfield.SampleHeight(position.x, position.z);
+            return _terrainHeightfield.SampleSurfaceHeight(position.x, position.z, IsInsideIsland);
         }
 
         private void CreateTerrainTile(GeneratedBiomeRegion region)

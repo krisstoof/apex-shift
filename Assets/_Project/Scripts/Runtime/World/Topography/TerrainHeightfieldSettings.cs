@@ -9,34 +9,34 @@ namespace ApexShift.Runtime.World.Topography
     {
         [Header("Macro elevation")]
         [SerializeField] private float macroFrequency = 0.012f;
-        [SerializeField] private float macroAmplitude = 0.34f;
+        [SerializeField] private float macroAmplitude = 4.20f;
 
         [Header("Rolling hills")]
         [SerializeField] private float hillsFrequency = 0.028f;
-        [SerializeField] private float hillsAmplitude = 0.16f;
+        [SerializeField] private float hillsAmplitude = 1.80f;
 
         [Header("Ridges and valleys")]
         [SerializeField] private float ridgeFrequency = 0.052f;
-        [SerializeField] private float ridgeAmplitude = 0.20f;
+        [SerializeField] private float ridgeAmplitude = 2.00f;
         [SerializeField] private float valleyFrequency = 0.020f;
-        [SerializeField] private float valleyStrength = 0.16f;
+        [SerializeField] private float valleyStrength = 2.20f;
 
         [Header("Surface detail")]
         [SerializeField] private float detailFrequency = 0.11f;
-        [SerializeField] private float detailAmplitude = 0.035f;
+        [SerializeField] private float detailAmplitude = 0.18f;
 
         [Header("Domain warp")]
         [SerializeField] private float warpFrequency = 0.018f;
-        [SerializeField] private float warpStrength = 8f;
+        [SerializeField] private float warpStrength = 10f;
 
         [Header("Elevation")]
-        [SerializeField] private float minimumHeight = -0.20f;
-        [SerializeField] private float maximumHeight = 0.95f;
+        [SerializeField] private float minimumHeight = 0f;
+        [SerializeField] private float maximumHeight = 6.5f;
 
         [Header("Safe start")]
         [SerializeField] private float spawnFlattenInnerRadius = 10f;
         [SerializeField] private float spawnFlattenOuterRadius = 26f;
-        [SerializeField] private float spawnTargetElevation = 0.03f;
+        [SerializeField] private float spawnTargetElevation = 0.08f;
 
         [Header("Spawn slope thresholds")]
         [SerializeField] private float playerSafeSlopeDegrees = 14f;
