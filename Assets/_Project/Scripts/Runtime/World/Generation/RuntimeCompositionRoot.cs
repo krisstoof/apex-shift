@@ -34,8 +34,8 @@ namespace ApexShift.Runtime.World.Generation
             DayNight = Create<DayNightRuntime>("DayNightRuntime", parent);
             Create<DayNightSkyRuntime>("DayNightSkyRuntime", parent);
             SnapshotProvider = Create<GameSnapshotProvider>("GameSnapshotProvider", parent);
-            SnapshotProvider.SetAutoRefresh(RuntimeDebugSettings.DebugEnabled);
-            if (RuntimeDebugSettings.DebugEnabled)
+            SnapshotProvider.SetAutoRefresh(RuntimeDebugSettings.DeveloperDiagnosticsEnabled);
+            if (RuntimeDebugSettings.DeveloperDiagnosticsEnabled)
             {
                 DebugPanel = Create<DebugPanelPresenter>("DebugPanelPresenter", parent);
                 WorldMapDebug = Create<WorldMapDebugWindow>("WorldMapDebugWindow", parent);

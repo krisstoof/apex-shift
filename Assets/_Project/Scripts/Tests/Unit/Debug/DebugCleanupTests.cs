@@ -35,6 +35,29 @@ namespace ApexShift.Tests.Unit.Debug
         }
 
         [Test]
+        public void DiagnosticsPolicyRequiresEditorOrDevelopmentBuild()
+        {
+            Assert.IsFalse(RuntimeDiagnosticsPolicy.Resolve(false, false, true));
+            Assert.IsTrue(RuntimeDiagnosticsPolicy.Resolve(true, false, true));
+            Assert.IsTrue(RuntimeDiagnosticsPolicy.Resolve(false, true, true));
+            Assert.IsFalse(RuntimeDiagnosticsPolicy.Resolve(true, true, false));
+        }
+
+        [Test]
+        public void FreeBuildAndCraftingRequireDeveloperDiagnostics()
+        {
+            RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(false);
+            RuntimeDebugSettings.SetFreeBuildingEnabled(true);
+            RuntimeDebugSettings.SetFreeCraftingEnabled(true);
+            Assert.IsFalse(RuntimeDebugSettings.FreeBuildingEnabled);
+            Assert.IsFalse(RuntimeDebugSettings.FreeCraftingEnabled);
+
+            RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(true);
+            Assert.IsTrue(RuntimeDebugSettings.FreeBuildingEnabled);
+            Assert.IsTrue(RuntimeDebugSettings.FreeCraftingEnabled);
+        }
+
+        [Test]
         public void UIDebuggerIsPresentationOwnedAndDoesNotScanTheSceneEveryFrame()
         {
             Assert.AreEqual("ApexShift.Presentation.Debugging", typeof(UIDebugger).Namespace);

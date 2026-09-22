@@ -1360,7 +1360,7 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             var behavior = instance.GetComponent<CreatureBehaviorRuntime>();
             if (behavior == null) behavior = instance.AddComponent<CreatureBehaviorRuntime>();
 
-            if (RuntimeDebugSettings.DebugEnabled)
+            if (RuntimeDebugSettings.DeveloperDiagnosticsEnabled)
             {
                 var debugOverlay = instance.GetComponent<CreatureDebugOverlay>();
                 if (debugOverlay == null) debugOverlay = instance.AddComponent<CreatureDebugOverlay>();
@@ -1713,7 +1713,7 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             motionFeedback.SetInputReader(inputReader);
             motionFeedback.SetVisualRoot(player.transform.childCount > 0 ? player.transform.GetChild(0) : player.transform);
 
-            if (RuntimeDebugSettings.DebugEnabled)
+            if (RuntimeDebugSettings.DeveloperDiagnosticsEnabled)
             {
                 PlayerActionDebugLog debugLog = player.GetComponent<PlayerActionDebugLog>();
                 if (debugLog == null) debugLog = player.AddComponent<PlayerActionDebugLog>();

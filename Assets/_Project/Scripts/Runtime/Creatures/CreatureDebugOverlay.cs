@@ -56,7 +56,7 @@ namespace ApexShift.Runtime.Creatures
 
         private void OnGUI()
         {
-            if (!GameSessionState.IsGameplayActive || !RuntimeDebugSettings.DebugEnabled || !RuntimeDebugSettings.CreatureFramesEnabled || HideAllDebugFrames || !showDebugFrame)
+            if (!GameSessionState.IsGameplayActive || !RuntimeDebugSettings.DeveloperDiagnosticsEnabled || !RuntimeDebugSettings.CreatureFramesEnabled || HideAllDebugFrames || !showDebugFrame)
             {
                 return;
             }

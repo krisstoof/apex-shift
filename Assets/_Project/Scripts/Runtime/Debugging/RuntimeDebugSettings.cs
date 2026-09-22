@@ -10,36 +10,51 @@ namespace ApexShift.Runtime.Debugging
     {
         private const float MinimumRefreshInterval = 0.05f;
 
-        public static bool DebugEnabled { get; private set; } = false;
-        public static bool CreatureFramesEnabled { get; private set; } = false;
-        public static bool EcosystemOverlayEnabled { get; private set; } = false;
-        public static bool FreeBuildingEnabled { get; private set; } = false;
-        public static bool FreeCraftingEnabled { get; private set; } = false;
+        private static bool requestedDeveloperDiagnostics;
+        private static bool requestedCreatureFrames;
+        private static bool requestedEcosystemOverlay;
+        private static bool requestedFreeBuilding;
+        private static bool requestedFreeCrafting;
+
+        public static bool DeveloperDiagnosticsAvailable
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            get => true;
+#else
+            get => false;
+#endif
+        }
+
+        public static bool DeveloperDiagnosticsEnabled =>
+            RuntimeDiagnosticsPolicy.Resolve(DeveloperDiagnosticsAvailable, false, requestedDeveloperDiagnostics);
+        public static bool DebugEnabled => DeveloperDiagnosticsEnabled;
+        public static bool CreatureFramesEnabled => DeveloperDiagnosticsEnabled && requestedCreatureFrames;
+        public static bool EcosystemOverlayEnabled => DeveloperDiagnosticsEnabled && requestedEcosystemOverlay;
+        public static bool FreeBuildingEnabled => DeveloperDiagnosticsEnabled && requestedFreeBuilding;
+        public static bool FreeCraftingEnabled => DeveloperDiagnosticsEnabled && requestedFreeCrafting;
         public static float RefreshIntervalSeconds { get; private set; } = 0.35f;
 
-        public static void SetDebugEnabled(bool enabled)
-        {
-            DebugEnabled = enabled;
-        }
+        public static void SetDeveloperDiagnosticsEnabled(bool enabled) => requestedDeveloperDiagnostics = enabled;
+        public static void SetDebugEnabled(bool enabled) => SetDeveloperDiagnosticsEnabled(enabled);
 
         public static void SetCreatureFramesEnabled(bool enabled)
         {
-            CreatureFramesEnabled = enabled;
+            requestedCreatureFrames = enabled;
         }
 
         public static void SetEcosystemOverlayEnabled(bool enabled)
         {
-            EcosystemOverlayEnabled = enabled;
+            requestedEcosystemOverlay = enabled;
         }
 
         public static void SetFreeBuildingEnabled(bool enabled)
         {
-            FreeBuildingEnabled = enabled;
+            requestedFreeBuilding = enabled;
         }
 
         public static void SetFreeCraftingEnabled(bool enabled)
         {
-            FreeCraftingEnabled = enabled;
+            requestedFreeCrafting = enabled;
         }
 
         public static void SetRefreshInterval(float seconds)
@@ -49,11 +64,11 @@ namespace ApexShift.Runtime.Debugging
 
         public static void RestoreDefaults()
         {
-            DebugEnabled = false;
-            CreatureFramesEnabled = false;
-            EcosystemOverlayEnabled = false;
-            FreeBuildingEnabled = false;
-            FreeCraftingEnabled = false;
+            requestedDeveloperDiagnostics = false;
+            requestedCreatureFrames = false;
+            requestedEcosystemOverlay = false;
+            requestedFreeBuilding = false;
+            requestedFreeCrafting = false;
             RefreshIntervalSeconds = 0.35f;
         }
     }

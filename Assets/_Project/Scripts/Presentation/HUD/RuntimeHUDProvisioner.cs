@@ -298,7 +298,7 @@ CreateMenuBackdropFrame(optionsMenu.transform);
 
             GameStartupController startup = uiRoot.GetComponent<GameStartupController>() ?? uiRoot.AddComponent<GameStartupController>();
             if (uiRoot.GetComponent<InputEnabler>() == null) uiRoot.AddComponent<InputEnabler>();
-            if (RuntimeDebugSettings.DebugEnabled && uiRoot.GetComponent<UIDebugger>() == null)
+            if (RuntimeDebugSettings.DeveloperDiagnosticsEnabled && uiRoot.GetComponent<UIDebugger>() == null)
                 uiRoot.AddComponent<UIDebugger>();
 
             menuGo.SetActive(true);

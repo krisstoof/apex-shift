@@ -113,7 +113,7 @@ namespace ApexShift.Tests.Regression
         public void RuntimeDebugSettingsCanDisableDebugWithoutRemovingComponents()
         {
             RuntimeDebugSettings.RestoreDefaults();
-            RuntimeDebugSettings.SetDebugEnabled(false);
+            RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(false);
             RuntimeDebugSettings.SetCreatureFramesEnabled(false);
             RuntimeDebugSettings.SetEcosystemOverlayEnabled(false);
             RuntimeDebugSettings.SetFreeBuildingEnabled(true);
@@ -122,6 +122,10 @@ namespace ApexShift.Tests.Regression
             Assert.IsFalse(RuntimeDebugSettings.DebugEnabled);
             Assert.IsFalse(RuntimeDebugSettings.CreatureFramesEnabled);
             Assert.IsFalse(RuntimeDebugSettings.EcosystemOverlayEnabled);
+            Assert.IsFalse(RuntimeDebugSettings.FreeBuildingEnabled);
+            Assert.IsFalse(RuntimeDebugSettings.FreeCraftingEnabled);
+
+            RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(true);
             Assert.IsTrue(RuntimeDebugSettings.FreeBuildingEnabled);
             Assert.IsTrue(RuntimeDebugSettings.FreeCraftingEnabled);
 

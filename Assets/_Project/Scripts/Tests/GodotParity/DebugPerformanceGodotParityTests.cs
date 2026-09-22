@@ -67,7 +67,7 @@ namespace ApexShift.Tests.GodotParity
         public void DebugRefreshCanBeThrottledGlobally()
         {
             RuntimeDebugSettings.SetRefreshInterval(0.75f);
-            RuntimeDebugSettings.SetDebugEnabled(false);
+            RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(false);
 
             Assert.AreEqual(0.75f, RuntimeDebugSettings.RefreshIntervalSeconds, 0.001f);
             Assert.IsFalse(RuntimeDebugSettings.DebugEnabled);

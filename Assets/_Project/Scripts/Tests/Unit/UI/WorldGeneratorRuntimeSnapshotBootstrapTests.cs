@@ -15,7 +15,7 @@ namespace ApexShift.Tests.Unit.UI
             GameObject root = new GameObject("GeneratorRoot");
             try
             {
-                RuntimeDebugSettings.SetDebugEnabled(true);
+                RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(true);
                 var composition = new RuntimeCompositionRoot();
                 composition.Compose(root.transform);
 
