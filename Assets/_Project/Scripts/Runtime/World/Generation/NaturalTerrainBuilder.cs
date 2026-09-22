@@ -371,7 +371,8 @@ namespace ApexShift.Runtime.World.Generation
             float x1 = x0 + cellSize;
             float z0 = cz * cellSize - halfSize.z;
             float z1 = z0 + cellSize;
-            return new[] { new Vector2(x0, z0), new Vector2(x1, z0), new Vector2(x1, z1), new Vector2(x0, z1) };
+            // Clockwise around the cell as viewed from +Y (Unity's terrain winding).
+            return new[] { new Vector2(x0, z0), new Vector2(x0, z1), new Vector2(x1, z1), new Vector2(x1, z0) };
         }
 
         private static int LandMask(Vector2[] corners, Func<float, float, bool> isInsideIsland)
@@ -412,51 +413,35 @@ namespace ApexShift.Runtime.World.Generation
             List<int> triangles,
             float tileSize)
         {
-            bool[] land = new bool[4];
             bool[] target = new bool[4];
             int mask = 0;
             for (int i = 0; i < 4; i++)
             {
-                land[i] = isInsideIsland(corners[i].x, corners[i].y);
-                target[i] = includeLand ? land[i] : !land[i];
+                bool isLand = isInsideIsland(corners[i].x, corners[i].y);
+                target[i] = includeLand ? isLand : !isLand;
                 if (target[i]) mask |= 1 << i;
             }
             if (mask == 0) return;
 
-            Vector2[] perimeter = { corners[0], corners[3], corners[2], corners[1] };
             var polygons = new List<List<Vector2>>();
+            Vector2[] crossings = new Vector2[4];
+            bool[] hasCrossing = new bool[4];
+            for (int edge = 0; edge < 4; edge++)
+            {
+                int next = (edge + 1) & 3;
+                bool edgeCrosses = isInsideIsland(corners[edge].x, corners[edge].y)
+                                   != isInsideIsland(corners[next].x, corners[next].y);
+                hasCrossing[edge] = edgeCrosses;
+                if (edgeCrosses)
+                    crossings[edge] = FindBoundary(corners[edge], corners[next], isInsideIsland);
+            }
 
-            // The two diagonal cases need a center decision to cover the cell
-            // completely without an overlap or a central hole.
             if (mask == 5 || mask == 10)
             {
-                Vector2 e0 = FindBoundary(corners[0], corners[1], isInsideIsland);
-                Vector2 e1 = FindBoundary(corners[1], corners[2], isInsideIsland);
-                Vector2 e2 = FindBoundary(corners[2], corners[3], isInsideIsland);
-                Vector2 e3 = FindBoundary(corners[3], corners[0], isInsideIsland);
                 Vector2 center = (corners[0] + corners[2]) * 0.5f;
-                bool centerTarget = includeLand
-                    ? isInsideIsland(center.x, center.y)
-                    : !isInsideIsland(center.x, center.y);
-
-                if (mask == 5)
-                {
-                    polygons.Add(centerTarget
-                        ? new List<Vector2> { corners[0], e0, center, e3 }
-                        : new List<Vector2> { corners[0], e0, e3 });
-                    polygons.Add(centerTarget
-                        ? new List<Vector2> { corners[2], e2, center, e1 }
-                        : new List<Vector2> { corners[2], e2, e1 });
-                }
-                else
-                {
-                    polygons.Add(centerTarget
-                        ? new List<Vector2> { corners[1], e1, center, e0 }
-                        : new List<Vector2> { corners[1], e1, e0 });
-                    polygons.Add(centerTarget
-                        ? new List<Vector2> { corners[3], e3, center, e2 }
-                        : new List<Vector2> { corners[3], e3, e2 });
-                }
+                bool centerLand = isInsideIsland(center.x, center.y);
+                bool centerTarget = includeLand ? centerLand : !centerLand;
+                BuildAmbiguousPolygons(mask, centerTarget, corners, crossings, polygons);
             }
             else
             {
@@ -464,9 +449,8 @@ namespace ApexShift.Runtime.World.Generation
                 for (int i = 0; i < 4; i++)
                 {
                     int next = (i + 1) % 4;
-                    if (target[i]) polygon.Add(perimeter[i]);
-                    if (target[i] != target[next])
-                        polygon.Add(FindBoundary(perimeter[i], perimeter[next], isInsideIsland));
+                    if (target[i]) polygon.Add(corners[i]);
+                    if (hasCrossing[i]) polygon.Add(crossings[i]);
                 }
                 polygons.Add(polygon);
             }
@@ -477,10 +461,63 @@ namespace ApexShift.Runtime.World.Generation
                 Vector2 origin = polygon[0];
                 for (int i = 1; i < polygon.Count - 1; i++)
                 {
+                    if (Mathf.Abs(CrossXZ(polygon[i] - origin, polygon[i + 1] - origin)) < 0.00001f)
+                        continue;
                     AddContourVertex(origin, getLandHeight, getSurfaceHeight, vertices, uvs, triangles, tileSize);
                     AddContourVertex(polygon[i], getLandHeight, getSurfaceHeight, vertices, uvs, triangles, tileSize);
                     AddContourVertex(polygon[i + 1], getLandHeight, getSurfaceHeight, vertices, uvs, triangles, tileSize);
                 }
+            }
+        }
+
+        private static void BuildAmbiguousPolygons(
+            int mask,
+            bool centerTarget,
+            Vector2[] corners,
+            Vector2[] crossings,
+            List<List<Vector2>> polygons)
+        {
+            GetAmbiguousCrossingPairs(mask, centerTarget,
+                out int pairA0, out int pairB0, out _, out _);
+            bool targetConnected = mask == 5
+                ? pairA0 == 0 && pairB0 == 1
+                : pairA0 == 3 && pairB0 == 0;
+            if (mask == 5)
+            {
+                if (targetConnected)
+                    polygons.Add(new List<Vector2> { corners[0], crossings[0], crossings[1], corners[2], crossings[2], crossings[3] });
+                else
+                {
+                    polygons.Add(new List<Vector2> { corners[0], crossings[0], crossings[3] });
+                    polygons.Add(new List<Vector2> { corners[2], crossings[2], crossings[1] });
+                }
+            }
+            else
+            {
+                if (targetConnected)
+                    polygons.Add(new List<Vector2> { corners[1], crossings[1], crossings[2], corners[3], crossings[3], crossings[0] });
+                else
+                {
+                    polygons.Add(new List<Vector2> { corners[1], crossings[1], crossings[0] });
+                    polygons.Add(new List<Vector2> { corners[3], crossings[3], crossings[2] });
+                }
+            }
+        }
+
+        private static float CrossXZ(Vector2 a, Vector2 b) => a.x * b.y - a.y * b.x;
+
+        private static void GetAmbiguousCrossingPairs(int landMask, bool centerLand,
+            out int firstPairA, out int firstPairB, out int secondPairA, out int secondPairB)
+        {
+            if ((landMask == 5 && centerLand) || (landMask == 10 && !centerLand))
+            {
+                firstPairA = 0; firstPairB = 1;
+                secondPairA = 2; secondPairB = 3;
+            }
+            else
+            {
+                firstPairA = 3; firstPairB = 0;
+                secondPairA = 1; secondPairB = 2;
             }
         }
 
@@ -538,16 +575,11 @@ namespace ApexShift.Runtime.World.Generation
             bool centerLand = isInsideIsland(center.x, center.y);
             // Select the same diagonal resolution as AppendContourCell so cliff
             // segments and land/water triangles share exactly the same contour.
-            if (centerLand)
-            {
-                AddContourWall(crossings[0], crossings[1], isInsideIsland, getTerrainHeight, cliffBaseY, vertices, triangles, uvs);
-                AddContourWall(crossings[2], crossings[3], isInsideIsland, getTerrainHeight, cliffBaseY, vertices, triangles, uvs);
-            }
-            else
-            {
-                AddContourWall(crossings[3], crossings[0], isInsideIsland, getTerrainHeight, cliffBaseY, vertices, triangles, uvs);
-                AddContourWall(crossings[1], crossings[2], isInsideIsland, getTerrainHeight, cliffBaseY, vertices, triangles, uvs);
-            }
+            int landMask = LandMask(corners, isInsideIsland);
+            GetAmbiguousCrossingPairs(landMask, centerLand,
+                out int a0, out int b0, out int a1, out int b1);
+            AddContourWall(crossings[a0], crossings[b0], isInsideIsland, getTerrainHeight, cliffBaseY, vertices, triangles, uvs);
+            AddContourWall(crossings[a1], crossings[b1], isInsideIsland, getTerrainHeight, cliffBaseY, vertices, triangles, uvs);
         }
 
         private static void AddContourWall(
