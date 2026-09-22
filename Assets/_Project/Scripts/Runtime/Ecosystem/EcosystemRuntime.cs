@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System;
 using ApexShift.Core.Ecosystem;
 using ApexShift.Runtime.Creatures;
 using UnityEngine;
@@ -17,7 +18,7 @@ namespace ApexShift.Runtime.Ecosystem
             {
                 if (_instance == null)
                 {
-                    _instance = Object.FindAnyObjectByType<EcosystemRuntime>();
+                    _instance = UnityEngine.Object.FindAnyObjectByType<EcosystemRuntime>();
                 }
 
                 return _instance;
@@ -33,6 +34,8 @@ namespace ApexShift.Runtime.Ecosystem
         public int CreatureCount => _creatures.Count;
         public IReadOnlyList<FoodSourceView> FoodSources => _foodSources;
         public IReadOnlyList<CreatureAgentView> Creatures => _creatures;
+        public event Action<CreatureAgentView> CreatureRegistered;
+        public event Action<CreatureAgentView> CreatureUnregistered;
         public int PlantFoodSourceCount => GetFoodSourceCount(FoodKind.Plants);
         public int MeatFoodSourceCount => GetFoodSourceCount(FoodKind.Meat);
 
@@ -86,6 +89,7 @@ namespace ApexShift.Runtime.Ecosystem
             if (!_creatures.Contains(creature))
             {
                 _creatures.Add(creature);
+                CreatureRegistered?.Invoke(creature);
             }
         }
 
@@ -96,7 +100,10 @@ namespace ApexShift.Runtime.Ecosystem
                 return;
             }
 
-            _creatures.Remove(creature);
+            if (_creatures.Remove(creature))
+            {
+                CreatureUnregistered?.Invoke(creature);
+            }
         }
 
         public int GetCreaturesInRadius(Vector3 position, float radius, List<CreatureAgentView> results, string creatureId = null)

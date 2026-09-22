@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace ApexShift.Runtime.Debugging
@@ -15,6 +16,8 @@ namespace ApexShift.Runtime.Debugging
         private static bool requestedEcosystemOverlay;
         private static bool requestedFreeBuilding;
         private static bool requestedFreeCrafting;
+
+        public static event Action<bool> DeveloperDiagnosticsChanged;
 
         public static bool DeveloperDiagnosticsAvailable
         {
@@ -34,7 +37,16 @@ namespace ApexShift.Runtime.Debugging
         public static bool FreeCraftingEnabled => DeveloperDiagnosticsEnabled && requestedFreeCrafting;
         public static float RefreshIntervalSeconds { get; private set; } = 0.35f;
 
-        public static void SetDeveloperDiagnosticsEnabled(bool enabled) => requestedDeveloperDiagnostics = enabled;
+        public static void SetDeveloperDiagnosticsEnabled(bool enabled)
+        {
+            bool previous = DeveloperDiagnosticsEnabled;
+            requestedDeveloperDiagnostics = enabled;
+            bool current = DeveloperDiagnosticsEnabled;
+            if (previous != current)
+            {
+                DeveloperDiagnosticsChanged?.Invoke(current);
+            }
+        }
         public static void SetDebugEnabled(bool enabled) => SetDeveloperDiagnosticsEnabled(enabled);
 
         public static void SetCreatureFramesEnabled(bool enabled)
@@ -64,12 +76,17 @@ namespace ApexShift.Runtime.Debugging
 
         public static void RestoreDefaults()
         {
+            bool previous = DeveloperDiagnosticsEnabled;
             requestedDeveloperDiagnostics = false;
             requestedCreatureFrames = false;
             requestedEcosystemOverlay = false;
             requestedFreeBuilding = false;
             requestedFreeCrafting = false;
             RefreshIntervalSeconds = 0.35f;
+            if (previous && !DeveloperDiagnosticsEnabled)
+            {
+                DeveloperDiagnosticsChanged?.Invoke(false);
+            }
         }
     }
 }

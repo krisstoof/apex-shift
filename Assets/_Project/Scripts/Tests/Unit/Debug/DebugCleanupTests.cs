@@ -1,6 +1,10 @@
 using System.IO;
+using System.Reflection;
 using ApexShift.Presentation.Debugging;
 using ApexShift.Runtime.Debugging;
+using ApexShift.Runtime.Creatures;
+using ApexShift.Runtime.Ecosystem;
+using ApexShift.Runtime.UI.Snapshots;
 using ApexShift.Runtime.World.Generation;
 using NUnit.Framework;
 using UnityEngine;
@@ -54,6 +58,90 @@ namespace ApexShift.Tests.Unit.Debug
             RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(true);
             Assert.IsTrue(RuntimeDebugSettings.FreeBuildingEnabled);
             Assert.IsTrue(RuntimeDebugSettings.FreeCraftingEnabled);
+        }
+
+        [Test]
+        public void DeveloperDiagnosticsChangedPublishesOnlyEffectiveTransitions()
+        {
+            int notifications = 0;
+            bool lastValue = false;
+            System.Action<bool> handler = value => { notifications++; lastValue = value; };
+            RuntimeDebugSettings.DeveloperDiagnosticsChanged += handler;
+            try
+            {
+                RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(false);
+                RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(false);
+                Assert.AreEqual(0, notifications);
+
+                RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(true);
+                Assert.AreEqual(1, notifications);
+                Assert.IsTrue(lastValue);
+
+                RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(true);
+                Assert.AreEqual(1, notifications);
+            }
+            finally
+            {
+                RuntimeDebugSettings.DeveloperDiagnosticsChanged -= handler;
+                RuntimeDebugSettings.RestoreDefaults();
+            }
+        }
+
+        [Test]
+        public void DiagnosticsBootstrapRebindsWithoutWorldRegeneration()
+        {
+            GameObject generatorObject = new GameObject("DiagnosticsGenerator");
+            GameObject generationRoot = new GameObject("GenerationRoot");
+            GameObject player = new GameObject("Player");
+            GameObject ui = new GameObject("UI");
+            GameObject creature = new GameObject("Creature");
+            try
+            {
+                WorldGeneratorRuntime generator = generatorObject.AddComponent<WorldGeneratorRuntime>();
+                WorldGenerationContext context = new WorldGenerationContext(1, generationRoot.transform) { Player = player };
+                typeof(WorldGeneratorRuntime).GetField("_generationContext", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(generator, context);
+                generationRoot.AddComponent<GameSnapshotProvider>();
+                EcosystemRuntime ecosystem = generationRoot.AddComponent<EcosystemRuntime>();
+                CreatureAgentView creatureView = creature.AddComponent<CreatureAgentView>();
+                ecosystem.RegisterCreature(creatureView);
+
+                RuntimeDiagnosticsBootstrap bootstrap = generatorObject.AddComponent<RuntimeDiagnosticsBootstrap>();
+                bootstrap.Configure(generator);
+                RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(true);
+
+                Assert.IsTrue(generationRoot.GetComponent<GameSnapshotProvider>().AutoRefreshEnabled);
+                Assert.IsNotNull(player.GetComponent<PlayerActionDebugLog>());
+                Assert.IsNotNull(ui.GetComponent<UIDebugger>());
+                Assert.IsNotNull(generationRoot.GetComponent<DebugPanelPresenter>());
+                Assert.IsNotNull(generationRoot.GetComponent<WorldMapDebugWindow>());
+                Assert.IsNotNull(generationRoot.GetComponent<WorldGenerationDebugPresenter>());
+                Assert.IsNotNull(creature.GetComponent<CreatureDebugOverlay>());
+
+                RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(false);
+
+                Assert.IsFalse(generationRoot.GetComponent<GameSnapshotProvider>().AutoRefreshEnabled);
+                Assert.IsNull(player.GetComponent<PlayerActionDebugLog>());
+                Assert.IsNull(ui.GetComponent<UIDebugger>());
+                Assert.IsNull(generationRoot.GetComponent<DebugPanelPresenter>());
+                Assert.IsNull(generationRoot.GetComponent<WorldMapDebugWindow>());
+                Assert.IsNull(generationRoot.GetComponent<WorldGenerationDebugPresenter>());
+                Assert.IsNull(creature.GetComponent<CreatureDebugOverlay>());
+
+                RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(true);
+                Assert.IsNotNull(player.GetComponent<PlayerActionDebugLog>());
+                Assert.IsNotNull(ui.GetComponent<UIDebugger>());
+                Assert.IsNotNull(creature.GetComponent<CreatureDebugOverlay>());
+            }
+            finally
+            {
+                RuntimeDebugSettings.RestoreDefaults();
+                Object.DestroyImmediate(generatorObject);
+                Object.DestroyImmediate(generationRoot);
+                Object.DestroyImmediate(player);
+                Object.DestroyImmediate(ui);
+                Object.DestroyImmediate(creature);
+            }
         }
 
         [Test]
