@@ -1,65 +1,61 @@
-# Blender MCP Asset Agent
+# Blender MCP agent
 
-The repository contains a Codex skill and a Blender-side orchestrator for creating Apex Shift bushcraft assets through Blender MCP.
+This repository uses the v10.1 Blender pipeline as the only active production
+asset workflow.
 
-## Included files
+## Canonical files
 
-- `.codex/config.toml` - project-scoped Blender MCP server configuration for Windows.
-- `AGENTS.md` - repository guidance that routes Blender work to the dedicated skill.
-- `.agents/skills/blender-asset-creator/SKILL.md` - the agent workflow and safety rules.
-- `.agents/skills/blender-asset-creator/references/asset-contracts.md` - visual and technical contracts.
-- `Tools/Blender/blender_mcp_agent.py` - safe entry point around the existing generator and validation scripts.
+- `Tools/BlenderV10/apex_shift_blender_generator_v10_1.py`
+- `Tools/BlenderV10/apex_shift_profiles_v10.py`
+- `Tools/BlenderV10/apex_shift_asset_visual_specs_v5.json`
+- `Tools/BlenderV10/blender_mcp_agent.py`
 
-## Local prerequisites
+The profile/spec set contains 98 asset profiles. Asset IDs must come from that
+file; do not use a separate legacy ID list.
 
-1. Install Blender and the current Blender MCP add-on.
-2. Install `uv` with its official Windows installer so the `uvx` command exists.
-3. Open the repository as a trusted project in Codex.
-4. Restart Codex after reading the project `.codex/config.toml`.
-5. Open Blender, enable the Blender MCP add-on, open the `BlenderMCP` sidebar tab and start the connection on port `9876`.
-6. Use `/mcp` in Codex to confirm the `blender` server is active.
+## MCP setup
 
-The project configuration pins Python 3.11, disables Blender MCP telemetry and asks for approval for write-capable tools.
+Install `uv`/`uvx`, open Blender, enable the Blender MCP add-on and connect it
+on `localhost:9876`. Codex uses `.codex/config.toml`; VS Code uses the same
+command:
 
-## First run
-
-Start with the reference set rather than generating every asset:
-
-```text
-Use the blender-asset-creator skill. Inspect the Blender scene, then generate and validate wood, spear and campfire through Tools/Blender/blender_mcp_agent.py. Show me the previews and report every failed check before changing more assets.
+```json
+{
+  "command": "cmd",
+  "args": ["/c", "uvx", "--python", "3.11", "blender-mcp"]
+}
 ```
 
-The MCP call should import the checked-in orchestrator and run:
+The configured environment is `BLENDER_HOST=localhost`, `BLENDER_PORT=9876`,
+and `DISABLE_TELEMETRY=true`.
+
+## MCP workflow
 
 ```python
+import sys
+from pathlib import Path
+
+repo = Path(r"C:\path\to\apex-shift")
+tools = repo / "Tools" / "BlenderV10"
+sys.path.insert(0, str(tools))
+
 from blender_mcp_agent import run_asset_job
-run_asset_job(["wood", "spear", "campfire"])
+result = run_asset_job(["tent"])
+print(result)
 ```
 
-## Typical requests
+Review previews before requesting `run_asset_job(all_assets=True)`. The
+generator writes first to the ignored local directory
+`Tools/BlenderV10/ApexShift_Assets_v10_Output/`. It does not write directly to
+Unity production folders.
 
-```text
-Use Blender MCP to regenerate spear. Improve the silhouette and fiber binding, keep the held-item pivot stable, render a preview and rerun validation.
-```
+Unity import is a separate editor operation:
 
-```text
-Generate tent and storage_box, then compare their scale and isometric readability. Do not modify Unity gameplay code.
-```
+`Apex Shift -> Art -> Bushcraft -> Import Generated Assets And Bind PrefabRegistry`
 
-```text
-Generate all assets only after the wood, spear and campfire previews pass review. Write the combined manifest and validation report.
-```
+That command uses `BushcraftGeneratedAssetBinder`. Production Unity models stay
+committed under `Assets/_Project/Art/Bushcraft` and the relevant `Resources`
+folders. No repository clone or git submodule of `blender-mcp` is required.
 
-## Generated outputs
-
-- `Assets/_Project/Art/Bushcraft/Items/Models/`
-- `Assets/_Project/Art/Bushcraft/Placeables/Models/`
-- `Assets/_Project/Art/Bushcraft/Resources/Models/`
-- `Assets/_Project/Art/Bushcraft/Source/Blend/`
-- `Assets/_Project/Art/Bushcraft/bushcraft_model_manifest.json`
-- `Docs/art/bushcraft-validation-report.md`
-- `Docs/art/blender-mcp-agent-last-run.json`
-
-## Security boundaries
-
-Blender MCP exposes arbitrary Python execution inside Blender. The agent therefore runs only checked-in repository modules and short import/call snippets. External model downloads, Poly Haven, Sketchfab, generated-model services and arbitrary web code remain disabled unless explicitly requested.
+Legacy v4/v6/v7 and old-tree scripts are retained only in
+`Tools/Archive/BushcraftLegacy/` for historical reference.

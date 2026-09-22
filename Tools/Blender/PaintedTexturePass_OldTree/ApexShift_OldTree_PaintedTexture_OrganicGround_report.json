@@ -1,6 +1,0 @@
-{
-  "base_file": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\PaintedTexturePass_OldTree\\ApexShift_OldTree_PaintedTexture.blend",
-  "change": "replaced polygonal soil disk with irregular low organic soil collar and darkened ground",
-  "soil_object": "AS_OldTree_SoilCollar",
-  "render": "C:\\Users\\kriss\\apex-shift\\Tools\\Blender\\PaintedTexturePass_OldTree\\ApexShift_OldTree_PaintedTexture_OrganicGround_Render.png"
-}

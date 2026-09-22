@@ -12,11 +12,11 @@ Use Blender MCP as the interaction layer and the repository's Python pipeline as
 Read these files before changing asset behavior:
 
 1. `Docs/art/BUSHCRAFT_GENERATION_SETUP.md`
-2. `Docs/art/apex-shift-bushcraft-brief.md`
-3. `Tools/Blender/bushcraft_asset_library.py`
-4. `Tools/Blender/bushcraft_asset_generator.py`
-5. `Tools/Blender/bushcraft_render_validation.py`
-6. `Tools/Blender/blender_mcp_agent.py`
+2. `Tools/BlenderV10/apex_shift_biblia_wizualna_v5.md`
+3. `Tools/BlenderV10/apex_shift_blender_generator_v10_1.py`
+4. `Tools/BlenderV10/apex_shift_profiles_v10.py`
+5. `Tools/BlenderV10/apex_shift_asset_visual_specs_v5.json`
+6. `Tools/BlenderV10/blender_mcp_agent.py`
 
 The current production target overrides older placeholder wording: assets are stylized realistic, hand-painted, organic and readable from an isometric camera. Mid-poly geometry is acceptable. Avoid primitive-looking low-poly substitutions.
 
@@ -28,15 +28,13 @@ The current production target overrides older placeholder wording: assets are st
 4. Save user-authored scene work before destructive operations.
 5. Verify the requested asset IDs exist in `GENERATOR_MAP`. Never silently invent an ID.
 
-Supported IDs currently include:
-
-- Items: `wood`, `stone`, `fiber`, `grass`, `meat`, `hide`, `bone`, `berries`, `torch`, `spear`, `bow`
-- Placeables: `campfire`, `storage_box`, `tent`, `wall`, `trap`
-- Resources: `conifer_tree`, `leafy_tree`, `dry_tree`, `rock`, `green_bush`, `dry_bush`, `grass_or_flower`, `berry_bush`
+The v10 profile file is the source of truth for the 98 supported asset IDs.
+Load and validate that profile set through the orchestrator; do not maintain a
+second hand-written list here.
 
 ## Preferred execution path
 
-Use the Blender MCP Python execution tool only to import and call the checked-in orchestrator. Keep the executed snippet small and deterministic.
+Use the Blender MCP Python execution tool only to import and call the checked-in v10 orchestrator. Keep the executed snippet small and deterministic.
 
 Example for the premium reference set:
 
@@ -45,7 +43,7 @@ import sys
 from pathlib import Path
 
 repo = Path(r"C:\path\to\apex-shift")
-tools = repo / "Tools" / "Blender"
+tools = repo / "Tools" / "BlenderV10"
 if str(tools) not in sys.path:
     sys.path.insert(0, str(tools))
 
@@ -79,16 +77,10 @@ Do not paste the full generator implementation into MCP calls. Edit repository s
 
 ## Output contract
 
-The orchestrator writes to the existing directories:
-
-- Models: `Assets/_Project/Art/Bushcraft/{Items|Placeables|Resources}/Models/`
-- Textures: matching `Textures/` directory
-- Blender sources: `Assets/_Project/Art/Bushcraft/Source/Blend/`
-- Manifest: `Assets/_Project/Art/Bushcraft/bushcraft_model_manifest.json`
-- Validation report: `Docs/art/bushcraft-validation-report.md`
-- Last-run summary: `Docs/art/blender-mcp-agent-last-run.json`
-
-Generate `.blend`, `.fbx`, `.obj` and an isometric preview PNG through the existing exporter.
+Generation first writes locally to `Tools/BlenderV10/ApexShift_Assets_v10_Output/`.
+The local output is ignored and is then imported through
+`BushcraftGeneratedAssetBinder`; it is not written directly to production
+Unity asset folders by MCP.
 
 ## QA loop
 
