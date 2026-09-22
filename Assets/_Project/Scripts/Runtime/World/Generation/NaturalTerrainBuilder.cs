@@ -49,7 +49,7 @@ namespace ApexShift.Runtime.World.Generation
             float tileSize,
             BiomeCatalogAsset catalog,
             Func<float, float, bool> isInsideIsland,
-            Func<Vector3, string, float> getTerrainHeight,
+            Func<Vector3, float> getTerrainHeight,
             Func<Vector3, string> determineBiome)
         {
             int resolution   = gridSize * SubdivPerTile;
@@ -75,7 +75,7 @@ namespace ApexShift.Runtime.World.Generation
                     if (land)
                     {
                         Vector3 p = new Vector3(wx, 0f, wz);
-                        float h = Mathf.Max(getTerrainHeight(p, determineBiome(p)), 0.01f);
+                        float h = Mathf.Max(getTerrainHeight(p), 0.01f);
                         heightArr[vx, vz] = h;
                         origHeight[vx, vz] = h;
                     }
@@ -485,7 +485,7 @@ namespace ApexShift.Runtime.World.Generation
             Material cliffMaterial,
             BiomeCatalogAsset catalog,
             Func<float, float, bool> isInsideIsland,
-            Func<Vector3, string, float> getTerrainHeight,
+            Func<Vector3, float> getTerrainHeight,
             Func<Vector3, string> determineBiome,
             float cliffBaseY = -0.6f)
         {
@@ -506,7 +506,7 @@ namespace ApexShift.Runtime.World.Generation
                     if (!isInsideIsland(cx, cz)) continue;
 
                     Vector3 p = new Vector3(cx, 0f, cz);
-                    float h = Mathf.Max(getTerrainHeight(p, determineBiome(p)), 0.01f);
+                    float h = Mathf.Max(getTerrainHeight(p), 0.01f);
 
                     if (h <= CliffHeightThreshold) continue;  // beach area – no cliff
 

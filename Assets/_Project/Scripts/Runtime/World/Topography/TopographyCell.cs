@@ -17,6 +17,8 @@ namespace ApexShift.Runtime.World.Topography
 
         // ── Terrain data ─────────────────────────────────────────────────────
         public readonly float       Height;
+        public readonly float       NormalizedElevation;
+        public readonly float       SlopeDegrees;
         public readonly string      BiomeId;
         public readonly TerrainType TerrainType;
 
@@ -31,31 +33,36 @@ namespace ApexShift.Runtime.World.Topography
 
         // ── Spawn safety ─────────────────────────────────────────────────────
         /// <summary>Safe for player starting position: flat land, not a shoreline or ridge.</summary>
-        public bool IsSafeForPlayerSpawn =>
-            IsLand && !IsShoreline && TerrainType != TerrainType.Ridge;
-
-        /// <summary>Safe for creature spawn: land that is not a shoreline (no water-exit risk).</summary>
-        public bool IsSafeForCreatureSpawn => IsLand && !IsShoreline;
-
-        /// <summary>Safe for resource spawn: land cell that is not on the shoreline.</summary>
-        public bool IsSafeForResourceSpawn => IsLand && !IsShoreline;
+        public readonly bool IsSafeForPlayerSpawn;
+        public readonly bool IsSafeForCreatureSpawn;
+        public readonly bool IsSafeForResourceSpawn;
 
         // ── Constructor ───────────────────────────────────────────────────────
         public TopographyCell(
             int gridX, int gridZ,
             Vector3 worldCenter,
             float height,
+            float normalizedElevation,
+            float slopeDegrees,
             string biomeId,
             TerrainType terrainType,
-            bool isShoreline)
+            bool isShoreline,
+            float playerSafeSlopeDegrees = 14f,
+            float creatureSafeSlopeDegrees = 24f,
+            float resourceSafeSlopeDegrees = 20f)
         {
             GridX       = gridX;
             GridZ       = gridZ;
             WorldCenter = worldCenter;
             Height      = height;
+            NormalizedElevation = normalizedElevation;
+            SlopeDegrees = slopeDegrees;
             BiomeId     = biomeId;
             TerrainType = terrainType;
             IsShoreline = isShoreline;
+            IsSafeForPlayerSpawn = IsLand && !IsShoreline && TerrainType != TerrainType.Ridge && slopeDegrees <= playerSafeSlopeDegrees;
+            IsSafeForCreatureSpawn = IsLand && !IsShoreline && slopeDegrees <= creatureSafeSlopeDegrees;
+            IsSafeForResourceSpawn = IsLand && !IsShoreline && slopeDegrees <= resourceSafeSlopeDegrees;
         }
     }
 }

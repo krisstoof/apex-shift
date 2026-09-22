@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using ApexShift.Runtime.World.Generation;
 
 namespace ApexShift.Runtime.World.Topography
 {
@@ -51,13 +52,15 @@ namespace ApexShift.Runtime.World.Topography
             int   gridSize,
             float tileSize,
             Func<float, float, bool>         isInsideIsland,
-            Func<Vector3, string, float>     getTerrainHeight,
-            Func<Vector3, string>            determineBiome)
+            Func<Vector3, float>              getTerrainHeight,
+            Func<Vector3, string>             determineBiome,
+            TerrainHeightfieldSettings       terrainSettings = null)
         {
             _gridSize = gridSize;
             _tileSize = tileSize;
             _originX  = -(gridSize * tileSize * 0.5f);
             _originZ  = -(gridSize * tileSize * 0.5f);
+            terrainSettings = terrainSettings ?? new TerrainHeightfieldSettings();
 
             // ── Pass 1: classify each cell ────────────────────────────────────
             var tempType      = new TerrainType[gridSize, gridSize];
@@ -81,7 +84,7 @@ namespace ApexShift.Runtime.World.Topography
                     {
                         Vector3 p = new Vector3(wx, 0f, wz);
                         biomeId = determineBiome(p);
-                        height  = getTerrainHeight(p, biomeId);
+                        height  = getTerrainHeight(p);
                     }
                     else
                     {
@@ -91,9 +94,25 @@ namespace ApexShift.Runtime.World.Topography
 
                     tempBiome[x, z]  = biomeId;
                     tempHeight[x, z] = height;
-                    tempType[x, z]   = ClassifyTerrain(biomeId, height, isLand);
                 }
             }
+
+            float minLandHeight = float.MaxValue;
+            float maxLandHeight = float.MinValue;
+            for (int z = 0; z < gridSize; z++)
+                for (int x = 0; x < gridSize; x++)
+                    if (tempIsLand[x, z])
+                    {
+                        minLandHeight = Mathf.Min(minLandHeight, tempHeight[x, z]);
+                        maxLandHeight = Mathf.Max(maxLandHeight, tempHeight[x, z]);
+                    }
+
+            float heightRange = Mathf.Max(0.0001f, maxLandHeight - minLandHeight);
+            for (int z = 0; z < gridSize; z++)
+                for (int x = 0; x < gridSize; x++)
+                    tempType[x, z] = ClassifyTerrain(
+                        tempBiome[x, z], tempHeight[x, z],
+                        CalculateSlope(tempHeight, x, z, gridSize, tileSize), tempIsLand[x, z]);
 
             // ── Pass 2: detect shoreline, reclassify beach cells ─────────────
             var tempShore = new bool[gridSize, gridSize];
@@ -128,9 +147,14 @@ namespace ApexShift.Runtime.World.Topography
                         x, z,
                         new Vector3(wx, tempHeight[x, z], wz),
                         tempHeight[x, z],
+                        tempIsLand[x, z] ? Mathf.Clamp01((tempHeight[x, z] - minLandHeight) / heightRange) : 0f,
+                        CalculateSlope(tempHeight, x, z, gridSize, tileSize),
                         tempBiome[x, z],
                         tempType[x, z],
-                        tempShore[x, z]);
+                        tempShore[x, z],
+                        terrainSettings.PlayerSafeSlopeDegrees,
+                        terrainSettings.CreatureSafeSlopeDegrees,
+                        terrainSettings.ResourceSafeSlopeDegrees);
 
                     _grid[x, z] = cell;
 
@@ -303,11 +327,23 @@ namespace ApexShift.Runtime.World.Topography
 
         // ── Private helpers ───────────────────────────────────────────────────
 
-        private static TerrainType ClassifyTerrain(string biomeId, float height, bool isLand)
+        private static float CalculateSlope(float[,] heights, int x, int z, int size, float tileSize)
+        {
+            if (size <= 1 || tileSize <= 0f) return 0f;
+            int left = Mathf.Max(0, x - 1);
+            int right = Mathf.Min(size - 1, x + 1);
+            int down = Mathf.Max(0, z - 1);
+            int up = Mathf.Min(size - 1, z + 1);
+            float dx = (heights[right, z] - heights[left, z]) / ((right - left) * tileSize);
+            float dz = (heights[x, up] - heights[x, down]) / ((up - down) * tileSize);
+            return Mathf.Atan(Mathf.Sqrt(dx * dx + dz * dz)) * Mathf.Rad2Deg;
+        }
+
+        private static TerrainType ClassifyTerrain(string biomeId, float height, float slopeDegrees, bool isLand)
         {
             if (!isLand) return TerrainType.Water;
-            if (biomeId == "stoneback_ridge" || height > 0.55f) return TerrainType.Ridge;
-            if (height > 0.18f)                                  return TerrainType.Hills;
+            if (biomeId == "stoneback_ridge" || height > 0.55f || slopeDegrees > 28f) return TerrainType.Ridge;
+            if (height > 0.18f || slopeDegrees > 12f)                                  return TerrainType.Hills;
             if (biomeId == "westwood" || biomeId == "south_thicket") return TerrainType.Forest;
             return TerrainType.Plain;  // hearth_meadow, redfang_wilds, generic
         }

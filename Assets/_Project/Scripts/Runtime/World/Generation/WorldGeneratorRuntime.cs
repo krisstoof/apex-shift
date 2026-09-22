@@ -107,6 +107,7 @@ namespace ApexShift.Runtime.World.Generation
         private RuntimeAudioSetup _runtimeAudio;
         private RuntimeCameraSetup _runtimeCamera;
         private WorldSpawnService _worldSpawnService;
+        private TerrainHeightfieldGenerator _terrainHeightfield;
 
         private const string DefaultInputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
 
@@ -152,6 +153,7 @@ namespace ApexShift.Runtime.World.Generation
             _worldSpawnService = new WorldSpawnService();
 
             _lastResult = new WorldGenerationResult { Seed = seed };
+            _terrainHeightfield = new TerrainHeightfieldGenerator(seed, settings != null ? settings.Terrain : null);
             _generationContext.Result = _lastResult;
             _generationCoordinator.Generate(_generationContext,
                 new WorldGenerationStage("PrepareGeneration", context =>
@@ -482,7 +484,8 @@ namespace ApexShift.Runtime.World.Generation
             // Third pass: Build the unified natural terrain mesh (replaces per-tile land cubes)
             // Build topography runtime before terrain mesh so other systems can query it immediately
             EnsureIslandTopographyRuntime();
-            _islandTopography.Build(gridSize, tileSize, IsInsideIsland, GetTerrainHeight, DetermineBiome);
+            _islandTopography.Build(gridSize, tileSize, IsInsideIsland, SampleTerrainHeight, DetermineBiome,
+                settings != null ? settings.Terrain : null);
 
             NaturalTerrainBuilder.BuildIslandTerrain(
                 _terrainRoot,
@@ -490,7 +493,7 @@ namespace ApexShift.Runtime.World.Generation
                 tileSize,
                 biomeCatalog,
                 IsInsideIsland,
-                GetTerrainHeight,
+                SampleTerrainHeight,
                 DetermineBiome);
 
             // Fourth pass: Unified water surface mesh (replaces per-tile water cubes)
@@ -518,7 +521,7 @@ namespace ApexShift.Runtime.World.Generation
                 cliffMaterial,
                 biomeCatalog,
                 IsInsideIsland,
-                GetTerrainHeight,
+                SampleTerrainHeight,
                 DetermineBiome);
         }
 
@@ -559,7 +562,7 @@ namespace ApexShift.Runtime.World.Generation
                 return;
             }
 
-            float terrainHeight = biomeId == "water" ? -0.35f : GetTerrainHeight(center, biomeId);
+            float terrainHeight = biomeId == "water" ? -0.35f : SampleTerrainHeight(center);
             Vector3 regionCenter = new Vector3(center.x, terrainHeight, center.z);
             Bounds bounds = new Bounds(regionCenter, new Vector3(size, 2f, size));
             GeneratedBiomeRegion region = new GeneratedBiomeRegion(biome, bounds);
@@ -588,34 +591,11 @@ namespace ApexShift.Runtime.World.Generation
             }
         }
 
-        private float GetTerrainHeight(Vector3 position, string biomeId)
+        private float SampleTerrainHeight(Vector3 position)
         {
-            float broad = Mathf.PerlinNoise((position.x + 300f) * 0.014f, (position.z + 300f) * 0.014f);
-            float detail = Mathf.PerlinNoise((position.x + 900f) * 0.045f, (position.z + 900f) * 0.045f);
-
-            float height = (broad - 0.5f) * 0.45f + (detail - 0.5f) * 0.16f;
-
-            switch (biomeId)
-            {
-                case "stoneback_ridge":
-                    height += 0.45f + Mathf.PerlinNoise((position.x + 30f) * 0.035f, (position.z + 80f) * 0.035f) * 0.35f;
-                    break;
-                case "westwood":
-                    height += 0.18f;
-                    break;
-                case "redfang_wilds":
-                    height += 0.10f;
-                    break;
-                case "south_thicket":
-                    height += 0.06f;
-                    break;
-                case "hearth_meadow":
-                    height = Mathf.Lerp(height, 0.03f, 0.75f);
-                    break;
-            }
-
-            height = Mathf.Clamp(height, -0.20f, biomeId == "stoneback_ridge" ? 0.95f : 0.45f);
-            return Mathf.Round(height * 10f) / 10f;
+            if (_terrainHeightfield == null)
+                _terrainHeightfield = new TerrainHeightfieldGenerator(seed, settings != null ? settings.Terrain : null);
+            return _terrainHeightfield.SampleHeight(position.x, position.z);
         }
 
         private void CreateTerrainTile(GeneratedBiomeRegion region)
