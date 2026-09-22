@@ -7,6 +7,7 @@ using ApexShift.Runtime.UI;
 using ApexShift.Runtime.DayNight;
 using ApexShift.Presentation.Icons;
 using ApexShift.Presentation.Crafting;
+using ApexShift.Presentation.Debugging;
 using ApexShift.Runtime.Debugging;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -297,7 +298,8 @@ CreateMenuBackdropFrame(optionsMenu.transform);
 
             GameStartupController startup = uiRoot.GetComponent<GameStartupController>() ?? uiRoot.AddComponent<GameStartupController>();
             if (uiRoot.GetComponent<InputEnabler>() == null) uiRoot.AddComponent<InputEnabler>();
-            if (uiRoot.GetComponent<UIDebugger>() == null) uiRoot.AddComponent<UIDebugger>();
+            if (RuntimeDebugSettings.DebugEnabled && uiRoot.GetComponent<UIDebugger>() == null)
+                uiRoot.AddComponent<UIDebugger>();
 
             menuGo.SetActive(true);
             startup.Configure(generator, startMenu, pauseMenu, hudGo, optionsMenu, startGrp, pauseGrp, optionsGrp);

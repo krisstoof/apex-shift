@@ -81,7 +81,7 @@ namespace ApexShift.Tests.Unit.Input
         [Test]
         public void PlayerActionDebugLog_UsesReaderEventsAndOnGUIInsteadOfPolling()
         {
-            string source = File.ReadAllText("Assets/_Project/Scripts/Runtime/Debug/PlayerActionDebugLog.cs");
+            string source = File.ReadAllText("Assets/_Project/Scripts/Runtime/Debugging/PlayerActionDebugLog.cs");
 
             Assert.IsTrue(source.Contains("PlayerInputReader"));
             Assert.IsTrue(source.Contains("InteractPressed"));
@@ -170,7 +170,7 @@ namespace ApexShift.Tests.Unit.Input
         [Test]
         public void PlayerActionDebugLog_ExposesRuntimeToggles()
         {
-            string source = File.ReadAllText("Assets/_Project/Scripts/Runtime/Debug/PlayerActionDebugLog.cs");
+            string source = File.ReadAllText("Assets/_Project/Scripts/Runtime/Debugging/PlayerActionDebugLog.cs");
 
             Assert.IsTrue(source.Contains("Movement Enabled"));
             Assert.IsTrue(source.Contains("Bobbing Enabled"));

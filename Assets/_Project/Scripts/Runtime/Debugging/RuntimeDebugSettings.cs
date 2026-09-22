@@ -10,9 +10,9 @@ namespace ApexShift.Runtime.Debugging
     {
         private const float MinimumRefreshInterval = 0.05f;
 
-        public static bool DebugEnabled { get; private set; } = true;
-        public static bool CreatureFramesEnabled { get; private set; } = true;
-        public static bool EcosystemOverlayEnabled { get; private set; } = true;
+        public static bool DebugEnabled { get; private set; } = false;
+        public static bool CreatureFramesEnabled { get; private set; } = false;
+        public static bool EcosystemOverlayEnabled { get; private set; } = false;
         public static bool FreeBuildingEnabled { get; private set; } = false;
         public static bool FreeCraftingEnabled { get; private set; } = false;
         public static float RefreshIntervalSeconds { get; private set; } = 0.35f;
@@ -49,9 +49,9 @@ namespace ApexShift.Runtime.Debugging
 
         public static void RestoreDefaults()
         {
-            DebugEnabled = true;
-            CreatureFramesEnabled = true;
-            EcosystemOverlayEnabled = true;
+            DebugEnabled = false;
+            CreatureFramesEnabled = false;
+            EcosystemOverlayEnabled = false;
             FreeBuildingEnabled = false;
             FreeCraftingEnabled = false;
             RefreshIntervalSeconds = 0.35f;

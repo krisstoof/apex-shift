@@ -34,12 +34,15 @@ namespace ApexShift.Runtime.World.Generation
             DayNight = Create<DayNightRuntime>("DayNightRuntime", parent);
             Create<DayNightSkyRuntime>("DayNightSkyRuntime", parent);
             SnapshotProvider = Create<GameSnapshotProvider>("GameSnapshotProvider", parent);
-            DebugPanel = Create<DebugPanelPresenter>("DebugPanelPresenter", parent);
-            WorldMapDebug = Create<WorldMapDebugWindow>("WorldMapDebugWindow", parent);
-            Create<WorldGenerationDebugPresenter>("WorldGenerationDebugPresenter", parent);
-
-            DebugPanel.SetSnapshotProvider(SnapshotProvider);
-            WorldMapDebug.SetSnapshotProvider(SnapshotProvider);
+            SnapshotProvider.SetAutoRefresh(RuntimeDebugSettings.DebugEnabled);
+            if (RuntimeDebugSettings.DebugEnabled)
+            {
+                DebugPanel = Create<DebugPanelPresenter>("DebugPanelPresenter", parent);
+                WorldMapDebug = Create<WorldMapDebugWindow>("WorldMapDebugWindow", parent);
+                Create<WorldGenerationDebugPresenter>("WorldGenerationDebugPresenter", parent);
+                DebugPanel.SetSnapshotProvider(SnapshotProvider);
+                WorldMapDebug.SetSnapshotProvider(SnapshotProvider);
+            }
         }
 
         private static T Create<T>(string name, Transform parent) where T : Component

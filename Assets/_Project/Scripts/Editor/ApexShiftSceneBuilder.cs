@@ -270,18 +270,6 @@ namespace ApexShift.EditorTools
             combatExperience.SetInputReader(inputReader);
             combatExperience.SetVisualRoot(ResolvePlayerVisualRoot(player));
 
-            PlayerActionDebugLog debugLog = player.GetComponent<PlayerActionDebugLog>();
-            if (debugLog == null)
-            {
-                debugLog = player.AddComponent<PlayerActionDebugLog>();
-            }
-            debugLog.SetInputReader(inputReader);
-            debugLog.SetWatchedTarget(player.transform);
-            debugLog.SetSecondaryTarget(cameraObject != null ? cameraObject.transform : null);
-            debugLog.SetMovementController(playerController);
-            debugLog.SetMotionFeedback(motionFeedback);
-            debugLog.SetCameraFollow(cameraObject != null ? cameraObject.GetComponent<IsometricCameraFollow>() : null);
-
             Animator animator = player.GetComponentInChildren<Animator>();
             RuntimeAnimatorController runtimeController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(PlayerControllerPath);
             if (animator != null && runtimeController != null)

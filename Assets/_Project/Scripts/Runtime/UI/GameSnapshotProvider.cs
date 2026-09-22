@@ -35,6 +35,7 @@ namespace ApexShift.Runtime.UI.Snapshots
         private BuildingRegistry buildingRegistry;
         public GameSnapshot LastSnapshot => lastSnapshot;
         public event Action<GameSnapshot> SnapshotUpdated;
+        public void SetAutoRefresh(bool enabled) => autoRefresh = enabled;
         private void Awake() { CaptureNow(); }
         private void Update()
         {

@@ -2280,18 +2280,6 @@ namespace ApexShift.EditorTools.World
             motionFeedback.SetInputReader(inputReader);
             motionFeedback.SetVisualRoot(ResolvePlayerVisualRoot(player));
 
-            PlayerActionDebugLog debugLog = player.GetComponent<PlayerActionDebugLog>();
-            if (debugLog == null)
-            {
-                debugLog = player.AddComponent<PlayerActionDebugLog>();
-            }
-            debugLog.SetInputReader(inputReader);
-            debugLog.SetWatchedTarget(player.transform);
-            debugLog.SetSecondaryTarget(cameraObject != null ? cameraObject.transform : null);
-            debugLog.SetMovementController(playerController);
-            debugLog.SetMotionFeedback(motionFeedback);
-            debugLog.SetCameraFollow(cameraObject != null ? cameraObject.GetComponent<IsometricCameraFollow>() : null);
-
             PlayerInventoryRuntime inventory = player.GetComponent<PlayerInventoryRuntime>();
             if (inventory == null)
             {

@@ -4,11 +4,13 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-namespace ApexShift.Runtime.Debugging
+namespace ApexShift.Presentation.Debugging
 {
     public class UIDebugger : MonoBehaviour
     {
         private readonly HashSet<Button> trackedButtons = new HashSet<Button>();
+
+        private void OnEnable() => RefreshTrackedButtons();
 
         private void Update()
         {
@@ -20,17 +22,6 @@ namespace ApexShift.Runtime.Debugging
 
             List<RaycastResult> results = new List<RaycastResult>();
             EventSystem.current.RaycastAll(eventData, results);
-
-            // Track new buttons
-            var allButtons = Object.FindObjectsByType<Button>(FindObjectsInactive.Include);
-            foreach (var b in allButtons)
-{
-                if (!trackedButtons.Contains(b))
-                {
-                    trackedButtons.Add(b);
-                    b.onClick.AddListener(() => LogButtonClick(b));
-                }
-            }
 
             if (Mouse.current.leftButton.wasPressedThisFrame)
             {
@@ -57,6 +48,16 @@ if (results.Count == 0)
                 {
                     Debug.Log($"[UIDebug] Current Selected: {EventSystem.current.currentSelectedGameObject.name}");
                 }
+            }
+        }
+
+        public void RefreshTrackedButtons()
+        {
+            Button[] buttons = GetComponentsInChildren<Button>(true);
+            foreach (Button button in buttons)
+            {
+                if (button == null || !trackedButtons.Add(button)) continue;
+                button.onClick.AddListener(() => LogButtonClick(button));
             }
         }
 

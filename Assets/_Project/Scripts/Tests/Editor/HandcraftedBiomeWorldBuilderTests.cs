@@ -102,14 +102,12 @@ namespace ApexShift.Tests.Editor
             Assert.IsTrue(handcraftedSource.Contains("ApexShiftInputActions.inputactions"));
             Assert.IsTrue(handcraftedSource.Contains("SetInputActions"));
             Assert.IsTrue(handcraftedSource.Contains("PlayerInputReader"));
-            Assert.IsTrue(handcraftedSource.Contains("PlayerActionDebugLog"));
             Assert.IsTrue(handcraftedSource.Contains("PlayerActionFeedback"));
             Assert.IsTrue(handcraftedSource.Contains("PlayerMotionVisualFeedback"));
             Assert.IsTrue(handcraftedSource.Contains("PlayerPrototype.controller"));
             Assert.IsTrue(baseSceneSource.Contains("ApexShiftInputActions.inputactions"));
             Assert.IsTrue(baseSceneSource.Contains("SetInputActions"));
             Assert.IsTrue(baseSceneSource.Contains("PlayerInputReader"));
-            Assert.IsTrue(baseSceneSource.Contains("PlayerActionDebugLog"));
             Assert.IsTrue(baseSceneSource.Contains("PlayerActionFeedback"));
             Assert.IsTrue(baseSceneSource.Contains("PlayerMotionVisualFeedback"));
             Assert.IsTrue(baseSceneSource.Contains("PlayerPrototype.controller"));

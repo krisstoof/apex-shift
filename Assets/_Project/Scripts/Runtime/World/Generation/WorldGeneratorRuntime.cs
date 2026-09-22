@@ -1360,8 +1360,11 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             var behavior = instance.GetComponent<CreatureBehaviorRuntime>();
             if (behavior == null) behavior = instance.AddComponent<CreatureBehaviorRuntime>();
 
-            var debugOverlay = instance.GetComponent<CreatureDebugOverlay>();
-            if (debugOverlay == null) debugOverlay = instance.AddComponent<CreatureDebugOverlay>();
+            if (RuntimeDebugSettings.DebugEnabled)
+            {
+                var debugOverlay = instance.GetComponent<CreatureDebugOverlay>();
+                if (debugOverlay == null) debugOverlay = instance.AddComponent<CreatureDebugOverlay>();
+            }
 
             var animDriver = instance.GetComponent<CreatureAnimationDriver>();
             if (animDriver == null) animDriver = instance.AddComponent<CreatureAnimationDriver>();
@@ -1710,14 +1713,17 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             motionFeedback.SetInputReader(inputReader);
             motionFeedback.SetVisualRoot(player.transform.childCount > 0 ? player.transform.GetChild(0) : player.transform);
 
-            PlayerActionDebugLog debugLog = player.GetComponent<PlayerActionDebugLog>();
-            if (debugLog == null) debugLog = player.AddComponent<PlayerActionDebugLog>();
-            debugLog.SetInputReader(inputReader);
-            debugLog.SetWatchedTarget(player.transform);
-            debugLog.SetSecondaryTarget(cameraGo != null ? cameraGo.transform : null);
-            debugLog.SetMovementController(controller);
-            debugLog.SetMotionFeedback(motionFeedback);
-            debugLog.SetCameraFollow(cameraGo != null ? cameraGo.GetComponent<IsometricCameraFollow>() : null);
+            if (RuntimeDebugSettings.DebugEnabled)
+            {
+                PlayerActionDebugLog debugLog = player.GetComponent<PlayerActionDebugLog>();
+                if (debugLog == null) debugLog = player.AddComponent<PlayerActionDebugLog>();
+                debugLog.SetInputReader(inputReader);
+                debugLog.SetWatchedTarget(player.transform);
+                debugLog.SetSecondaryTarget(cameraGo != null ? cameraGo.transform : null);
+                debugLog.SetMovementController(controller);
+                debugLog.SetMotionFeedback(motionFeedback);
+                debugLog.SetCameraFollow(cameraGo != null ? cameraGo.GetComponent<IsometricCameraFollow>() : null);
+            }
 
             BuildingPlacementRuntime buildingPlacement = player.GetComponent<BuildingPlacementRuntime>();
             if (buildingPlacement == null)

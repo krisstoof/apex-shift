@@ -53,7 +53,6 @@ namespace ApexShift.Editor.World
             GameObject generatorGo = new GameObject("RuntimeWorldGenerator");
             WorldGeneratorRuntime generator = generatorGo.AddComponent<WorldGeneratorRuntime>();
             generatorGo.AddComponent<RuntimeHUDProvisioner>();
-            generatorGo.AddComponent<WorldMapDebugWindow>();
 
             generator.SetBiomeCatalog(catalog);
             ItemIconCatalog itemIconCatalog = AssetDatabase.LoadAssetAtPath<ItemIconCatalog>(ItemIconCatalogPath);

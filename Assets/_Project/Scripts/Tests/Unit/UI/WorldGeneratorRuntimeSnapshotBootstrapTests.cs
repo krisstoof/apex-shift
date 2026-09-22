@@ -1,6 +1,7 @@
 using ApexShift.Runtime.UI.Debugging;
 using ApexShift.Runtime.UI.Snapshots;
 using ApexShift.Runtime.World.Generation;
+using ApexShift.Runtime.Debugging;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -14,6 +15,7 @@ namespace ApexShift.Tests.Unit.UI
             GameObject root = new GameObject("GeneratorRoot");
             try
             {
+                RuntimeDebugSettings.SetDebugEnabled(true);
                 var composition = new RuntimeCompositionRoot();
                 composition.Compose(root.transform);
 
@@ -22,6 +24,7 @@ namespace ApexShift.Tests.Unit.UI
             }
             finally
             {
+                RuntimeDebugSettings.RestoreDefaults();
                 Object.DestroyImmediate(root);
                 foreach (GameSnapshotProvider provider in Object.FindObjectsByType<GameSnapshotProvider>(FindObjectsInactive.Include))
                 {
