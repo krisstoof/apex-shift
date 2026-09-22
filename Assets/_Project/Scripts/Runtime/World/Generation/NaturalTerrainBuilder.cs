@@ -55,7 +55,7 @@ namespace ApexShift.Runtime.World.Generation
             int resolution   = gridSize * SubdivPerTile;
             float cellSize   = tileSize / SubdivPerTile;
             Vector3 halfSize = new Vector3(gridSize * tileSize * 0.5f, 0f, gridSize * tileSize * 0.5f);
-            int vWidth       = resolution + 1;
+            int vWidth = resolution + 1;
 
             // ── Pass 1: compute authoritative per-vertex surface heights and land flags ──
             var heightArr    = new float[vWidth, vWidth];
@@ -81,20 +81,8 @@ namespace ApexShift.Runtime.World.Generation
             }
 
             // ── Pass 3: build vertex and UV arrays ────────────────────────────
-            Vector3[] vertices = new Vector3[vWidth * vWidth];
-            Vector2[] uvs      = new Vector2[vWidth * vWidth];
-
-            for (int vz = 0; vz <= resolution; vz++)
-            {
-                for (int vx = 0; vx <= resolution; vx++)
-                {
-                    float wx  = vx * cellSize - halfSize.x;
-                    float wz  = vz * cellSize - halfSize.z;
-                    int   idx = vz * vWidth + vx;
-                    vertices[idx] = new Vector3(wx, heightArr[vx, vz], wz);
-                    uvs[idx]      = new Vector2(wx / tileSize, wz / tileSize);
-                }
-            }
+            var vertices = new List<Vector3>();
+            var uvs = new List<Vector2>();
 
             // ── Pass 4: triangle lists grouped by biome ───────────────────────
             var biomeTriangles = new Dictionary<string, List<int>>();
@@ -105,23 +93,20 @@ namespace ApexShift.Runtime.World.Generation
             {
                 for (int cx = 0; cx < resolution; cx++)
                 {
+                    Vector2[] corners = CellCorners(cx, cz, cellSize, halfSize);
+                    int mask = LandMask(corners, isInsideIsland);
+                    if (mask == 0) continue;
+
                     float ccx = (cx + 0.5f) * cellSize - halfSize.x;
                     float ccz = (cz + 0.5f) * cellSize - halfSize.z;
-
-                    if (!isInsideIsland(ccx, ccz)) continue;
-
                     string biomeId = getBiomeId(new Vector3(ccx, 0f, ccz));
                     if (!biomeTriangles.ContainsKey(biomeId))
                         biomeId = "south_thicket";
 
-                    int v00 = cz       * vWidth + cx;
-                    int v10 = cz       * vWidth + (cx + 1);
-                    int v01 = (cz + 1) * vWidth + cx;
-                    int v11 = (cz + 1) * vWidth + (cx + 1);
-
                     var tris = biomeTriangles[biomeId];
-                    tris.Add(v00); tris.Add(v01); tris.Add(v11);
-                    tris.Add(v00); tris.Add(v11); tris.Add(v10);
+                    AppendContourCell(corners, true, isInsideIsland,
+                        p => getTerrainHeight(new Vector3(p.x, 0f, p.y)),
+                        null, vertices, uvs, tris, tileSize);
                 }
             }
 
@@ -158,8 +143,8 @@ namespace ApexShift.Runtime.World.Generation
                 name        = "IslandTerrainMesh",
                 indexFormat = UnityEngine.Rendering.IndexFormat.UInt32
             };
-            mesh.vertices     = vertices;
-            mesh.uv           = uvs;
+            mesh.SetVertices(vertices);
+            mesh.SetUVs(0, uvs);
             mesh.subMeshCount = activeBiomes.Count;
             for (int i = 0; i < activeBiomes.Count; i++)
                 mesh.SetTriangles(biomeTriangles[activeBiomes[i]], i);
@@ -196,26 +181,10 @@ namespace ApexShift.Runtime.World.Generation
             int resolution   = gridSize * SubdivPerTile;   // 152
             float cellSize   = tileSize / SubdivPerTile;   // 2 units
             Vector3 halfSize = new Vector3(gridSize * tileSize * 0.5f, 0f, gridSize * tileSize * 0.5f);
-            int vWidth       = resolution + 1;
+            int vWidth = resolution + 1;
 
-            Vector3[] vertices = new Vector3[vWidth * vWidth];
-            Vector2[] uvs      = new Vector2[vWidth * vWidth];
-
-            for (int vz = 0; vz <= resolution; vz++)
-            {
-                for (int vx = 0; vx <= resolution; vx++)
-                {
-                    float wx = vx * cellSize - halfSize.x;
-                    float wz = vz * cellSize - halfSize.z;
-
-                    // Slight Perlin ripple in the vertex grid so the water isn't perfectly flat
-                    float ripple = (Mathf.PerlinNoise((wx + 200f) * 0.12f, (wz + 200f) * 0.12f) - 0.5f) * 0.04f;
-
-                    int idx    = vz * vWidth + vx;
-                    vertices[idx] = new Vector3(wx, waterY + ripple, wz);
-                    uvs[idx]      = new Vector2(wx / tileSize, wz / tileSize);
-                }
-            }
+            var vertices = new List<Vector3>();
+            var uvs = new List<Vector2>();
 
             // Two submeshes: shallow (within ~2 tiles of shore) and deep water
             var shallowTris = new List<int>();
@@ -228,19 +197,16 @@ namespace ApexShift.Runtime.World.Generation
                     float ccx = (cx + 0.5f) * cellSize - halfSize.x;
                     float ccz = (cz + 0.5f) * cellSize - halfSize.z;
 
-                    if (isInsideIsland(ccx, ccz)) continue;   // land – skip
+                    Vector2[] corners = CellCorners(cx, cz, cellSize, halfSize);
+                    int mask = LandMask(corners, isInsideIsland);
+                    if (mask == 15) continue;                 // land – skip
 
                     float distToLand = ApproxDistanceToLand(ccx, ccz, isInsideIsland, cellSize);
                     bool shallow     = distToLand < tileSize * 1.8f;
 
-                    int v00 = cz       * vWidth + cx;
-                    int v10 = cz       * vWidth + (cx + 1);
-                    int v01 = (cz + 1) * vWidth + cx;
-                    int v11 = (cz + 1) * vWidth + (cx + 1);
-
                     var tris = shallow ? shallowTris : deepTris;
-                    tris.Add(v00); tris.Add(v01); tris.Add(v11);
-                    tris.Add(v00); tris.Add(v11); tris.Add(v10);
+                    AppendContourCell(corners, false, isInsideIsland, null,
+                        p => WaterSurfaceHeight(p, waterY), vertices, uvs, tris, tileSize);
                 }
             }
 
@@ -252,8 +218,8 @@ namespace ApexShift.Runtime.World.Generation
                 name        = "WaterSurfaceMesh",
                 indexFormat = UnityEngine.Rendering.IndexFormat.UInt32
             };
-            mesh.vertices     = vertices;
-            mesh.uv           = uvs;
+            mesh.SetVertices(vertices);
+            mesh.SetUVs(0, uvs);
             mesh.subMeshCount = subCount;
 
             var mats = new List<Material>();
@@ -399,6 +365,219 @@ namespace ApexShift.Runtime.World.Generation
         // Helpers
         // -------------------------------------------------------------------------
 
+        private static Vector2[] CellCorners(int cx, int cz, float cellSize, Vector3 halfSize)
+        {
+            float x0 = cx * cellSize - halfSize.x;
+            float x1 = x0 + cellSize;
+            float z0 = cz * cellSize - halfSize.z;
+            float z1 = z0 + cellSize;
+            return new[] { new Vector2(x0, z0), new Vector2(x1, z0), new Vector2(x1, z1), new Vector2(x0, z1) };
+        }
+
+        private static int LandMask(Vector2[] corners, Func<float, float, bool> isInsideIsland)
+        {
+            int mask = 0;
+            for (int i = 0; i < 4; i++)
+                if (isInsideIsland(corners[i].x, corners[i].y)) mask |= 1 << i;
+            return mask;
+        }
+
+        private static Vector2 FindBoundary(Vector2 land, Vector2 water, Func<float, float, bool> isInsideIsland)
+        {
+            bool landState = isInsideIsland(land.x, land.y);
+            Vector2 lo = land;
+            Vector2 hi = water;
+            for (int i = 0; i < 10; i++)
+            {
+                Vector2 mid = (lo + hi) * 0.5f;
+                if (isInsideIsland(mid.x, mid.y) == landState) lo = mid;
+                else hi = mid;
+            }
+            Vector2 boundary = (lo + hi) * 0.5f;
+            // Quantize the result so the same shared edge, visited in reverse
+            // order by its neighboring cell, produces bit-identical vertices.
+            return new Vector2(
+                Mathf.Round(boundary.x * 100000f) / 100000f,
+                Mathf.Round(boundary.y * 100000f) / 100000f);
+        }
+
+        private static void AppendContourCell(
+            Vector2[] corners,
+            bool includeLand,
+            Func<float, float, bool> isInsideIsland,
+            Func<Vector2, float> getLandHeight,
+            Func<Vector2, float> getSurfaceHeight,
+            List<Vector3> vertices,
+            List<Vector2> uvs,
+            List<int> triangles,
+            float tileSize)
+        {
+            bool[] land = new bool[4];
+            bool[] target = new bool[4];
+            int mask = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                land[i] = isInsideIsland(corners[i].x, corners[i].y);
+                target[i] = includeLand ? land[i] : !land[i];
+                if (target[i]) mask |= 1 << i;
+            }
+            if (mask == 0) return;
+
+            Vector2[] perimeter = { corners[0], corners[3], corners[2], corners[1] };
+            var polygons = new List<List<Vector2>>();
+
+            // The two diagonal cases need a center decision to cover the cell
+            // completely without an overlap or a central hole.
+            if (mask == 5 || mask == 10)
+            {
+                Vector2 e0 = FindBoundary(corners[0], corners[1], isInsideIsland);
+                Vector2 e1 = FindBoundary(corners[1], corners[2], isInsideIsland);
+                Vector2 e2 = FindBoundary(corners[2], corners[3], isInsideIsland);
+                Vector2 e3 = FindBoundary(corners[3], corners[0], isInsideIsland);
+                Vector2 center = (corners[0] + corners[2]) * 0.5f;
+                bool centerTarget = includeLand
+                    ? isInsideIsland(center.x, center.y)
+                    : !isInsideIsland(center.x, center.y);
+
+                if (mask == 5)
+                {
+                    polygons.Add(centerTarget
+                        ? new List<Vector2> { corners[0], e0, center, e3 }
+                        : new List<Vector2> { corners[0], e0, e3 });
+                    polygons.Add(centerTarget
+                        ? new List<Vector2> { corners[2], e2, center, e1 }
+                        : new List<Vector2> { corners[2], e2, e1 });
+                }
+                else
+                {
+                    polygons.Add(centerTarget
+                        ? new List<Vector2> { corners[1], e1, center, e0 }
+                        : new List<Vector2> { corners[1], e1, e0 });
+                    polygons.Add(centerTarget
+                        ? new List<Vector2> { corners[3], e3, center, e2 }
+                        : new List<Vector2> { corners[3], e3, e2 });
+                }
+            }
+            else
+            {
+                var polygon = new List<Vector2>(6);
+                for (int i = 0; i < 4; i++)
+                {
+                    int next = (i + 1) % 4;
+                    if (target[i]) polygon.Add(perimeter[i]);
+                    if (target[i] != target[next])
+                        polygon.Add(FindBoundary(perimeter[i], perimeter[next], isInsideIsland));
+                }
+                polygons.Add(polygon);
+            }
+
+            foreach (List<Vector2> polygon in polygons)
+            {
+                if (polygon.Count < 3) continue;
+                Vector2 origin = polygon[0];
+                for (int i = 1; i < polygon.Count - 1; i++)
+                {
+                    AddContourVertex(origin, getLandHeight, getSurfaceHeight, vertices, uvs, triangles, tileSize);
+                    AddContourVertex(polygon[i], getLandHeight, getSurfaceHeight, vertices, uvs, triangles, tileSize);
+                    AddContourVertex(polygon[i + 1], getLandHeight, getSurfaceHeight, vertices, uvs, triangles, tileSize);
+                }
+            }
+        }
+
+        private static void AddContourVertex(
+            Vector2 point,
+            Func<Vector2, float> getLandHeight,
+            Func<Vector2, float> getSurfaceHeight,
+            List<Vector3> vertices,
+            List<Vector2> uvs,
+            List<int> triangles,
+            float tileSize)
+        {
+            float height = getSurfaceHeight != null ? getSurfaceHeight(point) : getLandHeight(point);
+            int index = vertices.Count;
+            vertices.Add(new Vector3(point.x, height, point.y));
+            uvs.Add(new Vector2(point.x / tileSize, point.y / tileSize));
+            triangles.Add(index);
+        }
+
+        private static float WaterSurfaceHeight(Vector2 point, float waterY)
+        {
+            float ripple = (Mathf.PerlinNoise((point.x + 200f) * 0.12f, (point.y + 200f) * 0.12f) - 0.5f) * 0.04f;
+            return waterY + ripple;
+        }
+
+        private static void AppendContourCliffSegments(
+            Vector2[] corners,
+            Func<float, float, bool> isInsideIsland,
+            Func<Vector3, float> getTerrainHeight,
+            float cliffBaseY,
+            List<Vector3> vertices,
+            List<int> triangles,
+            List<Vector2> uvs)
+        {
+            var crossings = new List<Vector2>(4);
+            for (int i = 0; i < 4; i++)
+            {
+                int next = (i + 1) % 4;
+                bool a = isInsideIsland(corners[i].x, corners[i].y);
+                bool b = isInsideIsland(corners[next].x, corners[next].y);
+                if (a != b)
+                    crossings.Add(FindBoundary(corners[i], corners[next], isInsideIsland));
+            }
+
+            if (crossings.Count == 2)
+            {
+                AddContourWall(crossings[0], crossings[1], isInsideIsland, getTerrainHeight,
+                    cliffBaseY, vertices, triangles, uvs);
+                return;
+            }
+
+            if (crossings.Count != 4) return;
+
+            Vector2 center = (corners[0] + corners[2]) * 0.5f;
+            bool centerLand = isInsideIsland(center.x, center.y);
+            // Select the same diagonal resolution as AppendContourCell so cliff
+            // segments and land/water triangles share exactly the same contour.
+            if (centerLand)
+            {
+                AddContourWall(crossings[0], crossings[1], isInsideIsland, getTerrainHeight, cliffBaseY, vertices, triangles, uvs);
+                AddContourWall(crossings[2], crossings[3], isInsideIsland, getTerrainHeight, cliffBaseY, vertices, triangles, uvs);
+            }
+            else
+            {
+                AddContourWall(crossings[3], crossings[0], isInsideIsland, getTerrainHeight, cliffBaseY, vertices, triangles, uvs);
+                AddContourWall(crossings[1], crossings[2], isInsideIsland, getTerrainHeight, cliffBaseY, vertices, triangles, uvs);
+            }
+        }
+
+        private static void AddContourWall(
+            Vector2 a,
+            Vector2 b,
+            Func<float, float, bool> isInsideIsland,
+            Func<Vector3, float> getTerrainHeight,
+            float cliffBaseY,
+            List<Vector3> vertices,
+            List<int> triangles,
+            List<Vector2> uvs)
+        {
+            Vector2 midpoint = (a + b) * 0.5f;
+            Vector2 tangent = (b - a).normalized;
+            Vector2 left = new Vector2(-tangent.y, tangent.x);
+            bool leftIsLand = isInsideIsland(midpoint.x + left.x * 0.05f, midpoint.y + left.y * 0.05f);
+            if (!leftIsLand)
+            {
+                Vector2 temp = a;
+                a = b;
+                b = temp;
+            }
+
+            float heightA = getTerrainHeight(new Vector3(a.x, 0f, a.y));
+            float heightB = getTerrainHeight(new Vector3(b.x, 0f, b.y));
+            if (Mathf.Max(heightA, heightB) <= CliffHeightThreshold) return;
+            AddWallQuad( vertices, triangles, uvs,
+                new Vector3(a.x, heightA, a.y), new Vector3(b.x, heightB, b.y), cliffBaseY);
+        }
+
         private static Material BuildWaterMaterial(Material source, Color fallbackColor)
         {
             Material mat = source != null
@@ -468,45 +647,18 @@ namespace ApexShift.Runtime.World.Generation
             var tris  = new List<int>();
             var uvs   = new List<Vector2>();
 
-            for (int gz = 0; gz < gridSize; gz++)
+            int contourResolution = gridSize * SubdivPerTile;
+            float contourCellSize = tileSize / SubdivPerTile;
+            for (int cz = 0; cz < contourResolution; cz++)
             {
-                for (int gx = 0; gx < gridSize; gx++)
+                for (int cx = 0; cx < contourResolution; cx++)
                 {
-                    // Tile world-space centre and corners
-                    float cx = gx * tileSize - halfSize.x + tileSize * 0.5f;
-                    float cz = gz * tileSize - halfSize.z + tileSize * 0.5f;
+                    Vector2[] corners = CellCorners(cx, cz, contourCellSize, halfSize);
+                    int mask = LandMask(corners, isInsideIsland);
+                    if (mask == 0 || mask == 15) continue;
 
-                    if (!isInsideIsland(cx, cz)) continue;
-
-                    Vector3 p = new Vector3(cx, 0f, cz);
-                    float h = getTerrainHeight(p);
-
-                    if (h <= CliffHeightThreshold) continue;  // beach area – no cliff
-
-                    float x0 = gx * tileSize - halfSize.x;
-                    float x1 = x0 + tileSize;
-                    float z0 = gz * tileSize - halfSize.z;
-                    float z1 = z0 + tileSize;
-
-                    // +X edge
-                    if (!isInsideIsland(cx + tileSize, cz))
-                        AddWallQuad(verts, tris, uvs,
-                            new Vector3(x1, h, z0), new Vector3(x1, h, z1), cliffBaseY);
-
-                    // -X edge
-                    if (!isInsideIsland(cx - tileSize, cz))
-                        AddWallQuad(verts, tris, uvs,
-                            new Vector3(x0, h, z1), new Vector3(x0, h, z0), cliffBaseY);
-
-                    // +Z edge
-                    if (!isInsideIsland(cx, cz + tileSize))
-                        AddWallQuad(verts, tris, uvs,
-                            new Vector3(x1, h, z1), new Vector3(x0, h, z1), cliffBaseY);
-
-                    // -Z edge
-                    if (!isInsideIsland(cx, cz - tileSize))
-                        AddWallQuad(verts, tris, uvs,
-                            new Vector3(x0, h, z0), new Vector3(x1, h, z0), cliffBaseY);
+                    AppendContourCliffSegments(corners, isInsideIsland, getTerrainHeight, cliffBaseY,
+                        verts, tris, uvs);
                 }
             }
 
