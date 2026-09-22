@@ -352,7 +352,7 @@ namespace ApexShift.Runtime.World.Generation
             }
         }
 
-        private bool IsInsideIsland(float x, float z)
+        private float SampleIslandField(float x, float z)
         {
             const float islandRadiusX = 108f;
             const float islandRadiusZ = 82f;
@@ -378,8 +378,10 @@ namespace ApexShift.Runtime.World.Generation
             radiusModifier -= northBay;
             radiusModifier -= southBite;
 
-            return distance <= radiusModifier;
+            return radiusModifier - distance;
         }
+
+        private bool IsInsideIsland(float x, float z) => SampleIslandField(x, z) >= 0f;
 
         private void GenerateIslandLayout()
         {
@@ -445,7 +447,7 @@ namespace ApexShift.Runtime.World.Generation
                 gridSize,
                 tileSize,
                 biomeCatalog,
-                IsInsideIsland,
+                SampleIslandField,
                 SampleTerrainHeight,
                 _islandTopography.GetBiomeIdAt);
 
@@ -456,7 +458,7 @@ namespace ApexShift.Runtime.World.Generation
                 tileSize,
                 waterSurfaceMaterial,
                 waterSurfaceMaterial,
-                IsInsideIsland);
+                SampleIslandField);
 
             // Fifth pass: Build the seabed mesh visible below the water surface
             NaturalTerrainBuilder.BuildSeabed(
@@ -473,7 +475,7 @@ namespace ApexShift.Runtime.World.Generation
                 tileSize,
                 cliffMaterial,
                 biomeCatalog,
-                IsInsideIsland,
+                SampleIslandField,
                 SampleTerrainHeight,
                 _islandTopography.GetBiomeIdAt);
         }

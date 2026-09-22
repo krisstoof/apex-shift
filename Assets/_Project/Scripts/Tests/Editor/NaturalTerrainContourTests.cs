@@ -19,7 +19,7 @@ namespace ApexShift.Tests.Editor
         [TestCaseSource(nameof(AllMarchingSquaresCases))]
         public void MarchingSquares_AllMasksPartitionCellWithPositiveWinding(int mask, bool centerInside)
         {
-            Func<float, float, bool> field = BuildMaskField(mask, centerInside);
+            Func<float, float, float> field = BuildMaskField(mask, centerInside);
             List<Vector3> landVertices;
             List<int> landTriangles;
             List<Vector3> waterVertices;
@@ -51,7 +51,7 @@ namespace ApexShift.Tests.Editor
         [TestCase(10, true)]
         public void AmbiguousCliffContourUsesLandWaterCenterPairing(int mask, bool centerInside)
         {
-            Func<float, float, bool> field = BuildMaskField(mask, centerInside);
+            Func<float, float, float> field = BuildMaskField(mask, centerInside);
             var vertices = new List<Vector3>();
             var triangles = new List<int>();
             var uvs = new List<Vector2>();
@@ -70,6 +70,21 @@ namespace ApexShift.Tests.Editor
                 actual.Add(UnorderedPair(new Vector2(vertices[i].x, vertices[i].z), new Vector2(vertices[i + 1].x, vertices[i + 1].z)));
 
             CollectionAssert.AreEquivalent(expected, actual, $"mask={mask}, centerInside={centerInside}");
+        }
+
+        [Test]
+        public void ScalarFieldBoundaryInterpolationLandsOnZeroContour()
+        {
+            Func<float, float, float> field = (x, z) => 2f * x + z - 0.25f;
+            MethodInfo method = typeof(NaturalTerrainBuilder).GetMethod("FindBoundary", BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.That(method, Is.Not.Null);
+            Vector2 point = (Vector2)method.Invoke(null, new object[]
+            {
+                new Vector2(-1f, 0f), new Vector2(1f, 0f), field
+            });
+
+            Assert.That(Mathf.Abs(field(point.x, point.y)), Is.LessThan(0.000001f));
+            Assert.That(point.x, Is.EqualTo(0.125f).Within(0.000001f));
         }
 
         public static IEnumerable<TestCaseData> AllMarchingSquaresCases()
@@ -100,7 +115,7 @@ namespace ApexShift.Tests.Editor
             GameObject secondRoot = new GameObject("ContourSecond");
             try
             {
-                Func<float, float, bool> island = (x, z) => x * x + z * z <= 64f;
+                Func<float, float, float> island = (x, z) => 64f - x * x - z * z;
                 Func<Vector3, float> height = p => 0.25f + p.x * 0.01f + p.z * 0.005f;
 
                 NaturalTerrainBuilder.BuildIslandTerrain(firstRoot.transform, 4, 5f, catalog, island, height, p => "south_thicket");
@@ -115,8 +130,16 @@ namespace ApexShift.Tests.Editor
 
                 Assert.That(landA.triangles.Length, Is.GreaterThan(0));
                 Assert.That(waterA.triangles.Length, Is.GreaterThan(0));
-                Assert.That(ContainsNonGridVertex(landA, 5f / 6f), Is.True);
-                Assert.That(ContainsNonGridVertex(waterA, 5f / 6f), Is.True);
+                AssertTrianglesValid(landA.vertices, landA.triangles);
+                AssertTrianglesValid(waterA.vertices, waterA.triangles);
+                Assert.That(landA.vertexCount, Is.LessThan(landA.triangles.Length),
+                    "Land contour vertices should be shared between triangles.");
+                Assert.That(waterA.vertexCount, Is.LessThan(waterA.triangles.Length),
+                    "Water contour vertices should be shared between triangles.");
+                Assert.That(firstRoot.transform.Find("IslandTerrainMesh").GetComponent<MeshCollider>().sharedMesh,
+                    Is.SameAs(landA), "The land collider should use the rendered terrain mesh.");
+                Assert.That(ContainsNonGridVertex(landA, 5f / 12f), Is.True);
+                Assert.That(ContainsNonGridVertex(waterA, 5f / 12f), Is.True);
                 AssertMeshesEqual(landA, landB);
                 AssertMeshesEqual(waterA, waterB);
             }
@@ -140,27 +163,23 @@ namespace ApexShift.Tests.Editor
             return false;
         }
 
-        private static Func<float, float, bool> BuildMaskField(int mask, bool centerInside)
+        private static Func<float, float, float> BuildMaskField(int mask, bool centerInside)
         {
             return (x, z) =>
             {
-                if (Mathf.Abs(x) < 0.0001f && Mathf.Abs(z) < 0.0001f)
-                    return centerInside;
-                for (int i = 0; i < Cell.Length; i++)
-                    if ((new Vector2(x, z) - Cell[i]).sqrMagnitude < 0.0000001f)
-                        return (mask & (1 << i)) != 0;
-
                 float u = (x + 1f) * 0.5f;
                 float v = (z + 1f) * 0.5f;
                 float[] values = new float[4];
                 for (int i = 0; i < 4; i++) values[i] = (mask & (1 << i)) != 0 ? 1f : -1f;
                 float c0 = Mathf.Lerp(values[0], values[3], u);
                 float c1 = Mathf.Lerp(values[1], values[2], u);
-                return Mathf.Lerp(c0, c1, v) >= 0f;
+                float centerBias = (centerInside ? 0.25f : -0.25f) *
+                                   Mathf.Max(0f, 1f - x * x) * Mathf.Max(0f, 1f - z * z);
+                return Mathf.Lerp(c0, c1, v) + centerBias;
             };
         }
 
-        private static void AppendCell(bool includeLand, Func<float, float, bool> field,
+        private static void AppendCell(bool includeLand, Func<float, float, float> field,
             out List<Vector3> vertices, out List<int> triangles)
         {
             vertices = new List<Vector3>();
@@ -169,26 +188,20 @@ namespace ApexShift.Tests.Editor
             MethodInfo method = typeof(NaturalTerrainBuilder).GetMethod("AppendContourCell", BindingFlags.NonPublic | BindingFlags.Static);
             Assert.That(method, Is.Not.Null);
             Func<Vector2, float> flatHeight = _ => 0.25f;
-            method.Invoke(null, new object[] { Cell, includeLand, field, flatHeight, flatHeight, vertices, uvs, triangles, 1f });
+            var cache = Activator.CreateInstance(typeof(NaturalTerrainBuilder).GetNestedType("ContourVertexCache", BindingFlags.NonPublic), true);
+            method.Invoke(null, new object[] { Cell, includeLand, field, flatHeight, flatHeight, vertices, uvs, triangles, 1f, cache, 0 });
         }
 
-        private static Vector2[] EdgeCrossings(int mask, Func<float, float, bool> field)
+        private static Vector2[] EdgeCrossings(int mask, Func<float, float, float> field)
         {
             var result = new Vector2[4];
             for (int edge = 0; edge < 4; edge++)
             {
                 Vector2 a = Cell[edge];
                 Vector2 b = Cell[(edge + 1) & 3];
-                bool state = field(a.x, a.y);
-                Vector2 lo = a;
-                Vector2 hi = b;
-                for (int i = 0; i < 10; i++)
-                {
-                    Vector2 mid = (lo + hi) * 0.5f;
-                    if (field(mid.x, mid.y) == state) lo = mid;
-                    else hi = mid;
-                }
-                result[edge] = (lo + hi) * 0.5f;
+                float va = field(a.x, a.y);
+                float vb = field(b.x, b.y);
+                result[edge] = Vector2.Lerp(a, b, va / (va - vb));
             }
             return result;
         }
