@@ -50,7 +50,7 @@ namespace ApexShift.Runtime.World.Generation
             BiomeCatalogAsset catalog,
             Func<float, float, bool> isInsideIsland,
             Func<Vector3, float> getTerrainHeight,
-            Func<Vector3, string> determineBiome)
+            Func<Vector3, string> getBiomeId)
         {
             int resolution   = gridSize * SubdivPerTile;
             float cellSize   = tileSize / SubdivPerTile;
@@ -110,7 +110,7 @@ namespace ApexShift.Runtime.World.Generation
 
                     if (!isInsideIsland(ccx, ccz)) continue;
 
-                    string biomeId = determineBiome(new Vector3(ccx, 0f, ccz));
+                    string biomeId = getBiomeId(new Vector3(ccx, 0f, ccz));
                     if (!biomeTriangles.ContainsKey(biomeId))
                         biomeId = "south_thicket";
 
@@ -459,7 +459,7 @@ namespace ApexShift.Runtime.World.Generation
             BiomeCatalogAsset catalog,
             Func<float, float, bool> isInsideIsland,
             Func<Vector3, float> getTerrainHeight,
-            Func<Vector3, string> determineBiome,
+            Func<Vector3, string> getBiomeId,
             float cliffBaseY = -0.6f)
         {
             Vector3 halfSize = new Vector3(gridSize * tileSize * 0.5f, 0f, gridSize * tileSize * 0.5f);

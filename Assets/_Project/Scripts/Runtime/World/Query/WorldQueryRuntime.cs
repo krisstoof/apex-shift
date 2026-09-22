@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using ApexShift.Core.Ecosystem;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
+using ApexShift.Runtime.World.Topography;
 using UnityEngine;
 
 namespace ApexShift.Runtime.World.Query
@@ -168,6 +169,10 @@ namespace ApexShift.Runtime.World.Query
 
         public string GetBiomeIdForPosition(Vector3 position)
         {
+            IslandTopographyRuntime topography = IslandTopographyRuntime.Active;
+            if (topography != null && topography.IsBuilt)
+                return topography.GetBiomeIdAt(position);
+
             ResolveDirector();
             if (ecosystemDirector != null)
             {

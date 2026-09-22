@@ -19,6 +19,9 @@ namespace ApexShift.Runtime.World.Topography
         public readonly float       Height;
         public readonly float       NormalizedElevation;
         public readonly float       SlopeDegrees;
+        public readonly float       Moisture01;
+        public readonly float       Temperature01;
+        public float Dryness01 => 1f - Moisture01;
         public readonly string      BiomeId;
         public readonly TerrainType TerrainType;
 
@@ -47,6 +50,8 @@ namespace ApexShift.Runtime.World.Topography
             string biomeId,
             TerrainType terrainType,
             bool isShoreline,
+            float moisture01 = 0.5f,
+            float temperature01 = 0.5f,
             float playerSafeSlopeDegrees = 14f,
             float creatureSafeSlopeDegrees = 24f,
             float resourceSafeSlopeDegrees = 20f)
@@ -60,6 +65,8 @@ namespace ApexShift.Runtime.World.Topography
             BiomeId     = biomeId;
             TerrainType = terrainType;
             IsShoreline = isShoreline;
+            Moisture01 = Mathf.Clamp01(moisture01);
+            Temperature01 = Mathf.Clamp01(temperature01);
             IsSafeForPlayerSpawn = IsLand && !IsShoreline && TerrainType != TerrainType.Ridge && slopeDegrees <= playerSafeSlopeDegrees;
             IsSafeForCreatureSpawn = IsLand && !IsShoreline && slopeDegrees <= creatureSafeSlopeDegrees;
             IsSafeForResourceSpawn = IsLand && !IsShoreline && slopeDegrees <= resourceSafeSlopeDegrees;

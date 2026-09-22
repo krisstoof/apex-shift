@@ -108,6 +108,8 @@ namespace ApexShift.Runtime.World.Generation
         private RuntimeCameraSetup _runtimeCamera;
         private WorldSpawnService _worldSpawnService;
         private TerrainHeightfieldGenerator _terrainHeightfield;
+        private BiomeFieldGenerator _biomeField;
+        private BiomeClassifier _biomeClassifier;
 
         private const string DefaultInputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
 
@@ -154,6 +156,8 @@ namespace ApexShift.Runtime.World.Generation
 
             _lastResult = new WorldGenerationResult { Seed = seed };
             _terrainHeightfield = new TerrainHeightfieldGenerator(seed, settings != null ? settings.Terrain : null);
+            _biomeField = new BiomeFieldGenerator(seed, settings != null ? settings.Biome : null);
+            _biomeClassifier = new BiomeClassifier(seed, settings != null ? settings.Biome : null);
             _generationContext.Result = _lastResult;
             _generationCoordinator.Generate(_generationContext,
                 new WorldGenerationStage("PrepareGeneration", context =>
@@ -377,55 +381,6 @@ namespace ApexShift.Runtime.World.Generation
             return distance <= radiusModifier;
         }
 
-        private string DetermineBiome(Vector3 position)
-        {
-            float borderNoise = Mathf.PerlinNoise((position.x + 200f) * 0.030f, (position.z + 200f) * 0.030f) - 0.5f;
-            float x = position.x + borderNoise * 22f;
-            float z = position.z + borderNoise * 18f;
-
-            float centerDistance = Mathf.Sqrt(x * x + z * z);
-            if (centerDistance < 18f)
-            {
-                return "hearth_meadow";
-            }
-
-            float moisture = Mathf.PerlinNoise((x + 650f) * 0.026f, (z + 870f) * 0.026f);
-            float heat = Mathf.PerlinNoise((x + 125f) * 0.022f, (z + 430f) * 0.022f);
-            float ridge = Mathf.PerlinNoise((x + 910f) * 0.045f, (z + 220f) * 0.032f);
-
-            if (z > 38f || (ridge > 0.66f && z > 8f))
-            {
-                return "stoneback_ridge";
-            }
-
-            if (x < -34f && moisture > 0.35f)
-            {
-                return "westwood";
-            }
-
-            if (x > 42f || (heat > 0.62f && z < -12f))
-            {
-                return "redfang_wilds";
-            }
-
-            if (moisture > 0.58f || (z < -10f && x < 28f))
-            {
-                return "south_thicket";
-            }
-
-            if (x < -22f)
-            {
-                return "westwood";
-            }
-
-            if (heat > 0.55f)
-            {
-                return "redfang_wilds";
-            }
-
-            return "south_thicket";
-        }
-
         private void GenerateIslandLayout()
         {
             if (biomeCatalog == null)
@@ -440,8 +395,7 @@ namespace ApexShift.Runtime.World.Generation
             bool[,] landGrid = new bool[gridSize, gridSize];
             Vector3 centerOffset = new Vector3(gridSize * tileSize * 0.5f, 0, gridSize * tileSize * 0.5f);
 
-            // First pass: Determine Land/Water and Create Tiles.
-            // This is intentionally runtime-specific: large island layout, not handcrafted rectangles.
+            // First pass: determine only land/water. Biomes are assigned by topography below.
             for (int z = 0; z < gridSize; z++)
             {
                 for (int x = 0; x < gridSize; x++)
@@ -451,18 +405,6 @@ namespace ApexShift.Runtime.World.Generation
                     bool isLand = IsInsideIsland(pos.x, pos.z);
                     landGrid[x, z] = isLand;
 
-                    string biomeId;
-                    if (isLand)
-                    {
-                        biomeId = DetermineBiome(pos);
-                        _landTileCenters.Add(pos);
-                    }
-                    else
-                    {
-                        biomeId = "water";
-                    }
-
-                    AddTileRegion(biomeId, pos, tileSize);
                 }
             }
 
@@ -484,8 +426,19 @@ namespace ApexShift.Runtime.World.Generation
             // Third pass: Build the unified natural terrain mesh (replaces per-tile land cubes)
             // Build topography runtime before terrain mesh so other systems can query it immediately
             EnsureIslandTopographyRuntime();
-            _islandTopography.Build(gridSize, tileSize, IsInsideIsland, SampleTerrainHeight, DetermineBiome,
-                settings != null ? settings.Terrain : null);
+            _islandTopography.Build(gridSize, tileSize, IsInsideIsland, SampleTerrainHeight, null,
+                settings != null ? settings.Terrain : null, _biomeField, _biomeClassifier);
+
+            // Create regions from the same classified cells used by every later query.
+            for (int z = 0; z < gridSize; z++)
+                for (int x = 0; x < gridSize; x++)
+                {
+                    TopographyCell cell = _islandTopography.GetCell(x, z);
+                    if (cell == null) continue;
+                    Vector3 pos = cell.WorldCenter;
+                    AddTileRegion(cell.IsLand ? cell.BiomeId : "water", pos, tileSize);
+                    if (cell.IsLand) _landTileCenters.Add(pos);
+                }
 
             NaturalTerrainBuilder.BuildIslandTerrain(
                 _terrainRoot,
@@ -494,7 +447,7 @@ namespace ApexShift.Runtime.World.Generation
                 biomeCatalog,
                 IsInsideIsland,
                 SampleTerrainHeight,
-                DetermineBiome);
+                _islandTopography.GetBiomeIdAt);
 
             // Fourth pass: Unified water surface mesh (replaces per-tile water cubes)
             NaturalTerrainBuilder.BuildUnifiedWaterSurface(
@@ -522,7 +475,7 @@ namespace ApexShift.Runtime.World.Generation
                 biomeCatalog,
                 IsInsideIsland,
                 SampleTerrainHeight,
-                DetermineBiome);
+                _islandTopography.GetBiomeIdAt);
         }
 
         private void CheckAndAddWall(int nx, int nz, Vector3 pos, Vector3 direction, bool[,] landGrid, int gridSize, float tileSize)

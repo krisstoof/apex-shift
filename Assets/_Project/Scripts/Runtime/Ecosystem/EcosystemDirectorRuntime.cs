@@ -5,6 +5,7 @@ using ApexShift.Core.Save;
 using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.World.Generation;
+using ApexShift.Runtime.World.Topography;
 using UnityEngine;
 
 namespace ApexShift.Runtime.Ecosystem
@@ -132,6 +133,10 @@ namespace ApexShift.Runtime.Ecosystem
 
         public string GetBiomeIdForPosition(Vector3 position)
         {
+            IslandTopographyRuntime topography = IslandTopographyRuntime.Active;
+            if (topography != null && topography.IsBuilt)
+                return topography.GetBiomeIdAt(position);
+
             for (int i = 0; i < regions.Count; i++)
             {
                 GeneratedBiomeRegion region = regions[i];
