@@ -71,8 +71,8 @@
     "modelContextProtocol": {
         "servers": {
             "blender": {
-                "command": "uv",
-                "args": ["run", "-C", "${workspaceFolder}/Tools/blender-mcp", "python", "-m", "blender_mcp.server"],
+                "command": "cmd",
+                "args": ["/c", "uvx", "--python", "3.11", "blender-mcp"],
                 "disabled": false
             }
         }
