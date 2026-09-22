@@ -27,7 +27,7 @@ namespace ApexShift.Runtime.UI.Snapshots
         [SerializeField] private Transform playerTransform;
         [SerializeField] private DayNightRuntime dayNightRuntime;
         [SerializeField] private float refreshIntervalSeconds = 0.5f;
-        [SerializeField] private bool autoRefresh = true;
+        [SerializeField] private bool autoRefresh = false;
         private float refreshTimer;
         private float smoothedFps;
         private GameSnapshot lastSnapshot = GameSnapshot.Empty;
@@ -36,11 +36,12 @@ namespace ApexShift.Runtime.UI.Snapshots
         public GameSnapshot LastSnapshot => lastSnapshot;
         public event Action<GameSnapshot> SnapshotUpdated;
         public void SetAutoRefresh(bool enabled) => autoRefresh = enabled;
+        public bool AutoRefreshEnabled => autoRefresh;
         private void Awake() { CaptureNow(); }
         private void Update()
         {
-            UpdateFps();
             if (!autoRefresh) return;
+            UpdateFps();
             refreshTimer -= Time.unscaledDeltaTime;
             if (refreshTimer <= 0f) { refreshTimer = Mathf.Max(0.1f, refreshIntervalSeconds); CaptureNow(); }
         }

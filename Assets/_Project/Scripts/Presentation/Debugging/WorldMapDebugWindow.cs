@@ -1,11 +1,11 @@
 using ApexShift.Runtime.Creatures;
+using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.Flow;
-using ApexShift.Runtime.UI.Debugging;
 using ApexShift.Runtime.UI.Snapshots;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace ApexShift.Runtime.Debugging
+namespace ApexShift.Presentation.Debugging
 {
     [DisallowMultipleComponent]
     public sealed class WorldMapDebugWindow : MonoBehaviour

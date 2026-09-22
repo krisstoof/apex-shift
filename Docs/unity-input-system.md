@@ -41,9 +41,16 @@ import wrappers are not runtime asset locations.
 
 Player movement stays camera-relative and uses the generated `WorldBounds`.
 
-## Player Action Debug Log
+## Developer diagnostics
 
-The scene and world builders automatically attach `PlayerActionDebugLog` to the player.
+`RuntimeDiagnosticsBootstrap` owns optional developer diagnostics. It is gated by
+`UNITY_EDITOR || DEVELOPMENT_BUILD` and `RuntimeDebugSettings.DeveloperDiagnosticsEnabled`.
+Without that switch, `GameSnapshotProvider` keeps auto refresh disabled and the
+runtime does not create debug presenters, creature overlays, or action logging.
+Free building and crafting use the same master diagnostic gate. `FpsCounterUI`
+remains part of the tester-facing HUD and is intentionally not developer-only.
+
+When enabled, the bootstrap attaches `PlayerActionDebugLog` to the active player.
 
 The overlay shows recent actions:
 

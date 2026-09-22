@@ -2,11 +2,9 @@ using UnityEngine;
 using ApexShift.Runtime.Bootstrap;
 using ApexShift.Runtime.DayNight;
 using ApexShift.Runtime.Ecosystem;
-using ApexShift.Runtime.UI.Debugging;
 using ApexShift.Runtime.UI.Snapshots;
 using ApexShift.Runtime.World.Query;
 using ApexShift.Runtime.World.Sky;
-using ApexShift.Runtime.Debugging;
 
 namespace ApexShift.Runtime.World.Generation
 {
@@ -18,10 +16,8 @@ namespace ApexShift.Runtime.World.Generation
         public WorldQueryRuntime WorldQuery { get; private set; }
         public DayNightRuntime DayNight { get; private set; }
         public GameSnapshotProvider SnapshotProvider { get; private set; }
-        public DebugPanelPresenter DebugPanel { get; private set; }
-        public WorldMapDebugWindow WorldMapDebug { get; private set; }
 
-        public void Compose(Transform parent)
+        public void Compose(Transform parent, WorldGeneratorRuntime generator = null)
         {
             Create<GameBootstrapper>("GameBootstrapper", parent);
 
@@ -34,15 +30,6 @@ namespace ApexShift.Runtime.World.Generation
             DayNight = Create<DayNightRuntime>("DayNightRuntime", parent);
             Create<DayNightSkyRuntime>("DayNightSkyRuntime", parent);
             SnapshotProvider = Create<GameSnapshotProvider>("GameSnapshotProvider", parent);
-            SnapshotProvider.SetAutoRefresh(RuntimeDebugSettings.DeveloperDiagnosticsEnabled);
-            if (RuntimeDebugSettings.DeveloperDiagnosticsEnabled)
-            {
-                DebugPanel = Create<DebugPanelPresenter>("DebugPanelPresenter", parent);
-                WorldMapDebug = Create<WorldMapDebugWindow>("WorldMapDebugWindow", parent);
-                Create<WorldGenerationDebugPresenter>("WorldGenerationDebugPresenter", parent);
-                DebugPanel.SetSnapshotProvider(SnapshotProvider);
-                WorldMapDebug.SetSnapshotProvider(SnapshotProvider);
-            }
         }
 
         private static T Create<T>(string name, Transform parent) where T : Component

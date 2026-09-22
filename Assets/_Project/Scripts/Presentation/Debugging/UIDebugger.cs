@@ -8,37 +8,35 @@ namespace ApexShift.Presentation.Debugging
 {
     public class UIDebugger : MonoBehaviour
     {
-        private readonly HashSet<Button> trackedButtons = new HashSet<Button>();
-
-        private void OnEnable() => RefreshTrackedButtons();
+        private readonly List<RaycastResult> raycastResults = new List<RaycastResult>();
 
         private void Update()
         {
             if (EventSystem.current == null || Mouse.current == null) return;
 
+            if (!Mouse.current.leftButton.wasPressedThisFrame) return;
+
             Vector2 mousePos = Mouse.current.position.ReadValue();
             PointerEventData eventData = new PointerEventData(EventSystem.current);
             eventData.position = mousePos;
 
-            List<RaycastResult> results = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(eventData, results);
+            raycastResults.Clear();
+            EventSystem.current.RaycastAll(eventData, raycastResults);
 
-            if (Mouse.current.leftButton.wasPressedThisFrame)
-            {
                 var actions = InputSystem.actions;
                 string actionsInfo = actions != null ? $"Enabled={actions.enabled}" : "NULL";
                 var uiMap = actions?.FindActionMap("UI");
                 string mapInfo = uiMap != null ? $"UI Map Enabled={uiMap.enabled}" : "UI Map Missing";
 
-                Debug.Log($"[UIDebug] Mouse Click at {mousePos}. Screen: {Screen.width}x{Screen.height}. Hits: {results.Count}. Actions: {actionsInfo}, {mapInfo}");
-if (results.Count == 0)
+                Debug.Log($"[UIDebug] Mouse Click at {mousePos}. Screen: {Screen.width}x{Screen.height}. Hits: {raycastResults.Count}. Actions: {actionsInfo}, {mapInfo}");
+if (raycastResults.Count == 0)
                 {
                     Debug.Log("[UIDebug]  - No UI elements hit.");
                 }
-                foreach (var hit in results)
+                foreach (var hit in raycastResults)
                 {
                     var graphic = hit.gameObject.GetComponent<Graphic>();
-                    var button = hit.gameObject.GetComponent<Button>();
+                    var button = hit.gameObject.GetComponentInParent<Button>();
                     string buttonInfo = button != null ? $" (Button Listeners: {button.onClick.GetPersistentEventCount()})" : "";
                     string extra = graphic != null ? $" (RaycastTarget: {graphic.raycastTarget}, Color: {graphic.color})" : "";
                     Debug.Log($"  - Hit: {hit.gameObject.name} on Canvas {hit.module.gameObject.name}{extra}{buttonInfo}");
@@ -48,22 +46,6 @@ if (results.Count == 0)
                 {
                     Debug.Log($"[UIDebug] Current Selected: {EventSystem.current.currentSelectedGameObject.name}");
                 }
-            }
-        }
-
-        public void RefreshTrackedButtons()
-        {
-            Button[] buttons = GetComponentsInChildren<Button>(true);
-            foreach (Button button in buttons)
-            {
-                if (button == null || !trackedButtons.Add(button)) continue;
-                button.onClick.AddListener(() => LogButtonClick(button));
-            }
-        }
-
-        private void LogButtonClick(Button b)
-        {
-            Debug.Log($"[UIDebug] BUTTON EVENT: '{b.name}' onClick fired!");
         }
     }
 }

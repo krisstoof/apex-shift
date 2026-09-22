@@ -1,7 +1,8 @@
 using UnityEngine;
+using ApexShift.Runtime.World.Generation;
 using ApexShift.Runtime.World.Topography;
 
-namespace ApexShift.Runtime.World.Generation
+namespace ApexShift.Presentation.Debugging
 {
     /// <summary>Presentation-only generation diagnostics; generation code never draws UI.</summary>
     public sealed class WorldGenerationDebugPresenter : MonoBehaviour

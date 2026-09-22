@@ -24,9 +24,8 @@ namespace ApexShift.Tests.Unit.Debug
             {
                 var composition = new RuntimeCompositionRoot();
                 composition.Compose(root.transform);
-                Assert.IsNull(composition.DebugPanel);
-                Assert.IsNull(composition.WorldMapDebug);
-                Assert.IsEmpty(root.GetComponentsInChildren<WorldGenerationDebugPresenter>(true));
+                Assert.IsFalse(composition.SnapshotProvider.AutoRefreshEnabled);
+                Assert.IsNull(root.GetComponentInChildren<RuntimeDiagnosticsBootstrap>(true));
             }
             finally
             {
@@ -60,10 +59,28 @@ namespace ApexShift.Tests.Unit.Debug
         [Test]
         public void UIDebuggerIsPresentationOwnedAndDoesNotScanTheSceneEveryFrame()
         {
-            Assert.AreEqual("ApexShift.Presentation.Debugging", typeof(UIDebugger).Namespace);
             string source = File.ReadAllText("Assets/_Project/Scripts/Presentation/Debugging/UIDebugger.cs");
+            Assert.IsFalse(source.Contains("GetComponentsInChildren<Button>"));
             Assert.IsFalse(source.Contains("FindObjectsByType<Button>"));
-            Assert.IsTrue(source.Contains("GetComponentsInChildren<Button>"));
+            Assert.IsTrue(source.IndexOf("wasPressedThisFrame") < source.IndexOf("RaycastAll"));
+        }
+
+        [Test]
+        public void RuntimeOwnersDoNotContainPresentationDiagnostics()
+        {
+            string generator = File.ReadAllText("Assets/_Project/Scripts/Runtime/World/Generation/WorldGeneratorRuntime.cs");
+            string composition = File.ReadAllText("Assets/_Project/Scripts/Runtime/World/Generation/RuntimeCompositionRoot.cs");
+            string hud = File.ReadAllText("Assets/_Project/Scripts/Presentation/HUD/RuntimeHUDProvisioner.cs");
+
+            Assert.IsFalse(generator.Contains("PlayerActionDebugLog"));
+            Assert.IsFalse(generator.Contains("CreatureDebugOverlay"));
+            Assert.IsFalse(generator.Contains("WorldGenerationDebugPresenter"));
+            Assert.IsFalse(generator.Contains("RuntimeDebugSettings.DeveloperDiagnosticsEnabled"));
+            Assert.IsFalse(generator.Contains("RuntimeDebugSettings.DebugEnabled"));
+            Assert.IsFalse(composition.Contains("DebugPanelPresenter"));
+            Assert.IsFalse(composition.Contains("WorldMapDebugWindow"));
+            Assert.IsFalse(composition.Contains("WorldGenerationDebugPresenter"));
+            Assert.IsFalse(hud.Contains("UIDebugger"));
         }
     }
 }

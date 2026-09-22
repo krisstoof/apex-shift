@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using ApexShift.Runtime.Bootstrap;
 using ApexShift.Runtime.Camera;
-using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.Interaction;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.PlayerInput;
@@ -158,7 +157,7 @@ namespace ApexShift.Runtime.World.Generation
                 new WorldGenerationStage("PrepareGeneration", context =>
                 {
                     _runtimeComposition = new RuntimeCompositionRoot();
-                    _runtimeComposition.Compose(CurrentGenerationParent);
+                    _runtimeComposition.Compose(CurrentGenerationParent, this);
                     UnsubscribeFromDayNightRuntime();
                     _dayNightRuntime = CurrentGenerationParent.GetComponentInChildren<DayNightRuntime>(true);
                     if (_dayNightRuntime != null) _dayNightRuntime.DayChanged += HandleDayChanged;
@@ -203,9 +202,6 @@ namespace ApexShift.Runtime.World.Generation
                 new WorldGenerationStage("FinalizeGeneration", context =>
                 {
                     context.Result = _lastResult;
-                    WorldGenerationDebugPresenter debugPresenter = CurrentGenerationParent
-                        .GetComponentInChildren<WorldGenerationDebugPresenter>(true);
-                    if (debugPresenter != null) debugPresenter.Configure(_lastResult, _islandTopography);
                     Debug.Log($"World Generation Complete. Biomes: {_lastResult.BiomeCount}, Resources: {_lastResult.ResourceCount}, Seed: {seed}");
                     OnGenerationComplete?.Invoke(context.Player);
                 }));
@@ -1360,12 +1356,6 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             var behavior = instance.GetComponent<CreatureBehaviorRuntime>();
             if (behavior == null) behavior = instance.AddComponent<CreatureBehaviorRuntime>();
 
-            if (RuntimeDebugSettings.DeveloperDiagnosticsEnabled)
-            {
-                var debugOverlay = instance.GetComponent<CreatureDebugOverlay>();
-                if (debugOverlay == null) debugOverlay = instance.AddComponent<CreatureDebugOverlay>();
-            }
-
             var animDriver = instance.GetComponent<CreatureAnimationDriver>();
             if (animDriver == null) animDriver = instance.AddComponent<CreatureAnimationDriver>();
             float runThreshold = 2.0f;
@@ -1713,17 +1703,6 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             motionFeedback.SetInputReader(inputReader);
             motionFeedback.SetVisualRoot(player.transform.childCount > 0 ? player.transform.GetChild(0) : player.transform);
 
-            if (RuntimeDebugSettings.DeveloperDiagnosticsEnabled)
-            {
-                PlayerActionDebugLog debugLog = player.GetComponent<PlayerActionDebugLog>();
-                if (debugLog == null) debugLog = player.AddComponent<PlayerActionDebugLog>();
-                debugLog.SetInputReader(inputReader);
-                debugLog.SetWatchedTarget(player.transform);
-                debugLog.SetSecondaryTarget(cameraGo != null ? cameraGo.transform : null);
-                debugLog.SetMovementController(controller);
-                debugLog.SetMotionFeedback(motionFeedback);
-                debugLog.SetCameraFollow(cameraGo != null ? cameraGo.GetComponent<IsometricCameraFollow>() : null);
-            }
 
             BuildingPlacementRuntime buildingPlacement = player.GetComponent<BuildingPlacementRuntime>();
             if (buildingPlacement == null)
@@ -1842,32 +1821,5 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
                 Gizmos.DrawWireCube(region.Bounds.center, region.Bounds.size);
             }
         }
-
-        // Runtime diagnostics are rendered by WorldGenerationDebugPresenter.
-#if false
-        private void LegacyDebugOverlayDisabled()
-        {
-            if (_lastResult == null) return;
-
-            GUI.color = Color.black;
-            GUILayout.BeginArea(new Rect(Screen.width - 310, 450, 300, 260));
-            GUILayout.Label($"Seed: {_lastResult.Seed}");
-            GUILayout.Label($"Biomes: {_lastResult.BiomeCount}");
-            GUILayout.Label($"Resources: {_lastResult.ResourceCount}");
-            GUILayout.Label($"Spawn Attempts: {_lastResult.SpawnAttempts}");
-
-            // ── Topography debug stats ──────────────────────────────────────
-            if (_islandTopography != null && _islandTopography.IsBuilt)
-            {
-                GUILayout.Space(4);
-                GUILayout.Label($"── Topography ──");
-                GUILayout.Label($"Land: {_islandTopography.LandCellCount}  Water: {_islandTopography.WaterCellCount}");
-                GUILayout.Label($"Shore: {_islandTopography.ShoreCellCount}  Ridge: {_islandTopography.RidgeCellCount}");
-                GUILayout.Label($"Safe Player: {_islandTopography.SafePlayerCells}");
-                GUILayout.Label($"Safe Creature: {_islandTopography.SafeCreatureCells}");
-            }
-            GUILayout.EndArea();
-        }
-#endif
 }
 }

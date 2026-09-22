@@ -8,7 +8,6 @@ using ApexShift.Runtime.DayNight;
 using ApexShift.Presentation.Icons;
 using ApexShift.Presentation.Crafting;
 using ApexShift.Presentation.Debugging;
-using ApexShift.Runtime.Debugging;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -35,6 +34,8 @@ namespace ApexShift.Presentation.HUD
             {
                 generator.SetGenerateOnStart(false);
                 generator.OnGenerationComplete += HandleGenerationComplete;
+                RuntimeDiagnosticsBootstrap bootstrap = GetComponent<RuntimeDiagnosticsBootstrap>() ?? gameObject.AddComponent<RuntimeDiagnosticsBootstrap>();
+                bootstrap.Configure(generator);
             }
             if (uiFont == null) uiFont = (Font)Resources.GetBuiltinResource(typeof(Font), "LegacyRuntime.ttf");
         }
@@ -298,9 +299,6 @@ CreateMenuBackdropFrame(optionsMenu.transform);
 
             GameStartupController startup = uiRoot.GetComponent<GameStartupController>() ?? uiRoot.AddComponent<GameStartupController>();
             if (uiRoot.GetComponent<InputEnabler>() == null) uiRoot.AddComponent<InputEnabler>();
-            if (RuntimeDebugSettings.DeveloperDiagnosticsEnabled && uiRoot.GetComponent<UIDebugger>() == null)
-                uiRoot.AddComponent<UIDebugger>();
-
             menuGo.SetActive(true);
             startup.Configure(generator, startMenu, pauseMenu, hudGo, optionsMenu, startGrp, pauseGrp, optionsGrp);
 

@@ -1,4 +1,4 @@
-using ApexShift.Runtime.UI.Debugging;
+using ApexShift.Presentation.Debugging;
 using ApexShift.Runtime.UI.Snapshots;
 using NUnit.Framework;
 using UnityEngine;

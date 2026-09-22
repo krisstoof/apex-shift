@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-namespace ApexShift.Runtime.UI.Debugging
+namespace ApexShift.Presentation.Debugging
 {
     [DisallowMultipleComponent]
     public sealed class DebugPanelPresenter : MonoBehaviour
