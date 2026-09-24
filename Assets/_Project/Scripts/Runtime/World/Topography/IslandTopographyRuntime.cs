@@ -45,6 +45,8 @@ namespace ApexShift.Runtime.World.Topography
         public int SafeCreatureCells  { get; private set; }
 
         public bool IsBuilt => _grid != null;
+        public int DenseBiomeMapResolutionPerTile => _gridSize > 0 ? _biomeMapSize / _gridSize : 0;
+        public float DenseBiomeMapCellSize => _biomeMapCellSize;
 
         // ── Build ─────────────────────────────────────────────────────────────
 
@@ -61,7 +63,7 @@ namespace ApexShift.Runtime.World.Topography
             TerrainHeightfieldSettings       terrainSettings = null,
             BiomeFieldGenerator              biomeField = null,
             BiomeClassifier                   biomeClassifier = null,
-            int                               biomeResolutionPerTile = 6)
+            int                               biomeResolutionPerTile = 12)
         {
             _gridSize = gridSize;
             _tileSize = tileSize;
@@ -115,12 +117,6 @@ namespace ApexShift.Runtime.World.Topography
                     }
 
             float heightRange = Mathf.Max(0.0001f, maxLandHeight - minLandHeight);
-            for (int z = 0; z < gridSize; z++)
-                for (int x = 0; x < gridSize; x++)
-                    tempType[x, z] = ClassifyTerrain(
-                        tempBiome[x, z], tempIsLand[x, z] ? Mathf.Clamp01((tempHeight[x, z] - minLandHeight) / heightRange) : 0f,
-                        CalculateSlope(tempHeight, x, z, gridSize, tileSize), tempIsLand[x, z]);
-
             if (biomeField != null && biomeClassifier != null)
             {
                 for (int z = 0; z < gridSize; z++)
@@ -134,9 +130,17 @@ namespace ApexShift.Runtime.World.Topography
                             tempBiome[x, z] = biomeClassifier.Classify(new Vector3(_originX + x * tileSize + tileSize * 0.5f, 0f, _originZ + z * tileSize + tileSize * 0.5f), sample);
                         }
 
-            // ── Pass 2: detect shoreline, reclassify beach cells ─────────────
             }
 
+            // Classification follows final climate/biome results. Shoreline's Beach
+            // override is applied after this pass, while steep/ridge cliffs stay Ridge.
+            for (int z = 0; z < gridSize; z++)
+                for (int x = 0; x < gridSize; x++)
+                    tempType[x, z] = ClassifyTerrain(
+                        tempBiome[x, z], tempIsLand[x, z] ? Mathf.Clamp01((tempHeight[x, z] - minLandHeight) / heightRange) : 0f,
+                        CalculateSlope(tempHeight, x, z, gridSize, tileSize), tempIsLand[x, z]);
+
+            // Shoreline classification follows terrain-type classification.
             var tempShore = new bool[gridSize, gridSize];
             for (int z = 0; z < gridSize; z++)
             {
@@ -149,17 +153,9 @@ namespace ApexShift.Runtime.World.Topography
                         // Coastal land → Beach unless it is already a ridge cliff
                         if (tempType[x, z] != TerrainType.Ridge)
                             tempType[x, z] = TerrainType.Beach;
-                        }
+                    }
                 }
             }
-
-            // Terrain type is derived after biome classification so ridge/forest
-            // semantics are identical for cells and the visual terrain pass.
-            for (int z = 0; z < gridSize; z++)
-                for (int x = 0; x < gridSize; x++)
-                    tempType[x, z] = ClassifyTerrain(
-                        tempBiome[x, z], tempIsLand[x, z] ? Mathf.Clamp01((tempHeight[x, z] - minLandHeight) / heightRange) : 0f,
-                        CalculateSlope(tempHeight, x, z, gridSize, tileSize), tempIsLand[x, z]);
 
             // ── Pass 3: build immutable cell objects ─────────────────────────
             _grid = new TopographyCell[gridSize, gridSize];

@@ -39,7 +39,8 @@ namespace ApexShift.Runtime.World.Generation
         /// Builds the island land mesh. Each biome zone gets its own submesh so the
         /// biome GroundMaterials are applied directly. A MeshCollider handles physics.
         /// The coastline follows the scalar field's zero contour, locally refined to
-        /// twice the interior sampling density. Interior terrain remains at 6 samples/tile.
+        /// twice the interior sampling density. Biome borders use the same local refinement;
+        /// unaffected interior remains at 6 samples/tile.
         /// </summary>
     /// <summary>Terrain above this Y is treated as a cliff instead of a beach.</summary>
         private const float CliffHeightThreshold = 0.18f;
@@ -56,7 +57,8 @@ namespace ApexShift.Runtime.World.Generation
             int resolution   = gridSize * TerrainInteriorSubdivPerTile;
             float cellSize   = tileSize / TerrainInteriorSubdivPerTile;
             Vector3 halfSize = new Vector3(gridSize * tileSize * 0.5f, 0f, gridSize * tileSize * 0.5f);
-            bool[,] refinedCells = BuildCoastlineRefinementMask(resolution, cellSize, halfSize, sampleIslandField);
+            bool[,] refinedCells = BuildCombinedRefinementMask(resolution, cellSize, halfSize,
+                sampleIslandField, getBiomeId);
 
             // ── Pass 1: compute authoritative per-vertex surface heights and land flags ──
             // ── Pass 3: build vertex and UV arrays ────────────────────────────
@@ -79,12 +81,6 @@ namespace ApexShift.Runtime.World.Generation
 
                     float ccx = (cx + 0.5f) * cellSize - halfSize.x;
                     float ccz = (cz + 0.5f) * cellSize - halfSize.z;
-                    string biomeId = getBiomeId(new Vector3(ccx, 0f, ccz));
-                    if (!biomeTriangles.ContainsKey(biomeId))
-                        biomeId = "south_thicket";
-
-                    var tris = biomeTriangles[biomeId];
-                    int domain = Array.IndexOf(BiomeSubmeshOrder, biomeId);
                     Func<Vector2, float> getHeight = p => getTerrainHeight(new Vector3(p.x, 0f, p.y));
                     if (refinedCells[cx, cz])
                     {
@@ -94,12 +90,20 @@ namespace ApexShift.Runtime.World.Generation
                             {
                                 Vector2[] fineCorners = CellCorners(cx * 2 + sx, cz * 2 + sz,
                                     fineCellSize, halfSize);
+                                float fineX = (fineCorners[0].x + fineCorners[2].x) * 0.5f;
+                                float fineZ = (fineCorners[0].y + fineCorners[2].y) * 0.5f;
+                                string biomeId = ResolveBiome(getBiomeId(new Vector3(fineX, 0f, fineZ)));
+                                List<int> tris = biomeTriangles[biomeId];
+                                int domain = Array.IndexOf(BiomeSubmeshOrder, biomeId);
                                 AppendContourCell(fineCorners, true, sampleIslandField,
                                     getHeight, null, vertices, uvs, tris, tileSize, vertexCache, domain);
                             }
                     }
                     else
                     {
+                        string biomeId = ResolveBiome(getBiomeId(new Vector3(ccx, 0f, ccz)));
+                        List<int> tris = biomeTriangles[biomeId];
+                        int domain = Array.IndexOf(BiomeSubmeshOrder, biomeId);
                         AppendFullInteriorCell(corners, getHeight, null,
                             HasRefinedNeighbor(refinedCells, cx, cz, 0),
                             HasRefinedNeighbor(refinedCells, cx, cz, 1),
@@ -434,6 +438,56 @@ namespace ApexShift.Runtime.World.Generation
                         }
                 }
             return refined;
+        }
+
+        private static bool[,] BuildCombinedRefinementMask(int resolution, float cellSize,
+            Vector3 halfSize, Func<float, float, float> sampleIslandField,
+            Func<Vector3, string> getBiomeId)
+        {
+            bool[,] refined = BuildCoastlineRefinementMask(resolution, cellSize, halfSize, sampleIslandField);
+            var biomeBoundary = new bool[resolution, resolution];
+            for (int z = 0; z < resolution; z++)
+                for (int x = 0; x < resolution; x++)
+                {
+                    Vector2[] corners = CellCorners(x, z, cellSize, halfSize);
+                    Vector2 center = (corners[0] + corners[2]) * 0.5f;
+                    string first = null;
+                    bool hasLand = false;
+                    bool mixed = false;
+                    for (int i = 0; i < 9; i++)
+                    {
+                        Vector2 p = i < 4 ? corners[i] : i == 4 ? center :
+                            (corners[(i - 5) & 3] + corners[(i - 4) & 3]) * 0.5f;
+                        if (sampleIslandField(p.x, p.y) < 0f) continue;
+                        hasLand = true;
+                        string id = getBiomeId(new Vector3(p.x, 0f, p.y));
+                        if (first == null) first = id;
+                        else if (!string.Equals(first, id, StringComparison.Ordinal)) mixed = true;
+                    }
+                    biomeBoundary[x, z] = hasLand && mixed;
+                }
+
+            // Add one transition ring so shared mesh edges have matching vertices.
+            for (int z = 0; z < resolution; z++)
+                for (int x = 0; x < resolution; x++)
+                {
+                    if (!biomeBoundary[x, z]) continue;
+                    for (int dz = -1; dz <= 1; dz++)
+                        for (int dx = -1; dx <= 1; dx++)
+                        {
+                            int nx = x + dx, nz = z + dz;
+                            if (nx >= 0 && nx < resolution && nz >= 0 && nz < resolution)
+                                refined[nx, nz] = true;
+                        }
+                }
+            return refined;
+        }
+
+        private static string ResolveBiome(string biomeId)
+        {
+            return !string.IsNullOrEmpty(biomeId) && Array.IndexOf(BiomeSubmeshOrder, biomeId) >= 0
+                ? biomeId
+                : "south_thicket";
         }
 
         // Edge indices follow CellCorners' clockwise order: 0=left, 1=far,

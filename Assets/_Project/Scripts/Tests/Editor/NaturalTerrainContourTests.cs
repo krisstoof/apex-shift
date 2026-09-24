@@ -152,6 +152,44 @@ namespace ApexShift.Tests.Editor
             }
         }
 
+        [Test]
+        public void BiomeBoundaryRefinementIsLocalAndCreatesSeparateSubmeshes()
+        {
+            BiomeCatalogAsset catalog = ScriptableObject.CreateInstance<BiomeCatalogAsset>();
+            BiomeDefinitionAsset meadow = ScriptableObject.CreateInstance<BiomeDefinitionAsset>();
+            BiomeDefinitionAsset westwood = ScriptableObject.CreateInstance<BiomeDefinitionAsset>();
+            meadow.Configure("hearth_meadow", "Meadow", Color.green, false, Array.Empty<VegetationSpawnEntryAsset>());
+            westwood.Configure("westwood", "Westwood", Color.yellow, false, Array.Empty<VegetationSpawnEntryAsset>());
+            catalog.SetBiomes(new[] { meadow, westwood });
+            GameObject splitRoot = new GameObject("BiomeBoundaryRefined");
+            GameObject uniformRoot = new GameObject("BiomeUniform");
+            try
+            {
+                Func<float, float, float> island = (x, z) => 1f;
+                Func<Vector3, float> height = _ => 0f;
+                NaturalTerrainBuilder.BuildIslandTerrain(splitRoot.transform, 3, 8f, catalog, island, height,
+                    p => p.x < 0.23f ? "hearth_meadow" : "westwood");
+                NaturalTerrainBuilder.BuildIslandTerrain(uniformRoot.transform, 3, 8f, catalog, island, height,
+                    p => "hearth_meadow");
+
+                Mesh split = splitRoot.transform.Find("IslandTerrainMesh").GetComponent<MeshFilter>().sharedMesh;
+                Mesh uniform = uniformRoot.transform.Find("IslandTerrainMesh").GetComponent<MeshFilter>().sharedMesh;
+                Assert.That(split.subMeshCount, Is.EqualTo(2));
+                Assert.That(split.GetTriangles(0).Length, Is.GreaterThan(0));
+                Assert.That(split.GetTriangles(1).Length, Is.GreaterThan(0));
+                Assert.That(split.triangles.Length, Is.GreaterThan(uniform.triangles.Length),
+                    "Only the local boundary band should receive additional subdivision.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(splitRoot);
+                UnityEngine.Object.DestroyImmediate(uniformRoot);
+                UnityEngine.Object.DestroyImmediate(catalog);
+                UnityEngine.Object.DestroyImmediate(meadow);
+                UnityEngine.Object.DestroyImmediate(westwood);
+            }
+        }
+
         private static bool ContainsNonGridVertex(Mesh mesh, float cellSize)
         {
             foreach (Vector3 vertex in mesh.vertices)

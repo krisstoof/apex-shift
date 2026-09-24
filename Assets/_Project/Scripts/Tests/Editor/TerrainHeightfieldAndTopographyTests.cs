@@ -1,5 +1,8 @@
 using NUnit.Framework;
 using UnityEngine;
+using ApexShift.Runtime.Ecosystem;
+using ApexShift.Runtime.World.Biomes;
+using ApexShift.Runtime.World.Query;
 using ApexShift.Runtime.World.Topography;
 
 namespace ApexShift.Tests.Editor
@@ -122,6 +125,81 @@ namespace ApexShift.Tests.Editor
             }
             finally
             {
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void Topography_ShorelineLandCellIsBeachUnlessItIsARidge()
+        {
+            GameObject go = new GameObject("TopographyBeachOverrideTest");
+            try
+            {
+                IslandTopographyRuntime topography = go.AddComponent<IslandTopographyRuntime>();
+                topography.Build(4, 1f, (x, z) => x < 0f, p => 0f, p => "hearth_meadow");
+
+                TopographyCell shore = topography.GetCell(1, 1);
+                Assert.That(shore.IsShoreline, Is.True);
+                Assert.That(shore.TerrainType, Is.EqualTo(TerrainType.Beach));
+                Assert.That(shore.IsBeach, Is.True);
+
+                topography.Build(4, 1f, (x, z) => x < 0f, p => 0f, p => "stoneback_ridge");
+                TopographyCell ridgeShore = topography.GetCell(1, 1);
+                Assert.That(ridgeShore.IsShoreline, Is.True);
+                Assert.That(ridgeShore.TerrainType, Is.EqualTo(TerrainType.Ridge),
+                    "The intentional steep-cliff/ridge shoreline rule should remain intact.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void DenseBiomeMap_IsSharedByTopographyWorldQueryAndEcosystemQueries()
+        {
+            GameObject go = new GameObject("DenseBiomeMapIntegrationTest");
+            try
+            {
+                IslandTopographyRuntime topography = go.AddComponent<IslandTopographyRuntime>();
+                EcosystemDirectorRuntime director = go.AddComponent<EcosystemDirectorRuntime>();
+                WorldQueryRuntime worldQuery = go.AddComponent<WorldQueryRuntime>();
+                var field = new BiomeFieldGenerator(347, new BiomeFieldSettings());
+                var classifier = new BiomeClassifier(347, new BiomeFieldSettings());
+                topography.Build(8, 4f, (x, z) => true, p => p.x * 0.01f, p => "hearth_meadow",
+                    biomeField: field, biomeClassifier: classifier);
+                typeof(IslandTopographyRuntime).GetProperty("Active",
+                    System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
+                    .GetSetMethod(true).Invoke(null, new object[] { topography });
+                director.InitializeFromRegions(null);
+
+                Assert.That(topography.DenseBiomeMapResolutionPerTile, Is.EqualTo(12));
+                Assert.That(topography.DenseBiomeMapCellSize, Is.EqualTo(4f / 12f).Within(0.00001f));
+                var mapField = typeof(IslandTopographyRuntime).GetField("_biomeMap",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                object prebuiltMap = mapField.GetValue(topography);
+                Assert.That(prebuiltMap, Is.Not.Null);
+
+                Vector3[] positions =
+                {
+                    new Vector3(-11.3f, 0f, -7.1f),
+                    new Vector3(-2.25f, 0f, 1.75f),
+                    new Vector3(9.4f, 0f, 12.2f)
+                };
+                foreach (Vector3 position in positions)
+                {
+                    string expected = topography.GetBiomeIdAt(position);
+                    Assert.That(worldQuery.GetBiomeIdForPosition(position), Is.EqualTo(expected), "WorldQueryRuntime at " + position);
+                    Assert.That(director.GetBiomeIdForPosition(position), Is.EqualTo(expected), "EcosystemDirectorRuntime at " + position);
+                    Assert.That(mapField.GetValue(topography), Is.SameAs(prebuiltMap),
+                        "Gameplay biome lookups must use the built dense map, not rebuild/classify via noise.");
+                }
+            }
+            finally
+            {
+                typeof(IslandTopographyRuntime).GetProperty("Active",
+                    System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
+                    .GetSetMethod(true).Invoke(null, new object[] { null });
                 Object.DestroyImmediate(go);
             }
         }
