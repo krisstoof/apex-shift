@@ -31,10 +31,10 @@ namespace ApexShift.Editor.World
 
             var species = new List<VegetationSpeciesAsset>
             {
-                EnsureSpecies("tree_leafy_01", "Leafy Tree 01", VegetationCategory.Tree, new[] { "hearth_meadow", "westwood", "south_thicket" }, true, "wood"),
-                EnsureSpecies("tree_conifer_01", "Conifer Tree 01", VegetationCategory.Tree, new[] { "westwood", "stoneback_ridge" }, true, "wood"),
-                EnsureSpecies("tree_dead_01", "Dead Tree 01", VegetationCategory.DeadTree, new[] { "stoneback_ridge", "redfang_wilds" }, true, "wood"),
-                EnsureSpecies("shrub_forest_01", "Forest Shrub 01", VegetationCategory.Shrub, new[] { "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" }, true, "berries"),
+                EnsureSpecies("tree_leafy_01", "Leafy Tree 01", VegetationCategory.Tree, new[] { "hearth_meadow", "westwood", "south_thicket" }, true, "leafy_tree"),
+                EnsureSpecies("tree_conifer_01", "Conifer Tree 01", VegetationCategory.Tree, new[] { "westwood", "stoneback_ridge" }, true, "conifer_tree"),
+                EnsureSpecies("tree_dead_01", "Dead Tree 01", VegetationCategory.DeadTree, new[] { "stoneback_ridge", "redfang_wilds" }, true, "dry_tree"),
+                EnsureSpecies("shrub_forest_01", "Forest Shrub 01", VegetationCategory.Shrub, new[] { "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" }, true, "berry_bush"),
                 EnsureSpecies("groundcover_forest_01", "Forest Groundcover 01", VegetationCategory.GroundCover, new[] { "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" }, false, string.Empty)
             };
 
@@ -64,10 +64,11 @@ namespace ApexShift.Editor.World
         {
             var asset = LoadOrCreate<VegetationSpeciesAsset>(SpeciesFolder + "/" + id + ".asset");
             GameObject visual = asset.VisualPrefab; // Preserve any manually assigned content reference.
+            GameObject depletedVisual = asset.DepletedVisualPrefab; // Preserve any manually assigned depleted/stump visual.
             asset.Configure(id, label, visual, category, 0.8f, 1.2f,
                 category == VegetationCategory.GroundCover ? 0.35f : 2f,
                 0f, category == VegetationCategory.GroundCover ? 35f : 40f,
-                0f, 1f, 0f, 1f, biomes, true, harvestable, resourceKind, null,
+                0f, 1f, 0f, 1f, biomes, true, harvestable, resourceKind, depletedVisual,
                 category == VegetationCategory.GroundCover ? VegetationCollisionMode.None : VegetationCollisionMode.GameplayResource);
             EditorUtility.SetDirty(asset);
             return asset;

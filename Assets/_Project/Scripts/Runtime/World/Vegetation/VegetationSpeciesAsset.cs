@@ -44,6 +44,7 @@ namespace ApexShift.Runtime.World.Vegetation
         [SerializeField] private List<string> allowedBiomeIds = new List<string>();
         [SerializeField] private bool randomYaw = true;
         [SerializeField] private bool harvestable;
+        [Tooltip("Apex Shift ResourceDefinition kind (for example leafy_tree), not the resulting drop/item ID.")]
         [SerializeField] private string resourceKind = string.Empty;
         [SerializeField] private GameObject depletedVisualPrefab;
         [SerializeField] private VegetationCollisionMode collisionMode;
@@ -64,6 +65,7 @@ namespace ApexShift.Runtime.World.Vegetation
         public IReadOnlyList<string> AllowedBiomeIds => allowedBiomeIds;
         public bool RandomYaw => randomYaw;
         public bool Harvestable => harvestable;
+        /// <summary>The Apex Shift ResourceDefinition kind, not the resulting drop/item ID.</summary>
         public string ResourceKind => resourceKind ?? string.Empty;
         public GameObject DepletedVisualPrefab => depletedVisualPrefab;
         public VegetationCollisionMode CollisionMode => collisionMode;

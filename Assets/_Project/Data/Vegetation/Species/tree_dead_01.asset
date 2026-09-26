@@ -30,6 +30,6 @@ MonoBehaviour:
   - redfang_wilds
   randomYaw: 1
   harvestable: 1
-  resourceKind: wood
+  resourceKind: dry_tree
   depletedVisualPrefab: {fileID: 0}
   collisionMode: 3

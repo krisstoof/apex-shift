@@ -30,6 +30,6 @@ MonoBehaviour:
   - stoneback_ridge
   randomYaw: 1
   harvestable: 1
-  resourceKind: wood
+  resourceKind: conifer_tree
   depletedVisualPrefab: {fileID: 0}
   collisionMode: 3

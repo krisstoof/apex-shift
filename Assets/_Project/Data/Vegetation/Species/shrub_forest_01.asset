@@ -33,6 +33,6 @@ MonoBehaviour:
   - redfang_wilds
   randomYaw: 1
   harvestable: 1
-  resourceKind: berries
+  resourceKind: berry_bush
   depletedVisualPrefab: {fileID: 0}
   collisionMode: 3

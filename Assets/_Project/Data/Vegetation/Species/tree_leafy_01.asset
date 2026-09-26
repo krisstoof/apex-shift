@@ -31,6 +31,6 @@ MonoBehaviour:
   - south_thicket
   randomYaw: 1
   harvestable: 1
-  resourceKind: wood
+  resourceKind: leafy_tree
   depletedVisualPrefab: {fileID: 0}
   collisionMode: 3
