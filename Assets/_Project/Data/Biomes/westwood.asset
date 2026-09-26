@@ -60,4 +60,5 @@ MonoBehaviour:
     maxScale: 0.35
     resourceKind: berry_bush
     harvestable: 1
+  vegetationProfile: {fileID: 11400000, guid: 191f7f1e0dabf6841a7d48b250177744, type: 2}
   creatures: []

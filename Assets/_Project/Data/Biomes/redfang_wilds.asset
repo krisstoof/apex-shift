@@ -53,6 +53,7 @@ MonoBehaviour:
     maxScale: 0.20
     resourceKind: 
     harvestable: 0
+  vegetationProfile: {fileID: 11400000, guid: 4a4432b9538f40448a34640b805b859b, type: 2}
   creatures:
   - creatureId: varnak
     minCount: 0

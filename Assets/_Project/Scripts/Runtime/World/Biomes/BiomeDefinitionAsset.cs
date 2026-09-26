@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ApexShift.Core.World.Biomes;
 using ApexShift.Runtime.Audio;
+using ApexShift.Runtime.World.Vegetation;
 using UnityEngine;
 
 namespace ApexShift.Runtime.World.Biomes
@@ -13,7 +14,8 @@ namespace ApexShift.Runtime.World.Biomes
         [SerializeField] private Color groundColor = Color.green;
         [SerializeField] private Material groundMaterial;
         [SerializeField] private bool starterBiome;
-        [SerializeField] private List<VegetationSpawnEntryAsset> vegetation = new List<VegetationSpawnEntryAsset>();
+        [SerializeField, Tooltip("Legacy vegetation data retained for compatibility; new vegetation authoring uses VegetationProfile.")] private List<VegetationSpawnEntryAsset> vegetation = new List<VegetationSpawnEntryAsset>();
+        [SerializeField] private BiomeVegetationProfileAsset vegetationProfile;
         [SerializeField] private List<CreatureSpawnEntryAsset> creatures = new List<CreatureSpawnEntryAsset>();
 
         [Header("Ambient Audio")]
@@ -26,6 +28,7 @@ namespace ApexShift.Runtime.World.Biomes
         public Material GroundMaterial => groundMaterial;
         public bool StarterBiome => starterBiome;
         public IReadOnlyList<VegetationSpawnEntryAsset> Vegetation => vegetation;
+        public BiomeVegetationProfileAsset VegetationProfile => vegetationProfile;
         public IReadOnlyList<CreatureSpawnEntryAsset> Creatures => creatures;
         public BiomeAmbientProfile AmbientProfile => ambientProfile;
 
@@ -45,6 +48,11 @@ namespace ApexShift.Runtime.World.Biomes
             groundMaterial = material;
             vegetation = new List<VegetationSpawnEntryAsset>(vegetationEntries ?? new List<VegetationSpawnEntryAsset>());
             creatures = new List<CreatureSpawnEntryAsset>(creatureEntries ?? new List<CreatureSpawnEntryAsset>());
+        }
+
+        public void SetVegetationProfile(BiomeVegetationProfileAsset profile)
+        {
+            vegetationProfile = profile;
         }
 
         public BiomeDefinition ToCoreDefinition()

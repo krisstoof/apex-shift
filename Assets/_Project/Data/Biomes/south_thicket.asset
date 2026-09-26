@@ -60,6 +60,7 @@ MonoBehaviour:
     maxScale: 0.35
     resourceKind: berry_bush
     harvestable: 1
+  vegetationProfile: {fileID: 11400000, guid: 9e90f67a228c80f418797882e899c776, type: 2}
   creatures:
   - creatureId: grazer
     minCount: 2

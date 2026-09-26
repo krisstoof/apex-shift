@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d8328db365e4e6e9cd92a6010247771, type: 3}
+  m_Name: stoneback_ridge_vegetation
+  m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.World.Vegetation.BiomeVegetationProfileAsset
+  biomeId: stoneback_ridge
+  overallDensity: 0.5
+  species:
+  - species: {fileID: 11400000, guid: 5c806ac8319893a4fbd0301ba2483e8d, type: 2}
+    weight: 2
+    densityMultiplier: 1
+  - species: {fileID: 11400000, guid: c68e37fc5244faf47b6a1b58aab90795, type: 2}
+    weight: 1
+    densityMultiplier: 1
+  - species: {fileID: 11400000, guid: 3a8410c52178dc74b9f935f41f181c98, type: 2}
+    weight: 1
+    densityMultiplier: 1
+  - species: {fileID: 11400000, guid: 9b215399044e09e439e5d63535eb9584, type: 2}
+    weight: 1
+    densityMultiplier: 1.5
