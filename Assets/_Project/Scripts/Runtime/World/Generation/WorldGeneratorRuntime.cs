@@ -731,6 +731,8 @@ namespace ApexShift.Runtime.World.Generation
                     // (topography uses 8-unit grid cells; coastline is defined at ~1.3-unit resolution)
                     if (!IsInsideIsland(pos.x, pos.z)) continue;
 
+                    if (!IsResourceCandidateInRegionBiome(pos, region)) continue;
+
                     // Topography guard: skip water/shoreline resource positions
                     if (_islandTopography != null && !_islandTopography.IsSafeForResourceAt(pos.x, pos.z))
                         continue;
@@ -739,6 +741,15 @@ namespace ApexShift.Runtime.World.Generation
                     SpawnResource(entry, pos);
                 }
             }
+        }
+
+        private bool IsResourceCandidateInRegionBiome(Vector3 position, GeneratedBiomeRegion region)
+        {
+            if (_islandTopography == null || region?.Biome == null)
+                return true;
+
+            string actualBiome = _islandTopography.GetBiomeIdAt(position);
+            return string.Equals(actualBiome, region.Biome.BiomeId, System.StringComparison.Ordinal);
         }
 
         private void SpawnRegionCreatures(GeneratedBiomeRegion region)
@@ -797,7 +808,7 @@ namespace ApexShift.Runtime.World.Generation
 
                 for (int i = 0; i < countToSpawn; i++)
                 {
-                    if (!TryGetSafeCreatureSpawnPoint(spawnBounds, creatureId, out Vector3 pos))
+                    if (!TryGetSafeCreatureSpawnPoint(spawnBounds, creatureId, region.Biome.BiomeId, out Vector3 pos))
                     {
                         continue;
                     }
@@ -820,7 +831,7 @@ namespace ApexShift.Runtime.World.Generation
             }
         }
 
-        private bool TryGetSafeCreatureSpawnPoint(Bounds spawnBounds, string creatureId, out Vector3 pos)
+        private bool TryGetSafeCreatureSpawnPoint(Bounds spawnBounds, string creatureId, string expectedBiomeId, out Vector3 pos)
         {
             int attempts = Mathf.Max(1, creatureSpawnPositionAttempts);
             float minDistance = creatureId == "varnak"
@@ -836,7 +847,8 @@ namespace ApexShift.Runtime.World.Generation
                     bounds.TryClampToLand(candidate, out candidate);
                 }
 
-                if (!IsCreatureSpawnPointSafe(candidate, minDistance))
+                if (!IsCreatureBiomeCandidate(candidate, expectedBiomeId)
+                    || !IsCreatureSpawnPointSafe(candidate, minDistance))
                 {
                     continue;
                 }
@@ -944,13 +956,19 @@ namespace ApexShift.Runtime.World.Generation
                 float actualPadding = Mathf.Min(padding, region.Bounds.size.x * 0.2f);
                 spawnBounds.Expand(new Vector3(-actualPadding * 2f, 0f, -actualPadding * 2f));
 
-                if (TryGetSafeCreatureSpawnPoint(spawnBounds, "varnak", out pos))
+                if (TryGetSafeCreatureSpawnPoint(spawnBounds, "varnak", region.Biome.BiomeId, out pos))
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        private bool IsCreatureBiomeCandidate(Vector3 position, string expectedBiomeId)
+        {
+            return _islandTopography == null
+                   || string.Equals(_islandTopography.GetBiomeIdAt(position), expectedBiomeId, System.StringComparison.Ordinal);
         }
 
         private bool IsCreatureSpawnPointSafe(Vector3 pos, float minDistanceFromPlayer)
