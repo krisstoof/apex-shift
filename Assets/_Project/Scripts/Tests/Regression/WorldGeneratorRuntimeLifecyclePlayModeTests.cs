@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Globalization;
 using ApexShift.Runtime.World.Biomes;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.World.Generation;
 using ApexShift.Runtime.World.Landmarks;
+using ApexShift.Runtime.World.Topography;
 using ApexShift.Runtime.World.Vegetation;
 using NUnit.Framework;
 using UnityEngine;
@@ -111,6 +113,30 @@ namespace ApexShift.Tests.Regression
                 Assert.That(firstInstances.Length, Is.GreaterThan(0), "Test catalog should generate vegetation using its temporary visual.");
                 string[] firstMetadata = firstInstances.Select(ToMetadata).OrderBy(value => value).ToArray();
                 int firstResultCount = first.Result.VegetationInstanceCount;
+                Assert.IsNotNull(first.Result.Report, "Completed generation should publish its deterministic QA report.");
+                string firstReport = first.Result.Report.ToDeterministicString();
+                CultureInfo originalCulture = CultureInfo.CurrentCulture;
+                try
+                {
+                    CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");
+                    Assert.AreEqual(firstReport, first.Result.Report.ToDeterministicString(), "Report serialization must use invariant culture.");
+                }
+                finally { CultureInfo.CurrentCulture = originalCulture; }
+                Assert.AreEqual(first.Result.Report.LandCells, first.Result.Report.BiomeCells.Values.Sum(), "Biome samples must reconcile to land cells.");
+                Assert.AreEqual(first.Result.Report.LandCells, first.Result.Report.SlopeBuckets.Sum());
+                Assert.That(first.Result.Report.BiomeLandPercentages.Values.Sum(), Is.EqualTo(100f).Within(0.01f));
+                Assert.AreEqual(first.Result.Report.VegetationPlacements, first.Result.Report.VegetationByBiomeSpecies.Values.Sum());
+                Assert.AreEqual(first.Result.Report.VegetationPlacements, first.Result.Report.Harvestable + first.Result.Report.Decorative);
+                Assert.AreEqual(first.Result.Report.VegetationPlacements, first.Result.Report.Trees + first.Result.Report.Shrubs + first.Result.Report.GroundCover);
+                Assert.LessOrEqual(first.Result.Report.MinElevation, first.Result.Report.AverageElevation);
+                Assert.LessOrEqual(first.Result.Report.AverageElevation, first.Result.Report.MaxElevation);
+                Assert.That(first.Result.Report.Rejections.Water, Is.GreaterThanOrEqualTo(0));
+                Assert.That(first.Result.Report.Rejections.ExcessiveSlope, Is.GreaterThanOrEqualTo(0));
+                Assert.That(first.Result.Report.Rejections.BiomeMismatch, Is.GreaterThanOrEqualTo(0));
+                Assert.That(first.Result.Report.Rejections.Elevation, Is.GreaterThanOrEqualTo(0));
+                Assert.That(first.Result.Report.Rejections.Moisture, Is.GreaterThanOrEqualTo(0));
+                Assert.That(first.Result.Report.Rejections.ShorelineOrClearing, Is.GreaterThanOrEqualTo(0));
+                Assert.That(first.Result.Report.Rejections.SpacingOrCollision, Is.GreaterThanOrEqualTo(0));
                 Assert.That(firstResultCount, Is.EqualTo(firstInstances.Length));
                 int categoryTotal = 0;
                 foreach (string biomeId in new[] { "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" })
@@ -120,12 +146,28 @@ namespace ApexShift.Tests.Regression
                 {
                     Assert.That(instance.transform.parent.parent.name, Is.EqualTo($"Chunk_{instance.ChunkX}_{instance.ChunkZ}"));
                     Assert.That(first.Result.GetVegetationCount(instance.BiomeId, instance.SpeciesId), Is.GreaterThan(0));
+                    Assert.IsFalse(first.IslandTopography.IsWaterAt(instance.transform.position.x, instance.transform.position.z), "Generated vegetation placement must not be in water.");
+                    Assert.AreEqual(instance.BiomeId, first.IslandTopography.GetBiomeIdAt(instance.transform.position), "Placement metadata must match the authoritative dense biome map.");
+                    TopographyCell cell = first.IslandTopography.GetCellAt(instance.transform.position);
+                    VegetationSpeciesAsset species = FindSpecies(catalog, instance.SpeciesId);
+                    Assert.IsNotNull(species);
+                    Assert.That(cell.SlopeDegrees, Is.LessThanOrEqualTo(species.MaxSlopeDegrees + 0.05f), $"{instance.SpeciesId} exceeds its slope profile.");
+                    if (species.Category == VegetationCategory.Tree || species.Category == VegetationCategory.DeadTree)
+                    {
+                        Assert.That(HorizontalDistance(instance.transform.position, first.Player.transform.position), Is.GreaterThanOrEqualTo(generator.StartClearingRadius - 0.05f), "Large trees must respect the configured player clearing.");
+                        foreach (LandmarkRuntime landmark in LandmarkRegistry.Landmarks)
+                        {
+                            float radius = generator.GenerationSettings.Vegetation.LandmarkClearances.GetRadius(landmark.Type);
+                            if (radius > 0f) Assert.That(HorizontalDistance(instance.transform.position, landmark.transform.position), Is.GreaterThanOrEqualTo(radius - 0.05f), $"Large tree violates {landmark.Type} clearing.");
+                        }
+                    }
                 }
                 Transform firstVegetationRoot = first.VegetationRoot;
 
                 generator.ClearGeneratedWorld();
                 yield return null;
                 Assert.IsTrue(firstVegetationRoot == null, "ClearGeneratedWorld left the previous VegetationRoot alive.");
+                Assert.IsNull(generator.GetLastResult(), "ClearGeneratedWorld must discard stale report/result state.");
 
                 generator.Generate();
                 yield return null;
@@ -137,7 +179,17 @@ namespace ApexShift.Tests.Regression
                 Assert.That(secondInstances.Length, Is.EqualTo(firstInstances.Length), "Regeneration duplicated or lost vegetation instances.");
                 CollectionAssert.AreEqual(firstMetadata, secondMetadata, "The same seed must reproduce placement metadata.");
                 Assert.That(second.Result.VegetationInstanceCount, Is.EqualTo(firstResultCount));
+                Assert.AreEqual(firstReport, second.Result.Report.ToDeterministicString(), "Same seed/settings must reproduce the full generation report and rejection counters.");
                 Assert.That(second.VegetationRoot.childCount, Is.GreaterThan(0), "Chunk roots should be created only for actual placements.");
+
+                generator.SetSeed(91285);
+                generator.Generate();
+                yield return null;
+                WorldGenerationContext differentSeed = generator.CurrentGeneration;
+                string[] differentSeedMetadata = differentSeed.VegetationRoot.GetComponentsInChildren<VegetationInstanceRuntime>(true)
+                    .Select(ToMetadata).OrderBy(value => value).ToArray();
+                Assert.AreNotEqual(firstReport, differentSeed.Result.Report.ToDeterministicString(), "The seed is part of the complete deterministic report.");
+                CollectionAssert.AreNotEqual(firstMetadata, differentSeedMetadata, "Different seeds should change placement data without requiring every individual statistic to change.");
             }
             finally
             {
@@ -183,6 +235,20 @@ namespace ApexShift.Tests.Regression
         {
             return $"{instance.InstanceId}|{instance.SpeciesId}|{instance.BiomeId}|{instance.ChunkX}|{instance.ChunkZ}|{instance.transform.position.x:R}|{instance.transform.position.y:R}|{instance.transform.position.z:R}";
         }
+
+        private static VegetationSpeciesAsset FindSpecies(BiomeCatalogAsset catalog, string id)
+        {
+            foreach (BiomeDefinitionAsset biome in catalog.Biomes)
+            {
+                if (biome == null || biome.VegetationProfile == null || biome.VegetationProfile.Species == null) continue;
+                foreach (BiomeVegetationSpeciesEntry entry in biome.VegetationProfile.Species)
+                    if (entry.Species != null && entry.Species.SpeciesId == id) return entry.Species;
+            }
+            return null;
+        }
+
+        private static float HorizontalDistance(Vector3 a, Vector3 b)
+        { float x = a.x - b.x, z = a.z - b.z; return Mathf.Sqrt(x * x + z * z); }
 
         private static void DestroyCatalog(BiomeCatalogAsset catalog)
         {

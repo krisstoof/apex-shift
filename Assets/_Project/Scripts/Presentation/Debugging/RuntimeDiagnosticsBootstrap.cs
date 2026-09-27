@@ -75,7 +75,7 @@ namespace ApexShift.Presentation.Debugging
             worldMapDebug.SetSnapshotProvider(snapshotProvider);
             generationPresenter = generationRoot.gameObject.AddComponent<WorldGenerationDebugPresenter>();
             WorldGenerationContext context = generator?.CurrentGeneration;
-            generationPresenter.Configure(context?.Result, context?.IslandTopography);
+            generationPresenter.Configure(context?.Result, context?.IslandTopography, context?.VegetationRuntime);
 
             if (player != null)
             {

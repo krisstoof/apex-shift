@@ -113,11 +113,14 @@ namespace ApexShift.Runtime.World.Generation
         private BiomeFieldGenerator _biomeField;
         private BiomeClassifier _biomeClassifier;
         private VegetationPlacementPlanner _vegetationPlanner;
+        private VegetationRejectionCounts _vegetationRejections = new VegetationRejectionCounts();
 
         private const string DefaultInputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
 
         public event System.Action<GameObject> OnGenerationComplete;
         public int Seed => seed;
+        public float StartClearingRadius => clearingRadius;
+        public WorldGenerationSettings GenerationSettings => settings;
         public InputActionAsset InputActions => inputActions;
         public WorldGenerationContext CurrentGeneration => _generationContext;
         public IReadOnlyList<string> LastGenerationStageOrder => _generationCoordinator != null
@@ -158,6 +161,7 @@ namespace ApexShift.Runtime.World.Generation
             _worldSpawnService = new WorldSpawnService();
 
             _lastResult = new WorldGenerationResult { Seed = seed };
+            _vegetationRejections.Reset();
             _terrainHeightfield = new TerrainHeightfieldGenerator(seed, settings != null ? settings.Terrain : null);
             _biomeField = new BiomeFieldGenerator(seed, settings != null ? settings.Biome : null);
             _biomeClassifier = new BiomeClassifier(seed, settings != null ? settings.Biome : null);
@@ -210,6 +214,7 @@ namespace ApexShift.Runtime.World.Generation
                 new WorldGenerationStage("FinalizeGeneration", context =>
                 {
                     context.Result = _lastResult;
+                    _lastResult.Report = WorldGenerationReport.Create(_lastResult, _islandTopography, _vegetationRejections);
                     Debug.Log(BuildGenerationSummary(_lastResult));
                     OnGenerationComplete?.Invoke(context.Player);
                 }));
@@ -244,6 +249,8 @@ namespace ApexShift.Runtime.World.Generation
             }
             if (_runtimeOwner != null) _runtimeOwner.Clear();
             _generationContext = null;
+            _lastResult = null;
+            _vegetationRejections.Reset();
             _terrainRoot = null;
             _biomeRoot = null;
             _resourceRoot = null;
@@ -568,7 +575,7 @@ namespace ApexShift.Runtime.World.Generation
                 seed, biomeCatalog, vegetationSettings, _islandTopography.WorldBounds,
                 position => _islandTopography.TryGetEnvironmentAt(position, out VegetationEnvironmentSample sample) ? sample : default,
                 SampleTerrainHeight, _islandTopography.GetSafePlayerSpawnPoint(), clearingRadius,
-                landmarkClearances, shorelinePoints);
+                landmarkClearances, shorelinePoints, _vegetationRejections);
             VegetationRuntimeController controller = _vegetationRoot.GetComponent<VegetationRuntimeController>();
             if (controller == null) controller = _vegetationRoot.gameObject.AddComponent<VegetationRuntimeController>();
             Vector3 initialTarget = _islandTopography.GetSafePlayerSpawnPoint();
@@ -578,12 +585,15 @@ namespace ApexShift.Runtime.World.Generation
             {
                 VegetationSpeciesAsset species = placements[i].SpeciesAsset;
                 if (species == null || species.VisualPrefab == null) continue;
-                _lastResult.RecordVegetation(placements[i].BiomeId, placements[i].SpeciesId, placements[i].Category);
+                _lastResult.RecordVegetation(placements[i].BiomeId, placements[i].SpeciesId, placements[i].Category, species.Harvestable);
             }
         }
 
         private static string BuildGenerationSummary(WorldGenerationResult result)
         {
+            if (result.Report != null)
+                return "[WorldGenerationReport] " + result.Report.ToDeterministicString()
+                    + $"\nBiome regions: {result.BiomeCount}, Resources: {result.ResourceCount}, Spawn Attempts: {result.SpawnAttempts}";
             var summary = new System.Text.StringBuilder();
             summary.Append($"World Generation Complete. Biome regions: {result.BiomeCount}, Resources: {result.ResourceCount}, Seed: {result.Seed}")
                 .AppendLine().Append("Vegetation total: ").Append(result.VegetationInstanceCount);

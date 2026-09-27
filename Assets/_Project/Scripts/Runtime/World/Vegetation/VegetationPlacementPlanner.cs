@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ApexShift.Runtime.World.Biomes;
+using ApexShift.Runtime.World.Generation;
 using UnityEngine;
 
 namespace ApexShift.Runtime.World.Vegetation
@@ -28,7 +29,8 @@ namespace ApexShift.Runtime.World.Vegetation
             VegetationGenerationSettings settings, Bounds worldBounds,
             Func<Vector3, VegetationEnvironmentSample> sampleEnvironment,
             Func<Vector3, float> sampleHeight, Vector3 playerSpawn, float startClearingRadius,
-            IReadOnlyList<VegetationLandmarkClearance> landmarks, IReadOnlyList<Vector3> shorelinePoints)
+            IReadOnlyList<VegetationLandmarkClearance> landmarks, IReadOnlyList<Vector3> shorelinePoints,
+            VegetationRejectionCounts rejectionCounts = null)
         {
             var placements = new List<VegetationPlacement>();
             if (biomeCatalog == null || settings == null || sampleEnvironment == null || sampleHeight == null) return placements;
@@ -70,7 +72,7 @@ namespace ApexShift.Runtime.World.Vegetation
                     if (!IsFinite(density) || density <= 0f) continue;
                     PlanSpecies(seed, biomeId, speciesAsset, density, settings, worldBounds,
                         sampleEnvironment, sampleHeight, playerSpawn, startClearingRadius,
-                        landmarks, shorelinePoints, placements);
+                        landmarks, shorelinePoints, placements, rejectionCounts);
                 }
             }
             return placements;
@@ -94,7 +96,7 @@ namespace ApexShift.Runtime.World.Vegetation
             Func<Vector3, VegetationEnvironmentSample> sampleEnvironment, Func<Vector3, float> sampleHeight,
             Vector3 playerSpawn, float startClearingRadius,
             IReadOnlyList<VegetationLandmarkClearance> landmarks, IReadOnlyList<Vector3> shorelinePoints,
-            List<VegetationPlacement> output)
+            List<VegetationPlacement> output, VegetationRejectionCounts rejections)
         {
             // Candidate density uses the modulation ceiling; the local field then
             // deterministically thins candidates to form broad patches and clearings.
@@ -116,8 +118,8 @@ namespace ApexShift.Runtime.World.Vegetation
                 float baseZ = (gridZ + 0.5f) * cellSize;
                 var basePosition = new Vector3(baseX, 0f, baseZ);
                 VegetationEnvironmentSample baseEnvironment = sampleEnvironment(basePosition);
-                if (!baseEnvironment.IsLand || baseEnvironment.IsWater
-                    || !string.Equals(baseEnvironment.BiomeId, biomeId, StringComparison.Ordinal)) continue;
+                if (!baseEnvironment.IsLand || baseEnvironment.IsWater) { if (rejections != null) rejections.Water++; continue; }
+                if (!string.Equals(baseEnvironment.BiomeId, biomeId, StringComparison.Ordinal)) { if (rejections != null) rejections.BiomeMismatch++; continue; }
 
                 int baseChunkX = Mathf.FloorToInt(baseX / settings.ChunkSize);
                 int baseChunkZ = Mathf.FloorToInt(baseZ / settings.ChunkSize);
@@ -126,18 +128,22 @@ namespace ApexShift.Runtime.World.Vegetation
                 float z = baseZ + (random.Next01() - 0.5f) * cellSize * settings.JitterFraction;
                 var candidate = new Vector3(x, 0f, z);
                 VegetationEnvironmentSample environment = sampleEnvironment(candidate);
-                if (!IsEnvironmentValid(species, biomeId, environment)) continue;
-                if (environment.IsShoreline) continue;
-                if (!CanPlaceInStartClearing(species.Category, settings, candidate, playerSpawn, startClearingRadius)) continue;
-                if (IsNearLandmark(candidate, landmarks)) continue;
-                if (IsNearShoreline(candidate, shorelinePoints, coastClearance)) continue;
+                if (!environment.IsLand || environment.IsWater) { if (rejections != null) rejections.Water++; continue; }
+                if (!string.Equals(environment.BiomeId, biomeId, StringComparison.Ordinal) || !species.AllowsBiome(environment.BiomeId)) { if (rejections != null) rejections.BiomeMismatch++; continue; }
+                if (environment.SlopeDegrees < species.MinSlopeDegrees || environment.SlopeDegrees > species.MaxSlopeDegrees) { if (rejections != null) rejections.ExcessiveSlope++; continue; }
+                if (environment.NormalizedElevation < species.MinElevation01 || environment.NormalizedElevation > species.MaxElevation01) { if (rejections != null) rejections.Elevation++; continue; }
+                if (environment.Moisture01 < species.MinMoisture01 || environment.Moisture01 > species.MaxMoisture01) { if (rejections != null) rejections.Moisture++; continue; }
+                if (environment.IsShoreline) { if (rejections != null) rejections.ShorelineOrClearing++; continue; }
+                if (!CanPlaceInStartClearing(species.Category, settings, candidate, playerSpawn, startClearingRadius)
+                    || IsNearLandmark(candidate, landmarks) || IsNearShoreline(candidate, shorelinePoints, coastClearance))
+                { if (rejections != null) rejections.ShorelineOrClearing++; continue; }
 
                 float localDensityMultiplier = SampleLocalDensityMultiplier(seed, candidate.x, candidate.z);
                 if (random.Next01() > localDensityMultiplier / MaximumLocalDensityMultiplier) continue;
 
                 float height = sampleHeight(candidate);
                 candidate.y = height;
-                if (ViolatesSpacing(candidate, species.MinimumSpacing, spacingGroup)) continue;
+                if (ViolatesSpacing(candidate, species.MinimumSpacing, spacingGroup)) { if (rejections != null) rejections.SpacingOrCollision++; continue; }
 
                 float yaw = species.RandomYaw ? random.Next01() * 360f : 0f;
                 float scale = Mathf.Lerp(species.MinScale, species.MaxScale, random.Next01());

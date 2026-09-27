@@ -1,5 +1,18 @@
 namespace ApexShift.Runtime.World.Vegetation
 {
+    public readonly struct VegetationDebugPoint
+    {
+        public readonly UnityEngine.Vector3 Position;
+        public readonly VegetationCategory Category;
+        public readonly bool Harvestable;
+        public readonly bool StreamingGameplayActive;
+        public readonly TreeLifecycleState TreeState;
+        public readonly float RegrowthProgress;
+        public VegetationDebugPoint(UnityEngine.Vector3 position, VegetationCategory category, bool harvestable,
+            bool streamingGameplayActive, TreeLifecycleState treeState, float regrowthProgress)
+        { Position = position; Category = category; Harvestable = harvestable; StreamingGameplayActive = streamingGameplayActive; TreeState = treeState; RegrowthProgress = regrowthProgress; }
+    }
+
     public readonly struct VegetationRuntimeStats
     {
         public readonly int TotalPlacements, TotalChunks;

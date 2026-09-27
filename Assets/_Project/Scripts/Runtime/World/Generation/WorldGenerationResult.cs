@@ -11,14 +11,22 @@ namespace ApexShift.Runtime.World.Generation
         public int ResourceCount { get; set; }
         public int SpawnAttempts { get; set; }
         public int VegetationInstanceCount { get; private set; }
+        public WorldGenerationReport Report { get; internal set; }
         public List<GeneratedBiomeRegion> Regions { get; } = new List<GeneratedBiomeRegion>();
         private readonly Dictionary<string, int> vegetationCounts = new Dictionary<string, int>(StringComparer.Ordinal);
         private readonly Dictionary<string, int> vegetationCategoryCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+        private readonly Dictionary<string, int> vegetationHarvestableCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+        private readonly Dictionary<string, int> vegetationDecorativeCounts = new Dictionary<string, int>(StringComparer.Ordinal);
 
         public IReadOnlyDictionary<string, int> VegetationCounts => vegetationCounts;
         public IReadOnlyDictionary<string, int> VegetationCategoryCounts => vegetationCategoryCounts;
+        public IReadOnlyDictionary<string, int> VegetationHarvestableCounts => vegetationHarvestableCounts;
+        public IReadOnlyDictionary<string, int> VegetationDecorativeCounts => vegetationDecorativeCounts;
 
         public void RecordVegetation(string biomeId, string speciesId, VegetationCategory category)
+            => RecordVegetation(biomeId, speciesId, category, category != VegetationCategory.GroundCover);
+
+        public void RecordVegetation(string biomeId, string speciesId, VegetationCategory category, bool harvestable)
         {
             string key = (biomeId ?? string.Empty) + "/" + (speciesId ?? string.Empty);
             vegetationCounts.TryGetValue(key, out int count);
@@ -26,6 +34,9 @@ namespace ApexShift.Runtime.World.Generation
             string categoryKey = (biomeId ?? string.Empty) + "/" + category;
             vegetationCategoryCounts.TryGetValue(categoryKey, out int categoryCount);
             vegetationCategoryCounts[categoryKey] = categoryCount + 1;
+            Dictionary<string, int> target = harvestable ? vegetationHarvestableCounts : vegetationDecorativeCounts;
+            target.TryGetValue(key, out int kindCount);
+            target[key] = kindCount + 1;
             VegetationInstanceCount++;
         }
 

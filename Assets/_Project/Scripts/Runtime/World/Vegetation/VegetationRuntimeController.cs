@@ -58,6 +58,25 @@ namespace ApexShift.Runtime.World.Vegetation
         public int MaxActiveHarvestableTrees => settings != null ? settings.MaxActiveHarvestableTrees : 0;
         public int MaxActiveTreeColliders => settings != null ? settings.MaxActiveTreeColliders : 0;
 
+        public void CopyDebugPoints(List<VegetationDebugPoint> destination)
+        {
+            if (destination == null) return;
+            destination.Clear();
+            for (int c = 0; c < chunks.Count; c++)
+            {
+                List<InstanceEntry> entries = chunks[c].Entries;
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    InstanceEntry entry = entries[i];
+                    HarvestableTreeRuntime tree = entry.Tree;
+                    destination.Add(new VegetationDebugPoint(entry.Placement.Position, entry.Placement.Category,
+                        entry.Placement.SpeciesAsset != null && entry.Placement.SpeciesAsset.Harvestable,
+                        tree != null && tree.StreamingGameplayActive, tree != null ? tree.LifecycleState : TreeLifecycleState.Standing,
+                        tree != null ? tree.RegrowthProgress : 1f));
+                }
+            }
+        }
+
         public void Initialize(IReadOnlyList<VegetationPlacement> placements, VegetationGenerationSettings generationSettings,
             Vector3 initialTargetPosition)
         {

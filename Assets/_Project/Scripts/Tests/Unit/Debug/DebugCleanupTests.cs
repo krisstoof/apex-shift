@@ -32,6 +32,7 @@ namespace ApexShift.Tests.Unit.Debug
                 composition.Compose(root.transform);
                 Assert.IsFalse(composition.SnapshotProvider.AutoRefreshEnabled);
                 Assert.IsNull(root.GetComponentInChildren<RuntimeDiagnosticsBootstrap>(true));
+                Assert.IsNull(root.GetComponentInChildren<WorldGenerationDebugPresenter>(true));
             }
             finally
             {
@@ -46,6 +47,17 @@ namespace ApexShift.Tests.Unit.Debug
             Assert.IsTrue(RuntimeDiagnosticsPolicy.Resolve(true, false, true));
             Assert.IsTrue(RuntimeDiagnosticsPolicy.Resolve(false, true, true));
             Assert.IsFalse(RuntimeDiagnosticsPolicy.Resolve(true, true, false));
+        }
+
+        [Test]
+        public void WorldDebugViewModesCoverRequiredGenerationAndVegetationViews()
+        {
+            CollectionAssert.AreEqual(new[]
+            {
+                WorldDebugViewMode.None, WorldDebugViewMode.Elevation, WorldDebugViewMode.Slope,
+                WorldDebugViewMode.Moisture, WorldDebugViewMode.Biome, WorldDebugViewMode.VegetationDensity,
+                WorldDebugViewMode.HarvestableTrees, WorldDebugViewMode.VegetationChunks
+            }, System.Enum.GetValues(typeof(WorldDebugViewMode)));
         }
 
         [Test]
@@ -118,6 +130,8 @@ namespace ApexShift.Tests.Unit.Debug
                 Assert.IsNotNull(generationRoot.GetComponent<DebugPanelPresenter>());
                 Assert.IsNotNull(generationRoot.GetComponent<WorldMapDebugWindow>());
                 Assert.IsNotNull(generationRoot.GetComponent<WorldGenerationDebugPresenter>());
+                Assert.IsNotNull(generationRoot.GetComponent<WorldGenerationDebugPresenter>().DebugTexture,
+                    "The development world presenter owns one cached map texture when diagnostics are enabled.");
                 Assert.AreEqual(1, generationRoot.GetComponents<EcosystemDebugOverlay>().Length);
                 Assert.IsNotNull(creature.GetComponent<CreatureDebugOverlay>());
 

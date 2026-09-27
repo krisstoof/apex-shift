@@ -17,6 +17,10 @@ namespace ApexShift.Runtime.World.Vegetation
         public int ShrubCount { get; private set; }
         public int GroundCoverCount { get; private set; }
         public IReadOnlyList<HarvestableTreeRuntime> HarvestableTrees => harvestableTrees;
+        public bool HasActiveGameplayTree
+        {
+            get { for (int i = 0; i < harvestableTrees.Count; i++) if (harvestableTrees[i] != null && harvestableTrees[i].StreamingGameplayActive) return true; return false; }
+        }
         internal List<VegetationRuntimeController.InstanceEntry> Entries => entries;
 
         internal void Initialize(int x, int z, float size)
