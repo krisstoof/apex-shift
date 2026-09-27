@@ -11,6 +11,7 @@ using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.DayNight;
 using ApexShift.Runtime.World.Generation;
+using ApexShift.Runtime.World.Vegetation;
 using ApexShift.Runtime.World.Landmarks;
 using ApexShift.Runtime.Fire;
 using UnityEngine;
@@ -65,9 +66,20 @@ namespace ApexShift.Runtime.UI.Snapshots
             SurvivalSnapshot survival = playerSurvival != null ? SurvivalSnapshot.FromStats(playerSurvival.Stats, playerSurvival.ConditionText, playerSurvival.CanSprint, playerSurvival.IsSprinting) : SurvivalSnapshot.Empty;
             WorldDebugSnapshot world = CaptureWorldDebugSnapshot();
             DayNightSnapshot dayNight = DayNightSnapshot.FromRuntime(dayNightRuntime);
-            lastSnapshot = new GameSnapshot(inventory, survival, world, dayNight, Time.realtimeSinceStartup);
+            VegetationDebugSnapshot vegetation = CaptureVegetationDebugSnapshot();
+            lastSnapshot = new GameSnapshot(inventory, survival, world, dayNight, vegetation, Time.realtimeSinceStartup);
             SnapshotUpdated?.Invoke(lastSnapshot);
             return lastSnapshot;
+        }
+
+        private VegetationDebugSnapshot CaptureVegetationDebugSnapshot()
+        {
+            VegetationRuntimeController runtime = worldGenerator != null
+                ? worldGenerator.CurrentGeneration?.VegetationRuntime
+                : null;
+            if (runtime == null) return VegetationDebugSnapshot.Empty;
+            VegetationRuntimeStats stats = runtime.Stats;
+            return VegetationDebugSnapshot.FromStats(stats, runtime.MaxActiveHarvestableTrees, runtime.MaxActiveTreeColliders);
         }
         private WorldDebugSnapshot CaptureWorldDebugSnapshot()
         {

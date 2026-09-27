@@ -113,7 +113,6 @@ namespace ApexShift.Runtime.World.Generation
         private BiomeFieldGenerator _biomeField;
         private BiomeClassifier _biomeClassifier;
         private VegetationPlacementPlanner _vegetationPlanner;
-        private VegetationSpawner _vegetationSpawner;
 
         private const string DefaultInputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
 
@@ -186,6 +185,7 @@ namespace ApexShift.Runtime.World.Generation
                 {
                     context.Player = CreatePlayer();
                     _playerTransform = context.Player != null ? context.Player.transform : null;
+                    context.VegetationRuntime?.SetTarget(_playerTransform);
                     _currentSpawnDay = ResolveCurrentDay();
                     _spawnedVarnakCount = 0;
                 }),
@@ -569,8 +569,17 @@ namespace ApexShift.Runtime.World.Generation
                 position => _islandTopography.TryGetEnvironmentAt(position, out VegetationEnvironmentSample sample) ? sample : default,
                 SampleTerrainHeight, _islandTopography.GetSafePlayerSpawnPoint(), clearingRadius,
                 landmarkClearances, shorelinePoints);
-            _vegetationSpawner = new VegetationSpawner();
-            _vegetationSpawner.Spawn(placements, _vegetationRoot, _lastResult);
+            VegetationRuntimeController controller = _vegetationRoot.GetComponent<VegetationRuntimeController>();
+            if (controller == null) controller = _vegetationRoot.gameObject.AddComponent<VegetationRuntimeController>();
+            Vector3 initialTarget = _islandTopography.GetSafePlayerSpawnPoint();
+            controller.Initialize(placements, vegetationSettings, initialTarget);
+            if (_generationContext != null) _generationContext.VegetationRuntime = controller;
+            for (int i = 0; i < placements.Count; i++)
+            {
+                VegetationSpeciesAsset species = placements[i].SpeciesAsset;
+                if (species == null || species.VisualPrefab == null) continue;
+                _lastResult.RecordVegetation(placements[i].BiomeId, placements[i].SpeciesId, placements[i].Category);
+            }
         }
 
         private static string BuildGenerationSummary(WorldGenerationResult result)

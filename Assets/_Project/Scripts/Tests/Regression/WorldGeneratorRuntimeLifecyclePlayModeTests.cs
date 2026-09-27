@@ -118,7 +118,7 @@ namespace ApexShift.Tests.Regression
                 Assert.That(categoryTotal, Is.EqualTo(firstResultCount), "Per-biome/category counts should reconcile with total and existing species counts.");
                 foreach (VegetationInstanceRuntime instance in firstInstances)
                 {
-                    Assert.That(instance.transform.parent.name, Is.EqualTo($"Chunk_{instance.ChunkX}_{instance.ChunkZ}"));
+                    Assert.That(instance.transform.parent.parent.name, Is.EqualTo($"Chunk_{instance.ChunkX}_{instance.ChunkZ}"));
                     Assert.That(first.Result.GetVegetationCount(instance.BiomeId, instance.SpeciesId), Is.GreaterThan(0));
                 }
                 Transform firstVegetationRoot = first.VegetationRoot;

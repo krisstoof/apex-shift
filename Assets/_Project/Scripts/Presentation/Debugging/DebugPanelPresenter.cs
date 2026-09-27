@@ -43,6 +43,7 @@ namespace ApexShift.Presentation.Debugging
             SurvivalSnapshot survival = snapshot.survival ?? SurvivalSnapshot.Empty;
             InventorySnapshot inventory = snapshot.inventory ?? InventorySnapshot.Empty;
             DayNightSnapshot dayNight = snapshot.dayNight ?? DayNightSnapshot.Empty;
+            VegetationDebugSnapshot vegetation = snapshot.vegetation ?? VegetationDebugSnapshot.Empty;
             StringBuilder builder = new StringBuilder(1024);
             builder.AppendLine("=== GAME SNAPSHOT ===");
             builder.AppendLine($"t: {world.realtimeSinceStartup:0.0}s  fps: {world.fps:0}");
@@ -58,6 +59,15 @@ namespace ApexShift.Presentation.Debugging
             builder.AppendLine($"storage containers: {world.storageContainerCount}");
             builder.AppendLine($"fire sources active/all: {world.activeFireSourceCount}/{world.fireSourceCount}");
             builder.AppendLine($"landmarks: {world.landmarkCount}");
+            builder.AppendLine();
+            builder.AppendLine("=== VEGETATION ===");
+            builder.AppendLine($"chunks tree/shrub/ground: {vegetation.activeTreeChunks}/{vegetation.activeShrubChunks}/{vegetation.activeGroundCoverChunks} / {vegetation.totalChunks}");
+            builder.AppendLine($"visible tree/shrub/ground: {vegetation.visibleTrees}/{vegetation.visibleShrubs}/{vegetation.visibleGroundCover}");
+            builder.AppendLine($"gameplay trees: {vegetation.activeHarvestableTrees} / {vegetation.maxActiveHarvestableTrees}");
+            builder.AppendLine($"tree colliders: {vegetation.activeTreeColliders} / {vegetation.maxActiveTreeColliders}");
+            builder.AppendLine($"pool: {vegetation.pooledInstances} hit/miss: {vegetation.poolHits}/{vegetation.poolMisses}");
+            builder.AppendLine($"tree LOD/missing: {vegetation.lodGroupTreeCount}/{vegetation.missingLodTreeCount}");
+            builder.AppendLine($"streaming: {vegetation.streamingRefreshMs:0.00} ms");
             builder.AppendLine();
             builder.AppendLine("=== SURVIVAL ===");
             builder.AppendLine($"hp/hun/sta/rest: {survival.health:0}/{survival.hunger:0}/{survival.stamina:0}/{survival.rest:0}");

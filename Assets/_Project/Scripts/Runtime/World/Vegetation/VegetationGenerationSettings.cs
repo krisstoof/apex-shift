@@ -55,6 +55,21 @@ namespace ApexShift.Runtime.World.Vegetation
         [SerializeField, Min(0f)] private float groundCoverCoastalClearance = 0.75f;
         [Header("Landmark clearance")]
         [SerializeField] private VegetationLandmarkClearanceSettings landmarkClearances = new VegetationLandmarkClearanceSettings();
+        [Header("Streaming")]
+        [SerializeField] private bool streamingEnabled = true;
+        [SerializeField, Min(0.05f)] private float streamingUpdateInterval = 0.25f;
+        [SerializeField, Min(0f)] private float treeVisualRadius = 100f;
+        [SerializeField, Min(0f)] private float shrubVisualRadius = 65f;
+        [SerializeField, Min(0f)] private float groundCoverVisualRadius = 42f;
+        [SerializeField, Min(0f)] private float treeGameplayRadius = 32f;
+        [SerializeField, Min(0f)] private float hysteresisDistance = 12f;
+        [SerializeField, Min(0)] private int maxVisibleTrees = 1200;
+        [SerializeField, Min(0)] private int maxVisibleShrubs = 1000;
+        [SerializeField, Min(0)] private int maxVisibleGroundCover = 1800;
+        [SerializeField, Min(0)] private int maxActiveHarvestableTrees = 160;
+        [SerializeField, Min(0)] private int maxActiveTreeColliders = 200;
+        [SerializeField, Min(1)] private int maxChunkTransitionsPerUpdate = 4;
+        [SerializeField, Min(0)] private int decorativePoolCapacityPerSpecies = 512;
 
         public float TreeBaseDensity => treeBaseDensity;
         public float DeadTreeBaseDensity => deadTreeBaseDensity;
@@ -67,6 +82,20 @@ namespace ApexShift.Runtime.World.Vegetation
         public float ShrubCoastalClearance => shrubCoastalClearance;
         public float GroundCoverCoastalClearance => groundCoverCoastalClearance;
         public VegetationLandmarkClearanceSettings LandmarkClearances => landmarkClearances ?? (landmarkClearances = new VegetationLandmarkClearanceSettings());
+        public bool StreamingEnabled => streamingEnabled;
+        public float StreamingUpdateInterval => Mathf.Max(0.05f, streamingUpdateInterval);
+        public float TreeVisualRadius => Mathf.Max(0f, treeVisualRadius);
+        public float ShrubVisualRadius => Mathf.Max(0f, shrubVisualRadius);
+        public float GroundCoverVisualRadius => Mathf.Max(0f, groundCoverVisualRadius);
+        public float TreeGameplayRadius => Mathf.Max(0f, treeGameplayRadius);
+        public float HysteresisDistance => Mathf.Max(0f, hysteresisDistance);
+        public int MaxVisibleTrees => Mathf.Max(0, maxVisibleTrees);
+        public int MaxVisibleShrubs => Mathf.Max(0, maxVisibleShrubs);
+        public int MaxVisibleGroundCover => Mathf.Max(0, maxVisibleGroundCover);
+        public int MaxActiveHarvestableTrees => Mathf.Max(0, maxActiveHarvestableTrees);
+        public int MaxActiveTreeColliders => Mathf.Max(0, maxActiveTreeColliders);
+        public int MaxChunkTransitionsPerUpdate => Mathf.Max(1, maxChunkTransitionsPerUpdate);
+        public int DecorativePoolCapacityPerSpecies => Mathf.Max(0, decorativePoolCapacityPerSpecies);
 
         public float GetBaseDensity(VegetationCategory category)
         {
@@ -114,6 +143,26 @@ namespace ApexShift.Runtime.World.Vegetation
             shrubCoastalClearance = Mathf.Max(0f, shrubCoast);
             groundCoverCoastalClearance = Mathf.Max(0f, groundCoverCoast);
             LandmarkClearances.Configure(oldTree, ruins, pond, camp, cave);
+        }
+
+        public void ConfigureStreaming(bool enabled, float updateInterval, float treesRadius, float shrubsRadius,
+            float groundCoverRadius, float gameplayRadius, float hysteresis, int visibleTrees, int visibleShrubs,
+            int visibleGroundCover, int activeTrees, int activeTreeColliders, int chunkTransitions, int poolCapacity)
+        {
+            streamingEnabled = enabled;
+            streamingUpdateInterval = Mathf.Max(0.05f, updateInterval);
+            treeVisualRadius = Mathf.Max(0f, treesRadius);
+            shrubVisualRadius = Mathf.Max(0f, shrubsRadius);
+            groundCoverVisualRadius = Mathf.Max(0f, groundCoverRadius);
+            treeGameplayRadius = Mathf.Max(0f, gameplayRadius);
+            hysteresisDistance = Mathf.Max(0f, hysteresis);
+            maxVisibleTrees = Mathf.Max(0, visibleTrees);
+            maxVisibleShrubs = Mathf.Max(0, visibleShrubs);
+            maxVisibleGroundCover = Mathf.Max(0, visibleGroundCover);
+            maxActiveHarvestableTrees = Mathf.Max(0, activeTrees);
+            maxActiveTreeColliders = Mathf.Max(0, activeTreeColliders);
+            maxChunkTransitionsPerUpdate = Mathf.Max(1, chunkTransitions);
+            decorativePoolCapacityPerSpecies = Mathf.Max(0, poolCapacity);
         }
     }
 }

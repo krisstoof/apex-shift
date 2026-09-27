@@ -20,20 +20,32 @@ namespace ApexShift.Runtime.World.Vegetation
                 VegetationSpeciesAsset species = placement.SpeciesAsset;
                 if (species == null || species.VisualPrefab == null) continue;
                 Transform parent = GetChunkRoot(vegetationRoot, placement.ChunkX, placement.ChunkZ);
-                var rotation = Quaternion.Euler(0f, placement.Yaw, 0f);
-                GameObject instance = Object.Instantiate(species.VisualPrefab, placement.Position, rotation, parent);
-                instance.name = species.SpeciesId + "_" + placement.InstanceId;
-                instance.transform.localScale = Vector3.Scale(species.VisualPrefab.transform.localScale, Vector3.one * placement.Scale);
-
-                VegetationInstanceRuntime marker = instance.GetComponent<VegetationInstanceRuntime>();
-                if (marker == null) marker = instance.AddComponent<VegetationInstanceRuntime>();
-                marker.Configure(placement);
-                ApplyCollisionPolicy(instance, placement.CollisionMode);
-                VegetationGameplayPromoter.Promote(instance, marker, species);
+                GameObject instance = CreateInstance(placement, parent);
                 result?.RecordVegetation(placement.BiomeId, placement.SpeciesId, placement.Category);
-                spawned++;
+                if (instance != null) spawned++;
             }
             return spawned;
+        }
+
+        public static GameObject CreateInstance(VegetationPlacement placement, Transform parent)
+        {
+            if (placement.SpeciesAsset == null || placement.SpeciesAsset.VisualPrefab == null || parent == null) return null;
+            GameObject instance = Object.Instantiate(placement.SpeciesAsset.VisualPrefab, placement.Position,
+                Quaternion.Euler(0f, placement.Yaw, 0f), parent);
+            ConfigureExistingInstance(instance, placement);
+            return instance;
+        }
+
+        public static void ConfigureExistingInstance(GameObject instance, VegetationPlacement placement)
+        {
+            if (instance == null || placement.SpeciesAsset == null) return;
+            instance.name = placement.SpeciesId + "_" + placement.InstanceId;
+            instance.transform.localScale = Vector3.Scale(placement.SpeciesAsset.VisualPrefab.transform.localScale, Vector3.one * placement.Scale);
+            VegetationInstanceRuntime marker = instance.GetComponent<VegetationInstanceRuntime>();
+            if (marker == null) marker = instance.AddComponent<VegetationInstanceRuntime>();
+            marker.Configure(placement);
+            ApplyCollisionPolicy(instance, placement.CollisionMode);
+            VegetationGameplayPromoter.Promote(instance, marker, placement.SpeciesAsset);
         }
 
         private Transform GetChunkRoot(Transform root, int chunkX, int chunkZ)

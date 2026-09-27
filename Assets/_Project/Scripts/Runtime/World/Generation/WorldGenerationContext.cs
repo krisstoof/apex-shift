@@ -3,6 +3,7 @@ using UnityEngine.AI;
 using Unity.AI.Navigation;
 using ApexShift.Runtime.DayNight;
 using ApexShift.Runtime.World.Topography;
+using ApexShift.Runtime.World.Vegetation;
 
 namespace ApexShift.Runtime.World.Generation
 {
@@ -16,6 +17,7 @@ namespace ApexShift.Runtime.World.Generation
         public Transform BiomeRoot { get; set; }
         public Transform ResourceRoot { get; set; }
         public Transform VegetationRoot { get; set; }
+        public VegetationRuntimeController VegetationRuntime { get; set; }
         public Transform CreatureRoot { get; set; }
         public Transform BuildingRoot { get; set; }
         public Transform LandmarkRoot { get; set; }

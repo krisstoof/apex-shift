@@ -34,6 +34,7 @@ namespace ApexShift.Runtime.World.Vegetation
         [SerializeField, Min(0f)] private float fallDuration = 1.2f;
         [SerializeField] private bool dropsSpawned;
         [SerializeField] private GameObject depletedVisualPrefab;
+        [SerializeField] private bool streamingGameplayActive = true;
 
         [NonSerialized] private GameObject depletedVisualInstance;
         [NonSerialized] private Renderer[] standingRenderers;
@@ -57,6 +58,19 @@ namespace ApexShift.Runtime.World.Vegetation
         public bool DropsSpawned => dropsSpawned;
         public int RegrowthDays => regrowthDays;
         public float FallDuration => fallDuration;
+        public bool StreamingGameplayActive => streamingGameplayActive;
+        public int StreamingColliderCount => (trunkColliders != null ? trunkColliders.Length : 0) + (interactionCollider != null ? 1 : 0);
+        public int ActiveStreamingColliderCount
+        {
+            get
+            {
+                int count = 0;
+                if (trunkColliders != null)
+                    for (int i = 0; i < trunkColliders.Length; i++) if (trunkColliders[i] != null && trunkColliders[i].enabled) count++;
+                if (interactionCollider != null && interactionCollider.enabled) count++;
+                return count;
+            }
+        }
         public IReadOnlyList<Collider> TrunkColliders => trunkColliders ?? Array.Empty<Collider>();
 
         public void Configure(VegetationInstanceRuntime marker, VegetationSpeciesAsset species, ResourceNodeView node)
@@ -94,11 +108,14 @@ namespace ApexShift.Runtime.World.Vegetation
 
             CacheRuntimeComponents();
             HarvestableTreeRegistry.Register(this);
+            SetStreamingGameplayActive(streamingGameplayActive);
+            enabled = lifecycleState == TreeLifecycleState.Falling;
         }
 
         public bool CanAxeHit(GameObject actor)
         {
             return lifecycleState == TreeLifecycleState.Standing
+                   && streamingGameplayActive
                    && currentHealth > 0f
                    && resourceNode != null
                    && resourceNode.HasRequiredTool(actor);
@@ -161,8 +178,8 @@ namespace ApexShift.Runtime.World.Vegetation
                     standingRotation = transform.rotation;
                     SetStumpVisible(false);
                     SetStandingVisuals(true);
-                    SetTrunkColliders(true);
-                    SetInteractionCollider(true);
+                    SetStreamingColliders();
+                    enabled = false;
                     if (resourceNode != null) resourceNode.State.RestoreToFull();
                     break;
             }
@@ -182,10 +199,23 @@ namespace ApexShift.Runtime.World.Vegetation
             standingRotation = transform.rotation;
             SetStumpVisible(false);
             SetStandingVisuals(true);
-            SetTrunkColliders(true);
-            SetInteractionCollider(true);
+            SetStreamingColliders();
+            enabled = false;
             if (resourceNode != null) resourceNode.State.RestoreToFull();
             return true;
+        }
+
+        public void SetStreamingGameplayActive(bool active)
+        {
+            streamingGameplayActive = active;
+            if (active && lifecycleState == TreeLifecycleState.Falling) enabled = true;
+            SetStreamingColliders();
+        }
+
+        public void PrepareForStreamingDeactivation()
+        {
+            if (lifecycleState == TreeLifecycleState.Falling)
+                SettleDepletedState(spawnMissingDrops: true);
         }
 
         private void Awake()
@@ -227,8 +257,8 @@ namespace ApexShift.Runtime.World.Vegetation
             fallAxis = Vector3.Cross(Vector3.up, horizontalDirection).normalized;
             if (fallAxis.sqrMagnitude < 0.0001f) fallAxis = transform.right;
             fallElapsed = 0f;
-            SetTrunkColliders(false);
-            SetInteractionCollider(false);
+            enabled = true;
+            SetStreamingColliders();
 
             if (fallDuration <= 0f) SettleDepletedState(spawnMissingDrops: true);
         }
@@ -241,8 +271,8 @@ namespace ApexShift.Runtime.World.Vegetation
             lifecycleState = TreeLifecycleState.Depleted;
             regrowthProgress = 0f;
             SetStandingVisuals(false);
-            SetTrunkColliders(false);
-            SetInteractionCollider(false);
+            SetStreamingColliders();
+            enabled = false;
             if (resourceNode != null) resourceNode.State.MarkDepleted();
             SetStumpVisible(true);
 
@@ -312,6 +342,13 @@ namespace ApexShift.Runtime.World.Vegetation
             if (interactionCollider == null && resourceNode != null)
                 interactionCollider = resourceNode.GetComponent<SphereCollider>();
             if (interactionCollider != null) interactionCollider.enabled = enabled;
+        }
+
+        private void SetStreamingColliders()
+        {
+            bool enabledForStanding = streamingGameplayActive && lifecycleState == TreeLifecycleState.Standing;
+            SetTrunkColliders(enabledForStanding);
+            SetInteractionCollider(enabledForStanding);
         }
 
         private void CacheRuntimeComponents()
