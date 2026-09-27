@@ -1,12 +1,15 @@
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
+using System.Linq;
+using ApexShift.Core.Save;
+using ApexShift.Infrastructure.Save;
 using ApexShift.Runtime.Ecosystem;
+using ApexShift.Runtime.Items;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Resources;
+using ApexShift.Runtime.Save;
 using ApexShift.Runtime.World.Vegetation;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace ApexShift.Tests.Editor
 {
@@ -19,6 +22,7 @@ namespace ApexShift.Tests.Editor
         {
             ResourceRegistry.ClearForTests();
             HarvestableTreeRegistry.ClearForTests();
+            ItemPickupRegistry.ClearForTests();
         }
 
         [TearDown]
@@ -27,6 +31,9 @@ namespace ApexShift.Tests.Editor
             for (int i = owned.Count - 1; i >= 0; i--)
                 if (owned[i] != null) Object.DestroyImmediate(owned[i]);
             owned.Clear();
+            for (int i = ItemPickupRegistry.Pickups.Count - 1; i >= 0; i--)
+                if (ItemPickupRegistry.Pickups[i] != null) Object.DestroyImmediate(ItemPickupRegistry.Pickups[i].gameObject);
+            ItemPickupRegistry.ClearForTests();
             ResourceRegistry.ClearForTests();
             HarvestableTreeRegistry.ClearForTests();
         }
@@ -56,6 +63,8 @@ namespace ApexShift.Tests.Editor
             Assert.That(tree.ResourceKind, Is.EqualTo("leafy_tree"));
             Assert.That(node.State.ResourceId, Is.EqualTo("leafy_tree"));
             Assert.That(node.ShowOnResourceMap, Is.False);
+            Assert.That(node.DirectInteractionEnabled, Is.False);
+            Assert.That(node.Prompt, Is.Empty);
             Assert.That(harvestableInstance.GetComponent<FoodSourceView>(), Is.Not.Null);
             Assert.That(harvestableInstance.GetComponentInChildren<FoodSourceView>(true).enabled, Is.False);
             Assert.That(ResourceRegistry.Resources, Does.Contain(node));
@@ -93,6 +102,7 @@ namespace ApexShift.Tests.Editor
         public void AxeRequirementBlocksHarvestWithoutAxeAndYieldsConfiguredWoodWithAxe()
         {
             GameObject visual = Track(new GameObject("tree_visual"));
+            MeshRenderer standingRenderer = visual.AddComponent<MeshRenderer>();
             VegetationSpeciesAsset species = CreateSpecies("tree_conifer_01", visual, VegetationCategory.Tree, true, "conifer_tree");
             Transform root = Track(new GameObject("vegetation_root")).transform;
             SpawnOne(species, root, new Vector3(0f, 0f, 2f));
@@ -104,20 +114,41 @@ namespace ApexShift.Tests.Editor
             PlayerInventoryRuntime inventory = actor.AddComponent<PlayerInventoryRuntime>();
             inventory.EnsureInitialized();
             Assert.That(node.CanInteract(actor), Is.False);
-            Assert.That(tree.TryAxeHit(actor), Is.False);
+            Assert.That(tree.CanAxeHit(actor), Is.False);
+            Assert.That(tree.TryAxeHit(new AxeHitContext(actor, 25f, Vector3.zero, Vector3.forward)), Is.False);
+            Assert.That(tree.CurrentHealth, Is.EqualTo(tree.MaxHealth));
             Assert.That(node.State.IsDepleted, Is.False);
+            Assert.That(node.Interact(actor), Is.False, "Direct interaction may not harvest a tree outside its HP lifecycle.");
             Assert.That(inventory.Inventory.GetAmount("wood"), Is.EqualTo(0));
 
             inventory.Inventory.AddItem("axe", 1);
-            Assert.That(node.CanInteract(actor), Is.True);
-            // Audio fallback uses Destroy on its temporary clip source; Unity warns about this in EditMode only.
-            LogAssert.Expect(LogType.Error, new Regex("WorldAudio_proc_pickup_fallback: Destroy may not be called from edit mode.*"));
-            Assert.That(tree.TryAxeHit(actor), Is.True);
+            Assert.That(node.CanInteract(actor), Is.False, "Interaction must not bypass tree HP even while an axe is owned.");
+            Assert.That(tree.CanAxeHit(actor), Is.True);
+            for (int i = 0; i < 4; i++)
+            {
+                Assert.That(tree.TryAxeHit(new AxeHitContext(actor, 25f, Vector3.zero, Vector3.forward)), Is.True);
+                Assert.That(tree.LifecycleState, Is.EqualTo(TreeLifecycleState.Standing));
+            }
+            Assert.That(tree.CurrentHealth, Is.EqualTo(20f));
+            Assert.That(tree.TryAxeHit(new AxeHitContext(actor, 25f, Vector3.zero, Vector3.forward)), Is.True);
             Assert.That(node.State.IsDepleted, Is.True);
-            Assert.That(inventory.Inventory.GetAmount("wood"), Is.EqualTo(4));
-            Assert.That(instance.activeSelf, Is.False);
+            Assert.That(tree.CurrentHealth, Is.EqualTo(0f));
+            Assert.That(tree.LifecycleState, Is.EqualTo(TreeLifecycleState.Depleted));
+            Assert.That(inventory.Inventory.GetAmount("wood"), Is.EqualTo(0), "Tree harvest drops are pickups, not direct inventory changes.");
+            Assert.That(instance.activeSelf, Is.True);
+            Assert.That(tree.DropsSpawned, Is.True);
+            Assert.That(ItemPickupRegistry.Pickups.Count, Is.EqualTo(1));
+            Assert.That(ItemPickupRegistry.Pickups[0].ItemId, Is.EqualTo("wood"));
+            Assert.That(ItemPickupRegistry.Pickups[0].Amount, Is.EqualTo(4));
+            Assert.That(instance.transform.Find("TreeStump").gameObject.activeSelf, Is.True);
+            Assert.That(instance.GetComponent<MeshRenderer>().enabled, Is.False);
+            Assert.That(tree.TrunkColliders[0].enabled, Is.False);
+            Assert.That(node.GetComponent<SphereCollider>().enabled, Is.False, "The interaction trigger is unusable after depletion.");
             Assert.That(HarvestableTreeRegistry.Count, Is.EqualTo(1), "Depleted inactive trees remain registered for stable identity/save integration.");
             Assert.That(ResourceRegistry.ResourceCount, Is.EqualTo(1));
+            Assert.That(tree.TryAxeHit(new AxeHitContext(actor, 25f, Vector3.zero, Vector3.forward)), Is.False);
+            Assert.That(ItemPickupRegistry.Pickups.Count, Is.EqualTo(1));
+            Assert.That(standingRenderer.enabled, Is.True, "Falling/depleting one instance must not change its shared visual prefab.");
         }
 
         [Test]
@@ -146,11 +177,14 @@ namespace ApexShift.Tests.Editor
 
             SpawnOne(harvestable, root, new Vector3(0f, 0f, 2.4f));
             Physics.SyncTransforms();
-            // Keep the EditMode-only audio cleanup warning from masking the combat assertions.
-            LogAssert.Expect(LogType.Error, new Regex("WorldAudio_proc_pickup_fallback: Destroy may not be called from edit mode.*"));
-            Assert.That(combat.TryHitHarvestableTree(Vector3.forward), Is.True,
-                "The child capsule trunk should resolve its parent HarvestableTreeRuntime.");
-            Assert.That(inventory.Inventory.GetAmount("wood"), Is.EqualTo(4));
+            for (int i = 0; i < 4; i++)
+                Assert.That(combat.TryHitHarvestableTree(Vector3.forward), Is.True,
+                    "The child capsule trunk should resolve its parent HarvestableTreeRuntime.");
+            HarvestableTreeRuntime harvestedTree = root.GetChild(1).GetChild(0).GetComponent<HarvestableTreeRuntime>();
+            Assert.That(harvestedTree.LifecycleState, Is.EqualTo(TreeLifecycleState.Depleted));
+            Assert.That(inventory.Inventory.GetAmount("wood"), Is.EqualTo(0));
+            Assert.That(ItemPickupRegistry.Pickups.Count, Is.EqualTo(1));
+            Assert.That(ItemPickupRegistry.Pickups[0].Amount, Is.EqualTo(4));
         }
 
         [Test]
@@ -231,12 +265,160 @@ namespace ApexShift.Tests.Editor
         }
 
         [Test]
+        public void RegrowthRestoresHealthVisualsColliderAndResourceState()
+        {
+            var setup = SpawnTree("tree_dead_01", VegetationCategory.DeadTree, "dry_tree", 0f, 4);
+            GameObject actor = CreateActorWithAxe("tree_cutter");
+            for (int i = 0; i < 3; i++) setup.Tree.TryAxeHit(new AxeHitContext(actor, 25f, Vector3.zero, Vector3.forward));
+            Assert.That(setup.Tree.LifecycleState, Is.EqualTo(TreeLifecycleState.Depleted));
+            Assert.That(setup.Node.State.IsDepleted, Is.True);
+            Assert.That(setup.Tree.AdvanceGrowthDays(3), Is.True);
+            Assert.That(setup.Tree.LifecycleState, Is.EqualTo(TreeLifecycleState.Depleted));
+            Assert.That(setup.Tree.RegrowthProgress, Is.EqualTo(0.75f).Within(0.001f));
+
+            Assert.That(setup.Tree.AdvanceGrowthDays(1), Is.True);
+            Assert.That(setup.Tree.LifecycleState, Is.EqualTo(TreeLifecycleState.Standing));
+            Assert.That(setup.Tree.CurrentHealth, Is.EqualTo(70f));
+            Assert.That(setup.Tree.DropsSpawned, Is.False);
+            Assert.That(setup.Node.State.IsDepleted, Is.False);
+            Assert.That(setup.Tree.TrunkColliders[0].enabled, Is.True);
+            Assert.That(setup.Instance.GetComponentInChildren<Renderer>().enabled, Is.True);
+            Assert.That(setup.Instance.transform.Find("TreeStump"), Is.Null);
+        }
+
+        [Test]
+        public void EcosystemDirectorTickDayAdvancesRegisteredTreeRegrowth()
+        {
+            var setup = SpawnTree("tree_dead_01", VegetationCategory.DeadTree, "dry_tree", 0f, 4);
+            GameObject actor = CreateActorWithAxe("tree_cutter");
+            for (int i = 0; i < 3; i++)
+                setup.Tree.TryAxeHit(new AxeHitContext(actor, 25f, Vector3.zero, Vector3.forward));
+            Assert.That(setup.Tree.LifecycleState, Is.EqualTo(TreeLifecycleState.Depleted));
+
+            GameObject directorObject = Track(new GameObject("ecosystem_director"));
+            EcosystemDirectorRuntime director = directorObject.AddComponent<EcosystemDirectorRuntime>();
+            director.InitializeFromRegions(null);
+            director.TickDay(3);
+            Assert.That(setup.Tree.LifecycleState, Is.EqualTo(TreeLifecycleState.Depleted));
+
+            director.TickDay(1);
+            Assert.That(setup.Tree.LifecycleState, Is.EqualTo(TreeLifecycleState.Standing));
+            Assert.That(setup.Tree.CurrentHealth, Is.EqualTo(setup.Tree.MaxHealth));
+        }
+
+        [Test]
+        public void PartialDamageSaveRestoresByTreeIdAndFurtherHitsContinue()
+        {
+            GameObject visual = Track(new GameObject("tree_visual"));
+            VegetationSpeciesAsset species = CreateSpecies("tree_leafy_01", visual, VegetationCategory.Tree, true, "leafy_tree");
+            var placement = new VegetationPlacement("tree_partial_save_id", "westwood", species, Vector3.zero, 0f, 1f, 0, 0);
+            Transform firstRoot = Track(new GameObject("first_generation")).transform;
+            new VegetationSpawner().Spawn(new[] { placement }, firstRoot, null);
+            HarvestableTreeRuntime firstTree = firstRoot.GetComponentInChildren<HarvestableTreeRuntime>();
+            GameObject actor = CreateActorWithAxe("tree_cutter");
+            firstTree.TryAxeHit(new AxeHitContext(actor, 55f, Vector3.zero, Vector3.forward));
+            TreeSaveData saved = firstTree.CaptureSaveData();
+            Assert.That(saved.CurrentHealth, Is.EqualTo(45f));
+
+            Object.DestroyImmediate(firstRoot.gameObject);
+            Transform secondRoot = Track(new GameObject("loaded_generation")).transform;
+            new VegetationSpawner().Spawn(new[] { placement }, secondRoot, null);
+            HarvestableTreeRuntime restored = secondRoot.GetComponentInChildren<HarvestableTreeRuntime>();
+            restored.RestoreSaveData(saved);
+            Assert.That(restored.TreeId, Is.EqualTo("tree_partial_save_id"));
+            Assert.That(restored.CurrentHealth, Is.EqualTo(45f));
+            Assert.That(restored.LifecycleState, Is.EqualTo(TreeLifecycleState.Standing));
+            Assert.That(restored.TryAxeHit(new AxeHitContext(actor, 25f, Vector3.zero, Vector3.forward)), Is.True);
+            Assert.That(restored.CurrentHealth, Is.EqualTo(20f));
+            Assert.That(restored.TryAxeHit(new AxeHitContext(actor, 25f, Vector3.zero, Vector3.forward)), Is.True);
+            Assert.That(restored.LifecycleState, Is.EqualTo(TreeLifecycleState.Depleted));
+            Assert.That(ItemPickupRegistry.Pickups.Count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void DepletedAndFallingSaveRestoreDoNotDuplicateDrops()
+        {
+            var depletedSetup = SpawnTree("tree_leafy_01", VegetationCategory.Tree, "leafy_tree", 0f, 5);
+            GameObject actor = CreateActorWithAxe("tree_cutter");
+            for (int i = 0; i < 4; i++) depletedSetup.Tree.TryAxeHit(new AxeHitContext(actor, 25f, Vector3.zero, Vector3.forward));
+            TreeSaveData depletedSave = depletedSetup.Tree.CaptureSaveData();
+            Assert.That(depletedSave.DropsSpawned, Is.True);
+            Assert.That(ItemPickupRegistry.Pickups.Count, Is.EqualTo(1));
+            depletedSetup.Tree.RestoreSaveData(depletedSave);
+            Assert.That(ItemPickupRegistry.Pickups.Count, Is.EqualTo(1));
+
+            var fallingSetup = SpawnTree("tree_conifer_01", VegetationCategory.Tree, "conifer_tree", 1.35f, 6);
+            fallingSetup.Tree.TryAxeHit(new AxeHitContext(actor, 120f, Vector3.zero, Vector3.forward));
+            TreeSaveData fallingSave = fallingSetup.Tree.CaptureSaveData();
+            Assert.That(fallingSave.LifecycleState, Is.EqualTo("Falling"));
+            Assert.That(fallingSetup.Tree.CurrentHealth, Is.EqualTo(0f));
+            Assert.That(fallingSetup.Tree.TrunkColliders[0].enabled, Is.False);
+            Assert.That(fallingSave.DropsSpawned, Is.False);
+            Assert.That(fallingSetup.Tree.TryAxeHit(new AxeHitContext(actor, 25f, Vector3.zero, Vector3.forward)), Is.False);
+            fallingSetup.Tree.RestoreSaveData(fallingSave);
+            Assert.That(fallingSetup.Tree.LifecycleState, Is.EqualTo(TreeLifecycleState.Depleted));
+            Assert.That(ItemPickupRegistry.Pickups.Count, Is.EqualTo(2), "Settling a saved Falling tree creates its pending yield once.");
+            TreeSaveData settledSave = fallingSetup.Tree.CaptureSaveData();
+            fallingSetup.Tree.RestoreSaveData(settledSave);
+            Assert.That(ItemPickupRegistry.Pickups.Count, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void SaveCapturesTreeOnceAndKeepsOrdinaryResourcesAndPickups()
+        {
+            var tree = SpawnTree("tree_leafy_01", VegetationCategory.Tree, "leafy_tree", 0f, 5);
+            tree.Tree.TryAxeHit(new AxeHitContext(CreateActorWithAxe("tree_cutter"), 25f, Vector3.zero, Vector3.forward));
+            GameObject rockObject = Track(new GameObject("ordinary_rock"));
+            rockObject.transform.position = new Vector3(40f, 0f, 0f);
+            ResourceNodeView rock = rockObject.AddComponent<ResourceNodeView>();
+            rock.ConfigureDefault("rock");
+            GameObject pickup = ItemPickupSpawner.Spawn("wood", 3, new Vector3(10f, 0f, 0f), Quaternion.identity);
+
+            GameSaveService saveService = Track(new GameObject("save_service")).AddComponent<GameSaveService>();
+            GameSaveData save = saveService.CaptureCurrentState();
+            Assert.That(save.World.TreeStates.Count, Is.EqualTo(1));
+            Assert.That(save.World.TreeStates[0].TreeId, Is.EqualTo(tree.Tree.TreeId));
+            Assert.That(save.World.TreeStates[0].CurrentHealth, Is.EqualTo(75f));
+            Assert.That(save.World.Resources.Any(resource =>
+                Mathf.Abs(resource.x - tree.Instance.transform.position.x) < 0.001f
+                && Mathf.Abs(resource.z - tree.Instance.transform.position.z) < 0.001f), Is.False,
+                "A tree must not also be serialized as a generic ResourceSaveData.");
+            Assert.That(save.World.Resources.Any(resource => resource.ResourceId == "rock"), Is.True);
+            Assert.That(save.World.Pickups.Any(savedPickup => savedPickup.ItemId == "wood" && savedPickup.Amount == 3), Is.True);
+
+            tree.Tree.TryAxeHit(new AxeHitContext(CreateActorWithAxe("second_cutter"), 25f, Vector3.zero, Vector3.forward));
+            Assert.That(tree.Tree.CurrentHealth, Is.EqualTo(50f));
+            var restoreTrees = typeof(GameSaveService).GetMethod("RestoreTreeStates", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+            Assert.NotNull(restoreTrees);
+            restoreTrees.Invoke(null, new object[] { save.World.TreeStates });
+            Assert.That(tree.Tree.CurrentHealth, Is.EqualTo(75f), "Save restoration resolves state by stable TreeId.");
+
+            Object.DestroyImmediate(pickup);
+            var restoreMethod = typeof(GameSaveService).GetMethod("RestorePickupStates", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.NotNull(restoreMethod);
+            restoreMethod.Invoke(saveService, new object[] { save.World.Pickups });
+            Assert.That(ItemPickupRegistry.Pickups.Count(p => p != null && p.ItemId == "wood" && p.Amount == 3), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void LegacySaveWithoutTreeStatesRemainsDeserializable()
+        {
+            const string payload = "{\"world\":{\"seed\":321,\"day\":3,\"timeOfDay\":0.5,\"resources\":[]}}";
+            GameSaveData restored = new UnityJsonGameSaveSerializer().Deserialize(payload);
+
+            Assert.That(restored, Is.Not.Null);
+            Assert.That(restored.World.Seed, Is.EqualTo(321));
+            Assert.That(restored.World.TreeStates, Is.Empty);
+        }
+
+        [Test]
         public void OrdinaryResourceMapVisibilityDefaultsToTrueAndCanBeDisabledForTrees()
         {
             GameObject rockObject = Track(new GameObject("rock"));
             ResourceNodeView rock = rockObject.AddComponent<ResourceNodeView>();
             rock.ConfigureDefault("rock");
             Assert.That(rock.ShowOnResourceMap, Is.True);
+            Assert.That(rock.DirectInteractionEnabled, Is.True);
 
             GameObject treeObject = Track(new GameObject("tree"));
             ResourceNodeView tree = treeObject.AddComponent<ResourceNodeView>();
@@ -245,13 +427,38 @@ namespace ApexShift.Tests.Editor
             Assert.That(tree.ShowOnResourceMap, Is.False);
         }
 
-        private VegetationSpeciesAsset CreateSpecies(string id, GameObject visual, VegetationCategory category, bool harvestable, string resourceKind)
+        private VegetationSpeciesAsset CreateSpecies(string id, GameObject visual, VegetationCategory category, bool harvestable,
+            string resourceKind, float fallDuration = 0f, int regrowthDays = 5)
         {
             var species = Track(ScriptableObject.CreateInstance<VegetationSpeciesAsset>());
+            GameObject stumpVisual = Track(new GameObject(id + "_stump_visual"));
+            float maxHealth = id == "tree_conifer_01" ? 120f : id == "tree_dead_01" ? 70f : 100f;
             species.Configure(id, id, visual, category, 1f, 1f, 3.8f, 0f, 90f, 0f, 1f, 0f, 1f,
-                VegetationSpeciesAsset.CanonicalBiomeIds, true, harvestable, resourceKind, null,
-                VegetationCollisionMode.GameplayResource);
+                VegetationSpeciesAsset.CanonicalBiomeIds, true, harvestable, resourceKind, stumpVisual,
+                VegetationCollisionMode.GameplayResource, 0.18f, 1.8f, 0.9f, maxHealth, regrowthDays, fallDuration);
             return species;
+        }
+
+        private (HarvestableTreeRuntime Tree, ResourceNodeView Node, GameObject Instance) SpawnTree(
+            string speciesId, VegetationCategory category, string resourceKind, float fallDuration, int regrowthDays)
+        {
+            GameObject visual = Track(new GameObject(speciesId + "_visual"));
+            visual.AddComponent<MeshRenderer>();
+            VegetationSpeciesAsset species = CreateSpecies(speciesId, visual, category, true, resourceKind,
+                fallDuration, regrowthDays);
+            Transform root = Track(new GameObject("tree_test_generation")).transform;
+            SpawnOne(species, root, Vector3.zero);
+            GameObject instance = root.GetChild(0).GetChild(0).gameObject;
+            return (instance.GetComponent<HarvestableTreeRuntime>(), instance.GetComponent<ResourceNodeView>(), instance);
+        }
+
+        private GameObject CreateActorWithAxe(string name)
+        {
+            GameObject actor = Track(new GameObject(name));
+            PlayerInventoryRuntime inventory = actor.AddComponent<PlayerInventoryRuntime>();
+            inventory.EnsureInitialized();
+            inventory.Inventory.AddItem("axe", 1);
+            return actor;
         }
 
         private static void SpawnOne(VegetationSpeciesAsset species, Transform root, Vector3 position)

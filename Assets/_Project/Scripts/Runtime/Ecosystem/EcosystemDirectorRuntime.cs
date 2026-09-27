@@ -6,6 +6,7 @@ using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.World.Generation;
 using ApexShift.Runtime.World.Topography;
+using ApexShift.Runtime.World.Vegetation;
 using UnityEngine;
 
 namespace ApexShift.Runtime.Ecosystem
@@ -254,6 +255,9 @@ namespace ApexShift.Runtime.Ecosystem
                     resourceNode.AdvanceGrowthDays(days);
                 }
             }
+
+            foreach (HarvestableTreeRuntime tree in HarvestableTreeRegistry.Trees.Values)
+                if (tree != null) tree.AdvanceGrowthDays(days);
         }
 
         private static bool ContainsHorizontal(Bounds bounds, Vector3 position)

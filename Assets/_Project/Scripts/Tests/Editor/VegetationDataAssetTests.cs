@@ -99,6 +99,9 @@ namespace ApexShift.Tests.Editor
             float[] expectedTrunkRadii = { 0.20f, 0.16f, 0.18f, 0.08f, 0.05f };
             float[] expectedTrunkHeights = { 1.9f, 2.1f, 1.5f, 0.6f, 0.25f };
             float[] expectedTrunkCenters = { 0.95f, 1.05f, 0.75f, 0.3f, 0.125f };
+            float[] expectedTreeHealth = { 100f, 120f, 70f, 100f, 100f };
+            int[] expectedRegrowthDays = { 5, 6, 4, 0, 0 };
+            float[] expectedFallDuration = { 1.2f, 1.35f, 0.9f, 0f, 0f };
             int speciesCountBefore = AssetDatabase.FindAssets("t:VegetationSpeciesAsset", new[] { root + "/Species" }).Length;
             int profileCountBefore = AssetDatabase.FindAssets("t:BiomeVegetationProfileAsset", new[] { root + "/Biomes" }).Length;
             var visualPrefabs = new Dictionary<string, GameObject>();
@@ -137,6 +140,9 @@ namespace ApexShift.Tests.Editor
                 Assert.That(species.TrunkRadius, Is.EqualTo(expectedTrunkRadii[i]).Within(0.0001f), id + " trunk radius");
                 Assert.That(species.TrunkHeight, Is.EqualTo(expectedTrunkHeights[i]).Within(0.0001f), id + " trunk height");
                 Assert.That(species.TrunkCenterY, Is.EqualTo(expectedTrunkCenters[i]).Within(0.0001f), id + " trunk center");
+                Assert.That(species.TreeMaxHealth, Is.EqualTo(expectedTreeHealth[i]).Within(0.0001f), id + " tree max health");
+                Assert.That(species.TreeRegrowthDays, Is.EqualTo(expectedRegrowthDays[i]), id + " tree regrowth days");
+                Assert.That(species.TreeFallDuration, Is.EqualTo(expectedFallDuration[i]).Within(0.0001f), id + " tree fall duration");
             }
 
             AssertProfileDensity("hearth_meadow", 0.45f);

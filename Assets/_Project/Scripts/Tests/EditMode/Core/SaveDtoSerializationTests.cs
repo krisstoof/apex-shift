@@ -59,7 +59,20 @@ namespace ApexShift.Tests.EditMode.Core
             Assert.AreEqual(2, restored.World.Day);
             Assert.AreEqual(0.25f, restored.World.TimeOfDay, 0.001f);
             Assert.AreEqual(1, restored.World.Resources.Count);
+            Assert.AreEqual(0, restored.World.TreeStates.Count);
             Assert.IsTrue(restored.Version.IsCompatible);
+        }
+
+        [Test]
+        public void Deserialize_OldSaveWithoutTreeStatesRemainsCompatible()
+        {
+            const string oldPayload = "{\"world\":{\"seed\":321,\"day\":3,\"timeOfDay\":0.5,\"resources\":[]}}";
+            UnityJsonGameSaveSerializer serializer = new UnityJsonGameSaveSerializer();
+
+            GameSaveData restored = serializer.Deserialize(oldPayload);
+
+            Assert.AreEqual(321, restored.World.Seed);
+            Assert.AreEqual(0, restored.World.TreeStates.Count);
         }
 
         [Test]

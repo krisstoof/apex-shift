@@ -11,6 +11,7 @@ namespace ApexShift.Core.Save
         public int day = 1;
         public float timeOfDay;
         public List<ResourceSaveData> resources = new List<ResourceSaveData>();
+        public List<TreeSaveData> treeStates = new List<TreeSaveData>();
         public List<PickupSaveData> pickups = new List<PickupSaveData>();
         public List<BiomeEcosystemSaveData> biomeStates = new List<BiomeEcosystemSaveData>();
         public List<CreatureSaveData> creatureStates = new List<CreatureSaveData>();
@@ -23,6 +24,7 @@ namespace ApexShift.Core.Save
         public int Day => day;
         public float TimeOfDay => timeOfDay;
         public IReadOnlyList<ResourceSaveData> Resources => resources ?? (resources = new List<ResourceSaveData>());
+        public IReadOnlyList<TreeSaveData> TreeStates => treeStates ?? (treeStates = new List<TreeSaveData>());
         public IReadOnlyList<PickupSaveData> Pickups => pickups ?? (pickups = new List<PickupSaveData>());
         public IReadOnlyList<BiomeEcosystemSaveData> BiomeStates => biomeStates ?? (biomeStates = new List<BiomeEcosystemSaveData>());
         public IReadOnlyList<CreatureSaveData> CreatureStates => creatureStates ?? (creatureStates = new List<CreatureSaveData>());

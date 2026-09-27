@@ -83,6 +83,7 @@ namespace ApexShift.Runtime.Items
             itemId = string.IsNullOrWhiteSpace(newItemId) ? string.Empty : newItemId.Trim().ToLowerInvariant();
             amount = Mathf.Max(1, newAmount);
             EnsureTrigger();
+            ItemPickupRegistry.Register(this);
         }
 
         public bool CanInteract(GameObject actor)

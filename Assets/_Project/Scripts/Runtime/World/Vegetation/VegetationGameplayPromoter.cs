@@ -24,6 +24,7 @@ namespace ApexShift.Runtime.World.Vegetation
             node.ConfigureDefault(species.ResourceKind);
             node.ConfigureToolRequirement("axe");
             node.SetShowOnResourceMap(false);
+            node.SetDirectInteractionEnabled(false);
 
             FoodSourceView[] foodSources = instance.GetComponentsInChildren<FoodSourceView>(true);
             for (int i = 0; i < foodSources.Length; i++)
@@ -33,7 +34,7 @@ namespace ApexShift.Runtime.World.Vegetation
 
             HarvestableTreeRuntime tree = instance.GetComponent<HarvestableTreeRuntime>();
             if (tree == null) tree = instance.AddComponent<HarvestableTreeRuntime>();
-            tree.Configure(marker, species.ResourceKind, node);
+            tree.Configure(marker, species, node);
             return tree;
         }
 

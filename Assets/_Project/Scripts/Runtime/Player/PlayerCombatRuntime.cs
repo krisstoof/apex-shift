@@ -33,6 +33,7 @@ namespace ApexShift.Runtime.Player
         [Header("Axe targeting")]
         [SerializeField, Min(0.1f)] private float axeRange = 2.6f;
         [SerializeField, Min(0.01f)] private float axeHitRadius = 0.22f;
+        [SerializeField, Min(0.1f)] private float axeTreeDamage = 25f;
         [SerializeField] private LayerMask axeTargetMask = Physics.DefaultRaycastLayers;
 
         [Header("Bow")]
@@ -193,19 +194,23 @@ namespace ApexShift.Runtime.Player
 
             IAxeHitTarget nearestTarget = null;
             float nearestDistance = float.PositiveInfinity;
+            Vector3 nearestHitPoint = origin + direction * axeRange;
             for (int i = 0; i < hitCount; i++)
             {
                 RaycastHit hit = axeHitBuffer[i];
                 Transform hitTransform = hit.collider != null ? hit.collider.transform : null;
                 if (hitTransform == null || hitTransform == transform || hitTransform.IsChildOf(transform)) continue;
                 HarvestableTreeRuntime tree = hitTransform.GetComponentInParent<HarvestableTreeRuntime>();
-                if (tree == null || tree.ResourceNode == null || !tree.ResourceNode.CanInteract(gameObject)
+                if (tree == null || !tree.CanAxeHit(gameObject)
                     || hit.distance >= nearestDistance) continue;
                 nearestTarget = tree;
                 nearestDistance = hit.distance;
+                nearestHitPoint = hit.point;
             }
 
-            return nearestTarget != null && nearestTarget.TryAxeHit(gameObject);
+            if (nearestTarget == null) return false;
+            var hitContext = new AxeHitContext(gameObject, axeTreeDamage, nearestHitPoint, direction);
+            return nearestTarget.TryAxeHit(in hitContext);
         }
 
         private void HandleAttackPressed() => TriggerPrimaryAttack();

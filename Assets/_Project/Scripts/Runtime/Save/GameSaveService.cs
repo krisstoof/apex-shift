@@ -15,6 +15,7 @@ using ApexShift.Runtime.DayNight;
 using ApexShift.Runtime.Camera;
 using ApexShift.Runtime.World.Generation;
 using ApexShift.Runtime.World.Landmarks;
+using ApexShift.Runtime.World.Vegetation;
 using UnityEngine;
 
 namespace ApexShift.Runtime.Save
@@ -120,7 +121,7 @@ namespace ApexShift.Runtime.Save
             List<ResourceSaveData> resources = new List<ResourceSaveData>();
             foreach (ResourceNodeView node in ResourceRegistry.Resources)
             {
-                if (node == null)
+                if (node == null || node.GetComponent<HarvestableTreeRuntime>() != null)
                 {
                     continue;
                 }
@@ -148,6 +149,7 @@ namespace ApexShift.Runtime.Save
 
             CaptureDynamicMeatDrops(resources);
             List<PickupSaveData> pickups = CapturePickupStates();
+            List<TreeSaveData> treeStates = CaptureTreeStates();
             List<BiomeEcosystemSaveData> biomeStates = CaptureBiomeStates();
             List<CreatureSaveData> creatureStates = CaptureCreatureStates();
             List<BuildingSaveData> buildingStates = CaptureBuildingStates();
@@ -168,6 +170,7 @@ namespace ApexShift.Runtime.Save
                 ecosystemDirector != null ? ecosystemDirector.EcosystemStateSource : "generated");
             
             world.landmarkStates = landmarkStates;
+            world.treeStates = treeStates;
 
             return new GameSaveData(inventory, survival, world);
         }
@@ -226,6 +229,7 @@ namespace ApexShift.Runtime.Save
             }
 
             RestoreResourceStates(saveData.World.Resources);
+            RestoreTreeStates(saveData.World.TreeStates);
             RestorePickupStates(saveData.World.Pickups);
             ApplyBiomeStates(saveData.World.BiomeStates);
             ApplyEcosystemMetadata(saveData.World);
@@ -634,12 +638,43 @@ namespace ApexShift.Runtime.Save
             return pickups;
         }
 
+        private static List<TreeSaveData> CaptureTreeStates()
+        {
+            return HarvestableTreeRegistry.Trees.Values
+                .Where(tree => tree != null)
+                .OrderBy(tree => tree.TreeId, StringComparer.Ordinal)
+                .Select(tree => tree.CaptureSaveData())
+                .ToList();
+        }
+
+        private static void RestoreTreeStates(IReadOnlyList<TreeSaveData> savedTrees)
+        {
+            if (savedTrees == null) return;
+            foreach (TreeSaveData saved in savedTrees)
+            {
+                if (saved == null) continue;
+                if (!HarvestableTreeRegistry.TryGet(saved.TreeId, out HarvestableTreeRuntime tree))
+                {
+                    Debug.LogWarning($"[Save] No generated harvestable tree matches saved TreeId '{saved.TreeId}'. Skipping tree state.");
+                    continue;
+                }
+                tree.RestoreSaveData(saved);
+            }
+        }
+
         private void RestorePickupStates(IReadOnlyList<PickupSaveData> savedPickups)
         {
-            if (savedPickups == null || savedPickups.Count == 0)
+            ItemPickupView[] existingPickups = ItemPickupRegistry.Pickups.ToArray();
+            for (int i = 0; i < existingPickups.Length; i++)
             {
-                return;
+                if (existingPickups[i] == null) continue;
+                GameObject oldPickup = existingPickups[i].gameObject;
+                oldPickup.SetActive(false);
+                if (Application.isPlaying) Destroy(oldPickup);
+                else DestroyImmediate(oldPickup);
             }
+
+            if (savedPickups == null || savedPickups.Count == 0) return;
 
             foreach (PickupSaveData pickup in savedPickups)
             {
@@ -666,6 +701,7 @@ namespace ApexShift.Runtime.Save
             Dictionary<Vector3Int, ResourceNodeView> lookup = new Dictionary<Vector3Int, ResourceNodeView>();
             foreach (ResourceNodeView node in nodes)
             {
+                if (node == null || node.GetComponent<HarvestableTreeRuntime>() != null) continue;
                 Vector3 p = node.transform.position;
                 Vector3Int key = new Vector3Int(Mathf.RoundToInt(p.x * 100), Mathf.RoundToInt(p.y * 100), Mathf.RoundToInt(p.z * 100));
                 if (!lookup.ContainsKey(key))

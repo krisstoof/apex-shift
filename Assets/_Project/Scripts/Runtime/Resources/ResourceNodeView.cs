@@ -64,6 +64,9 @@ namespace ApexShift.Runtime.Resources
         [SerializeField]
         private bool showOnResourceMap = true;
 
+        [SerializeField]
+        private bool directInteractionEnabled = true;
+
         [Header("Tool gating")]
         [SerializeField] private string requiredToolItemId = string.Empty;
         [SerializeField] private bool autoResolveToolRequirement = true;
@@ -78,6 +81,7 @@ namespace ApexShift.Runtime.Resources
         {
             get
             {
+                if (!directInteractionEnabled) return string.Empty;
                 EnsureState();
                 string prompt = harvestSystem.GetPrompt(state);
                 string requiredTool = ResolveRequiredToolItemId();
@@ -93,8 +97,10 @@ namespace ApexShift.Runtime.Resources
         public int Priority { get { EnsureState(); return state.PickupPriority; } }
         public float InteractionDuration => 1.5f;
         public bool ShowOnResourceMap => showOnResourceMap;
+        public bool DirectInteractionEnabled => directInteractionEnabled;
 
         public void SetShowOnResourceMap(bool show) => showOnResourceMap = show;
+        public void SetDirectInteractionEnabled(bool enabled) => directInteractionEnabled = enabled;
 
         public ResourceState State
 {
@@ -162,6 +168,7 @@ namespace ApexShift.Runtime.Resources
 
         public bool CanInteract(GameObject actor)
         {
+            if (!directInteractionEnabled) return false;
             EnsureState();
             if (state.RenderOnly)
             {
@@ -183,6 +190,7 @@ namespace ApexShift.Runtime.Resources
 
         public bool Interact(GameObject actor)
         {
+            if (!directInteractionEnabled) return false;
             EnsureState();
             if (!TryResolveInventory(actor, out PlayerInventoryRuntime inventoryRuntime))
             {
@@ -221,6 +229,13 @@ namespace ApexShift.Runtime.Resources
             }
 
             return true;
+        }
+
+        public bool HasRequiredTool(GameObject actor)
+        {
+            EnsureState();
+            return TryResolveInventory(actor, out PlayerInventoryRuntime inventoryRuntime)
+                   && HasRequiredTool(inventoryRuntime, out _);
         }
 
         public void LoadState(int currentAmount, bool depleted)

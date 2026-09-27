@@ -22,6 +22,9 @@ MonoBehaviour:
   trunkRadius: 0.18
   trunkHeight: 1.5
   trunkCenterY: 0.75
+  treeMaxHealth: 70
+  treeRegrowthDays: 4
+  treeFallDuration: 0.9
   minSlopeDegrees: 0
   maxSlopeDegrees: 40
   minElevation01: 0
