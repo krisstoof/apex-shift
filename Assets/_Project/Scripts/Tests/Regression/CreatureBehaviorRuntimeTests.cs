@@ -1,6 +1,8 @@
 using System.Collections;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
+using ApexShift.Runtime.Player;
+using ApexShift.Runtime.World.Query;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.AI;
@@ -39,6 +41,8 @@ namespace ApexShift.Tests.Regression
                 playerObject = new GameObject("Player");
                 playerObject.tag = "Player";
                 playerObject.transform.position = Vector3.zero;
+                playerObject.AddComponent<PlayerPresenceRuntime>().MarkActive();
+                Assert.That(PlayerPresenceRuntime.ActiveTransform, Is.SameAs(playerObject.transform));
 
                 creatureObject = new GameObject("Creature_varnak");
                 creatureObject.AddComponent<CreatureNavigationAdapter>();
@@ -96,7 +100,8 @@ namespace ApexShift.Tests.Regression
 
                 preyObject = new GameObject("Creature_small_prey");
                 preyObject.AddComponent<CreatureNavigationAdapter>();
-                preyObject.AddComponent<CreatureAgentView>().Configure("small_prey");
+                CreatureAgentView preyView = preyObject.AddComponent<CreatureAgentView>();
+                preyView.Configure("small_prey");
                 preyObject.AddComponent<CreatureNeedsRuntime>().Configure("small_prey");
                 preyObject.AddComponent<CreatureHealthRuntime>().Configure("small_prey");
                 preyObject.AddComponent<CreatureBehaviorBrain>();
@@ -107,6 +112,7 @@ namespace ApexShift.Tests.Regression
                 creatureObject.AddComponent<CreatureNavigationAdapter>();
                 creatureObject.AddComponent<CreatureAgentView>().Configure("grazer");
                 creatureObject.AddComponent<CreatureNeedsRuntime>().Configure("grazer");
+                creatureObject.GetComponent<CreatureNeedsRuntime>().RestoreNeeds(100f, 0f);
                 creatureObject.AddComponent<CreatureHealthRuntime>().Configure("grazer");
                 CreatureBehaviorBrain brain = creatureObject.AddComponent<CreatureBehaviorBrain>();
                 creatureObject.AddComponent<CreatureBehaviorRuntime>();
@@ -117,6 +123,12 @@ namespace ApexShift.Tests.Regression
                 {
                     yield return null;
                 }
+
+                Assert.That(ecosystemObject.GetComponent<EcosystemRuntime>().Creatures, Does.Contain(preyView),
+                    "The prey fixture must be registered through CreatureBehaviorBrain's normal enable lifecycle.");
+                Assert.That(WorldQueryRuntime.GetOrCreate(ecosystemObject.GetComponent<EcosystemRuntime>())
+                    .TryFindNearestCreatureById(creatureObject.transform.position, "small_prey", 10f, out CreatureAgentView queriedPrey), Is.True);
+                Assert.That(queriedPrey, Is.SameAs(preyView));
 
                 Assert.That(
                     brain.CurrentTargetLabel.Contains("small_prey") || brain.State == CreatureBehaviorState.Flee,

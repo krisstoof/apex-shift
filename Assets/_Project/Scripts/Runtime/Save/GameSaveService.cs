@@ -220,6 +220,11 @@ namespace ApexShift.Runtime.Save
 
             saveData.EnsureDefaults();
 
+            // ApplyLoadedState is also used by callers that construct the service in a
+            // scene without WorldGeneratorRuntime (e.g. restoring a saved creature into
+            // an already composed ecosystem). Resolve those registries before restoration.
+            ResolveReferences();
+
             if (worldGenerator != null)
             {
                 worldGenerator.SetSeed(saveData.World.Seed);

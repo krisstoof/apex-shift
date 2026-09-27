@@ -4,6 +4,7 @@ using ApexShift.Runtime.Player;
 using ApexShift.Runtime.World.Generation;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -85,12 +86,23 @@ namespace ApexShift.Tests.Editor
                 Assert.That(animator, Is.Not.Null);
                 Assert.That(driver, Is.Not.Null);
                 Assert.That(animator.runtimeAnimatorController, Is.Not.Null);
-                RuntimeAnimatorController prototype = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(
-                    "Assets/_Project/Animations/Player/PlayerPrototype.controller");
-                Assert.That(animator.runtimeAnimatorController, Is.SameAs(prototype));
-                Assert.That(animator.runtimeAnimatorController.animationClips.Any(clip => clip.name == "Idle"), Is.True);
-                Assert.That(animator.runtimeAnimatorController.animationClips.Any(clip => clip.name == "Walking"), Is.True);
-                Assert.That(animator.runtimeAnimatorController.animationClips.Any(clip => clip.name == "Running"), Is.True);
+                RuntimeAnimatorController generated = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(
+                    "Assets/_Project/Generated/Animation/GeneratedKevinIglesiasPlayerItemUse.controller");
+                Assert.That(animator.runtimeAnimatorController, Is.SameAs(generated));
+                Assert.That(generated, Is.Not.Null);
+                Assert.That(generated.animationClips.Any(clip => clip.name == "Idle"), Is.True);
+                Assert.That(generated.animationClips.Any(clip => clip.name == "Walking"), Is.True);
+                Assert.That(generated.animationClips.Any(clip => clip.name == "Running"), Is.True);
+                AnimatorController controller = generated as AnimatorController;
+                Assert.That(controller, Is.Not.Null, "Generated player controller must expose its authored state/parameter contract.");
+                string[] requiredParameters =
+                {
+                    "Speed", "IsMoving", "IsSprinting", "IsSwimming", "Attack", "Interact", "Gather",
+                    "SpearAttack", "BowAttack", "AxeUse", "PickaxeUse", "TorchUse", "Hurt", "Death"
+                };
+                string[] parameterNames = controller.parameters.Select(parameter => parameter.name).ToArray();
+                foreach (string parameterName in requiredParameters)
+                    Assert.That(parameterNames, Does.Contain(parameterName), $"Generated player controller is missing parameter {parameterName}.");
             }
             finally
             {

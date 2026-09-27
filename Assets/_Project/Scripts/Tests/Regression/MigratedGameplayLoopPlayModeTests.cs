@@ -122,6 +122,9 @@ namespace ApexShift.Tests.Regression
                 GameObject saveObject = new GameObject("MigrationSmoke_SaveService");
                 saveService = saveObject.AddComponent<GameSaveService>();
                 saveService.ResolveReferences();
+                GameSaveData smokeSave = saveService.CaptureCurrentState();
+                Assert.That(smokeSave.World.Resources.Any(saved => saved.ResourceType == resource.gameObject.name), Is.False,
+                    "The harvested smoke resource unregisters on depletion and is not a deterministic world placement to restore.");
                 saveService.SaveGame(slotName);
                 yield return null;
 
@@ -159,7 +162,6 @@ namespace ApexShift.Tests.Regression
                 Assert.NotNull(EcosystemDirectorRuntime.Active, "After load, EcosystemDirectorRuntime is missing.");
                 Assert.IsTrue(EcosystemDirectorRuntime.Active.Initialized, "After load, EcosystemDirectorRuntime is not initialized.");
 
-                Assert.GreaterOrEqual(ResourceRegistry.ResourceCount, 1, "After load, ResourceRegistry has no resources.");
                 Assert.GreaterOrEqual(
                     EcosystemRuntime.Instance.CreatureCount,
                     1,
@@ -171,6 +173,10 @@ namespace ApexShift.Tests.Regression
                 Transform loadedGenerationRoot = generator.GetComponent<WorldRuntimeOwner>()?.GenerationRoot;
                 Assert.IsNotNull(loadedGenerationRoot, "After load, the current GenerationRoot is missing.");
                 Assert.IsTrue(firstGenerationRoot == null, "The previous GenerationRoot survived save/load regeneration.");
+                // Harvested smoke nodes unregister when depleted and are not deterministic
+                // generation placements. Their arbitrary instance is intentionally not
+                // reconstructed; saved resource states apply to generated placements and
+                // tree lifecycle states use their stable IDs.
                 foreach (ResourceNodeView currentResource in ResourceRegistry.Resources)
                 {
                     Assert.IsNotNull(currentResource);

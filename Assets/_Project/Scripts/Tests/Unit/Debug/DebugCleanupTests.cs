@@ -1,3 +1,4 @@
+using System.Collections;
 using System.IO;
 using System.Reflection;
 using ApexShift.Presentation.Debugging;
@@ -8,6 +9,7 @@ using ApexShift.Runtime.UI.Snapshots;
 using ApexShift.Runtime.World.Generation;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace ApexShift.Tests.Unit.Debug
 {
@@ -87,8 +89,8 @@ namespace ApexShift.Tests.Unit.Debug
             }
         }
 
-        [Test]
-        public void DiagnosticsBootstrapRebindsWithoutWorldRegeneration()
+        [UnityTest]
+        public IEnumerator DiagnosticsBootstrapRebindsWithoutWorldRegeneration()
         {
             GameObject generatorObject = new GameObject("DiagnosticsGenerator");
             GameObject generationRoot = new GameObject("GenerationRoot");
@@ -121,6 +123,8 @@ namespace ApexShift.Tests.Unit.Debug
 
                 RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(false);
 
+                yield return null;
+
                 Assert.IsFalse(generationRoot.GetComponent<GameSnapshotProvider>().AutoRefreshEnabled);
                 Assert.IsNull(player.GetComponent<PlayerActionDebugLog>());
                 Assert.IsNull(ui.GetComponent<UIDebugger>());
@@ -131,6 +135,7 @@ namespace ApexShift.Tests.Unit.Debug
                 Assert.IsNull(creature.GetComponent<CreatureDebugOverlay>());
 
                 RuntimeDebugSettings.SetDeveloperDiagnosticsEnabled(true);
+                yield return null;
                 Assert.IsNotNull(player.GetComponent<PlayerActionDebugLog>());
                 Assert.IsNotNull(ui.GetComponent<UIDebugger>());
                 Assert.AreEqual(1, generationRoot.GetComponents<EcosystemDebugOverlay>().Length);

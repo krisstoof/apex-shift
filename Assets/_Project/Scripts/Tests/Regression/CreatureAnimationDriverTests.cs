@@ -60,6 +60,9 @@ namespace ApexShift.Tests.Regression
                 driver.Configure(2f);
 
                 behavior.SetBehaviorStateForTests(CreatureBehaviorState.Chase, "test");
+                // This test covers the driver's response to a Chase state, not AI reevaluation.
+                // Leave the component enabled for its state property but prevent Update decisions.
+                behavior.enabled = false;
 
                 float currentState = 0f;
                 for (int i = 0; i < 120; i++)

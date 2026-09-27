@@ -18,6 +18,21 @@ namespace ApexShift.Runtime.World.Vegetation
             public InstanceEntry(VegetationPlacement placement) { Placement = placement; }
         }
 
+        private struct StreamingBudgetUsage
+        {
+            public int Trees, Shrubs, GroundCover, GameplayTrees, TreeColliders;
+
+            public int Visible(VegetationCategory category) => category == VegetationCategory.Tree || category == VegetationCategory.DeadTree
+                ? Trees : category == VegetationCategory.Shrub ? Shrubs : GroundCover;
+
+            public void AddVisible(VegetationCategory category, int delta)
+            {
+                if (category == VegetationCategory.Tree || category == VegetationCategory.DeadTree) Trees += delta;
+                else if (category == VegetationCategory.Shrub) Shrubs += delta;
+                else GroundCover += delta;
+            }
+        }
+
         private static readonly ProfilerMarker RefreshMarker = new ProfilerMarker("Vegetation.StreamingRefresh");
         private static readonly ProfilerMarker ActivateMarker = new ProfilerMarker("Vegetation.ChunkActivate");
         private static readonly ProfilerMarker DeactivateMarker = new ProfilerMarker("Vegetation.ChunkDeactivate");
@@ -173,6 +188,9 @@ namespace ApexShift.Runtime.World.Vegetation
 
                 for (int c = 0; c < chunks.Count; c++)
                     if (ChunkNeedsTransition(chunks[c])) pendingTransitions.Add(chunks[c]);
+                // Free capacity before activating replacement chunks. Stable ordering also
+                // keeps a streamed transition within the same hard visual/gameplay budgets.
+                pendingTransitions.Sort((a, b) => ChunkHasDeactivation(b).CompareTo(ChunkHasDeactivation(a)));
                 chunkTransitionsLastRefresh = 0;
                 streamingRefreshMs = Mathf.Max(0f, (Time.realtimeSinceStartup - start) * 1000f);
                 RefreshStats(streamingRefreshMs);
@@ -260,14 +278,26 @@ namespace ApexShift.Runtime.World.Vegetation
 
         private void ProcessPendingTransitions()
         {
+            // A previous activation may have been deferred until another chunk released
+            // capacity. Reconsider all owned chunks on subsequent updates.
+            if (pendingCursor >= pendingTransitions.Count)
+            {
+                pendingTransitions.Clear();
+                pendingCursor = 0;
+                for (int i = 0; i < chunks.Count; i++)
+                    if (ChunkNeedsTransition(chunks[i])) pendingTransitions.Add(chunks[i]);
+                pendingTransitions.Sort((a, b) => ChunkHasDeactivation(b).CompareTo(ChunkHasDeactivation(a)));
+            }
+
             int processed = 0;
             int limit = settings != null ? settings.MaxChunkTransitionsPerUpdate : 4;
+            StreamingBudgetUsage usage = MeasureBudgetUsage();
             while (pendingCursor < pendingTransitions.Count && processed < limit)
             {
                 VegetationChunkRuntime chunk = pendingTransitions[pendingCursor++];
                 if (chunk == null) continue;
                 bool activating = HasDesiredVisible(chunk);
-                using ((activating ? ActivateMarker : DeactivateMarker).Auto()) ApplyChunk(chunk);
+                using ((activating ? ActivateMarker : DeactivateMarker).Auto()) ApplyChunk(chunk, ref usage);
                 processed++;
                 chunkTransitionsLastRefresh++;
             }
@@ -275,34 +305,114 @@ namespace ApexShift.Runtime.World.Vegetation
             RefreshStats(streamingRefreshMs);
         }
 
-        private void ApplyChunk(VegetationChunkRuntime chunk)
+        private void ApplyChunk(VegetationChunkRuntime chunk, ref StreamingBudgetUsage usage)
         {
             bool[] rootsWanted = new bool[3];
+            // Deactivate old visibility/gameplay first, including entries in a chunk that
+            // is also receiving new visible entries.
             for (int i = 0; i < chunk.Entries.Count; i++)
             {
                 InstanceEntry entry = chunk.Entries[i];
-                if (entry.Tree != null) entry.Tree.SetStreamingGameplayActive(entry.DesiredGameplay);
-                if (entry.DesiredVisible)
+                if (entry.DesiredGameplay && entry.DesiredVisible) continue;
+                if (entry.Tree != null && !entry.DesiredGameplay && entry.Tree.StreamingGameplayActive)
                 {
-                    rootsWanted[CategoryIndex(entry.Placement.Category)] = true;
-                    if (entry.Instance == null) CreateInstance(chunk, entry, visible: true);
-                    else
-                    {
-                        entry.Instance.transform.SetParent(chunk.GetRoot(entry.Placement.Category), false);
-                        entry.Instance.transform.SetPositionAndRotation(entry.Placement.Position, Quaternion.Euler(0f, entry.Placement.Yaw, 0f));
-                        entry.Instance.SetActive(true);
-                    }
+                    usage.GameplayTrees--;
+                    usage.TreeColliders -= entry.Tree.ActiveStreamingColliderCount;
+                    entry.Tree.SetStreamingGameplayActive(false);
                 }
-                else if (entry.Instance != null)
+                if (!entry.DesiredVisible && entry.Instance != null)
                 {
                     if (entry.Tree != null && entry.Tree.LifecycleState == TreeLifecycleState.Falling)
                         entry.Tree.PrepareForStreamingDeactivation();
+                    if (entry.Instance.activeSelf) usage.AddVisible(entry.Placement.Category, -1);
                     if (pool != null && VegetationInstancePool.CanPoolPlacement(entry.Placement)
                         && pool.Release(entry.Placement, entry.Instance)) entry.Instance = null;
                     else entry.Instance.SetActive(false);
                 }
             }
+
+            for (int i = 0; i < chunk.Entries.Count; i++)
+            {
+                InstanceEntry entry = chunk.Entries[i];
+                if (entry.DesiredGameplay && entry.Tree != null)
+                {
+                    bool wasGameplayActive = entry.Tree.StreamingGameplayActive;
+                    bool shouldActivate = CanActivateGameplayTree(entry.Tree, usage);
+                    if (wasGameplayActive && !shouldActivate)
+                    {
+                        usage.GameplayTrees--;
+                        usage.TreeColliders -= entry.Tree.ActiveStreamingColliderCount;
+                    }
+                    entry.Tree.SetStreamingGameplayActive(shouldActivate);
+                    if (!wasGameplayActive && shouldActivate)
+                    {
+                        usage.GameplayTrees++;
+                        usage.TreeColliders += entry.Tree.ActiveStreamingColliderCount;
+                    }
+                }
+                if (!entry.DesiredVisible) continue;
+
+                rootsWanted[CategoryIndex(entry.Placement.Category)] = true;
+                bool wasVisible = entry.Instance != null && entry.Instance.activeSelf;
+                bool canShow = wasVisible || CanActivateVisible(entry.Placement.Category, usage);
+                if (entry.Instance == null)
+                {
+                    CreateInstance(chunk, entry, visible: canShow);
+                    if (canShow && entry.Instance != null && entry.Instance.activeSelf) usage.AddVisible(entry.Placement.Category, 1);
+                }
+                else
+                {
+                    entry.Instance.transform.SetParent(chunk.GetRoot(entry.Placement.Category), false);
+                    entry.Instance.transform.SetPositionAndRotation(entry.Placement.Position, Quaternion.Euler(0f, entry.Placement.Yaw, 0f));
+                    entry.Instance.SetActive(canShow);
+                    if (!wasVisible && canShow) usage.AddVisible(entry.Placement.Category, 1);
+                }
+            }
             for (int i = 0; i < 3; i++) chunk.SetCategoryRootActive(i, rootsWanted[i]);
+        }
+
+        private bool CanActivateVisible(VegetationCategory category, StreamingBudgetUsage usage)
+        {
+            int budget = category == VegetationCategory.Tree || category == VegetationCategory.DeadTree
+                ? settings.MaxVisibleTrees
+                : category == VegetationCategory.Shrub ? settings.MaxVisibleShrubs : settings.MaxVisibleGroundCover;
+            return usage.Visible(category) < budget;
+        }
+
+        private bool CanActivateGameplayTree(HarvestableTreeRuntime tree, StreamingBudgetUsage usage)
+        {
+            int active = usage.GameplayTrees - (tree.StreamingGameplayActive ? 1 : 0);
+            int colliders = usage.TreeColliders - (tree.StreamingGameplayActive ? tree.ActiveStreamingColliderCount : 0);
+            return active < settings.MaxActiveHarvestableTrees
+                   && colliders + tree.StreamingColliderCount <= settings.MaxActiveTreeColliders;
+        }
+
+        private StreamingBudgetUsage MeasureBudgetUsage()
+        {
+            StreamingBudgetUsage usage = default;
+            for (int c = 0; c < chunks.Count; c++)
+                for (int e = 0; e < chunks[c].Entries.Count; e++)
+                {
+                    InstanceEntry entry = chunks[c].Entries[e];
+                    if (entry.Instance != null && entry.Instance.activeSelf) usage.AddVisible(entry.Placement.Category, 1);
+                    if (entry.Tree != null && entry.Tree.StreamingGameplayActive)
+                    {
+                        usage.GameplayTrees++;
+                        usage.TreeColliders += entry.Tree.ActiveStreamingColliderCount;
+                    }
+                }
+            return usage;
+        }
+
+        private static bool ChunkHasDeactivation(VegetationChunkRuntime chunk)
+        {
+            for (int i = 0; i < chunk.Entries.Count; i++)
+            {
+                InstanceEntry entry = chunk.Entries[i];
+                if (entry.Instance != null && entry.Instance.activeSelf && !entry.DesiredVisible) return true;
+                if (entry.Tree != null && entry.Tree.StreamingGameplayActive && !entry.DesiredGameplay) return true;
+            }
+            return false;
         }
 
         private void CreateInstance(VegetationChunkRuntime chunk, InstanceEntry entry, bool visible)

@@ -282,9 +282,14 @@ namespace ApexShift.Tests.Editor
             Assert.That(setup.Tree.CurrentHealth, Is.EqualTo(70f));
             Assert.That(setup.Tree.DropsSpawned, Is.False);
             Assert.That(setup.Node.State.IsDepleted, Is.False);
-            Assert.That(setup.Tree.TrunkColliders[0].enabled, Is.True);
+            Assert.That(setup.Tree.StreamingGameplayActive, Is.False);
+            Assert.That(setup.Tree.TrunkColliders[0].enabled, Is.False);
             Assert.That(setup.Instance.GetComponentInChildren<Renderer>().enabled, Is.True);
             Assert.That(setup.Instance.transform.Find("TreeStump"), Is.Null);
+
+            setup.Tree.SetStreamingGameplayActive(true);
+            Assert.That(setup.Tree.StreamingGameplayActive, Is.True);
+            Assert.That(setup.Tree.TrunkColliders[0].enabled, Is.True);
         }
 
         [Test]

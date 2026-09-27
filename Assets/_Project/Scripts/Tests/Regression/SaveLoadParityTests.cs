@@ -205,7 +205,10 @@ namespace ApexShift.Tests.Regression
                 CreatureHitboxRuntime hitbox = restored.GetComponent<CreatureHitboxRuntime>();
                 Assert.IsNotNull(hitbox);
                 Assert.IsNotNull(hitbox.CombatCollider);
+                Assert.That(hitbox.CombatCollider.name, Is.EqualTo("ApexShiftCombatHitbox"));
+                Assert.That(hitbox.CombatCollider.transform.parent, Is.EqualTo(restored.transform));
                 Assert.IsTrue(hitbox.CombatCollider.enabled);
+                Assert.IsTrue(hitbox.CombatCollider.isTrigger);
                 Assert.IsTrue(hitbox.IsValidForMask(Physics.DefaultRaycastLayers, out string reason), reason);
 
                 player = new GameObject("RestoreCombatPlayer");
