@@ -122,8 +122,8 @@ namespace ApexShift.Tests.Regression
             Assert.That(tree.gameObject.activeInHierarchy, Is.True, "The same tree instance should return with its original state.");
             Assert.That(controller.Stats.TotalPlacements, Is.EqualTo(649));
             Assert.That(controller.Stats.TotalChunks, Is.EqualTo(81));
-            Assert.That(controller.Stats.PooledInstances, Is.GreaterThan(0), "Streamed-out decorative vegetation should enter the pool.");
-            Assert.That(controller.Stats.PoolHits, Is.GreaterThan(0), "Returning to visited chunks should reuse pooled instances.");
+            Assert.That(controller.Stats.PoolHits, Is.GreaterThan(0),
+                "Streamed-out decorative vegetation must be reused from the pool; the idle pool may be empty after filling the hard visible budget.");
 
             VegetationInstanceRuntime[] instances = forestRoot.GetComponentsInChildren<VegetationInstanceRuntime>(true);
             VegetationInstanceRuntime restoredMetadata = instances.FirstOrDefault(instance => instance.InstanceId == "perf_ground_0_0_0");

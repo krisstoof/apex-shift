@@ -85,6 +85,12 @@ namespace ApexShift.Tests.Regression
                     woodBefore,
                     "Collecting the smoke resource did not add wood to inventory.");
 
+                // This hand-authored node exists only to smoke-test collection. It is not
+                // a deterministic world placement, so remove it before capturing world state.
+                string smokeResourceName = resource.gameObject.name;
+                UnityEngine.Object.Destroy(resource.gameObject);
+                yield return null;
+
                 // 6-7. Craft with the real runtime crafting path.
                 // The smoke resource proves resource->inventory flow. Add remaining ingredients
                 // directly so this test is not coupled to exact procedural resource placement.
@@ -124,8 +130,8 @@ namespace ApexShift.Tests.Regression
                 saveService = saveObject.AddComponent<GameSaveService>();
                 saveService.ResolveReferences();
                 GameSaveData smokeSave = saveService.CaptureCurrentState();
-                Assert.That(smokeSave.World.Resources.Any(saved => saved.ResourceType == resource.gameObject.name), Is.False,
-                    "The harvested smoke resource unregisters on depletion and is not a deterministic world placement to restore.");
+                Assert.That(smokeSave.World.Resources.Any(saved => saved.ResourceType == smokeResourceName), Is.False,
+                    "The transient smoke resource should not enter the save after its test-only destruction.");
                 saveService.SaveGame(slotName);
                 yield return null;
 

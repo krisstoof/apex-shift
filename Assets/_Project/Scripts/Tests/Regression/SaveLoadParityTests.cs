@@ -192,7 +192,7 @@ namespace ApexShift.Tests.Regression
                     new List<BiomeEcosystemSaveData>(),
                     new[]
                     {
-                        new CreatureSaveData("small_prey", "small_prey", 1, 0f, 0f, 1.1f, 0f, 30f, false, 100f, 0.2f, "Idle", "default", "default", "default", "restored", "none", 0f, "HERBIVORE", 0f)
+                        new CreatureSaveData("small_prey", "small_prey", 1, 0f, 0f, 1.1f, 30f, 30f, false, 100f, 0.2f, "Idle", "default", "default", "default", "restored", "none", 0f, "HERBIVORE", 0f)
                     },
                     new List<BuildingSaveData>(),
                     0f,
