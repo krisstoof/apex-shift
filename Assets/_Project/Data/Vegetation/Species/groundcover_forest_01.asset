@@ -19,6 +19,9 @@ MonoBehaviour:
   minScale: 0.8
   maxScale: 1.2
   minimumSpacing: 0.55
+  trunkRadius: 0.05
+  trunkHeight: 0.25
+  trunkCenterY: 0.125
   minSlopeDegrees: 0
   maxSlopeDegrees: 35
   minElevation01: 0

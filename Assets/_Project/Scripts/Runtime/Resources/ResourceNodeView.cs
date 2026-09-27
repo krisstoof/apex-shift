@@ -61,6 +61,9 @@ namespace ApexShift.Runtime.Resources
         [SerializeField]
         private float interactionRadius = 2.25f;
 
+        [SerializeField]
+        private bool showOnResourceMap = true;
+
         [Header("Tool gating")]
         [SerializeField] private string requiredToolItemId = string.Empty;
         [SerializeField] private bool autoResolveToolRequirement = true;
@@ -89,6 +92,9 @@ namespace ApexShift.Runtime.Resources
 
         public int Priority { get { EnsureState(); return state.PickupPriority; } }
         public float InteractionDuration => 1.5f;
+        public bool ShowOnResourceMap => showOnResourceMap;
+
+        public void SetShowOnResourceMap(bool show) => showOnResourceMap = show;
 
         public ResourceState State
 {
@@ -133,6 +139,7 @@ namespace ApexShift.Runtime.Resources
 
         public void ConfigureDefault(string kind)
         {
+            ResourceRegistry.Register(this);
             ResourceDefinition defaultDefinition = ResourceDefinition.CreateDefault(kind);
             resourceKind = defaultDefinition.Id.ToString();
             displayName = defaultDefinition.DisplayName;
@@ -150,6 +157,7 @@ namespace ApexShift.Runtime.Resources
             definition = null;
             state = null;
             EnsureState();
+            EnsureInteractionCollider();
         }
 
         public bool CanInteract(GameObject actor)

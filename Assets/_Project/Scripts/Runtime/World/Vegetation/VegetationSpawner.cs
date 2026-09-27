@@ -29,6 +29,7 @@ namespace ApexShift.Runtime.World.Vegetation
                 if (marker == null) marker = instance.AddComponent<VegetationInstanceRuntime>();
                 marker.Configure(placement);
                 ApplyCollisionPolicy(instance, placement.CollisionMode);
+                VegetationGameplayPromoter.Promote(instance, marker, species);
                 result?.RecordVegetation(placement.BiomeId, placement.SpeciesId, placement.Category);
                 spawned++;
             }

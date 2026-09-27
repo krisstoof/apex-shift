@@ -31,11 +31,11 @@ namespace ApexShift.Editor.World
 
             var species = new List<VegetationSpeciesAsset>
             {
-                EnsureSpecies("tree_leafy_01", "Leafy Tree 01", VegetationCategory.Tree, 4.2f, new[] { "hearth_meadow", "westwood", "south_thicket" }, true, "leafy_tree"),
-                EnsureSpecies("tree_conifer_01", "Conifer Tree 01", VegetationCategory.Tree, 3.8f, new[] { "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" }, true, "conifer_tree"),
-                EnsureSpecies("tree_dead_01", "Dead Tree 01", VegetationCategory.DeadTree, 4.5f, new[] { "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" }, true, "dry_tree"),
-                EnsureSpecies("shrub_forest_01", "Forest Shrub 01", VegetationCategory.Shrub, 1.4f, new[] { "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" }, true, "berry_bush"),
-                EnsureSpecies("groundcover_forest_01", "Forest Groundcover 01", VegetationCategory.GroundCover, 0.55f, new[] { "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" }, false, string.Empty)
+                EnsureSpecies("tree_leafy_01", "Leafy Tree 01", VegetationCategory.Tree, 4.2f, 0.20f, 1.9f, 0.95f, new[] { "hearth_meadow", "westwood", "south_thicket" }, true, "leafy_tree"),
+                EnsureSpecies("tree_conifer_01", "Conifer Tree 01", VegetationCategory.Tree, 3.8f, 0.16f, 2.1f, 1.05f, new[] { "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" }, true, "conifer_tree"),
+                EnsureSpecies("tree_dead_01", "Dead Tree 01", VegetationCategory.DeadTree, 4.5f, 0.18f, 1.5f, 0.75f, new[] { "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" }, true, "dry_tree"),
+                EnsureSpecies("shrub_forest_01", "Forest Shrub 01", VegetationCategory.Shrub, 1.4f, 0.08f, 0.6f, 0.3f, new[] { "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" }, true, "berry_bush"),
+                EnsureSpecies("groundcover_forest_01", "Forest Groundcover 01", VegetationCategory.GroundCover, 0.55f, 0.05f, 0.25f, 0.125f, new[] { "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" }, false, string.Empty)
             };
 
             VegetationCatalogAsset catalog = LoadOrCreate<VegetationCatalogAsset>(CatalogPath);
@@ -60,7 +60,8 @@ namespace ApexShift.Editor.World
             }
         }
 
-        private static VegetationSpeciesAsset EnsureSpecies(string id, string label, VegetationCategory category, float minimumSpacing, string[] biomes, bool harvestable, string resourceKind)
+        private static VegetationSpeciesAsset EnsureSpecies(string id, string label, VegetationCategory category, float minimumSpacing,
+            float trunkRadius, float trunkHeight, float trunkCenterY, string[] biomes, bool harvestable, string resourceKind)
         {
             var asset = LoadOrCreate<VegetationSpeciesAsset>(SpeciesFolder + "/" + id + ".asset");
             GameObject visual = asset.VisualPrefab; // Preserve any manually assigned content reference.
@@ -69,7 +70,8 @@ namespace ApexShift.Editor.World
                 minimumSpacing,
                 0f, category == VegetationCategory.GroundCover ? 35f : 40f,
                 0f, 1f, 0f, 1f, biomes, true, harvestable, resourceKind, depletedVisual,
-                category == VegetationCategory.GroundCover ? VegetationCollisionMode.None : VegetationCollisionMode.GameplayResource);
+                category == VegetationCategory.GroundCover ? VegetationCollisionMode.None : VegetationCollisionMode.GameplayResource,
+                trunkRadius, trunkHeight, trunkCenterY);
             EditorUtility.SetDirty(asset);
             return asset;
         }

@@ -2,6 +2,7 @@ using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Audio;
 using ApexShift.Runtime.PlayerInput;
+using ApexShift.Runtime.World.Vegetation;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -29,6 +30,11 @@ namespace ApexShift.Runtime.Player
         [SerializeField] private float meleeCooldownSeconds = 0.55f;
         [SerializeField] private float meleeStaminaCost = 8f;
 
+        [Header("Axe targeting")]
+        [SerializeField, Min(0.1f)] private float axeRange = 2.6f;
+        [SerializeField, Min(0.01f)] private float axeHitRadius = 0.22f;
+        [SerializeField] private LayerMask axeTargetMask = Physics.DefaultRaycastLayers;
+
         [Header("Bow")]
         [SerializeField] private float bowDamage = 15f;
         [SerializeField] private float bowCooldownSeconds = 1.05f;
@@ -53,6 +59,7 @@ namespace ApexShift.Runtime.Player
         private float cooldownRemaining;
         private UnityEngine.Camera aimCamera;
         private readonly MeleeTargetSelector meleeTargetSelector = new MeleeTargetSelector(32);
+        private readonly RaycastHit[] axeHitBuffer = new RaycastHit[32];
 
         public bool IsOnCooldown => cooldownRemaining > 0f;
 
@@ -161,6 +168,8 @@ namespace ApexShift.Runtime.Player
             {
                 TriggerUseAnimation(activeItemId);
                 cooldownRemaining = Mathf.Max(0.05f, meleeCooldownSeconds);
+                if (string.Equals(activeItemId, "axe", System.StringComparison.OrdinalIgnoreCase))
+                    TryHitHarvestableTree(direction);
                 return true;
             }
 
@@ -171,6 +180,32 @@ namespace ApexShift.Runtime.Player
 
             PublishCombatEvent(GameplayEventKind.PlayerMeleeHit, "player_attack_no_weapon", transform.position, "none", "no_weapon", 0f);
             return false;
+        }
+
+        /// <summary>Finds the nearest harvestable trunk along the axe swing and lets its resource node resolve the harvest.</summary>
+        public bool TryHitHarvestableTree(Vector3 direction)
+        {
+            if (direction.sqrMagnitude < 0.001f) return false;
+            direction.Normalize();
+            Vector3 origin = GetAttackOrigin();
+            int hitCount = Physics.SphereCastNonAlloc(origin, Mathf.Max(0.01f, axeHitRadius), direction,
+                axeHitBuffer, Mathf.Max(0.1f, axeRange), axeTargetMask, QueryTriggerInteraction.Ignore);
+
+            IAxeHitTarget nearestTarget = null;
+            float nearestDistance = float.PositiveInfinity;
+            for (int i = 0; i < hitCount; i++)
+            {
+                RaycastHit hit = axeHitBuffer[i];
+                Transform hitTransform = hit.collider != null ? hit.collider.transform : null;
+                if (hitTransform == null || hitTransform == transform || hitTransform.IsChildOf(transform)) continue;
+                HarvestableTreeRuntime tree = hitTransform.GetComponentInParent<HarvestableTreeRuntime>();
+                if (tree == null || tree.ResourceNode == null || !tree.ResourceNode.CanInteract(gameObject)
+                    || hit.distance >= nearestDistance) continue;
+                nearestTarget = tree;
+                nearestDistance = hit.distance;
+            }
+
+            return nearestTarget != null && nearestTarget.TryAxeHit(gameObject);
         }
 
         private void HandleAttackPressed() => TriggerPrimaryAttack();

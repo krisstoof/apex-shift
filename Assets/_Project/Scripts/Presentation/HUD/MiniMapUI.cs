@@ -251,7 +251,7 @@ namespace ApexShift.Presentation.HUD
             for (int i = 0; i < resources.Count && added < cap; i++)
             {
                 ResourceNodeView resource = resources[i];
-                if (resource == null || resource.gameObject == null || !resource.gameObject.activeInHierarchy)
+                if (resource == null || resource.gameObject == null || !resource.gameObject.activeInHierarchy || !resource.ShowOnResourceMap)
                 {
                     continue;
                 }

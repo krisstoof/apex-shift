@@ -35,6 +35,10 @@ namespace ApexShift.Runtime.World.Vegetation
         [SerializeField, Min(0.01f)] private float minScale = 0.8f;
         [SerializeField, Min(0.01f)] private float maxScale = 1.2f;
         [SerializeField, Min(0f)] private float minimumSpacing = 1f;
+        [Header("Tree trunk collision")]
+        [SerializeField, Min(0.01f)] private float trunkRadius = 0.18f;
+        [SerializeField, Min(0.02f)] private float trunkHeight = 1.8f;
+        [SerializeField, Min(0f)] private float trunkCenterY = 0.9f;
         [SerializeField, Range(0f, 90f)] private float minSlopeDegrees;
         [SerializeField, Range(0f, 90f)] private float maxSlopeDegrees = 90f;
         [SerializeField, Range(0f, 1f)] private float minElevation01;
@@ -56,6 +60,9 @@ namespace ApexShift.Runtime.World.Vegetation
         public float MinScale => minScale;
         public float MaxScale => maxScale;
         public float MinimumSpacing => minimumSpacing;
+        public float TrunkRadius => trunkRadius;
+        public float TrunkHeight => trunkHeight;
+        public float TrunkCenterY => trunkCenterY;
         public float MinSlopeDegrees => minSlopeDegrees;
         public float MaxSlopeDegrees => maxSlopeDegrees;
         public float MinElevation01 => minElevation01;
@@ -75,7 +82,8 @@ namespace ApexShift.Runtime.World.Vegetation
             float minimumSlope, float maximumSlope, float minimumElevation, float maximumElevation,
             float minimumMoisture, float maximumMoisture, IEnumerable<string> biomeIds,
             bool yawRandomized, bool canHarvest, string harvestResourceKind,
-            GameObject depletedPrefab, VegetationCollisionMode collision)
+            GameObject depletedPrefab, VegetationCollisionMode collision,
+            float treeTrunkRadius = 0.18f, float treeTrunkHeight = 1.8f, float treeTrunkCenterY = 0.9f)
         {
             speciesId = NormalizeSpeciesId(id);
             displayName = label ?? string.Empty;
@@ -84,6 +92,9 @@ namespace ApexShift.Runtime.World.Vegetation
             minScale = minimumScale;
             maxScale = maximumScale;
             minimumSpacing = spacing;
+            trunkRadius = Mathf.Max(0.01f, treeTrunkRadius);
+            trunkHeight = Mathf.Max(trunkRadius * 2f, treeTrunkHeight);
+            trunkCenterY = Mathf.Max(0f, treeTrunkCenterY);
             minSlopeDegrees = minimumSlope;
             maxSlopeDegrees = maximumSlope;
             minElevation01 = minimumElevation;

@@ -96,6 +96,9 @@ namespace ApexShift.Tests.Editor
             const string root = "Assets/_Project/Data/Vegetation";
             string[] ids = { "tree_leafy_01", "tree_conifer_01", "tree_dead_01", "shrub_forest_01", "groundcover_forest_01" };
             float[] expectedSpacing = { 4.2f, 3.8f, 4.5f, 1.4f, 0.55f };
+            float[] expectedTrunkRadii = { 0.20f, 0.16f, 0.18f, 0.08f, 0.05f };
+            float[] expectedTrunkHeights = { 1.9f, 2.1f, 1.5f, 0.6f, 0.25f };
+            float[] expectedTrunkCenters = { 0.95f, 1.05f, 0.75f, 0.3f, 0.125f };
             int speciesCountBefore = AssetDatabase.FindAssets("t:VegetationSpeciesAsset", new[] { root + "/Species" }).Length;
             int profileCountBefore = AssetDatabase.FindAssets("t:BiomeVegetationProfileAsset", new[] { root + "/Biomes" }).Length;
             var visualPrefabs = new Dictionary<string, GameObject>();
@@ -131,6 +134,9 @@ namespace ApexShift.Tests.Editor
                 Assert.That(species.VisualPrefab, Is.SameAs(visualPrefabs[id]), id + " visual prefab was not preserved");
                 Assert.That(species.DepletedVisualPrefab, Is.SameAs(depletedPrefabs[id]), id + " depleted prefab was not preserved");
                 Assert.That(species.MinimumSpacing, Is.EqualTo(expectedSpacing[i]).Within(0.0001f), id + " spacing was not retained by the data creator");
+                Assert.That(species.TrunkRadius, Is.EqualTo(expectedTrunkRadii[i]).Within(0.0001f), id + " trunk radius");
+                Assert.That(species.TrunkHeight, Is.EqualTo(expectedTrunkHeights[i]).Within(0.0001f), id + " trunk height");
+                Assert.That(species.TrunkCenterY, Is.EqualTo(expectedTrunkCenters[i]).Within(0.0001f), id + " trunk center");
             }
 
             AssertProfileDensity("hearth_meadow", 0.45f);
