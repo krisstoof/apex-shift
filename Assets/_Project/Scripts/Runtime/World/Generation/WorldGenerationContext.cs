@@ -15,6 +15,7 @@ namespace ApexShift.Runtime.World.Generation
         public Transform TerrainRoot { get; set; }
         public Transform BiomeRoot { get; set; }
         public Transform ResourceRoot { get; set; }
+        public Transform VegetationRoot { get; set; }
         public Transform CreatureRoot { get; set; }
         public Transform BuildingRoot { get; set; }
         public Transform LandmarkRoot { get; set; }

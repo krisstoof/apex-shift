@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using ApexShift.Runtime.World.Generation;
 using ApexShift.Runtime.World.Biomes;
+using ApexShift.Runtime.World.Vegetation;
 
 namespace ApexShift.Runtime.World.Topography
 {
@@ -47,6 +48,9 @@ namespace ApexShift.Runtime.World.Topography
         public bool IsBuilt => _grid != null;
         public int DenseBiomeMapResolutionPerTile => _gridSize > 0 ? _biomeMapSize / _gridSize : 0;
         public float DenseBiomeMapCellSize => _biomeMapCellSize;
+        public Bounds WorldBounds => new Bounds(
+            new Vector3(_originX + _gridSize * _tileSize * 0.5f, 0f, _originZ + _gridSize * _tileSize * 0.5f),
+            new Vector3(_gridSize * _tileSize, 0.1f, _gridSize * _tileSize));
 
         // ── Build ─────────────────────────────────────────────────────────────
 
@@ -223,6 +227,22 @@ namespace ApexShift.Runtime.World.Topography
             int x = Mathf.Clamp(Mathf.FloorToInt((worldPos.x - _originX) / _biomeMapCellSize), 0, _biomeMapSize - 1);
             int z = Mathf.Clamp(Mathf.FloorToInt((worldPos.z - _originZ) / _biomeMapCellSize), 0, _biomeMapSize - 1);
             return _biomeMap[x, z] ?? "water";
+        }
+
+        /// <summary>Combines cached coarse environment data with the authoritative dense biome map.</summary>
+        public bool TryGetEnvironmentAt(Vector3 worldPos, out VegetationEnvironmentSample sample)
+        {
+            sample = default;
+            if (_grid == null || worldPos.x < _originX || worldPos.z < _originZ
+                || worldPos.x >= _originX + _gridSize * _tileSize
+                || worldPos.z >= _originZ + _gridSize * _tileSize) return false;
+            TopographyCell cell = GetCellAt(worldPos);
+            if (cell == null) return false;
+            string denseBiome = GetBiomeIdAt(worldPos);
+            bool water = cell.IsWater || string.Equals(denseBiome, "water", StringComparison.Ordinal);
+            sample = new VegetationEnvironmentSample(!water && cell.IsLand, water, cell.IsShoreline,
+                denseBiome, cell.NormalizedElevation, cell.SlopeDegrees, cell.Moisture01);
+            return true;
         }
 
         /// <summary>Returns the cell at grid indices, or null if out of range.</summary>

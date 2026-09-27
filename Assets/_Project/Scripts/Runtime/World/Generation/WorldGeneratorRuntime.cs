@@ -19,6 +19,7 @@ using ApexShift.Runtime.DayNight;
 using ApexShift.Runtime.World.Sky;
 using ApexShift.Runtime.World.Topography;
 using ApexShift.Runtime.World.Landmarks;
+using ApexShift.Runtime.World.Vegetation;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
@@ -90,6 +91,7 @@ namespace ApexShift.Runtime.World.Generation
         private Transform _terrainRoot;
         private Transform _biomeRoot;
         private Transform _resourceRoot;
+        private Transform _vegetationRoot;
         private Transform _creatureRoot;
         private Transform _buildingRoot;
         private Transform _landmarkRoot;
@@ -110,6 +112,8 @@ namespace ApexShift.Runtime.World.Generation
         private TerrainHeightfieldGenerator _terrainHeightfield;
         private BiomeFieldGenerator _biomeField;
         private BiomeClassifier _biomeClassifier;
+        private VegetationPlacementPlanner _vegetationPlanner;
+        private VegetationSpawner _vegetationSpawner;
 
         private const string DefaultInputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
 
@@ -175,11 +179,9 @@ namespace ApexShift.Runtime.World.Generation
                     EnsureBuildingRegistry();
                 }),
                 new WorldGenerationStage("GenerateTerrainAndBiomes", context => GenerateIslandLayout()),
-                // Resources historically spawned while regions were being added. They
-                // now have a real stage, while remaining before landmarks to preserve
-                // the previous seeded random sequence.
                 new WorldGenerationStage("SpawnResources", context => SpawnAllRegionResources()),
                 new WorldGenerationStage("GenerateLandmarks", context => GenerateLandmarks()),
+                new WorldGenerationStage("GenerateVegetation", context => GenerateVegetation()),
                 new WorldGenerationStage("SpawnPlayer", context =>
                 {
                     context.Player = CreatePlayer();
@@ -208,7 +210,7 @@ namespace ApexShift.Runtime.World.Generation
                 new WorldGenerationStage("FinalizeGeneration", context =>
                 {
                     context.Result = _lastResult;
-                    Debug.Log($"World Generation Complete. Biomes: {_lastResult.BiomeCount}, Resources: {_lastResult.ResourceCount}, Seed: {seed}");
+                    Debug.Log(BuildGenerationSummary(_lastResult));
                     OnGenerationComplete?.Invoke(context.Player);
                 }));
         }
@@ -245,6 +247,7 @@ namespace ApexShift.Runtime.World.Generation
             _terrainRoot = null;
             _biomeRoot = null;
             _resourceRoot = null;
+            _vegetationRoot = null;
             _creatureRoot = null;
             _buildingRoot = null;
             _landmarkRoot = null;
@@ -270,11 +273,13 @@ namespace ApexShift.Runtime.World.Generation
             _creatureRoot = CreateRoot("CreatureRoot");
             _buildingRoot = CreateRoot("BuildingRoot");
             _landmarkRoot = CreateRoot("LandmarkRoot");
+            _vegetationRoot = CreateRoot("VegetationRoot");
             if (_generationContext != null)
             {
                 _generationContext.TerrainRoot = _terrainRoot;
                 _generationContext.BiomeRoot = _biomeRoot;
                 _generationContext.ResourceRoot = _resourceRoot;
+                _generationContext.VegetationRoot = _vegetationRoot;
                 _generationContext.CreatureRoot = _creatureRoot;
                 _generationContext.BuildingRoot = _buildingRoot;
                 _generationContext.LandmarkRoot = _landmarkRoot;
@@ -537,6 +542,46 @@ namespace ApexShift.Runtime.World.Generation
             }
         }
 
+        private void GenerateVegetation()
+        {
+            if (biomeCatalog == null || _islandTopography == null || !_islandTopography.IsBuilt || _vegetationRoot == null) return;
+            VegetationGenerationSettings vegetationSettings = settings != null ? settings.Vegetation : new VegetationGenerationSettings();
+            var shorelinePoints = new List<Vector3>();
+            TopographyCell[,] grid = _islandTopography.GetGridReadOnly();
+            if (grid != null)
+                for (int z = 0; z < grid.GetLength(1); z++)
+                    for (int x = 0; x < grid.GetLength(0); x++)
+                        if (grid[x, z] != null && grid[x, z].IsShoreline) shorelinePoints.Add(grid[x, z].WorldCenter);
+
+            var landmarkClearances = new List<VegetationLandmarkClearance>();
+            IReadOnlyList<LandmarkRuntime> landmarks = LandmarkRegistry.Landmarks;
+            for (int i = 0; i < landmarks.Count; i++)
+            {
+                LandmarkRuntime landmark = landmarks[i];
+                if (landmark == null) continue;
+                float radius = vegetationSettings.LandmarkClearances.GetRadius(landmark.Type);
+                if (radius > 0f) landmarkClearances.Add(new VegetationLandmarkClearance(landmark.transform.position, radius));
+            }
+
+            _vegetationPlanner = new VegetationPlacementPlanner();
+            List<VegetationPlacement> placements = _vegetationPlanner.Plan(
+                seed, biomeCatalog, vegetationSettings, _islandTopography.WorldBounds,
+                position => _islandTopography.TryGetEnvironmentAt(position, out VegetationEnvironmentSample sample) ? sample : default,
+                SampleTerrainHeight, _islandTopography.GetSafePlayerSpawnPoint(), clearingRadius,
+                landmarkClearances, shorelinePoints);
+            _vegetationSpawner = new VegetationSpawner();
+            _vegetationSpawner.Spawn(placements, _vegetationRoot, _lastResult);
+        }
+
+        private static string BuildGenerationSummary(WorldGenerationResult result)
+        {
+            var summary = new System.Text.StringBuilder();
+            summary.Append($"World Generation Complete. Biomes: {result.BiomeCount}, Resources: {result.ResourceCount}, Vegetation: {result.VegetationInstanceCount}, Seed: {result.Seed}");
+            foreach (KeyValuePair<string, int> entry in result.VegetationCounts)
+                summary.AppendLine().Append(entry.Key).Append(": ").Append(entry.Value);
+            return summary.ToString();
+        }
+
         private void SpawnAllRegionResources()
         {
             foreach (GeneratedBiomeRegion region in _lastResult.Regions)
@@ -719,6 +764,7 @@ namespace ApexShift.Runtime.World.Generation
             foreach (var entry in region.Biome.Vegetation)
             {
                 if (entry == null) continue;
+                if (IsMigratedDecorativeVegetation(entry.Kind)) continue;
 
                 for (int i = 0; i < entry.Count; i++)
                 {
@@ -740,6 +786,22 @@ namespace ApexShift.Runtime.World.Generation
                     _lastResult.SpawnAttempts++;
                     SpawnResource(entry, pos);
                 }
+            }
+        }
+
+        private static bool IsMigratedDecorativeVegetation(VegetationSpawnKind kind)
+        {
+            switch (kind)
+            {
+                case VegetationSpawnKind.ConiferTree:
+                case VegetationSpawnKind.LeafyTree:
+                case VegetationSpawnKind.DryTree:
+                case VegetationSpawnKind.GreenBush:
+                case VegetationSpawnKind.DryBush:
+                case VegetationSpawnKind.GrassOrFlower:
+                    return true;
+                default:
+                    return false;
             }
         }
 
