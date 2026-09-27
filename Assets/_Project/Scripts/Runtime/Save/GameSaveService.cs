@@ -229,8 +229,8 @@ namespace ApexShift.Runtime.Save
             }
 
             RestoreResourceStates(saveData.World.Resources);
-            RestoreTreeStates(saveData.World.TreeStates);
             RestorePickupStates(saveData.World.Pickups);
+            RestoreTreeStates(saveData.World.TreeStates);
             ApplyBiomeStates(saveData.World.BiomeStates);
             ApplyEcosystemMetadata(saveData.World);
             RestoreCreatureStates(saveData.World.CreatureStates);

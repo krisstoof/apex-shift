@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ApexShift.Core.Resources;
 using ApexShift.Core.Save;
 using ApexShift.Infrastructure.Save;
 using ApexShift.Runtime.Ecosystem;
@@ -364,6 +365,49 @@ namespace ApexShift.Tests.Editor
         }
 
         [Test]
+        public void ApplyLoadedState_RestoresPendingFallingTreeYieldAfterSavedPickups()
+        {
+            var setup = SpawnTree("tree_conifer_01", VegetationCategory.Tree, "conifer_tree", 1.35f, 6);
+            WorldSaveData world = new WorldSaveData(123, 1, 0f, new List<ResourceSaveData>(),
+                new List<PickupSaveData>(), new List<BiomeEcosystemSaveData>());
+            world.treeStates.Add(new TreeSaveData(setup.Tree.TreeId, setup.Tree.SpeciesId, setup.Tree.ResourceKind,
+                "Falling", 0f, setup.Tree.MaxHealth, 0f, dropsSpawned: false));
+            GameSaveData save = new GameSaveData(null, null, world);
+            GameSaveService service = CreateInactiveSaveService();
+
+            Assert.That(service.ApplyLoadedState(save), Is.True);
+
+            ResourceDefinition definition = ResourceDefinition.CreateDefault(setup.Tree.ResourceKind);
+            Assert.That(setup.Tree.LifecycleState, Is.EqualTo(TreeLifecycleState.Depleted));
+            Assert.That(ItemPickupRegistry.Pickups.Count, Is.EqualTo(1));
+            Assert.That(ItemPickupRegistry.Pickups[0].ItemId, Is.EqualTo(definition.ItemId));
+            Assert.That(ItemPickupRegistry.Pickups[0].Amount, Is.EqualTo(definition.HarvestAmount));
+        }
+
+        [Test]
+        public void ApplyLoadedState_RestoresSavedTreePickupBeforeSettlingDepletedTree()
+        {
+            var setup = SpawnTree("tree_leafy_01", VegetationCategory.Tree, "leafy_tree", 0f, 5);
+            ResourceDefinition definition = ResourceDefinition.CreateDefault(setup.Tree.ResourceKind);
+            WorldSaveData world = new WorldSaveData(123, 1, 0f, new List<ResourceSaveData>(),
+                new List<PickupSaveData>
+                {
+                    new PickupSaveData(definition.ItemId, definition.HarvestAmount, 3f, 0f, 4f, 0f, 0f, 0f, 1f)
+                }, new List<BiomeEcosystemSaveData>());
+            world.treeStates.Add(new TreeSaveData(setup.Tree.TreeId, setup.Tree.SpeciesId, setup.Tree.ResourceKind,
+                "Depleted", 0f, setup.Tree.MaxHealth, 0f, dropsSpawned: true));
+            GameSaveData save = new GameSaveData(null, null, world);
+            GameSaveService service = CreateInactiveSaveService();
+
+            Assert.That(service.ApplyLoadedState(save), Is.True);
+
+            Assert.That(setup.Tree.LifecycleState, Is.EqualTo(TreeLifecycleState.Depleted));
+            Assert.That(ItemPickupRegistry.Pickups.Count, Is.EqualTo(1));
+            Assert.That(ItemPickupRegistry.Pickups[0].ItemId, Is.EqualTo(definition.ItemId));
+            Assert.That(ItemPickupRegistry.Pickups[0].Amount, Is.EqualTo(definition.HarvestAmount));
+        }
+
+        [Test]
         public void SaveCapturesTreeOnceAndKeepsOrdinaryResourcesAndPickups()
         {
             var tree = SpawnTree("tree_leafy_01", VegetationCategory.Tree, "leafy_tree", 0f, 5);
@@ -425,6 +469,13 @@ namespace ApexShift.Tests.Editor
             tree.ConfigureDefault("dry_tree");
             tree.SetShowOnResourceMap(false);
             Assert.That(tree.ShowOnResourceMap, Is.False);
+        }
+
+        private GameSaveService CreateInactiveSaveService()
+        {
+            GameObject serviceObject = Track(new GameObject("inactive_save_service"));
+            serviceObject.SetActive(false);
+            return serviceObject.AddComponent<GameSaveService>();
         }
 
         private VegetationSpeciesAsset CreateSpecies(string id, GameObject visual, VegetationCategory category, bool harvestable,
