@@ -18,7 +18,7 @@ MonoBehaviour:
   category: 1
   minScale: 0.8
   maxScale: 1.2
-  minimumSpacing: 2
+  minimumSpacing: 1.4
   minSlopeDegrees: 0
   maxSlopeDegrees: 40
   minElevation01: 0

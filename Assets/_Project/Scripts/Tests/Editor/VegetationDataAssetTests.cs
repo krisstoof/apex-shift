@@ -95,6 +95,7 @@ namespace ApexShift.Tests.Editor
         {
             const string root = "Assets/_Project/Data/Vegetation";
             string[] ids = { "tree_leafy_01", "tree_conifer_01", "tree_dead_01", "shrub_forest_01", "groundcover_forest_01" };
+            float[] expectedSpacing = { 4.2f, 3.8f, 4.5f, 1.4f, 0.55f };
             int speciesCountBefore = AssetDatabase.FindAssets("t:VegetationSpeciesAsset", new[] { root + "/Species" }).Length;
             int profileCountBefore = AssetDatabase.FindAssets("t:BiomeVegetationProfileAsset", new[] { root + "/Biomes" }).Length;
             var visualPrefabs = new Dictionary<string, GameObject>();
@@ -123,12 +124,55 @@ namespace ApexShift.Tests.Editor
 
             Assert.That(AssetDatabase.FindAssets("t:VegetationSpeciesAsset", new[] { root + "/Species" }).Length, Is.EqualTo(speciesCountBefore));
             Assert.That(AssetDatabase.FindAssets("t:BiomeVegetationProfileAsset", new[] { root + "/Biomes" }).Length, Is.EqualTo(profileCountBefore));
-            foreach (string id in ids)
+            for (int i = 0; i < ids.Length; i++)
             {
+                string id = ids[i];
                 VegetationSpeciesAsset species = AssetDatabase.LoadAssetAtPath<VegetationSpeciesAsset>(root + "/Species/" + id + ".asset");
                 Assert.That(species.VisualPrefab, Is.SameAs(visualPrefabs[id]), id + " visual prefab was not preserved");
                 Assert.That(species.DepletedVisualPrefab, Is.SameAs(depletedPrefabs[id]), id + " depleted prefab was not preserved");
+                Assert.That(species.MinimumSpacing, Is.EqualTo(expectedSpacing[i]).Within(0.0001f), id + " spacing was not retained by the data creator");
             }
+
+            AssertProfileDensity("hearth_meadow", 0.45f);
+            AssertProfileDensity("westwood", 1.55f);
+            AssertProfileDensity("south_thicket", 1.70f);
+            AssertProfileDensity("stoneback_ridge", 0.65f);
+            AssertProfileDensity("redfang_wilds", 0.55f);
+            AssertProfileWeights("westwood", ("tree_conifer_01", 3f), ("tree_leafy_01", 2f), ("tree_dead_01", 0.35f), ("shrub_forest_01", 1.5f), ("groundcover_forest_01", 2.5f));
+            AssertProfileWeights("south_thicket", ("tree_leafy_01", 2.2f), ("tree_conifer_01", 0.8f), ("tree_dead_01", 0.2f), ("shrub_forest_01", 3f), ("groundcover_forest_01", 3.2f));
+            AssertProfileWeights("hearth_meadow", ("tree_leafy_01", 1f), ("shrub_forest_01", 0.8f), ("groundcover_forest_01", 2f));
+            AssertProfileWeights("stoneback_ridge", ("tree_conifer_01", 2.2f), ("tree_dead_01", 1.1f), ("shrub_forest_01", 0.5f), ("groundcover_forest_01", 0.8f));
+            AssertProfileWeights("redfang_wilds", ("tree_dead_01", 2.2f), ("tree_conifer_01", 0.5f), ("shrub_forest_01", 0.45f), ("groundcover_forest_01", 0.35f));
+            Assert.That(AssetDatabase.LoadAssetAtPath<VegetationSpeciesAsset>(root + "/Species/tree_conifer_01.asset").AllowsBiome("south_thicket"), Is.True);
+            Assert.That(AssetDatabase.LoadAssetAtPath<VegetationSpeciesAsset>(root + "/Species/tree_conifer_01.asset").AllowsBiome("redfang_wilds"), Is.True);
+            Assert.That(AssetDatabase.LoadAssetAtPath<VegetationSpeciesAsset>(root + "/Species/tree_dead_01.asset").AllowsBiome("south_thicket"), Is.True);
+        }
+
+        private static void AssertProfileDensity(string biomeId, float expected)
+        {
+            BiomeVegetationProfileAsset profile = AssetDatabase.LoadAssetAtPath<BiomeVegetationProfileAsset>(
+                "Assets/_Project/Data/Vegetation/Biomes/" + biomeId + "_vegetation.asset");
+            Assert.That(profile, Is.Not.Null, "Missing profile for " + biomeId);
+            Assert.That(profile.OverallDensity, Is.EqualTo(expected).Within(0.0001f), biomeId + " density was not applied");
+        }
+
+        private static void AssertProfileWeights(string biomeId, params (string speciesId, float weight)[] expected)
+        {
+            BiomeVegetationProfileAsset profile = AssetDatabase.LoadAssetAtPath<BiomeVegetationProfileAsset>(
+                "Assets/_Project/Data/Vegetation/Biomes/" + biomeId + "_vegetation.asset");
+            foreach ((string speciesId, float weight) in expected)
+            {
+                bool found = false;
+                foreach (BiomeVegetationSpeciesEntry entry in profile.Species)
+                    if (entry.Species.SpeciesId == speciesId)
+                    {
+                        Assert.That(entry.Weight, Is.EqualTo(weight).Within(0.0001f), biomeId + "/" + speciesId);
+                        found = true;
+                        break;
+                    }
+                Assert.That(found, Is.True, biomeId + " missing species " + speciesId);
+            }
+            Assert.That(profile.Species.Count, Is.EqualTo(expected.Length), biomeId + " has unexpected species entries");
         }
 
         private VegetationSpeciesAsset CreateSpecies(string id, GameObject visual, string[] biomes, bool harvestable, string resourceKind)

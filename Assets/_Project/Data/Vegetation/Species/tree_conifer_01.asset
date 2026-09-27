@@ -18,7 +18,7 @@ MonoBehaviour:
   category: 0
   minScale: 0.8
   maxScale: 1.2
-  minimumSpacing: 2
+  minimumSpacing: 3.8
   minSlopeDegrees: 0
   maxSlopeDegrees: 40
   minElevation01: 0
@@ -27,7 +27,9 @@ MonoBehaviour:
   maxMoisture01: 1
   allowedBiomeIds:
   - westwood
+  - south_thicket
   - stoneback_ridge
+  - redfang_wilds
   randomYaw: 1
   harvestable: 1
   resourceKind: conifer_tree

@@ -13,14 +13,17 @@ MonoBehaviour:
   m_Name: redfang_wilds_vegetation
   m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.World.Vegetation.BiomeVegetationProfileAsset
   biomeId: redfang_wilds
-  overallDensity: 0.65
+  overallDensity: 0.55
   species:
   - species: {fileID: 11400000, guid: c68e37fc5244faf47b6a1b58aab90795, type: 2}
-    weight: 1
+    weight: 2.2
     densityMultiplier: 1
   - species: {fileID: 11400000, guid: 3a8410c52178dc74b9f935f41f181c98, type: 2}
-    weight: 1
+    weight: 0.45
     densityMultiplier: 1
   - species: {fileID: 11400000, guid: 9b215399044e09e439e5d63535eb9584, type: 2}
-    weight: 1
-    densityMultiplier: 1.5
+    weight: 0.35
+    densityMultiplier: 1
+  - species: {fileID: 11400000, guid: 5c806ac8319893a4fbd0301ba2483e8d, type: 2}
+    weight: 0.5
+    densityMultiplier: 1

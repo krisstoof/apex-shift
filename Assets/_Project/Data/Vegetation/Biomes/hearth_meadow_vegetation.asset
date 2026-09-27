@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: hearth_meadow_vegetation
   m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.World.Vegetation.BiomeVegetationProfileAsset
   biomeId: hearth_meadow
-  overallDensity: 0.55
+  overallDensity: 0.45
   species:
   - species: {fileID: 11400000, guid: 894ae63f42f050c47b8389696b182ff4, type: 2}
-    weight: 2
+    weight: 1
     densityMultiplier: 1
   - species: {fileID: 11400000, guid: 3a8410c52178dc74b9f935f41f181c98, type: 2}
-    weight: 1
+    weight: 0.8
     densityMultiplier: 1
   - species: {fileID: 11400000, guid: 9b215399044e09e439e5d63535eb9584, type: 2}
-    weight: 1
-    densityMultiplier: 1.5
+    weight: 2
+    densityMultiplier: 1

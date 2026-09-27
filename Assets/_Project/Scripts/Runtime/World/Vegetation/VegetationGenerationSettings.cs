@@ -41,10 +41,10 @@ namespace ApexShift.Runtime.World.Vegetation
     public sealed class VegetationGenerationSettings
     {
         [Header("Base density (expected instances per square world unit)")]
-        [SerializeField, Min(0f)] private float treeBaseDensity = 0.009f;
-        [SerializeField, Min(0f)] private float deadTreeBaseDensity = 0.0012f;
-        [SerializeField, Min(0f)] private float shrubBaseDensity = 0.018f;
-        [SerializeField, Min(0f)] private float groundCoverBaseDensity = 0.045f;
+        [SerializeField, Min(0f)] private float treeBaseDensity = 0.016f;
+        [SerializeField, Min(0f)] private float deadTreeBaseDensity = 0.0025f;
+        [SerializeField, Min(0f)] private float shrubBaseDensity = 0.030f;
+        [SerializeField, Min(0f)] private float groundCoverBaseDensity = 0.075f;
         [Header("Placement")]
         [SerializeField, Min(1f)] private float chunkSize = 24f;
         [SerializeField, Range(0f, 1f)] private float jitterFraction = 0.88f;

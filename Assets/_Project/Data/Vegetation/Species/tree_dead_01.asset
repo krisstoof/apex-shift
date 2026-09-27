@@ -18,7 +18,7 @@ MonoBehaviour:
   category: 3
   minScale: 0.8
   maxScale: 1.2
-  minimumSpacing: 2
+  minimumSpacing: 4.5
   minSlopeDegrees: 0
   maxSlopeDegrees: 40
   minElevation01: 0
@@ -26,6 +26,8 @@ MonoBehaviour:
   minMoisture01: 0
   maxMoisture01: 1
   allowedBiomeIds:
+  - westwood
+  - south_thicket
   - stoneback_ridge
   - redfang_wilds
   randomYaw: 1

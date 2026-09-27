@@ -576,9 +576,20 @@ namespace ApexShift.Runtime.World.Generation
         private static string BuildGenerationSummary(WorldGenerationResult result)
         {
             var summary = new System.Text.StringBuilder();
-            summary.Append($"World Generation Complete. Biomes: {result.BiomeCount}, Resources: {result.ResourceCount}, Vegetation: {result.VegetationInstanceCount}, Seed: {result.Seed}");
+            summary.Append($"World Generation Complete. Biome regions: {result.BiomeCount}, Resources: {result.ResourceCount}, Seed: {result.Seed}")
+                .AppendLine().Append("Vegetation total: ").Append(result.VegetationInstanceCount);
+            string[] biomeIds = VegetationSpeciesAsset.CanonicalBiomeIds;
+            for (int i = 0; i < biomeIds.Length; i++)
+            {
+                string biomeId = biomeIds[i];
+                summary.AppendLine().Append(biomeId).Append(": trees=")
+                    .Append(result.GetVegetationCount(biomeId, VegetationCategory.Tree) + result.GetVegetationCount(biomeId, VegetationCategory.DeadTree))
+                    .Append(" shrubs=").Append(result.GetVegetationCount(biomeId, VegetationCategory.Shrub))
+                    .Append(" groundcover=").Append(result.GetVegetationCount(biomeId, VegetationCategory.GroundCover))
+                    .Append(" deadTrees=").Append(result.GetVegetationCount(biomeId, VegetationCategory.DeadTree));
+            }
             foreach (KeyValuePair<string, int> entry in result.VegetationCounts)
-                summary.AppendLine().Append(entry.Key).Append(": ").Append(entry.Value);
+                summary.AppendLine().Append("  ").Append(entry.Key).Append(": ").Append(entry.Value);
             return summary.ToString();
         }
 

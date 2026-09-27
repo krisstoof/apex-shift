@@ -19,6 +19,11 @@ namespace ApexShift.Runtime.World.Vegetation
         private readonly HashSet<string> emittedMissingPrefabWarnings = new HashSet<string>(StringComparer.Ordinal);
         private float spacingCellSize;
 
+        private const float MaximumLocalDensityMultiplier = 1.35f;
+        private const float LocalDensityMinimum = 0.55f;
+        private const float LocalDensityMaximum = 1.35f;
+        private const float LocalDensityCellSize = 48f;
+
         public List<VegetationPlacement> Plan(int seed, BiomeCatalogAsset biomeCatalog,
             VegetationGenerationSettings settings, Bounds worldBounds,
             Func<Vector3, VegetationEnvironmentSample> sampleEnvironment,
@@ -36,16 +41,19 @@ namespace ApexShift.Runtime.World.Vegetation
             {
                 BiomeVegetationProfileAsset profile = biome != null ? biome.VegetationProfile : null;
                 if (profile == null || profile.Species == null || profile.Species.Count == 0) continue;
-                float totalWeight = 0f;
-                for (int i = 0; i < profile.Species.Count; i++)
-                    if (profile.Species[i] != null) totalWeight += Mathf.Max(0f, profile.Species[i].Weight);
-                if (totalWeight <= 0f) continue;
+                float[] categoryWeights = new float[4];
+                categoryWeights[(int)VegetationCategory.Tree] = CalculateCategoryWeight(profile.Species, VegetationCategory.Tree);
+                categoryWeights[(int)VegetationCategory.DeadTree] = CalculateCategoryWeight(profile.Species, VegetationCategory.DeadTree);
+                categoryWeights[(int)VegetationCategory.Shrub] = CalculateCategoryWeight(profile.Species, VegetationCategory.Shrub);
+                categoryWeights[(int)VegetationCategory.GroundCover] = CalculateCategoryWeight(profile.Species, VegetationCategory.GroundCover);
 
                 for (int i = 0; i < profile.Species.Count; i++)
                 {
                     BiomeVegetationSpeciesEntry entry = profile.Species[i];
                     VegetationSpeciesAsset speciesAsset = entry != null ? entry.Species : null;
                     if (speciesAsset == null || entry.Weight <= 0f || entry.DensityMultiplier <= 0f) continue;
+                    float categoryWeight = categoryWeights[(int)speciesAsset.Category];
+                    if (categoryWeight <= 0f) continue;
                     string biomeId = biome.BiomeId;
                     if (!speciesAsset.AllowsBiome(biomeId)) continue;
                     if (speciesAsset.VisualPrefab == null)
@@ -58,7 +66,7 @@ namespace ApexShift.Runtime.World.Vegetation
                     float density = settings.GetBaseDensity(speciesAsset.Category)
                         * profile.OverallDensity
                         * entry.DensityMultiplier
-                        * (entry.Weight / totalWeight);
+                        * (entry.Weight / categoryWeight);
                     if (!IsFinite(density) || density <= 0f) continue;
                     PlanSpecies(seed, biomeId, speciesAsset, density, settings, worldBounds,
                         sampleEnvironment, sampleHeight, playerSpawn, startClearingRadius,
@@ -68,6 +76,19 @@ namespace ApexShift.Runtime.World.Vegetation
             return placements;
         }
 
+        private static float CalculateCategoryWeight(IReadOnlyList<BiomeVegetationSpeciesEntry> entries, VegetationCategory category)
+        {
+            if (entries == null) return 0f;
+            float total = 0f;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                BiomeVegetationSpeciesEntry entry = entries[i];
+                if (entry?.Species != null && entry.Species.Category == category)
+                    total += Mathf.Max(0f, entry.Weight);
+            }
+            return total;
+        }
+
         private void PlanSpecies(int seed, string biomeId, VegetationSpeciesAsset species,
             float density, VegetationGenerationSettings settings, Bounds worldBounds,
             Func<Vector3, VegetationEnvironmentSample> sampleEnvironment, Func<Vector3, float> sampleHeight,
@@ -75,7 +96,10 @@ namespace ApexShift.Runtime.World.Vegetation
             IReadOnlyList<VegetationLandmarkClearance> landmarks, IReadOnlyList<Vector3> shorelinePoints,
             List<VegetationPlacement> output)
         {
-            float cellSize = Mathf.Sqrt(1f / density);
+            // Candidate density uses the modulation ceiling; the local field then
+            // deterministically thins candidates to form broad patches and clearings.
+            float candidateDensity = density * MaximumLocalDensityMultiplier;
+            float cellSize = Mathf.Sqrt(1f / candidateDensity);
             if (!IsFinite(cellSize) || cellSize <= 0f) return;
             int minX = Mathf.FloorToInt(worldBounds.min.x / cellSize);
             int maxX = Mathf.CeilToInt(worldBounds.max.x / cellSize);
@@ -107,6 +131,9 @@ namespace ApexShift.Runtime.World.Vegetation
                 if (!CanPlaceInStartClearing(species.Category, settings, candidate, playerSpawn, startClearingRadius)) continue;
                 if (IsNearLandmark(candidate, landmarks)) continue;
                 if (IsNearShoreline(candidate, shorelinePoints, coastClearance)) continue;
+
+                float localDensityMultiplier = SampleLocalDensityMultiplier(seed, candidate.x, candidate.z);
+                if (random.Next01() > localDensityMultiplier / MaximumLocalDensityMultiplier) continue;
 
                 float height = sampleHeight(candidate);
                 candidate.y = height;
@@ -236,6 +263,31 @@ namespace ApexShift.Runtime.World.Vegetation
             AddInt(ref hash, Mathf.RoundToInt(position.z * 1000f));
             return "veg_" + hash.ToString("x16", System.Globalization.CultureInfo.InvariantCulture);
         }
+
+        private static float SampleLocalDensityMultiplier(int seed, float x, float z)
+        {
+            float gx = x / LocalDensityCellSize;
+            float gz = z / LocalDensityCellSize;
+            int x0 = Mathf.FloorToInt(gx);
+            int z0 = Mathf.FloorToInt(gz);
+            float tx = Smooth01(gx - x0);
+            float tz = Smooth01(gz - z0);
+            float a = Mathf.Lerp(HashDensity(seed, x0, z0), HashDensity(seed, x0 + 1, z0), tx);
+            float b = Mathf.Lerp(HashDensity(seed, x0, z0 + 1), HashDensity(seed, x0 + 1, z0 + 1), tx);
+            return Mathf.Lerp(LocalDensityMinimum, LocalDensityMaximum, Mathf.Lerp(a, b, tz));
+        }
+
+        private static float HashDensity(int seed, int x, int z)
+        {
+            ulong hash = FnvOffset;
+            AddInt(ref hash, seed);
+            AddInt(ref hash, x);
+            AddInt(ref hash, z);
+            uint value = (uint)(hash ^ (hash >> 32));
+            return (value & 0x00ffffffu) / 16777215f;
+        }
+
+        private static float Smooth01(float value) => value * value * (3f - 2f * value);
 
         private static ulong StableHash(int seed, int chunkX, int chunkZ, string biomeId, string speciesId, int gridX, int gridZ)
         {

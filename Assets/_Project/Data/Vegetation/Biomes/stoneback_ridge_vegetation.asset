@@ -13,17 +13,20 @@ MonoBehaviour:
   m_Name: stoneback_ridge_vegetation
   m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.World.Vegetation.BiomeVegetationProfileAsset
   biomeId: stoneback_ridge
-  overallDensity: 0.5
+  overallDensity: 0.65
   species:
   - species: {fileID: 11400000, guid: 5c806ac8319893a4fbd0301ba2483e8d, type: 2}
-    weight: 2
+    weight: 2.2
     densityMultiplier: 1
   - species: {fileID: 11400000, guid: c68e37fc5244faf47b6a1b58aab90795, type: 2}
-    weight: 1
+    weight: 1.1
     densityMultiplier: 1
   - species: {fileID: 11400000, guid: 3a8410c52178dc74b9f935f41f181c98, type: 2}
-    weight: 1
+    weight: 0.5
     densityMultiplier: 1
   - species: {fileID: 11400000, guid: 9b215399044e09e439e5d63535eb9584, type: 2}
-    weight: 1
-    densityMultiplier: 1.5
+    weight: 0.8
+    densityMultiplier: 1
+  - species: {fileID: 11400000, guid: 2c84954bb376c5d4d96065c38424674c, type: 2}
+    weight: 0.8
+    densityMultiplier: 1

@@ -112,6 +112,10 @@ namespace ApexShift.Tests.Regression
                 string[] firstMetadata = firstInstances.Select(ToMetadata).OrderBy(value => value).ToArray();
                 int firstResultCount = first.Result.VegetationInstanceCount;
                 Assert.That(firstResultCount, Is.EqualTo(firstInstances.Length));
+                int categoryTotal = 0;
+                foreach (string biomeId in new[] { "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" })
+                    categoryTotal += first.Result.GetVegetationCount(biomeId, VegetationCategory.Tree);
+                Assert.That(categoryTotal, Is.EqualTo(firstResultCount), "Per-biome/category counts should reconcile with total and existing species counts.");
                 foreach (VegetationInstanceRuntime instance in firstInstances)
                 {
                     Assert.That(instance.transform.parent.name, Is.EqualTo($"Chunk_{instance.ChunkX}_{instance.ChunkZ}"));
