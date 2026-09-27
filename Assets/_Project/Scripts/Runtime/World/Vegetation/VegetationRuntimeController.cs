@@ -211,6 +211,8 @@ namespace ApexShift.Runtime.World.Vegetation
                 {
                     InstanceEntry entry = chunk.Entries[e];
                     if (entry.Tree == null) continue;
+                    TreeLifecycleState state = entry.Tree.LifecycleState;
+                    if (state != TreeLifecycleState.Standing && state != TreeLifecycleState.Falling) continue;
                     float effectiveRadius = entry.Tree.StreamingGameplayActive ? radius + settings.HysteresisDistance : radius;
                     if (HorizontalDistanceSquared(position, entry.Placement.Position) <= effectiveRadius * effectiveRadius)
                         candidates.Add(entry);

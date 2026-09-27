@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using ApexShift.Core.Save;
 using ApexShift.Runtime.Items;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Resources;
@@ -151,6 +152,59 @@ namespace ApexShift.Tests.Regression
             ownedObjects.Remove(forestRoot);
         }
 
+        [UnityTest]
+        public IEnumerator DepletedTreesDoNotConsumeGameplayBudget()
+        {
+            BuildTreeSelectionFixture("depleted_budget", 2, 6);
+            yield return null;
+
+            var depleted = new List<HarvestableTreeRuntime>();
+            for (int i = 0; i < 4; i++)
+            {
+                Assert.That(HarvestableTreeRegistry.TryGet($"depleted_budget_tree_{i}", out HarvestableTreeRuntime tree), Is.True);
+                depleted.Add(tree);
+                tree.RestoreSaveData(new TreeSaveData(tree.TreeId, tree.SpeciesId, tree.ResourceKind,
+                    "Depleted", 0f, tree.MaxHealth, 0f, true));
+            }
+
+            controller.RefreshNow(fakePlayer.position);
+
+            Assert.That(controller.Stats.ActiveHarvestableTrees, Is.EqualTo(2));
+            for (int i = 0; i < depleted.Count; i++)
+                Assert.That(depleted[i].StreamingGameplayActive, Is.False, $"Depleted tree {depleted[i].TreeId} consumed gameplay budget.");
+            for (int i = 4; i < 6; i++)
+            {
+                Assert.That(HarvestableTreeRegistry.TryGet($"depleted_budget_tree_{i}", out HarvestableTreeRuntime standing), Is.True);
+                Assert.That(standing.LifecycleState, Is.EqualTo(TreeLifecycleState.Standing));
+                Assert.That(standing.StreamingGameplayActive, Is.True, $"Standing tree {standing.TreeId} should receive the available slot.");
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator RegrownDepletedTreeCanReenterGameplaySelection()
+        {
+            BuildTreeSelectionFixture("regrowth_budget", 1, 1);
+            yield return null;
+
+            Assert.That(HarvestableTreeRegistry.TryGet("regrowth_budget_tree_0", out HarvestableTreeRuntime tree), Is.True);
+            tree.RestoreSaveData(new TreeSaveData(tree.TreeId, tree.SpeciesId, tree.ResourceKind,
+                "Depleted", 0f, tree.MaxHealth, 0f, true));
+            controller.RefreshNow(fakePlayer.position);
+            Assert.That(tree.LifecycleState, Is.EqualTo(TreeLifecycleState.Depleted));
+            Assert.That(tree.StreamingGameplayActive, Is.False);
+            Assert.That(controller.Stats.ActiveHarvestableTrees, Is.Zero);
+
+            Assert.That(tree.AdvanceGrowthDays(tree.RegrowthDays), Is.True);
+            Assert.That(tree.LifecycleState, Is.EqualTo(TreeLifecycleState.Standing));
+            Assert.That(tree.StreamingGameplayActive, Is.False,
+                "Regrowth should preserve current streaming status until the next selection refresh.");
+
+            controller.RefreshNow(fakePlayer.position);
+
+            Assert.That(tree.StreamingGameplayActive, Is.True);
+            Assert.That(controller.Stats.ActiveHarvestableTrees, Is.EqualTo(1));
+        }
+
         [UnityTearDown]
         public IEnumerator TearDown()
         {
@@ -182,6 +236,33 @@ namespace ApexShift.Tests.Regression
                 maxTreeHealth: 25f, regrowthDays: 5, fallDuration: 0.05f);
             ownedAssets.Add(species);
             return species;
+        }
+
+        private void BuildTreeSelectionFixture(string idPrefix, int gameplayBudget, int treeCount)
+        {
+            GameObject root = Own(new GameObject($"{idPrefix}_VegetationRoot"));
+            controller = root.AddComponent<VegetationRuntimeController>();
+            fakePlayer = Own(new GameObject($"{idPrefix}_Player")).transform;
+            fakePlayer.position = new Vector3(12f, 0f, 8f);
+            GameObject visual = Own(GameObject.CreatePrimitive(PrimitiveType.Cube));
+            visual.name = $"{idPrefix}_TreeVisual";
+            Renderer renderer = visual.GetComponent<MeshRenderer>();
+            visual.AddComponent<LODGroup>().SetLODs(new[] { new LOD(0.01f, new[] { renderer }) });
+            GameObject stump = Own(new GameObject($"{idPrefix}_Stump"));
+            VegetationSpeciesAsset species = CreateSpecies($"{idPrefix}_species", visual,
+                VegetationCategory.Tree, true, "leafy_tree", stump);
+            settings = new VegetationGenerationSettings();
+            settings.ConfigurePlacement(24f, 0.88f, true);
+            settings.ConfigureStreaming(true, 0.05f, 60f, 30f, 20f, 30f, 2f,
+                32, 0, 0, gameplayBudget, 20, 4, 8);
+
+            var placements = new List<VegetationPlacement>(treeCount);
+            for (int i = 0; i < treeCount; i++)
+                placements.Add(new VegetationPlacement($"{idPrefix}_tree_{i}", "westwood", species,
+                    new Vector3(8f + i * 1.5f, 0f, 8f), 0f, 1f, 0, 0));
+
+            controller.Initialize(placements, settings, fakePlayer.position);
+            controller.SetTarget(fakePlayer);
         }
 
         private void AssertBudgets()

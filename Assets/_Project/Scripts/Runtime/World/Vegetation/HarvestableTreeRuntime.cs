@@ -269,6 +269,7 @@ namespace ApexShift.Runtime.World.Vegetation
             transform.rotation = standingRotation;
             currentHealth = 0f;
             lifecycleState = TreeLifecycleState.Depleted;
+            streamingGameplayActive = false;
             regrowthProgress = 0f;
             SetStandingVisuals(false);
             SetStreamingColliders();
