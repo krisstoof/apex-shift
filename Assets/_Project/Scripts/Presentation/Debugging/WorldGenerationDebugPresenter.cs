@@ -4,6 +4,7 @@ using ApexShift.Runtime.World.Generation;
 using ApexShift.Runtime.World.Topography;
 using ApexShift.Runtime.World.Vegetation;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace ApexShift.Presentation.Debugging
 {
