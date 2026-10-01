@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
-using ApexShift.Runtime.World.Biomes;
+using ApexShift.Runtime.World.Topography;
 using ApexShift.Runtime.World.Generation;
 
 namespace ApexShift.Tests.Editor
@@ -106,11 +106,6 @@ namespace ApexShift.Tests.Editor
         [Test]
         public void LandAndWaterMeshesUseTheSameDeterministicNonGridCoastline()
         {
-            BiomeCatalogAsset catalog = ScriptableObject.CreateInstance<BiomeCatalogAsset>();
-            BiomeDefinitionAsset biome = ScriptableObject.CreateInstance<BiomeDefinitionAsset>();
-            biome.Configure("south_thicket", "South Thicket", Color.green, false, Array.Empty<VegetationSpawnEntryAsset>());
-            catalog.SetBiomes(new[] { biome });
-
             GameObject firstRoot = new GameObject("ContourFirst");
             GameObject secondRoot = new GameObject("ContourSecond");
             try
@@ -118,9 +113,11 @@ namespace ApexShift.Tests.Editor
                 Func<float, float, float> island = (x, z) => 64f - x * x - z * z;
                 Func<Vector3, float> height = p => 0.25f + p.x * 0.01f + p.z * 0.005f;
 
-                NaturalTerrainBuilder.BuildIslandTerrain(firstRoot.transform, 4, 5f, catalog, island, height, p => "south_thicket");
+                NaturalTerrainBuilder.BuildIslandTerrain(firstRoot.transform, 4, 5f, null, null, null,
+                    island, height, _ => TerrainType.Plain);
                 NaturalTerrainBuilder.BuildUnifiedWaterSurface(firstRoot.transform, 4, 5f, null, null, island);
-                NaturalTerrainBuilder.BuildIslandTerrain(secondRoot.transform, 4, 5f, catalog, island, height, p => "south_thicket");
+                NaturalTerrainBuilder.BuildIslandTerrain(secondRoot.transform, 4, 5f, null, null, null,
+                    island, height, _ => TerrainType.Plain);
                 NaturalTerrainBuilder.BuildUnifiedWaterSurface(secondRoot.transform, 4, 5f, null, null, island);
 
                 Mesh landA = firstRoot.transform.Find("IslandTerrainMesh").GetComponent<MeshFilter>().sharedMesh;
@@ -147,46 +144,28 @@ namespace ApexShift.Tests.Editor
             {
                 UnityEngine.Object.DestroyImmediate(firstRoot);
                 UnityEngine.Object.DestroyImmediate(secondRoot);
-                UnityEngine.Object.DestroyImmediate(catalog);
-                UnityEngine.Object.DestroyImmediate(biome);
             }
         }
 
         [Test]
-        public void BiomeBoundaryRefinementIsLocalAndCreatesSeparateSubmeshes()
+        public void TerrainDomainBoundaryCreatesSeparateSubmeshes()
         {
-            BiomeCatalogAsset catalog = ScriptableObject.CreateInstance<BiomeCatalogAsset>();
-            BiomeDefinitionAsset meadow = ScriptableObject.CreateInstance<BiomeDefinitionAsset>();
-            BiomeDefinitionAsset westwood = ScriptableObject.CreateInstance<BiomeDefinitionAsset>();
-            meadow.Configure("hearth_meadow", "Meadow", Color.green, false, Array.Empty<VegetationSpawnEntryAsset>());
-            westwood.Configure("westwood", "Westwood", Color.yellow, false, Array.Empty<VegetationSpawnEntryAsset>());
-            catalog.SetBiomes(new[] { meadow, westwood });
-            GameObject splitRoot = new GameObject("BiomeBoundaryRefined");
-            GameObject uniformRoot = new GameObject("BiomeUniform");
+            GameObject splitRoot = new GameObject("TerrainDomainBoundary");
             try
             {
                 Func<float, float, float> island = (x, z) => 1f;
                 Func<Vector3, float> height = _ => 0f;
-                NaturalTerrainBuilder.BuildIslandTerrain(splitRoot.transform, 3, 8f, catalog, island, height,
-                    p => p.x < 0.23f ? "hearth_meadow" : "westwood");
-                NaturalTerrainBuilder.BuildIslandTerrain(uniformRoot.transform, 3, 8f, catalog, island, height,
-                    p => "hearth_meadow");
+                NaturalTerrainBuilder.BuildIslandTerrain(splitRoot.transform, 3, 8f, null, null, null,
+                    island, height, p => p.x < 0f ? TerrainType.Plain : TerrainType.Beach);
 
                 Mesh split = splitRoot.transform.Find("IslandTerrainMesh").GetComponent<MeshFilter>().sharedMesh;
-                Mesh uniform = uniformRoot.transform.Find("IslandTerrainMesh").GetComponent<MeshFilter>().sharedMesh;
                 Assert.That(split.subMeshCount, Is.EqualTo(2));
                 Assert.That(split.GetTriangles(0).Length, Is.GreaterThan(0));
                 Assert.That(split.GetTriangles(1).Length, Is.GreaterThan(0));
-                Assert.That(split.triangles.Length, Is.GreaterThan(uniform.triangles.Length),
-                    "Only the local boundary band should receive additional subdivision.");
             }
             finally
             {
                 UnityEngine.Object.DestroyImmediate(splitRoot);
-                UnityEngine.Object.DestroyImmediate(uniformRoot);
-                UnityEngine.Object.DestroyImmediate(catalog);
-                UnityEngine.Object.DestroyImmediate(meadow);
-                UnityEngine.Object.DestroyImmediate(westwood);
             }
         }
 

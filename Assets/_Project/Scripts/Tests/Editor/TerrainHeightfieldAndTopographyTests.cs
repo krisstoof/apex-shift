@@ -48,6 +48,8 @@ namespace ApexShift.Tests.Editor
             Assert.AreEqual(HabitatIds.Coast, classifier.Classify(true, true, 0f, TerrainType.Beach, .1f, 1f, .5f));
             Assert.AreEqual(HabitatIds.RockyUpland, classifier.Classify(true, false, 80f, TerrainType.Ridge, .8f, 35f, .3f));
             Assert.AreEqual(HabitatIds.WetJungle, classifier.Classify(true, false, 80f, TerrainType.Forest, .6f, 4f, .9f));
+            Assert.AreEqual(HabitatIds.LowlandJungle, classifier.Classify(true, false, 80f, TerrainType.Plain, .2f, 4f, .3f));
+            Assert.AreEqual(HabitatIds.JungleInterior, classifier.Classify(true, false, 80f, TerrainType.Plain, .6f, 4f, .3f));
             Assert.AreEqual("south_thicket", LegacyBiomeCompatibility.ToLegacyBiomeId(HabitatIds.LowlandJungle));
         }
 
@@ -237,6 +239,60 @@ namespace ApexShift.Tests.Editor
                     .GetSetMethod(true).Invoke(null, new object[] { null });
                 Object.DestroyImmediate(go);
             }
+        }
+
+        [Test]
+        public void DenseEnvironmentQueriesMatchCachedSamplesWithinCoarseCells()
+        {
+            GameObject go = new GameObject("DenseEnvironmentQueryContractTest");
+            try
+            {
+                IslandTopographyRuntime topography = go.AddComponent<IslandTopographyRuntime>();
+                var settings = new ApexShift.Runtime.World.Environment.HabitatClassificationSettings();
+                settings.Configure(16f, .67f, 28f, .67f, .43f);
+                topography.Build(20, 8f, (x, z) => x * x + z * z <= 62f * 62f,
+                    p => p.x * 0.5f, null,
+                    habitatSettings: settings,
+                    habitatClassifier: new ApexShift.Runtime.World.Environment.HabitatClassifier(settings));
+
+                Vector3 coastNear = new Vector3(41f, 0f, 1f);
+                Vector3 coastFar = new Vector3(43f, 0f, 1f);
+                Assert.That(topography.GetCellAt(coastNear), Is.SameAs(topography.GetCellAt(coastFar)));
+                Assert.That(topography.TryGetEnvironmentAt(coastNear,
+                    out ApexShift.Runtime.World.Environment.EnvironmentSample nearSample), Is.True);
+                Assert.That(topography.TryGetEnvironmentAt(coastFar,
+                    out ApexShift.Runtime.World.Environment.EnvironmentSample farSample), Is.True);
+                Assert.That(nearSample.DistanceToCoast, Is.Not.EqualTo(farSample.DistanceToCoast));
+
+                bool foundTerrainTransitionInSingleCoarseCell = false;
+                float denseStep = topography.DenseHabitatMapCellSize;
+                for (float z = -10f; z < 10f && !foundTerrainTransitionInSingleCoarseCell; z += denseStep)
+                    for (float x = 20f; x < 32f && !foundTerrainTransitionInSingleCoarseCell; x += denseStep)
+                    {
+                        Vector3 a = new Vector3(x, 0f, z);
+                        Vector3 b = new Vector3(x + denseStep, 0f, z);
+                        if (!ReferenceEquals(topography.GetCellAt(a), topography.GetCellAt(b))) continue;
+                        if (!topography.TryGetEnvironmentAt(a,
+                                out ApexShift.Runtime.World.Environment.EnvironmentSample sampleA) ||
+                            !topography.TryGetEnvironmentAt(b,
+                                out ApexShift.Runtime.World.Environment.EnvironmentSample sampleB) ||
+                            sampleA.TerrainType == sampleB.TerrainType) continue;
+                        Assert.That(topography.GetTerrainTypeAt(a), Is.EqualTo(sampleA.TerrainType));
+                        Assert.That(topography.GetTerrainTypeAt(b), Is.EqualTo(sampleB.TerrainType));
+                        foundTerrainTransitionInSingleCoarseCell = true;
+                    }
+                Assert.That(foundTerrainTransitionInSingleCoarseCell, Is.True,
+                    "Expected a dense terrain transition inside one coarse topography cell.");
+
+                foreach (Vector3 position in new[] { coastNear, coastFar })
+                {
+                    Assert.That(topography.TryGetEnvironmentAt(position,
+                        out ApexShift.Runtime.World.Environment.EnvironmentSample sample), Is.True);
+                    Assert.That(topography.GetDistanceToCoastAt(position), Is.EqualTo(sample.DistanceToCoast));
+                    Assert.That(topography.GetTerrainTypeAt(position), Is.EqualTo(sample.TerrainType));
+                }
+            }
+            finally { Object.DestroyImmediate(go); }
         }
     }
 }

@@ -239,8 +239,15 @@ namespace ApexShift.Runtime.World.Topography
         /// <summary>Compatibility API for systems migrating in #98/#99.</summary>
         public string GetBiomeIdAt(Vector3 worldPos) => LegacyBiomeCompatibility.ToLegacyBiomeId(GetHabitatIdAt(worldPos));
 
-        public TerrainType GetTerrainTypeAt(Vector3 worldPos) => GetCellAt(worldPos)?.TerrainType ?? TerrainType.Water;
-        public float GetDistanceToCoastAt(Vector3 worldPos) => GetCellAt(worldPos)?.DistanceToCoast ?? 0f;
+        public TerrainType GetTerrainTypeAt(Vector3 worldPos)
+            => TryGetEnvironmentAt(worldPos, out EnvironmentSample sample)
+                ? sample.TerrainType
+                : GetCellAt(worldPos)?.TerrainType ?? TerrainType.Water;
+
+        public float GetDistanceToCoastAt(Vector3 worldPos)
+            => TryGetEnvironmentAt(worldPos, out EnvironmentSample sample)
+                ? sample.DistanceToCoast
+                : GetCellAt(worldPos)?.DistanceToCoast ?? 0f;
 
         /// <summary>Returns the generated environment cache without resampling noise.</summary>
         public bool TryGetEnvironmentAt(Vector3 worldPos, out EnvironmentSample sample)
@@ -412,6 +419,7 @@ namespace ApexShift.Runtime.World.Topography
             var heights = new float[_habitatMapSize, _habitatMapSize];
             var moisture = new float[_habitatMapSize, _habitatMapSize];
             var temperature = new float[_habitatMapSize, _habitatMapSize];
+            var shoreline = new bool[_habitatMapSize, _habitatMapSize];
 
             for (int z = 0; z < _habitatMapSize; z++)
                 for (int x = 0; x < _habitatMapSize; x++)
@@ -431,55 +439,117 @@ namespace ApexShift.Runtime.World.Topography
                 {
                     int left = Mathf.Max(0, x - 1), right = Mathf.Min(_habitatMapSize - 1, x + 1);
                     int down = Mathf.Max(0, z - 1), up = Mathf.Min(_habitatMapSize - 1, z + 1);
+                    shoreline[x, z] = land[x, z] &&
+                        (!land[left, z] || !land[right, z] || !land[x, down] || !land[x, up]);
+                }
+
+            float[,] distanceToCoast = CalculateDistanceToCoast(land, shoreline,
+                _habitatMapSize, _habitatMapCellSize);
+
+            for (int z = 0; z < _habitatMapSize; z++)
+                for (int x = 0; x < _habitatMapSize; x++)
+                {
+                    int left = Mathf.Max(0, x - 1), right = Mathf.Min(_habitatMapSize - 1, x + 1);
+                    int down = Mathf.Max(0, z - 1), up = Mathf.Min(_habitatMapSize - 1, z + 1);
                     float dx = (heights[right, z] - heights[left, z]) / Mathf.Max(0.01f, (right - left) * _habitatMapCellSize);
                     float dz = (heights[x, up] - heights[x, down]) / Mathf.Max(0.01f, (up - down) * _habitatMapCellSize);
                     float slope = Mathf.Atan(Mathf.Sqrt(dx * dx + dz * dz)) * Mathf.Rad2Deg;
-                    bool shoreline = land[x, z] && (!land[left, z] || !land[right, z] || !land[x, down] || !land[x, up]);
+                    bool isShoreline = shoreline[x, z];
                     float elevation = land[x, z] ? Mathf.Clamp01((heights[x, z] - minHeight) / heightRange) : 0f;
                     TerrainType terrainType = ClassifyTerrain(elevation, slope, moisture[x, z], land[x, z]);
-                    if (shoreline && terrainType != TerrainType.Ridge) terrainType = TerrainType.Beach;
+                    if (isShoreline && terrainType != TerrainType.Ridge) terrainType = TerrainType.Beach;
                     Vector3 position = new Vector3(_originX + (x + 0.5f) * _habitatMapCellSize, heights[x, z], _originZ + (z + 0.5f) * _habitatMapCellSize);
-                    TopographyCell coarse = GetCellAt(position);
-                    float distance = coarse != null ? coarse.DistanceToCoast : 0f;
-                    string habitat = classifier.Classify(land[x, z], shoreline, distance, terrainType, elevation, slope, moisture[x, z]);
+                    float distance = distanceToCoast[x, z];
+                    string habitat = classifier.Classify(land[x, z], isShoreline, distance, terrainType, elevation, slope, moisture[x, z]);
                     _habitatMap[x, z] = habitat;
-                    _environmentMap[x, z] = new EnvironmentSample(land[x, z], !land[x, z], shoreline, habitat,
+                    _environmentMap[x, z] = new EnvironmentSample(land[x, z], !land[x, z], isShoreline, habitat,
                         terrainType, heights[x, z], elevation, slope, moisture[x, z], temperature[x, z], distance);
                 }
 
-            // Coarse cell centers are canonical for gameplay region/spawn queries.
-            for (int z = 0; z < gridSize; z++)
-                for (int x = 0; x < gridSize; x++)
-                {
-                    TopographyCell cell = _grid[x, z];
-                    int mapX = Mathf.Clamp(Mathf.FloorToInt((cell.WorldCenter.x - _originX) / _habitatMapCellSize), 0, _habitatMapSize - 1);
-                    int mapZ = Mathf.Clamp(Mathf.FloorToInt((cell.WorldCenter.z - _originZ) / _habitatMapCellSize), 0, _habitatMapSize - 1);
-                    _habitatMap[mapX, mapZ] = cell.HabitatId;
-                    _environmentMap[mapX, mapZ] = cell.ToEnvironmentSample();
-                }
         }
 
         private static float[,] CalculateDistanceToCoast(bool[,] isLand, bool[,] shoreline, int size, float tileSize)
         {
-            var coast = new List<Vector2Int>();
+            bool hasCoast = false;
+            var horizontal = new float[size, size];
+            var input = new float[size];
+            var output = new float[size];
+            var sites = new int[size];
+            var boundaries = new float[size + 1];
+            const float infinity = 1e20f;
+
             for (int z = 0; z < size; z++)
-                for (int x = 0; x < size; x++)
-                    if (shoreline[x, z]) coast.Add(new Vector2Int(x, z));
-            var result = new float[size, size];
-            float noCoast = size * tileSize;
-            for (int z = 0; z < size; z++)
+            {
                 for (int x = 0; x < size; x++)
                 {
-                    if (!isLand[x, z]) { result[x, z] = 0f; continue; }
-                    float best = float.MaxValue;
-                    for (int i = 0; i < coast.Count; i++)
-                    {
-                        float dx = x - coast[i].x, dz = z - coast[i].y;
-                        best = Mathf.Min(best, Mathf.Sqrt(dx * dx + dz * dz) * tileSize);
-                    }
-                    result[x, z] = best == float.MaxValue ? noCoast : best;
+                    input[x] = shoreline[x, z] ? 0f : infinity;
+                    hasCoast |= shoreline[x, z];
                 }
+                DistanceTransform1D(input, output, size, sites, boundaries);
+                for (int x = 0; x < size; x++) horizontal[x, z] = output[x];
+            }
+
+            var result = new float[size, size];
+            float noCoast = size * tileSize;
+            if (!hasCoast)
+            {
+                for (int z = 0; z < size; z++)
+                    for (int x = 0; x < size; x++)
+                        result[x, z] = isLand[x, z] ? noCoast : 0f;
+                return result;
+            }
+
+            for (int x = 0; x < size; x++)
+            {
+                for (int z = 0; z < size; z++) input[z] = horizontal[x, z];
+                DistanceTransform1D(input, output, size, sites, boundaries);
+                for (int z = 0; z < size; z++)
+                    result[x, z] = isLand[x, z] ? Mathf.Sqrt(output[z]) * tileSize : 0f;
+            }
             return result;
+        }
+
+        // Exact separable squared-Euclidean distance transform to the nearest shoreline sample.
+        private static void DistanceTransform1D(float[] input, float[] output, int size,
+            int[] sites, float[] boundaries)
+        {
+            int k = 0;
+            sites[0] = 0;
+            boundaries[0] = float.NegativeInfinity;
+            boundaries[1] = float.PositiveInfinity;
+            for (int q = 1; q < size; q++)
+            {
+                float crossing;
+                do
+                {
+                    int site = sites[k];
+                    crossing = ((input[q] + q * q) - (input[site] + site * site)) / (2f * (q - site));
+                    if (crossing <= boundaries[k]) k--;
+                    else break;
+                } while (k >= 0);
+                if (k < 0)
+                {
+                    k = 0;
+                    sites[0] = q;
+                    boundaries[0] = float.NegativeInfinity;
+                    boundaries[1] = float.PositiveInfinity;
+                }
+                else
+                {
+                    k++;
+                    sites[k] = q;
+                    boundaries[k] = crossing;
+                    boundaries[k + 1] = float.PositiveInfinity;
+                }
+            }
+
+            k = 0;
+            for (int q = 0; q < size; q++)
+            {
+                while (boundaries[k + 1] < q) k++;
+                float delta = q - sites[k];
+                output[q] = delta * delta + input[sites[k]];
+            }
         }
 
         private static TerrainType ClassifyTerrain(float elevation, float slopeDegrees, float moisture, bool isLand)
