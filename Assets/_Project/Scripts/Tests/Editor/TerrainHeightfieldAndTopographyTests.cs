@@ -4,6 +4,7 @@ using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.World.Biomes;
 using ApexShift.Runtime.World.Query;
 using ApexShift.Runtime.World.Topography;
+using ApexShift.Runtime.World.Environment;
 
 namespace ApexShift.Tests.Editor
 {
@@ -37,6 +38,36 @@ namespace ApexShift.Tests.Editor
                     differences++;
             }
             Assert.That(differences, Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void HabitatClassifierUsesPhysicalClimateFieldsAndLegacyAdapterIsExplicit()
+        {
+            var classifier = new HabitatClassifier(new HabitatClassificationSettings());
+            Assert.AreEqual(HabitatIds.Water, classifier.Classify(false, false, 0f, TerrainType.Water, 0f, 0f, .5f));
+            Assert.AreEqual(HabitatIds.Coast, classifier.Classify(true, true, 0f, TerrainType.Beach, .1f, 1f, .5f));
+            Assert.AreEqual(HabitatIds.RockyUpland, classifier.Classify(true, false, 80f, TerrainType.Ridge, .8f, 35f, .3f));
+            Assert.AreEqual(HabitatIds.WetJungle, classifier.Classify(true, false, 80f, TerrainType.Forest, .6f, 4f, .9f));
+            Assert.AreEqual("south_thicket", LegacyBiomeCompatibility.ToLegacyBiomeId(HabitatIds.LowlandJungle));
+        }
+
+        [Test]
+        public void SafePlayerSpawnIsDeterministicAndNearCoastWithoutUsingOriginIdentity()
+        {
+            GameObject go = new GameObject("HabitatSpawnTest");
+            try
+            {
+                IslandTopographyRuntime topography = go.AddComponent<IslandTopographyRuntime>();
+                topography.Build(30, 4f, (x, z) => x * x + z * z <= 48f * 48f, _ => 0.2f, null);
+                Vector3 first = topography.GetSafePlayerSpawnPoint();
+                Vector3 second = topography.GetSafePlayerSpawnPoint();
+                Assert.AreEqual(first, second);
+                TopographyCell cell = topography.GetCellAt(first);
+                Assert.IsNotNull(cell);
+                Assert.IsTrue(cell.IsSafeForPlayerSpawn);
+                Assert.That(cell.DistanceToCoast, Is.GreaterThan(16f));
+            }
+            finally { Object.DestroyImmediate(go); }
         }
 
         [TestCase(101)]
@@ -143,7 +174,7 @@ namespace ApexShift.Tests.Editor
                 Assert.That(shore.TerrainType, Is.EqualTo(TerrainType.Beach));
                 Assert.That(shore.IsBeach, Is.True);
 
-                topography.Build(4, 1f, (x, z) => x < 0f, p => 0f, p => "stoneback_ridge");
+                topography.Build(4, 1f, (x, z) => x < 0f, p => p.x * 10f, null);
                 TopographyCell ridgeShore = topography.GetCell(1, 1);
                 Assert.That(ridgeShore.IsShoreline, Is.True);
                 Assert.That(ridgeShore.TerrainType, Is.EqualTo(TerrainType.Ridge),
@@ -165,17 +196,17 @@ namespace ApexShift.Tests.Editor
                 EcosystemDirectorRuntime director = go.AddComponent<EcosystemDirectorRuntime>();
                 WorldQueryRuntime worldQuery = go.AddComponent<WorldQueryRuntime>();
                 var field = new BiomeFieldGenerator(347, new BiomeFieldSettings());
-                var classifier = new BiomeClassifier(347, new BiomeFieldSettings());
-                topography.Build(8, 4f, (x, z) => true, p => p.x * 0.01f, p => "hearth_meadow",
-                    biomeField: field, biomeClassifier: classifier);
+                var classifier = new ApexShift.Runtime.World.Environment.HabitatClassifier(new ApexShift.Runtime.World.Environment.HabitatClassificationSettings());
+                topography.Build(8, 4f, (x, z) => true, p => p.x * 0.01f, null,
+                    biomeField: field, habitatClassifier: classifier);
                 typeof(IslandTopographyRuntime).GetProperty("Active",
                     System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)
                     .GetSetMethod(true).Invoke(null, new object[] { topography });
                 director.InitializeFromRegions(null);
 
-                Assert.That(topography.DenseBiomeMapResolutionPerTile, Is.EqualTo(12));
-                Assert.That(topography.DenseBiomeMapCellSize, Is.EqualTo(4f / 12f).Within(0.00001f));
-                var mapField = typeof(IslandTopographyRuntime).GetField("_biomeMap",
+                Assert.That(topography.DenseHabitatMapResolutionPerTile, Is.EqualTo(12));
+                Assert.That(topography.DenseHabitatMapCellSize, Is.EqualTo(4f / 12f).Within(0.00001f));
+                var mapField = typeof(IslandTopographyRuntime).GetField("_habitatMap",
                     System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
                 object prebuiltMap = mapField.GetValue(topography);
                 Assert.That(prebuiltMap, Is.Not.Null);
@@ -188,9 +219,13 @@ namespace ApexShift.Tests.Editor
                 };
                 foreach (Vector3 position in positions)
                 {
-                    string expected = topography.GetBiomeIdAt(position);
-                    Assert.That(worldQuery.GetBiomeIdForPosition(position), Is.EqualTo(expected), "WorldQueryRuntime at " + position);
-                    Assert.That(director.GetBiomeIdForPosition(position), Is.EqualTo(expected), "EcosystemDirectorRuntime at " + position);
+                    string expected = topography.GetHabitatIdAt(position);
+                    Assert.That(worldQuery.GetHabitatIdForPosition(position), Is.EqualTo(expected), "WorldQueryRuntime at " + position);
+                    Assert.That(topography.TryGetEnvironmentAt(position, out ApexShift.Runtime.World.Environment.EnvironmentSample sample), Is.True);
+                    Assert.That(sample.HabitatId, Is.EqualTo(expected));
+                    string legacy = topography.GetBiomeIdAt(position);
+                    Assert.That(worldQuery.GetBiomeIdForPosition(position), Is.EqualTo(legacy), "Legacy WorldQueryRuntime adapter at " + position);
+                    Assert.That(director.GetBiomeIdForPosition(position), Is.EqualTo(legacy), "Legacy EcosystemDirectorRuntime adapter at " + position);
                     Assert.That(mapField.GetValue(topography), Is.SameAs(prebuiltMap),
                         "Gameplay biome lookups must use the built dense map, not rebuild/classify via noise.");
                 }

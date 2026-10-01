@@ -55,7 +55,7 @@ namespace ApexShift.Tests.Unit.Debug
             CollectionAssert.AreEqual(new[]
             {
                 WorldDebugViewMode.None, WorldDebugViewMode.Elevation, WorldDebugViewMode.Slope,
-                WorldDebugViewMode.Moisture, WorldDebugViewMode.Biome, WorldDebugViewMode.VegetationDensity,
+                WorldDebugViewMode.Moisture, WorldDebugViewMode.Habitat, WorldDebugViewMode.VegetationDensity,
                 WorldDebugViewMode.HarvestableTrees, WorldDebugViewMode.VegetationChunks
             }, System.Enum.GetValues(typeof(WorldDebugViewMode)));
         }

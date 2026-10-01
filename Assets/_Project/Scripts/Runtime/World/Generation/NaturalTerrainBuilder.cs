@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using ApexShift.Runtime.World.Biomes;
+using ApexShift.Runtime.World.Topography;
 
 namespace ApexShift.Runtime.World.Generation
 {
@@ -30,6 +31,92 @@ namespace ApexShift.Runtime.World.Generation
         {
             "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds"
         };
+
+        private static Material[] fallbackDomainMaterials;
+
+        /// <summary>Builds terrain from physical terrain domains, never legacy biome identity.</summary>
+        public static void BuildIslandTerrain(Transform parent, int gridSize, float tileSize,
+            Material landMaterial, Material beachMaterial, Material rockyMaterial,
+            Func<float, float, float> sampleIslandField, Func<Vector3, float> getTerrainHeight,
+            Func<Vector3, TerrainType> getTerrainType)
+        {
+            int resolution = gridSize * TerrainInteriorSubdivPerTile;
+            float cellSize = tileSize / TerrainInteriorSubdivPerTile;
+            Vector3 halfSize = new Vector3(gridSize * tileSize * 0.5f, 0f, gridSize * tileSize * 0.5f);
+            bool[,] refined = BuildCoastlineRefinementMask(resolution, cellSize, halfSize, sampleIslandField);
+            var vertices = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            var triangles = new[] { new List<int>(), new List<int>(), new List<int>() };
+            var cache = new ContourVertexCache();
+            Func<Vector2, float> height = p => getTerrainHeight(new Vector3(p.x, 0f, p.y));
+            for (int z = 0; z < resolution; z++)
+                for (int x = 0; x < resolution; x++)
+                {
+                    Vector2[] corners = CellCorners(x, z, cellSize, halfSize);
+                    int mask = LandMask(corners, sampleIslandField);
+                    if (mask == 0 && !refined[x, z]) continue;
+                    float cx = (corners[0].x + corners[2].x) * 0.5f;
+                    float cz = (corners[0].y + corners[2].y) * 0.5f;
+                    int domain = TerrainDomain(getTerrainType(new Vector3(cx, 0f, cz)));
+                    if (refined[x, z])
+                    {
+                        float fine = cellSize / 2f;
+                        for (int sz = 0; sz < 2; sz++)
+                            for (int sx = 0; sx < 2; sx++)
+                            {
+                                Vector2[] fc = CellCorners(x * 2 + sx, z * 2 + sz, fine, halfSize);
+                                float fx = (fc[0].x + fc[2].x) * .5f, fz = (fc[0].y + fc[2].y) * .5f;
+                                int fd = TerrainDomain(getTerrainType(new Vector3(fx, 0f, fz)));
+                                AppendContourCell(fc, true, sampleIslandField, height, null, vertices, uvs,
+                                    triangles[fd], tileSize, cache, fd);
+                            }
+                    }
+                    else
+                        AppendFullInteriorCell(corners, height, null,
+                            HasRefinedNeighbor(refined, x, z, 0), HasRefinedNeighbor(refined, x, z, 1),
+                            HasRefinedNeighbor(refined, x, z, 2), HasRefinedNeighbor(refined, x, z, 3),
+                            vertices, uvs, triangles[domain], tileSize, cache, domain);
+                }
+
+            var materials = new List<Material>(3);
+            var submeshes = new List<List<int>>(3);
+            Material[] supplied = { landMaterial, beachMaterial, rockyMaterial };
+            for (int i = 0; i < 3; i++)
+                if (triangles[i].Count > 0)
+                {
+                    materials.Add(supplied[i] != null ? supplied[i] : GetFallbackDomainMaterial(i));
+                    submeshes.Add(triangles[i]);
+                }
+            if (materials.Count == 0) return;
+            var mesh = new Mesh { name = "IslandTerrainMesh", indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+            mesh.SetVertices(vertices); mesh.SetUVs(0, uvs); mesh.subMeshCount = submeshes.Count;
+            for (int i = 0; i < submeshes.Count; i++) mesh.SetTriangles(submeshes[i], i);
+            mesh.RecalculateNormals(); mesh.RecalculateBounds();
+            var go = new GameObject("IslandTerrainMesh"); go.transform.SetParent(parent, false);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            go.AddComponent<MeshRenderer>().sharedMaterials = materials.ToArray();
+            go.AddComponent<MeshCollider>().sharedMesh = mesh;
+        }
+
+        private static int TerrainDomain(TerrainType type)
+            => type == TerrainType.Beach ? 1 : type == TerrainType.Ridge ? 2 : 0;
+
+        private static Material GetFallbackDomainMaterial(int domain)
+        {
+            if (fallbackDomainMaterials == null || fallbackDomainMaterials.Length != 3)
+            {
+                Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+                Color[] colors = { new Color(.20f, .34f, .16f), new Color(.76f, .68f, .43f), new Color(.38f, .36f, .32f) };
+                fallbackDomainMaterials = new Material[3];
+                for (int i = 0; i < 3; i++)
+                {
+                    fallbackDomainMaterials[i] = new Material(shader);
+                    if (fallbackDomainMaterials[i].HasProperty("_BaseColor")) fallbackDomainMaterials[i].SetColor("_BaseColor", colors[i]);
+                    else if (fallbackDomainMaterials[i].HasProperty("_Color")) fallbackDomainMaterials[i].SetColor("_Color", colors[i]);
+                }
+            }
+            return fallbackDomainMaterials[Mathf.Clamp(domain, 0, 2)];
+        }
 
         // -------------------------------------------------------------------------
         // Public API
@@ -876,10 +963,8 @@ namespace ApexShift.Runtime.World.Generation
             int gridSize,
             float tileSize,
             Material cliffMaterial,
-            BiomeCatalogAsset catalog,
             Func<float, float, float> sampleIslandField,
             Func<Vector3, float> getTerrainHeight,
-            Func<Vector3, string> getBiomeId,
             float cliffBaseY = -0.6f)
         {
             Vector3 halfSize = new Vector3(gridSize * tileSize * 0.5f, 0f, gridSize * tileSize * 0.5f);
@@ -923,13 +1008,8 @@ namespace ApexShift.Runtime.World.Generation
 
             // Resolve cliff material: prefer explicit, then stoneback_ridge, then grey fallback
             Material mat = cliffMaterial;
-            if (mat == null) mat = catalog?.GetBiome("stoneback_ridge")?.GroundMaterial;
             if (mat == null)
-            {
-                mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-                if (mat.HasProperty("_BaseColor"))
-                    mat.SetColor("_BaseColor", new Color(0.42f, 0.38f, 0.32f));  // dark grey-brown stone
-            }
+                mat = GetFallbackDomainMaterial(2);
 
             GameObject go = new GameObject("CliffWallsMesh");
             go.transform.SetParent(parent);

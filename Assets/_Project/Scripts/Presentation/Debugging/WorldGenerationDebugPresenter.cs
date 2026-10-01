@@ -3,20 +3,21 @@ using ApexShift.Runtime.Debugging;
 using ApexShift.Runtime.World.Generation;
 using ApexShift.Runtime.World.Topography;
 using ApexShift.Runtime.World.Vegetation;
+using ApexShift.Runtime.World.Environment;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace ApexShift.Presentation.Debugging
 {
-    public enum WorldDebugViewMode { None, Elevation, Slope, Moisture, Biome, VegetationDensity, HarvestableTrees, VegetationChunks }
+    public enum WorldDebugViewMode { None, Elevation, Slope, Moisture, Habitat, VegetationDensity, HarvestableTrees, VegetationChunks }
 
     /// <summary>Development-only, cached world map and generation report presentation.</summary>
     public sealed class WorldGenerationDebugPresenter : MonoBehaviour
     {
         private const int TextureResolution = 96;
         private static readonly Color WaterColor = new Color(0.08f, 0.28f, 0.42f);
-        private static readonly Color[] BiomeColors = { new Color(.74f,.68f,.38f), new Color(.16f,.38f,.18f), new Color(.20f,.54f,.25f), new Color(.45f,.42f,.40f), new Color(.52f,.22f,.19f) };
-        private static readonly string[] BiomeIds = { "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" };
+        private static readonly Color[] HabitatColors = { new Color(.08f,.28f,.42f), new Color(.78f,.69f,.44f), new Color(.38f,.62f,.25f), new Color(.13f,.39f,.18f), new Color(.12f,.52f,.35f), new Color(.45f,.43f,.40f) };
+        private static readonly string[] HabitatIds = { "water", "coast", "lowland_jungle", "jungle_interior", "wet_jungle", "rocky_upland" };
         private readonly List<VegetationDebugPoint> vegetationPoints = new List<VegetationDebugPoint>(2048);
         private readonly List<VegetationChunkRuntime> chunks = new List<VegetationChunkRuntime>(128);
         private WorldGenerationResult result;
@@ -76,24 +77,24 @@ namespace ApexShift.Presentation.Debugging
         private string BuildSummary()
         {
             WorldGenerationReport report = result != null ? result.Report : null;
-            if (report == null) return result != null ? $"Seed: {result.Seed}\nBiome regions: {result.BiomeCount}\nVegetation: {result.VegetationInstanceCount}\nReport pending" : string.Empty;
+            if (report == null) return result != null ? $"Seed: {result.Seed}\nHabitat regions: {result.BiomeCount}\nVegetation: {result.VegetationInstanceCount}\nReport pending" : string.Empty;
             VegetationRuntimeStats stats = vegetation != null ? vegetation.Stats : default;
             return $"Seed: {report.Seed}; regions/resources/spawn attempts: {result.BiomeCount}/{result.ResourceCount}/{result.SpawnAttempts}\nElevation min/max/avg: {report.MinElevation:0.00}/{report.MaxElevation:0.00}/{report.AverageElevation:0.00}\n" +
                 $"Land/water/shore/ridge: {report.LandCells}/{report.WaterCells}/{report.ShoreCells}/{report.RidgeCells}\n" +
                 $"Vegetation: {report.VegetationPlacements} (harvestable {report.Harvestable}, decorative {report.Decorative})\n" +
                 $"Trees/shrubs/ground: {report.Trees}/{report.Shrubs}/{report.GroundCover}\n" +
-                $"Biome cells: {FormatBiomeCounts(report)}\nRejected water/slope/biome/elev/moist/clear/spacing: " +
+                $"Habitat cells: {FormatHabitatCounts(report)}\nRejected water/slope/legacy-profile/elev/moist/clear/spacing: " +
                 $"{report.Rejections.Water}/{report.Rejections.ExcessiveSlope}/{report.Rejections.BiomeMismatch}/{report.Rejections.Elevation}/{report.Rejections.Moisture}/{report.Rejections.ShorelineOrClearing}/{report.Rejections.SpacingOrCollision}\n" +
                 $"Chunks active/total: {stats.ActiveTreeChunks + stats.ActiveShrubChunks + stats.ActiveGroundCoverChunks}/{stats.TotalChunks}; gameplay trees: {stats.ActiveHarvestableTrees}";
         }
 
-        private static string FormatBiomeCounts(WorldGenerationReport report)
+        private static string FormatHabitatCounts(WorldGenerationReport report)
         {
             var text = new System.Text.StringBuilder();
-            foreach (KeyValuePair<string, int> item in report.BiomeCells)
+            foreach (KeyValuePair<string, int> item in report.HabitatCells)
             {
                 if (text.Length > 0) text.Append("  ");
-                report.BiomeLandPercentages.TryGetValue(item.Key, out float percent);
+                report.HabitatLandPercentages.TryGetValue(item.Key, out float percent);
                 text.Append(item.Key).Append(':').Append(item.Value).Append('(').Append(percent.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)).Append("%)");
             }
             return text.ToString();
@@ -131,7 +132,7 @@ namespace ApexShift.Presentation.Debugging
                             { float elevation = reportRange(cell.Height); color = Color.Lerp(new Color(.18f,.22f,.55f), new Color(.82f,.9f,.42f), elevation); break; }
                         case WorldDebugViewMode.Slope: color = Color.Lerp(new Color(.12f,.48f,.18f), new Color(.86f,.12f,.08f), Mathf.Clamp01(cell.SlopeDegrees / 45f)); break;
                         case WorldDebugViewMode.Moisture: color = Color.Lerp(new Color(.70f,.43f,.20f), new Color(.05f,.35f,.83f), cell.Moisture01); break;
-                        case WorldDebugViewMode.Biome: color = BiomeColor(topography.GetBiomeIdAt(pos)); break;
+                        case WorldDebugViewMode.Habitat: color = HabitatColor(topography.GetHabitatIdAt(pos)); break;
                         case WorldDebugViewMode.VegetationDensity:
                             int count = density[y * TextureResolution + x]; color = Color.Lerp(new Color(.8f,.8f,.72f), new Color(.02f,.55f,.12f), Mathf.Clamp01(count / 5f)); break;
                         case WorldDebugViewMode.HarvestableTrees: color = Color.white; break;
@@ -191,9 +192,9 @@ namespace ApexShift.Presentation.Debugging
                 && (chunk.transform.GetChild(0).gameObject.activeSelf || chunk.transform.GetChild(1).gameObject.activeSelf || chunk.transform.GetChild(2).gameObject.activeSelf);
         }
 
-        private static Color BiomeColor(string id)
+        private static Color HabitatColor(string id)
         {
-            for (int i = 0; i < BiomeIds.Length; i++) if (BiomeIds[i] == id) return BiomeColors[i];
+            for (int i = 0; i < HabitatIds.Length; i++) if (HabitatIds[i] == id) return HabitatColors[i];
             return Color.magenta;
         }
 

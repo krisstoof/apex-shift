@@ -92,7 +92,7 @@ namespace ApexShift.Tests.Editor
 
         private static void SetDenseBiome(IslandTopographyRuntime topography, Vector3 position, string biomeId)
         {
-            FieldInfo mapField = typeof(IslandTopographyRuntime).GetField("_biomeMap",
+            FieldInfo mapField = typeof(IslandTopographyRuntime).GetField("_habitatMap",
                 BindingFlags.Instance | BindingFlags.NonPublic);
             var map = (string[,])mapField.GetValue(topography);
             FieldInfo originXField = typeof(IslandTopographyRuntime).GetField("_originX",
@@ -101,10 +101,10 @@ namespace ApexShift.Tests.Editor
                 BindingFlags.Instance | BindingFlags.NonPublic);
             float originX = (float)originXField.GetValue(topography);
             float originZ = (float)originZField.GetValue(topography);
-            float cellSize = topography.DenseBiomeMapCellSize;
+            float cellSize = topography.DenseHabitatMapCellSize;
             int x = Mathf.FloorToInt((position.x - originX) / cellSize);
             int z = Mathf.FloorToInt((position.z - originZ) / cellSize);
-            map[x, z] = biomeId;
+            map[x, z] = ApexShift.Runtime.World.Environment.LegacyBiomeCompatibility.FromLegacyBiomeId(biomeId);
         }
     }
 }

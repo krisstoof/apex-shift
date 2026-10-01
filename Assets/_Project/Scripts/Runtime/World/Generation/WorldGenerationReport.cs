@@ -20,8 +20,8 @@ namespace ApexShift.Runtime.World.Generation
         public float MaxElevation { get; private set; }
         public float AverageElevation { get; private set; }
         public IReadOnlyList<int> SlopeBuckets => slopeBuckets;
-        public IReadOnlyDictionary<string, int> BiomeCells => biomeCells;
-        public IReadOnlyDictionary<string, float> BiomeLandPercentages => biomeLandPercentages;
+        public IReadOnlyDictionary<string, int> HabitatCells => habitatCells;
+        public IReadOnlyDictionary<string, float> HabitatLandPercentages => habitatLandPercentages;
         public IReadOnlyDictionary<string, int> VegetationByBiomeSpecies => vegetationByBiomeSpecies;
         public int Harvestable { get; private set; }
         public int Decorative { get; private set; }
@@ -31,8 +31,8 @@ namespace ApexShift.Runtime.World.Generation
         public VegetationRejectionCounts Rejections { get; private set; }
 
         private readonly int[] slopeBuckets = new int[5];
-        private readonly SortedDictionary<string, int> biomeCells = new SortedDictionary<string, int>(StringComparer.Ordinal);
-        private readonly SortedDictionary<string, float> biomeLandPercentages = new SortedDictionary<string, float>(StringComparer.Ordinal);
+        private readonly SortedDictionary<string, int> habitatCells = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        private readonly SortedDictionary<string, float> habitatLandPercentages = new SortedDictionary<string, float>(StringComparer.Ordinal);
         private readonly SortedDictionary<string, int> vegetationByBiomeSpecies = new SortedDictionary<string, int>(StringComparer.Ordinal);
 
         public static WorldGenerationReport Create(WorldGenerationResult result, IslandTopographyRuntime topography,
@@ -77,15 +77,15 @@ namespace ApexShift.Runtime.World.Generation
                     minimum = Math.Min(minimum, cell.Height); maximum = Math.Max(maximum, cell.Height); sum += cell.Height; count++;
                     int bucket = cell.SlopeDegrees < 10f ? 0 : cell.SlopeDegrees < 20f ? 1 : cell.SlopeDegrees < 30f ? 2 : cell.SlopeDegrees < 40f ? 3 : 4;
                     report.slopeBuckets[bucket]++;
-                    report.biomeCells.TryGetValue(cell.BiomeId ?? string.Empty, out int biomeCount);
-                    report.biomeCells[cell.BiomeId ?? string.Empty] = biomeCount + 1;
+                    report.habitatCells.TryGetValue(cell.HabitatId ?? string.Empty, out int countForHabitat);
+                    report.habitatCells[cell.HabitatId ?? string.Empty] = countForHabitat + 1;
                 }
             }
             report.MinElevation = count == 0 ? 0f : minimum;
             report.MaxElevation = count == 0 ? 0f : maximum;
             report.AverageElevation = count == 0 ? 0f : sum / count;
-            foreach (KeyValuePair<string, int> biome in report.biomeCells)
-                report.biomeLandPercentages.Add(biome.Key, report.LandCells == 0 ? 0f : (float)biome.Value / report.LandCells * 100f);
+            foreach (KeyValuePair<string, int> habitat in report.habitatCells)
+                report.habitatLandPercentages.Add(habitat.Key, report.LandCells == 0 ? 0f : (float)habitat.Value / report.LandCells * 100f);
             return report;
         }
 
@@ -99,10 +99,10 @@ namespace ApexShift.Runtime.World.Generation
             for (int i = 0; i < slopeBuckets.Length; i++) { if (i > 0) text.Append(','); text.Append(slopeBuckets[i].ToString(CultureInfo.InvariantCulture)); }
             text
                 .Append(";vegetation=").Append(I(VegetationPlacements)).Append(',').Append(I(Harvestable)).Append(',').Append(I(Decorative)).Append(',').Append(I(Trees)).Append(',').Append(I(Shrubs)).Append(',').Append(I(GroundCover));
-            AppendMap(text, ";biomes=", biomeCells);
-            text.Append(";biomePercent=");
+            AppendMap(text, ";habitats=", habitatCells);
+            text.Append(";habitatPercent=");
             bool firstPercent = true;
-            foreach (KeyValuePair<string, float> item in biomeLandPercentages)
+            foreach (KeyValuePair<string, float> item in habitatLandPercentages)
             { if (!firstPercent) text.Append(','); firstPercent = false; text.Append(item.Key).Append(':').Append(F(item.Value)); }
             AppendMap(text, ";species=", vegetationByBiomeSpecies);
             text.Append(";rejected=").Append(I(Rejections.Water)).Append(',').Append(I(Rejections.ExcessiveSlope)).Append(',')

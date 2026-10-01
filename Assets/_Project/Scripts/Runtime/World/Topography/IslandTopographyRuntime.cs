@@ -4,6 +4,7 @@ using UnityEngine;
 using ApexShift.Runtime.World.Generation;
 using ApexShift.Runtime.World.Biomes;
 using ApexShift.Runtime.World.Vegetation;
+using ApexShift.Runtime.World.Environment;
 
 namespace ApexShift.Runtime.World.Topography
 {
@@ -33,9 +34,10 @@ namespace ApexShift.Runtime.World.Topography
         private float _tileSize;
         private float _originX;   // world X of grid cell (0,0) left edge
         private float _originZ;
-        private string[,] _biomeMap;
-        private int _biomeMapSize;
-        private float _biomeMapCellSize;
+        private string[,] _habitatMap;
+        private EnvironmentSample[,] _environmentMap;
+        private int _habitatMapSize;
+        private float _habitatMapCellSize;
 
         // ── Statistics (read by debug overlay) ───────────────────────────────
         public int LandCellCount      { get; private set; }
@@ -46,8 +48,10 @@ namespace ApexShift.Runtime.World.Topography
         public int SafeCreatureCells  { get; private set; }
 
         public bool IsBuilt => _grid != null;
-        public int DenseBiomeMapResolutionPerTile => _gridSize > 0 ? _biomeMapSize / _gridSize : 0;
-        public float DenseBiomeMapCellSize => _biomeMapCellSize;
+        public int DenseHabitatMapResolutionPerTile => _gridSize > 0 ? _habitatMapSize / _gridSize : 0;
+        public float DenseHabitatMapCellSize => _habitatMapCellSize;
+        public int DenseBiomeMapResolutionPerTile => DenseHabitatMapResolutionPerTile;
+        public float DenseBiomeMapCellSize => DenseHabitatMapCellSize;
         public Bounds WorldBounds => new Bounds(
             new Vector3(_originX + _gridSize * _tileSize * 0.5f, 0f, _originZ + _gridSize * _tileSize * 0.5f),
             new Vector3(_gridSize * _tileSize, 0.1f, _gridSize * _tileSize));
@@ -67,7 +71,9 @@ namespace ApexShift.Runtime.World.Topography
             TerrainHeightfieldSettings       terrainSettings = null,
             BiomeFieldGenerator              biomeField = null,
             BiomeClassifier                   biomeClassifier = null,
-            int                               biomeResolutionPerTile = 12)
+            int                               biomeResolutionPerTile = 12,
+            HabitatClassificationSettings    habitatSettings = null,
+            HabitatClassifier                 habitatClassifier = null)
         {
             _gridSize = gridSize;
             _tileSize = tileSize;
@@ -78,8 +84,10 @@ namespace ApexShift.Runtime.World.Topography
             // ── Pass 1: classify each cell ────────────────────────────────────
             var tempType      = new TerrainType[gridSize, gridSize];
             var tempHeight    = new float[gridSize, gridSize];
-            var tempBiome     = new string[gridSize, gridSize];
             var tempIsLand    = new bool[gridSize, gridSize];
+            var tempMoisture  = new float[gridSize, gridSize];
+            var tempTemperature = new float[gridSize, gridSize];
+            var tempHabitat = new string[gridSize, gridSize];
 
             for (int z = 0; z < gridSize; z++)
             {
@@ -91,21 +99,18 @@ namespace ApexShift.Runtime.World.Topography
                     bool isLand = isInsideIsland(wx, wz);
                     tempIsLand[x, z] = isLand;
 
-                    string biomeId;
                     float  height;
                     if (isLand)
                     {
                         Vector3 p = new Vector3(wx, 0f, wz);
-                        biomeId = biomeField == null ? determineBiome(p) : null;
                         height  = getTerrainHeight(p);
+                        tempMoisture[x, z] = biomeField != null ? biomeField.SampleMoisture(wx, wz) : 0.5f;
                     }
                     else
                     {
-                        biomeId = "water";
                         height  = -0.35f;
+                        tempMoisture[x, z] = 0.5f;
                     }
-
-                    tempBiome[x, z]  = biomeId;
                     tempHeight[x, z] = height;
                 }
             }
@@ -121,28 +126,21 @@ namespace ApexShift.Runtime.World.Topography
                     }
 
             float heightRange = Mathf.Max(0.0001f, maxLandHeight - minLandHeight);
-            if (biomeField != null && biomeClassifier != null)
-            {
-                for (int z = 0; z < gridSize; z++)
-                    for (int x = 0; x < gridSize; x++)
-                        if (tempIsLand[x, z])
-                        {
-                            float elevation = Mathf.Clamp01((tempHeight[x, z] - minLandHeight) / heightRange);
-                            float moisture = biomeField.SampleMoisture(_originX + x * tileSize + tileSize * 0.5f, _originZ + z * tileSize + tileSize * 0.5f);
-                            float temperature = biomeField.SampleTemperature(_originX + x * tileSize + tileSize * 0.5f, _originZ + z * tileSize + tileSize * 0.5f, elevation);
-                            var sample = new BiomeEnvironmentSample(elevation, CalculateSlope(tempHeight, x, z, gridSize, tileSize), moisture, temperature);
-                            tempBiome[x, z] = biomeClassifier.Classify(new Vector3(_originX + x * tileSize + tileSize * 0.5f, 0f, _originZ + z * tileSize + tileSize * 0.5f), sample);
-                        }
+            for (int z = 0; z < gridSize; z++)
+                for (int x = 0; x < gridSize; x++)
+                {
+                    float elevation = tempIsLand[x, z] ? Mathf.Clamp01((tempHeight[x, z] - minLandHeight) / heightRange) : 0f;
+                    float wx = _originX + (x + 0.5f) * tileSize, wz = _originZ + (z + 0.5f) * tileSize;
+                    tempTemperature[x, z] = tempIsLand[x, z] && biomeField != null
+                        ? biomeField.SampleTemperature(wx, wz, elevation) : 0.5f;
+                }
 
-            }
-
-            // Classification follows final climate/biome results. Shoreline's Beach
-            // override is applied after this pass, while steep/ridge cliffs stay Ridge.
+            // Terrain identity derives only from physical and climate fields.
             for (int z = 0; z < gridSize; z++)
                 for (int x = 0; x < gridSize; x++)
                     tempType[x, z] = ClassifyTerrain(
-                        tempBiome[x, z], tempIsLand[x, z] ? Mathf.Clamp01((tempHeight[x, z] - minLandHeight) / heightRange) : 0f,
-                        CalculateSlope(tempHeight, x, z, gridSize, tileSize), tempIsLand[x, z]);
+                        tempIsLand[x, z] ? Mathf.Clamp01((tempHeight[x, z] - minLandHeight) / heightRange) : 0f,
+                        CalculateSlope(tempHeight, x, z, gridSize, tileSize), tempMoisture[x, z], tempIsLand[x, z]);
 
             // Shoreline classification follows terrain-type classification.
             var tempShore = new bool[gridSize, gridSize];
@@ -160,6 +158,14 @@ namespace ApexShift.Runtime.World.Topography
                     }
                 }
             }
+
+            float[,] tempDistanceToCoast = CalculateDistanceToCoast(tempIsLand, tempShore, gridSize, tileSize);
+            var classifier = habitatClassifier ?? new HabitatClassifier(habitatSettings);
+            for (int z = 0; z < gridSize; z++)
+                for (int x = 0; x < gridSize; x++)
+                    tempHabitat[x, z] = classifier.Classify(tempIsLand[x, z], tempShore[x, z], tempDistanceToCoast[x, z],
+                        tempType[x, z], tempIsLand[x, z] ? Mathf.Clamp01((tempHeight[x, z] - minLandHeight) / heightRange) : 0f,
+                        CalculateSlope(tempHeight, x, z, gridSize, tileSize), tempMoisture[x, z]);
 
             // ── Pass 3: build immutable cell objects ─────────────────────────
             _grid = new TopographyCell[gridSize, gridSize];
@@ -179,14 +185,15 @@ namespace ApexShift.Runtime.World.Topography
                         tempHeight[x, z],
                         tempIsLand[x, z] ? Mathf.Clamp01((tempHeight[x, z] - minLandHeight) / heightRange) : 0f,
                         CalculateSlope(tempHeight, x, z, gridSize, tileSize),
-                        tempBiome[x, z],
+                        tempHabitat[x, z],
                         tempType[x, z],
                         tempShore[x, z],
                         biomeField != null && tempIsLand[x, z] ? biomeField.SampleMoisture(wx, wz) : 0.5f,
                         biomeField != null && tempIsLand[x, z] ? biomeField.SampleTemperature(wx, wz, tempIsLand[x, z] ? Mathf.Clamp01((tempHeight[x, z] - minLandHeight) / heightRange) : 0f) : 0.5f,
                         terrainSettings.PlayerSafeSlopeDegrees,
                         terrainSettings.CreatureSafeSlopeDegrees,
-                        terrainSettings.ResourceSafeSlopeDegrees);
+                        terrainSettings.ResourceSafeSlopeDegrees,
+                        tempHabitat[x, z], tempDistanceToCoast[x, z]);
 
                     _grid[x, z] = cell;
 
@@ -199,8 +206,8 @@ namespace ApexShift.Runtime.World.Topography
                 }
             }
 
-            BuildDenseBiomeMap(gridSize, tileSize, isInsideIsland, getTerrainHeight, minLandHeight, heightRange,
-                biomeField, biomeClassifier, biomeResolutionPerTile);
+            BuildDenseHabitatMap(gridSize, tileSize, isInsideIsland, getTerrainHeight, minLandHeight, heightRange,
+                biomeField, classifier, Mathf.Max(1, biomeResolutionPerTile));
 
             Debug.Log($"[Topography] Built {gridSize}×{gridSize} grid. " +
                       $"Land={LandCellCount} Water={WaterCellCount} " +
@@ -221,27 +228,39 @@ namespace ApexShift.Runtime.World.Topography
 
         public TopographyCell GetCellAt(Vector3 worldPos) => GetCellAt(worldPos.x, worldPos.z);
 
-        public string GetBiomeIdAt(Vector3 worldPos)
+        public string GetHabitatIdAt(Vector3 worldPos)
         {
-            if (_biomeMap == null) return GetCellAt(worldPos)?.BiomeId ?? "default";
-            int x = Mathf.Clamp(Mathf.FloorToInt((worldPos.x - _originX) / _biomeMapCellSize), 0, _biomeMapSize - 1);
-            int z = Mathf.Clamp(Mathf.FloorToInt((worldPos.z - _originZ) / _biomeMapCellSize), 0, _biomeMapSize - 1);
-            return _biomeMap[x, z] ?? "water";
+            if (!IsInsideWorld(worldPos) || _habitatMap == null) return HabitatIds.Water;
+            int x = Mathf.Clamp(Mathf.FloorToInt((worldPos.x - _originX) / _habitatMapCellSize), 0, _habitatMapSize - 1);
+            int z = Mathf.Clamp(Mathf.FloorToInt((worldPos.z - _originZ) / _habitatMapCellSize), 0, _habitatMapSize - 1);
+            return _habitatMap[x, z] ?? HabitatIds.Water;
         }
 
-        /// <summary>Combines cached coarse environment data with the authoritative dense biome map.</summary>
+        /// <summary>Compatibility API for systems migrating in #98/#99.</summary>
+        public string GetBiomeIdAt(Vector3 worldPos) => LegacyBiomeCompatibility.ToLegacyBiomeId(GetHabitatIdAt(worldPos));
+
+        public TerrainType GetTerrainTypeAt(Vector3 worldPos) => GetCellAt(worldPos)?.TerrainType ?? TerrainType.Water;
+        public float GetDistanceToCoastAt(Vector3 worldPos) => GetCellAt(worldPos)?.DistanceToCoast ?? 0f;
+
+        /// <summary>Returns the generated environment cache without resampling noise.</summary>
+        public bool TryGetEnvironmentAt(Vector3 worldPos, out EnvironmentSample sample)
+        {
+            sample = default;
+            if (!IsInsideWorld(worldPos) || _environmentMap == null) return false;
+            int x = Mathf.Clamp(Mathf.FloorToInt((worldPos.x - _originX) / _habitatMapCellSize), 0, _habitatMapSize - 1);
+            int z = Mathf.Clamp(Mathf.FloorToInt((worldPos.z - _originZ) / _habitatMapCellSize), 0, _habitatMapSize - 1);
+            sample = _environmentMap[x, z];
+            return true;
+        }
+
+        /// <summary>Legacy vegetation adapter. Habitat remains the authoritative topography identity.</summary>
         public bool TryGetEnvironmentAt(Vector3 worldPos, out VegetationEnvironmentSample sample)
         {
             sample = default;
-            if (_grid == null || worldPos.x < _originX || worldPos.z < _originZ
-                || worldPos.x >= _originX + _gridSize * _tileSize
-                || worldPos.z >= _originZ + _gridSize * _tileSize) return false;
-            TopographyCell cell = GetCellAt(worldPos);
-            if (cell == null) return false;
-            string denseBiome = GetBiomeIdAt(worldPos);
-            bool water = cell.IsWater || string.Equals(denseBiome, "water", StringComparison.Ordinal);
-            sample = new VegetationEnvironmentSample(!water && cell.IsLand, water, cell.IsShoreline,
-                denseBiome, cell.NormalizedElevation, cell.SlopeDegrees, cell.Moisture01);
+            if (!TryGetEnvironmentAt(worldPos, out EnvironmentSample environment)) return false;
+            sample = new VegetationEnvironmentSample(environment.IsLand, environment.IsWater, environment.IsShoreline,
+                LegacyBiomeCompatibility.ToLegacyBiomeId(environment.HabitatId), environment.NormalizedElevation,
+                environment.SlopeDegrees, environment.Moisture01);
             return true;
         }
 
@@ -264,16 +283,16 @@ namespace ApexShift.Runtime.World.Topography
             => GetCellAt(wx, wz)?.IsSafeForResourceSpawn ?? false;
 
         /// <summary>
-        /// Returns the world-space center of the safest player spawn point.
-        /// Prioritises hearth_meadow/plain cells closest to world origin.
-        /// Falls back to nearest safe land cell if none found in inner radius.
+        /// Returns a deterministic safe land point in the near-coastal band.
+        /// The score depends on cached physical distance only; origin and legacy
+        /// biome/profile identities do not define the starting area.
         /// </summary>
         public Vector3 GetSafePlayerSpawnPoint()
         {
             if (_grid == null) return Vector3.up * 0.1f;
 
             TopographyCell best = null;
-            float bestSqr = float.MaxValue;
+            float bestScore = float.MaxValue;
 
             for (int z = 0; z < _gridSize; z++)
             {
@@ -282,28 +301,10 @@ namespace ApexShift.Runtime.World.Topography
                     var c = _grid[x, z];
                     if (!c.IsSafeForPlayerSpawn) continue;
 
-                    // Prefer hearth_meadow / plain for starting area
-                    if (c.TerrainType != TerrainType.Plain && c.TerrainType != TerrainType.Forest)
-                        continue;
-
-                    float sqr = c.WorldCenter.x * c.WorldCenter.x + c.WorldCenter.z * c.WorldCenter.z;
-                    if (sqr < bestSqr) { bestSqr = sqr; best = c; }
-                }
-            }
-
-            // Fallback: any safe land cell
-            if (best == null)
-            {
-                bestSqr = float.MaxValue;
-                for (int z = 0; z < _gridSize; z++)
-                {
-                    for (int x = 0; x < _gridSize; x++)
-                    {
-                        var c = _grid[x, z];
-                        if (!c.IsSafeForPlayerSpawn) continue;
-                        float sqr = c.WorldCenter.x * c.WorldCenter.x + c.WorldCenter.z * c.WorldCenter.z;
-                        if (sqr < bestSqr) { bestSqr = sqr; best = c; }
-                    }
+                    float score = Mathf.Abs(c.DistanceToCoast - 24f);
+                    if (score < bestScore || (Mathf.Approximately(score, bestScore)
+                        && (best == null || c.GridZ < best.GridZ || (c.GridZ == best.GridZ && c.GridX < best.GridX))))
+                    { bestScore = score; best = c; }
                 }
             }
 
@@ -398,48 +399,102 @@ namespace ApexShift.Runtime.World.Topography
             return Mathf.Atan(Mathf.Sqrt(dx * dx + dz * dz)) * Mathf.Rad2Deg;
         }
 
-        private void BuildDenseBiomeMap(int gridSize, float tileSize, Func<float, float, bool> isInsideIsland,
+        private void BuildDenseHabitatMap(int gridSize, float tileSize, Func<float, float, bool> isInsideIsland,
             Func<Vector3, float> getTerrainHeight, float minHeight, float heightRange,
-            BiomeFieldGenerator field, BiomeClassifier classifier, int resolutionPerTile)
+            BiomeFieldGenerator field, HabitatClassifier classifier, int resolutionPerTile)
         {
-            if (field == null || classifier == null) { _biomeMap = null; return; }
-            _biomeMapSize = Mathf.Max(1, gridSize * Mathf.Max(1, resolutionPerTile));
-            _biomeMapCellSize = tileSize / Mathf.Max(1, resolutionPerTile);
-            _biomeMap = new string[_biomeMapSize, _biomeMapSize];
-            for (int z = 0; z < _biomeMapSize; z++)
-                for (int x = 0; x < _biomeMapSize; x++)
+            _habitatMapSize = Mathf.Max(1, gridSize * Mathf.Max(1, resolutionPerTile));
+            _habitatMapCellSize = tileSize / Mathf.Max(1, resolutionPerTile);
+            _habitatMap = new string[_habitatMapSize, _habitatMapSize];
+            _environmentMap = new EnvironmentSample[_habitatMapSize, _habitatMapSize];
+            var land = new bool[_habitatMapSize, _habitatMapSize];
+            var terrainTypes = new TerrainType[_habitatMapSize, _habitatMapSize];
+            var heights = new float[_habitatMapSize, _habitatMapSize];
+            var moisture = new float[_habitatMapSize, _habitatMapSize];
+            var temperature = new float[_habitatMapSize, _habitatMapSize];
+
+            for (int z = 0; z < _habitatMapSize; z++)
+                for (int x = 0; x < _habitatMapSize; x++)
                 {
-                    float wx = _originX + (x + 0.5f) * _biomeMapCellSize;
-                    float wz = _originZ + (z + 0.5f) * _biomeMapCellSize;
-                    if (!isInsideIsland(wx, wz)) { _biomeMap[x, z] = "water"; continue; }
-                    float h = getTerrainHeight(new Vector3(wx, 0f, wz));
-                    float hx = getTerrainHeight(new Vector3(wx + _biomeMapCellSize, 0f, wz)) - getTerrainHeight(new Vector3(wx - _biomeMapCellSize, 0f, wz));
-                    float hz = getTerrainHeight(new Vector3(wx, 0f, wz + _biomeMapCellSize)) - getTerrainHeight(new Vector3(wx, 0f, wz - _biomeMapCellSize));
-                    float slope = Mathf.Atan(Mathf.Sqrt(hx * hx + hz * hz) / Mathf.Max(0.01f, 2f * _biomeMapCellSize)) * Mathf.Rad2Deg;
-                    float elevation = Mathf.Clamp01((h - minHeight) / heightRange);
-                    var sample = new BiomeEnvironmentSample(elevation, slope, field.SampleMoisture(wx, wz), field.SampleTemperature(wx, wz, elevation));
-                    _biomeMap[x, z] = classifier.Classify(new Vector3(wx, 0f, wz), sample);
+                    float wx = _originX + (x + 0.5f) * _habitatMapCellSize;
+                    float wz = _originZ + (z + 0.5f) * _habitatMapCellSize;
+                    bool isLand = isInsideIsland(wx, wz);
+                    land[x, z] = isLand;
+                    heights[x, z] = isLand ? getTerrainHeight(new Vector3(wx, 0f, wz)) : -0.35f;
+                    float elevation = isLand ? Mathf.Clamp01((heights[x, z] - minHeight) / heightRange) : 0f;
+                    moisture[x, z] = isLand && field != null ? field.SampleMoisture(wx, wz) : 0.5f;
+                    temperature[x, z] = isLand && field != null ? field.SampleTemperature(wx, wz, elevation) : 0.5f;
                 }
 
-            // Region centers are the authoritative coarse samples. Pin those
-            // cache entries to the cell IDs so all public query paths agree.
+            for (int z = 0; z < _habitatMapSize; z++)
+                for (int x = 0; x < _habitatMapSize; x++)
+                {
+                    int left = Mathf.Max(0, x - 1), right = Mathf.Min(_habitatMapSize - 1, x + 1);
+                    int down = Mathf.Max(0, z - 1), up = Mathf.Min(_habitatMapSize - 1, z + 1);
+                    float dx = (heights[right, z] - heights[left, z]) / Mathf.Max(0.01f, (right - left) * _habitatMapCellSize);
+                    float dz = (heights[x, up] - heights[x, down]) / Mathf.Max(0.01f, (up - down) * _habitatMapCellSize);
+                    float slope = Mathf.Atan(Mathf.Sqrt(dx * dx + dz * dz)) * Mathf.Rad2Deg;
+                    bool shoreline = land[x, z] && (!land[left, z] || !land[right, z] || !land[x, down] || !land[x, up]);
+                    float elevation = land[x, z] ? Mathf.Clamp01((heights[x, z] - minHeight) / heightRange) : 0f;
+                    TerrainType terrainType = ClassifyTerrain(elevation, slope, moisture[x, z], land[x, z]);
+                    if (shoreline && terrainType != TerrainType.Ridge) terrainType = TerrainType.Beach;
+                    Vector3 position = new Vector3(_originX + (x + 0.5f) * _habitatMapCellSize, heights[x, z], _originZ + (z + 0.5f) * _habitatMapCellSize);
+                    TopographyCell coarse = GetCellAt(position);
+                    float distance = coarse != null ? coarse.DistanceToCoast : 0f;
+                    string habitat = classifier.Classify(land[x, z], shoreline, distance, terrainType, elevation, slope, moisture[x, z]);
+                    _habitatMap[x, z] = habitat;
+                    _environmentMap[x, z] = new EnvironmentSample(land[x, z], !land[x, z], shoreline, habitat,
+                        terrainType, heights[x, z], elevation, slope, moisture[x, z], temperature[x, z], distance);
+                }
+
+            // Coarse cell centers are canonical for gameplay region/spawn queries.
             for (int z = 0; z < gridSize; z++)
                 for (int x = 0; x < gridSize; x++)
                 {
                     TopographyCell cell = _grid[x, z];
-                    int mapX = Mathf.Clamp(Mathf.FloorToInt((cell.WorldCenter.x - _originX) / _biomeMapCellSize), 0, _biomeMapSize - 1);
-                    int mapZ = Mathf.Clamp(Mathf.FloorToInt((cell.WorldCenter.z - _originZ) / _biomeMapCellSize), 0, _biomeMapSize - 1);
-                    _biomeMap[mapX, mapZ] = cell.BiomeId;
+                    int mapX = Mathf.Clamp(Mathf.FloorToInt((cell.WorldCenter.x - _originX) / _habitatMapCellSize), 0, _habitatMapSize - 1);
+                    int mapZ = Mathf.Clamp(Mathf.FloorToInt((cell.WorldCenter.z - _originZ) / _habitatMapCellSize), 0, _habitatMapSize - 1);
+                    _habitatMap[mapX, mapZ] = cell.HabitatId;
+                    _environmentMap[mapX, mapZ] = cell.ToEnvironmentSample();
                 }
         }
 
-        private static TerrainType ClassifyTerrain(string biomeId, float height, float slopeDegrees, bool isLand)
+        private static float[,] CalculateDistanceToCoast(bool[,] isLand, bool[,] shoreline, int size, float tileSize)
+        {
+            var coast = new List<Vector2Int>();
+            for (int z = 0; z < size; z++)
+                for (int x = 0; x < size; x++)
+                    if (shoreline[x, z]) coast.Add(new Vector2Int(x, z));
+            var result = new float[size, size];
+            float noCoast = size * tileSize;
+            for (int z = 0; z < size; z++)
+                for (int x = 0; x < size; x++)
+                {
+                    if (!isLand[x, z]) { result[x, z] = 0f; continue; }
+                    float best = float.MaxValue;
+                    for (int i = 0; i < coast.Count; i++)
+                    {
+                        float dx = x - coast[i].x, dz = z - coast[i].y;
+                        best = Mathf.Min(best, Mathf.Sqrt(dx * dx + dz * dz) * tileSize);
+                    }
+                    result[x, z] = best == float.MaxValue ? noCoast : best;
+                }
+            return result;
+        }
+
+        private static TerrainType ClassifyTerrain(float elevation, float slopeDegrees, float moisture, bool isLand)
         {
             if (!isLand) return TerrainType.Water;
-            if (biomeId == "stoneback_ridge" || height > 0.55f || slopeDegrees > 28f) return TerrainType.Ridge;
-            if (height > 0.18f || slopeDegrees > 12f)                                  return TerrainType.Hills;
-            if (biomeId == "westwood" || biomeId == "south_thicket") return TerrainType.Forest;
-            return TerrainType.Plain;  // hearth_meadow, redfang_wilds, generic
+            if (elevation >= 0.67f || slopeDegrees >= 28f) return TerrainType.Ridge;
+            if (elevation > 0.18f || slopeDegrees > 12f) return TerrainType.Hills;
+            return moisture >= 0.56f ? TerrainType.Forest : TerrainType.Plain;
+        }
+
+        private bool IsInsideWorld(Vector3 position)
+        {
+            return _grid != null && position.x >= _originX && position.z >= _originZ
+                && position.x < _originX + _gridSize * _tileSize
+                && position.z < _originZ + _gridSize * _tileSize;
         }
 
         private static bool HasWaterNeighbor(int x, int z, bool[,] isLand, int size)

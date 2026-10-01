@@ -1,5 +1,7 @@
 # Unity World Biomes
 
+> **Production world identity:** Runtime island generation now classifies tropical habitats from cached environment fields, not the five legacy biome IDs below. Authoritative habitat IDs are `water`, `coast`, `lowland_jungle`, `jungle_interior`, `wet_jungle`, and `rocky_upland`. The handcrafted `BiomeWorldTest` and old biome profiles remain development/compatibility content. During migration, `LegacyBiomeCompatibility` maps habitats to those profile IDs for existing vegetation/resource/creature systems; do not use that adapter for terrain visuals or environment queries.
+
 The handcrafted biome world is generated through:
 
 `Tools > Apex Shift > World > Create Handcrafted Biome World`

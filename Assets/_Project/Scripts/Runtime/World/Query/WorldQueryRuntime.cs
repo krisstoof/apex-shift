@@ -3,6 +3,7 @@ using ApexShift.Core.Ecosystem;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.World.Topography;
+using ApexShift.Runtime.World.Environment;
 using UnityEngine;
 
 namespace ApexShift.Runtime.World.Query
@@ -181,6 +182,23 @@ namespace ApexShift.Runtime.World.Query
             // Placeholder parity API for the Godot world query service.
             // A later biome-index issue can replace this without changing creature AI callers.
             return string.IsNullOrWhiteSpace(defaultBiomeId) ? "default" : defaultBiomeId;
+        }
+
+        public string GetHabitatIdForPosition(Vector3 position)
+        {
+            IslandTopographyRuntime topography = IslandTopographyRuntime.Active;
+            return topography != null && topography.IsBuilt
+                ? topography.GetHabitatIdAt(position)
+                : HabitatIds.JungleInterior;
+        }
+
+        public bool TryGetEnvironmentAt(Vector3 position, out EnvironmentSample sample)
+        {
+            IslandTopographyRuntime topography = IslandTopographyRuntime.Active;
+            if (topography != null && topography.IsBuilt)
+                return topography.TryGetEnvironmentAt(position, out sample);
+            sample = default;
+            return false;
         }
 
         private void ResolveEcosystem()

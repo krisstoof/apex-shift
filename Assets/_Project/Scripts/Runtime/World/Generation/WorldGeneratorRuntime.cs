@@ -9,6 +9,7 @@ using ApexShift.Runtime.PlayerInput;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.Buildings;
 using ApexShift.Runtime.World.Biomes;
+using ApexShift.Runtime.World.Environment;
 using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Config;
@@ -111,7 +112,7 @@ namespace ApexShift.Runtime.World.Generation
         private WorldSpawnService _worldSpawnService;
         private TerrainHeightfieldGenerator _terrainHeightfield;
         private BiomeFieldGenerator _biomeField;
-        private BiomeClassifier _biomeClassifier;
+        private HabitatClassifier _habitatClassifier;
         private VegetationPlacementPlanner _vegetationPlanner;
         private VegetationRejectionCounts _vegetationRejections = new VegetationRejectionCounts();
 
@@ -164,7 +165,7 @@ namespace ApexShift.Runtime.World.Generation
             _vegetationRejections.Reset();
             _terrainHeightfield = new TerrainHeightfieldGenerator(seed, settings != null ? settings.Terrain : null);
             _biomeField = new BiomeFieldGenerator(seed, settings != null ? settings.Biome : null);
-            _biomeClassifier = new BiomeClassifier(seed, settings != null ? settings.Biome : null);
+            _habitatClassifier = new HabitatClassifier(settings != null ? settings.Habitat : null);
             _generationContext.Result = _lastResult;
             _generationCoordinator.Generate(_generationContext,
                 new WorldGenerationStage("PrepareGeneration", context =>
@@ -181,7 +182,7 @@ namespace ApexShift.Runtime.World.Generation
                     EnsureRoots();
                     EnsureBuildingRegistry();
                 }),
-                new WorldGenerationStage("GenerateTerrainAndBiomes", context => GenerateIslandLayout()),
+                new WorldGenerationStage("GenerateTerrainAndEnvironment", context => GenerateIslandLayout()),
                 new WorldGenerationStage("SpawnResources", context => SpawnAllRegionResources()),
                 new WorldGenerationStage("GenerateLandmarks", context => GenerateLandmarks()),
                 new WorldGenerationStage("GenerateVegetation", context => GenerateVegetation()),
@@ -441,7 +442,8 @@ namespace ApexShift.Runtime.World.Generation
             // Build topography runtime before terrain mesh so other systems can query it immediately
             EnsureIslandTopographyRuntime();
             _islandTopography.Build(gridSize, tileSize, IsInsideIsland, SampleTerrainHeight, null,
-                settings != null ? settings.Terrain : null, _biomeField, _biomeClassifier);
+                settings != null ? settings.Terrain : null, _biomeField, null,
+                habitatSettings: settings != null ? settings.Habitat : null, habitatClassifier: _habitatClassifier);
 
             // Create regions from the same classified cells used by every later query.
             for (int z = 0; z < gridSize; z++)
@@ -458,10 +460,12 @@ namespace ApexShift.Runtime.World.Generation
                 _terrainRoot,
                 gridSize,
                 tileSize,
-                biomeCatalog,
+                null,
+                null,
+                cliffMaterial,
                 SampleIslandField,
                 SampleTerrainHeight,
-                _islandTopography.GetBiomeIdAt);
+                _islandTopography.GetTerrainTypeAt);
 
             // Fourth pass: Unified water surface mesh (replaces per-tile water cubes)
             NaturalTerrainBuilder.BuildUnifiedWaterSurface(
@@ -486,10 +490,8 @@ namespace ApexShift.Runtime.World.Generation
                 gridSize,
                 tileSize,
                 cliffMaterial,
-                biomeCatalog,
                 SampleIslandField,
-                SampleTerrainHeight,
-                _islandTopography.GetBiomeIdAt);
+                SampleTerrainHeight);
         }
 
         private void CheckAndAddWall(int nx, int nz, Vector3 pos, Vector3 direction, bool[,] landGrid, int gridSize, float tileSize)

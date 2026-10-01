@@ -1,4 +1,5 @@
 using UnityEngine;
+using ApexShift.Runtime.World.Environment;
 
 namespace ApexShift.Runtime.World.Topography
 {
@@ -22,7 +23,10 @@ namespace ApexShift.Runtime.World.Topography
         public readonly float       Moisture01;
         public readonly float       Temperature01;
         public float Dryness01 => 1f - Moisture01;
-        public readonly string      BiomeId;
+        public readonly string      HabitatId;
+        public readonly float       DistanceToCoast;
+        /// <summary>Legacy profile adapter. HabitatId is the authoritative environment identity.</summary>
+        public string BiomeId => LegacyBiomeCompatibility.ToLegacyBiomeId(HabitatId);
         public readonly TerrainType TerrainType;
 
         /// <summary>True when this land cell directly borders at least one water cell.</summary>
@@ -54,7 +58,9 @@ namespace ApexShift.Runtime.World.Topography
             float temperature01 = 0.5f,
             float playerSafeSlopeDegrees = 14f,
             float creatureSafeSlopeDegrees = 24f,
-            float resourceSafeSlopeDegrees = 20f)
+            float resourceSafeSlopeDegrees = 20f,
+            string habitatId = null,
+            float distanceToCoast = 0f)
         {
             GridX       = gridX;
             GridZ       = gridZ;
@@ -62,7 +68,8 @@ namespace ApexShift.Runtime.World.Topography
             Height      = height;
             NormalizedElevation = normalizedElevation;
             SlopeDegrees = slopeDegrees;
-            BiomeId     = biomeId;
+            HabitatId = habitatId == null ? LegacyBiomeCompatibility.FromLegacyBiomeId(biomeId) : HabitatIds.Normalize(habitatId);
+            DistanceToCoast = Mathf.Max(0f, distanceToCoast);
             TerrainType = terrainType;
             IsShoreline = isShoreline;
             Moisture01 = Mathf.Clamp01(moisture01);
@@ -71,5 +78,9 @@ namespace ApexShift.Runtime.World.Topography
             IsSafeForCreatureSpawn = IsLand && !IsShoreline && slopeDegrees <= creatureSafeSlopeDegrees;
             IsSafeForResourceSpawn = IsLand && !IsShoreline && slopeDegrees <= resourceSafeSlopeDegrees;
         }
+
+        public EnvironmentSample ToEnvironmentSample()
+            => new EnvironmentSample(IsLand, IsWater, IsShoreline, HabitatId, TerrainType, Height,
+                NormalizedElevation, SlopeDegrees, Moisture01, Temperature01, DistanceToCoast);
     }
 }

@@ -38,7 +38,7 @@ namespace ApexShift.Tests.Regression
                 Assert.AreEqual(
                     new[]
                     {
-                        "PrepareGeneration", "CreateWorldRoots", "GenerateTerrainAndBiomes",
+                        "PrepareGeneration", "CreateWorldRoots", "GenerateTerrainAndEnvironment",
                         "SpawnResources", "GenerateLandmarks", "GenerateVegetation", "SpawnPlayer", "ConfigureCamera",
                         "BuildNavMesh", "SpawnCreatures", "FinalizeGeneration"
                     },
@@ -115,6 +115,9 @@ namespace ApexShift.Tests.Regression
                 int firstResultCount = first.Result.VegetationInstanceCount;
                 Assert.IsNotNull(first.Result.Report, "Completed generation should publish its deterministic QA report.");
                 string firstReport = first.Result.Report.ToDeterministicString();
+                StringAssert.Contains(";habitats=", firstReport);
+                StringAssert.Contains(";habitatPercent=", firstReport);
+                StringAssert.DoesNotContain(";biomes=", firstReport);
                 CultureInfo originalCulture = CultureInfo.CurrentCulture;
                 try
                 {
@@ -122,9 +125,9 @@ namespace ApexShift.Tests.Regression
                     Assert.AreEqual(firstReport, first.Result.Report.ToDeterministicString(), "Report serialization must use invariant culture.");
                 }
                 finally { CultureInfo.CurrentCulture = originalCulture; }
-                Assert.AreEqual(first.Result.Report.LandCells, first.Result.Report.BiomeCells.Values.Sum(), "Biome samples must reconcile to land cells.");
+                Assert.AreEqual(first.Result.Report.LandCells, first.Result.Report.HabitatCells.Values.Sum(), "Habitat samples must reconcile to land cells.");
                 Assert.AreEqual(first.Result.Report.LandCells, first.Result.Report.SlopeBuckets.Sum());
-                Assert.That(first.Result.Report.BiomeLandPercentages.Values.Sum(), Is.EqualTo(100f).Within(0.01f));
+                Assert.That(first.Result.Report.HabitatLandPercentages.Values.Sum(), Is.EqualTo(100f).Within(0.01f));
                 Assert.AreEqual(first.Result.Report.VegetationPlacements, first.Result.Report.VegetationByBiomeSpecies.Values.Sum());
                 Assert.AreEqual(first.Result.Report.VegetationPlacements, first.Result.Report.Harvestable + first.Result.Report.Decorative);
                 Assert.AreEqual(first.Result.Report.VegetationPlacements, first.Result.Report.Trees + first.Result.Report.Shrubs + first.Result.Report.GroundCover);
