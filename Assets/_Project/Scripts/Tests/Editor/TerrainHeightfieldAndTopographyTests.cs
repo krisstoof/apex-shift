@@ -242,6 +242,44 @@ namespace ApexShift.Tests.Editor
         }
 
         [Test]
+        public void LandWaterAndShorelineQueriesUseDenseStatesWithinSameCoarseCell()
+        {
+            GameObject go = new GameObject("DenseCoastQueryContractTest");
+            try
+            {
+                IslandTopographyRuntime topography = go.AddComponent<IslandTopographyRuntime>();
+                topography.Build(4, 4f, (x, z) => x < 1.2f, _ => 0f, null);
+
+                Vector3 interior = new Vector3(0.5f, 0f, 1.5f);
+                Vector3 shore = new Vector3(1.1f, 0f, 1.5f);
+                Vector3 water = new Vector3(1.5f, 0f, 1.5f);
+                TopographyCell coarse = topography.GetCellAt(interior);
+                Assert.That(topography.GetCellAt(shore), Is.SameAs(coarse));
+                Assert.That(topography.GetCellAt(water), Is.SameAs(coarse));
+                Assert.That(coarse.IsWater, Is.True,
+                    "The coarse cell center is water even though it contains dense land samples.");
+
+                Assert.That(topography.IsLandAt(interior.x, interior.z), Is.True);
+                Assert.That(topography.IsWaterAt(interior.x, interior.z), Is.False);
+                Assert.That(topography.IsShorelineAt(interior.x, interior.z), Is.False);
+                Assert.That(topography.IsLandAt(shore.x, shore.z), Is.True);
+                Assert.That(topography.IsShorelineAt(shore.x, shore.z), Is.True);
+                Assert.That(topography.IsWaterAt(water.x, water.z), Is.True);
+                Assert.That(topography.IsLandAt(water.x, water.z), Is.False);
+
+                foreach (Vector3 position in new[] { interior, shore, water })
+                {
+                    Assert.That(topography.TryGetEnvironmentAt(position,
+                        out ApexShift.Runtime.World.Environment.EnvironmentSample sample), Is.True);
+                    Assert.That(topography.IsLandAt(position.x, position.z), Is.EqualTo(sample.IsLand));
+                    Assert.That(topography.IsWaterAt(position.x, position.z), Is.EqualTo(sample.IsWater));
+                    Assert.That(topography.IsShorelineAt(position.x, position.z), Is.EqualTo(sample.IsShoreline));
+                }
+            }
+            finally { Object.DestroyImmediate(go); }
+        }
+
+        [Test]
         public void DenseEnvironmentQueriesMatchCachedSamplesWithinCoarseCells()
         {
             GameObject go = new GameObject("DenseEnvironmentQueryContractTest");

@@ -279,9 +279,20 @@ namespace ApexShift.Runtime.World.Topography
             return _grid[gx, gz];
         }
 
-        public bool IsLandAt(float wx, float wz)      => GetCellAt(wx, wz)?.IsLand  ?? false;
-        public bool IsWaterAt(float wx, float wz)     => GetCellAt(wx, wz)?.IsWater ?? true;
-        public bool IsShorelineAt(float wx, float wz) => GetCellAt(wx, wz)?.IsShoreline ?? false;
+        public bool IsLandAt(float wx, float wz)
+            => TryGetEnvironmentAt(new Vector3(wx, 0f, wz), out EnvironmentSample sample)
+                ? sample.IsLand
+                : GetCellAt(wx, wz)?.IsLand ?? false;
+
+        public bool IsWaterAt(float wx, float wz)
+            => TryGetEnvironmentAt(new Vector3(wx, 0f, wz), out EnvironmentSample sample)
+                ? sample.IsWater
+                : GetCellAt(wx, wz)?.IsWater ?? true;
+
+        public bool IsShorelineAt(float wx, float wz)
+            => TryGetEnvironmentAt(new Vector3(wx, 0f, wz), out EnvironmentSample sample)
+                ? sample.IsShoreline
+                : GetCellAt(wx, wz)?.IsShoreline ?? false;
 
         public bool IsSafeForCreatureAt(float wx, float wz)
             => GetCellAt(wx, wz)?.IsSafeForCreatureSpawn ?? false;
