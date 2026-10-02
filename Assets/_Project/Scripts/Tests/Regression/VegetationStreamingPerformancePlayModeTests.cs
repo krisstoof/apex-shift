@@ -50,12 +50,12 @@ namespace ApexShift.Tests.Regression
             {
                 Vector3 position = new Vector3(chunkX * 24f + 4f + (i % 4) * 4f, 0f,
                     chunkZ * 24f + 4f + (i / 4) * 8f);
-                placements.Add(new VegetationPlacement($"perf_ground_{chunkX}_{chunkZ}_{i}", "westwood",
+                placements.Add(new VegetationPlacement($"perf_ground_{chunkX}_{chunkZ}_{i}", "jungle_interior",
                     groundSpecies, position, i * 13f, 0.8f + i * 0.02f, chunkX, chunkZ));
             }
 
             treeId = "perf_cut_tree_stable_id";
-            placements.Add(new VegetationPlacement(treeId, "westwood", treeSpecies,
+            placements.Add(new VegetationPlacement(treeId, "jungle_interior", treeSpecies,
                 new Vector3(12f, 0f, 12f), 37f, 1f, 0, 0));
             fakePlayer.position = new Vector3(12f, 0f, 12f);
             controller.Initialize(placements, settings, fakePlayer.position);
@@ -66,6 +66,8 @@ namespace ApexShift.Tests.Regression
             HarvestableTreeRuntime tree = null;
             Assert.That(HarvestableTreeRegistry.TryGet(treeId, out tree), Is.True,
                 "Harvestable instances must remain registered while streamed out.");
+            Assert.That(tree.TreeId, Is.EqualTo(placements[placements.Count - 1].InstanceId));
+            Assert.That(tree.HabitatId, Is.EqualTo("jungle_interior"));
             var actor = Own(new GameObject("VegetationPerf_AxeOwner")).AddComponent<PlayerInventoryRuntime>();
             actor.EnsureInitialized();
             actor.Inventory.AddItem("axe", 1);
@@ -85,6 +87,7 @@ namespace ApexShift.Tests.Regression
                 "The distant home chunk's category root should be streamed out.");
             Assert.That(tree.LifecycleState, Is.EqualTo(TreeLifecycleState.Depleted));
 
+            TreeSaveData streamedOutState = tree.CaptureSaveData();
             var frameMilliseconds = new List<float>(120);
             float peakStreamingRefreshMs = controller.Stats.StreamingRefreshMs;
             Vector3[] route =
@@ -128,12 +131,16 @@ namespace ApexShift.Tests.Regression
             VegetationInstanceRuntime[] instances = forestRoot.GetComponentsInChildren<VegetationInstanceRuntime>(true);
             VegetationInstanceRuntime restoredMetadata = instances.FirstOrDefault(instance => instance.InstanceId == "perf_ground_0_0_0");
             Assert.That(restoredMetadata, Is.Not.Null, "The stable placement should be represented after reacquisition.");
-            Assert.That(restoredMetadata.BiomeId, Is.EqualTo("westwood"));
+            Assert.That(restoredMetadata.HabitatId, Is.EqualTo("jungle_interior"));
             Assert.That(restoredMetadata.ChunkX, Is.EqualTo(0));
             Assert.That(restoredMetadata.ChunkZ, Is.EqualTo(0));
             Assert.That(restoredMetadata.transform.position, Is.EqualTo(new Vector3(4f, 0f, 4f)));
             Assert.That(HarvestableTreeRegistry.TryGet(treeId, out HarvestableTreeRuntime sameTree), Is.True);
             Assert.That(sameTree, Is.SameAs(tree));
+            Assert.That(sameTree.TreeId, Is.EqualTo(treeId));
+            TreeSaveData streamedInState = sameTree.CaptureSaveData();
+            Assert.That(streamedInState.LifecycleState, Is.EqualTo(streamedOutState.LifecycleState));
+            Assert.That(streamedInState.RegrowthProgress, Is.EqualTo(streamedOutState.RegrowthProgress));
 
             frameMilliseconds.Sort();
             float averageFrameMs = frameMilliseconds.Count > 0 ? frameMilliseconds.Average() : 0f;
@@ -231,7 +238,7 @@ namespace ApexShift.Tests.Regression
         {
             VegetationSpeciesAsset species = ScriptableObject.CreateInstance<VegetationSpeciesAsset>();
             species.Configure(id, id, prefab, category, 0.8f, 1.2f, 1f, 0f, 90f, 0f, 1f, 0f, 1f,
-                new[] { "westwood" }, true, harvestable, resourceKind, stump,
+                new[] { "jungle_interior" }, true, harvestable, resourceKind, stump,
                 harvestable ? VegetationCollisionMode.GameplayResource : VegetationCollisionMode.None,
                 maxTreeHealth: 25f, regrowthDays: 5, fallDuration: 0.05f);
             ownedAssets.Add(species);
@@ -258,7 +265,7 @@ namespace ApexShift.Tests.Regression
 
             var placements = new List<VegetationPlacement>(treeCount);
             for (int i = 0; i < treeCount; i++)
-                placements.Add(new VegetationPlacement($"{idPrefix}_tree_{i}", "westwood", species,
+                placements.Add(new VegetationPlacement($"{idPrefix}_tree_{i}", "jungle_interior", species,
                     new Vector3(8f + i * 1.5f, 0f, 8f), 0f, 1f, 0, 0));
 
             controller.Initialize(placements, settings, fakePlayer.position);

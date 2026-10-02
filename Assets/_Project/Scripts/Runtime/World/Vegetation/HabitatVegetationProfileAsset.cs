@@ -5,7 +5,7 @@ using UnityEngine;
 namespace ApexShift.Runtime.World.Vegetation
 {
     [Serializable]
-    public sealed class BiomeVegetationSpeciesEntry
+    public sealed class HabitatVegetationSpeciesEntry
     {
         [SerializeField] private VegetationSpeciesAsset species;
         [SerializeField, Min(0f)] private float weight = 1f;
@@ -15,9 +15,9 @@ namespace ApexShift.Runtime.World.Vegetation
         public float Weight => weight;
         public float DensityMultiplier => densityMultiplier;
 
-        public BiomeVegetationSpeciesEntry() { }
+        public HabitatVegetationSpeciesEntry() { }
 
-        public BiomeVegetationSpeciesEntry(VegetationSpeciesAsset value, float selectionWeight, float density)
+        public HabitatVegetationSpeciesEntry(VegetationSpeciesAsset value, float selectionWeight, float density)
         {
             species = value;
             weight = selectionWeight;
@@ -25,32 +25,48 @@ namespace ApexShift.Runtime.World.Vegetation
         }
     }
 
-    [CreateAssetMenu(menuName = "Apex Shift/World/Biome Vegetation Profile", fileName = "BiomeVegetationProfile")]
-    public sealed class BiomeVegetationProfileAsset : ScriptableObject
+    [CreateAssetMenu(menuName = "Apex Shift/World/Habitat Vegetation Profile", fileName = "HabitatVegetationProfile")]
+    public sealed class HabitatVegetationProfileAsset : ScriptableObject
     {
-        [SerializeField] private string biomeId = string.Empty;
+        [SerializeField] private string habitatId = string.Empty;
         [SerializeField, Min(0f)] private float overallDensity = 1f;
-        [SerializeField] private List<BiomeVegetationSpeciesEntry> species = new List<BiomeVegetationSpeciesEntry>();
+        [SerializeField] private List<HabitatVegetationSpeciesEntry> species = new List<HabitatVegetationSpeciesEntry>();
 
-        public string BiomeId => biomeId;
-        public float OverallDensity => overallDensity;
-        public IReadOnlyList<BiomeVegetationSpeciesEntry> Species => species;
-
-        public void Configure(string id, float density, IEnumerable<BiomeVegetationSpeciesEntry> entries)
+        public static readonly IReadOnlyList<string> CanonicalHabitatIds = Array.AsReadOnly(new[]
         {
-            biomeId = VegetationSpeciesAsset.NormalizeSpeciesId(id);
-            overallDensity = density;
-            species = entries == null ? new List<BiomeVegetationSpeciesEntry>() : new List<BiomeVegetationSpeciesEntry>(entries);
+            global::ApexShift.Runtime.World.Environment.HabitatIds.Coast,
+            global::ApexShift.Runtime.World.Environment.HabitatIds.LowlandJungle,
+            global::ApexShift.Runtime.World.Environment.HabitatIds.JungleInterior,
+            global::ApexShift.Runtime.World.Environment.HabitatIds.WetJungle,
+            global::ApexShift.Runtime.World.Environment.HabitatIds.RockyUpland
+        });
+
+        public static bool IsValidHabitatId(string id)
+        {
+            foreach (string known in CanonicalHabitatIds)
+                if (string.Equals(known, id, StringComparison.Ordinal)) return true;
+            return false;
         }
 
-        public List<string> Validate(ICollection<string> validBiomeIds, VegetationCatalogAsset catalog)
+        public string HabitatId => habitatId;
+        public float OverallDensity => overallDensity;
+        public IReadOnlyList<HabitatVegetationSpeciesEntry> Species => species;
+
+        public void Configure(string id, float density, IEnumerable<HabitatVegetationSpeciesEntry> entries)
+        {
+            habitatId = VegetationSpeciesAsset.NormalizeSpeciesId(id);
+            overallDensity = density;
+            species = entries == null ? new List<HabitatVegetationSpeciesEntry>() : new List<HabitatVegetationSpeciesEntry>(entries);
+        }
+
+        public List<string> Validate(VegetationCatalogAsset catalog)
         {
             var errors = new List<string>();
-            string normalized = VegetationSpeciesAsset.NormalizeSpeciesId(biomeId);
-            if (string.IsNullOrWhiteSpace(biomeId) || !string.Equals(biomeId, normalized, StringComparison.Ordinal))
-                errors.Add($"Profile '{name}' has invalid biome ID '{biomeId}'.");
-            if (validBiomeIds == null || !validBiomeIds.Contains(normalized))
-                errors.Add($"Profile '{name}' references unknown biome ID '{biomeId}'.");
+            string normalized = VegetationSpeciesAsset.NormalizeSpeciesId(habitatId);
+            if (string.IsNullOrWhiteSpace(habitatId) || !string.Equals(habitatId, normalized, StringComparison.Ordinal))
+                errors.Add($"Profile '{name}' has invalid habitat ID '{habitatId}'.");
+            if (!IsValidHabitatId(normalized))
+                errors.Add($"Profile '{name}' references unknown habitat ID '{habitatId}'.");
             if (!IsFinite(overallDensity) || overallDensity < 0f)
                 errors.Add($"Profile '{name}' has invalid overall density {overallDensity}.");
 
@@ -61,7 +77,7 @@ namespace ApexShift.Runtime.World.Vegetation
                 return errors;
             }
 
-            foreach (BiomeVegetationSpeciesEntry entry in species)
+            foreach (HabitatVegetationSpeciesEntry entry in species)
             {
                 if (entry == null || entry.Species == null)
                 {
@@ -78,6 +94,8 @@ namespace ApexShift.Runtime.World.Vegetation
                     errors.Add($"Profile '{name}' species '{id}' has invalid weight {entry.Weight}.");
                 if (!IsFinite(entry.DensityMultiplier) || entry.DensityMultiplier < 0f)
                     errors.Add($"Profile '{name}' species '{id}' has invalid density multiplier {entry.DensityMultiplier}.");
+                if (!entry.Species.AllowsHabitat(normalized))
+                    errors.Add($"Species '{id}' is not allowed in profile habitat '{normalized}'.");
             }
             return errors;
         }

@@ -16,24 +16,31 @@ MonoBehaviour:
   displayName: Forest Shrub 01
   visualPrefab: {fileID: 0}
   category: 1
+  form: 3
+  minDistanceToCoast: 0
+  maxDistanceToCoast: 3.4028235e+38
+  allowedTerrainTypes: 
   minScale: 0.8
   maxScale: 1.2
   minimumSpacing: 1.4
   trunkRadius: 0.08
   trunkHeight: 0.6
   trunkCenterY: 0.3
+  treeMaxHealth: 100
+  treeRegrowthDays: 0
+  treeFallDuration: 0
   minSlopeDegrees: 0
   maxSlopeDegrees: 40
   minElevation01: 0
   maxElevation01: 1
   minMoisture01: 0
   maxMoisture01: 1
-  allowedBiomeIds:
-  - hearth_meadow
-  - westwood
-  - south_thicket
-  - stoneback_ridge
-  - redfang_wilds
+  allowedHabitatIds:
+  - coast
+  - lowland_jungle
+  - jungle_interior
+  - wet_jungle
+  - rocky_upland
   randomYaw: 1
   harvestable: 1
   resourceKind: berry_bush

@@ -16,6 +16,10 @@ MonoBehaviour:
   displayName: Conifer Tree 01
   visualPrefab: {fileID: 0}
   category: 0
+  form: 0
+  minDistanceToCoast: 0
+  maxDistanceToCoast: 3.4028235e+38
+  allowedTerrainTypes: 02000000030000000400000001000000i
   minScale: 0.8
   maxScale: 1.2
   minimumSpacing: 3.8
@@ -26,16 +30,13 @@ MonoBehaviour:
   treeRegrowthDays: 6
   treeFallDuration: 1.35
   minSlopeDegrees: 0
-  maxSlopeDegrees: 40
+  maxSlopeDegrees: 28
   minElevation01: 0
   maxElevation01: 1
   minMoisture01: 0
   maxMoisture01: 1
-  allowedBiomeIds:
-  - westwood
-  - south_thicket
-  - stoneback_ridge
-  - redfang_wilds
+  allowedHabitatIds:
+  - rocky_upland
   randomYaw: 1
   harvestable: 1
   resourceKind: conifer_tree

@@ -128,33 +128,36 @@ namespace ApexShift.Tests.Regression
                 Assert.AreEqual(first.Result.Report.LandCells, first.Result.Report.HabitatCells.Values.Sum(), "Habitat samples must reconcile to land cells.");
                 Assert.AreEqual(first.Result.Report.LandCells, first.Result.Report.SlopeBuckets.Sum());
                 Assert.That(first.Result.Report.HabitatLandPercentages.Values.Sum(), Is.EqualTo(100f).Within(0.01f));
-                Assert.AreEqual(first.Result.Report.VegetationPlacements, first.Result.Report.VegetationByBiomeSpecies.Values.Sum());
+                Assert.AreEqual(first.Result.Report.VegetationPlacements, first.Result.Report.VegetationByHabitatSpecies.Values.Sum());
                 Assert.AreEqual(first.Result.Report.VegetationPlacements, first.Result.Report.Harvestable + first.Result.Report.Decorative);
                 Assert.AreEqual(first.Result.Report.VegetationPlacements, first.Result.Report.Trees + first.Result.Report.Shrubs + first.Result.Report.GroundCover);
                 Assert.LessOrEqual(first.Result.Report.MinElevation, first.Result.Report.AverageElevation);
                 Assert.LessOrEqual(first.Result.Report.AverageElevation, first.Result.Report.MaxElevation);
                 Assert.That(first.Result.Report.Rejections.Water, Is.GreaterThanOrEqualTo(0));
                 Assert.That(first.Result.Report.Rejections.ExcessiveSlope, Is.GreaterThanOrEqualTo(0));
-                Assert.That(first.Result.Report.Rejections.BiomeMismatch, Is.GreaterThanOrEqualTo(0));
+                Assert.That(first.Result.Report.Rejections.HabitatMismatch, Is.GreaterThanOrEqualTo(0));
                 Assert.That(first.Result.Report.Rejections.Elevation, Is.GreaterThanOrEqualTo(0));
                 Assert.That(first.Result.Report.Rejections.Moisture, Is.GreaterThanOrEqualTo(0));
                 Assert.That(first.Result.Report.Rejections.ShorelineOrClearing, Is.GreaterThanOrEqualTo(0));
                 Assert.That(first.Result.Report.Rejections.SpacingOrCollision, Is.GreaterThanOrEqualTo(0));
                 Assert.That(firstResultCount, Is.EqualTo(firstInstances.Length));
                 int categoryTotal = 0;
-                foreach (string biomeId in new[] { "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" })
-                    categoryTotal += first.Result.GetVegetationCount(biomeId, VegetationCategory.Tree);
-                Assert.That(categoryTotal, Is.EqualTo(firstResultCount), "Per-biome/category counts should reconcile with total and existing species counts.");
+                foreach (string habitatId in HabitatVegetationProfileAsset.CanonicalHabitatIds)
+                    categoryTotal += first.Result.GetVegetationCount(habitatId, VegetationCategory.Tree);
+                Assert.That(categoryTotal, Is.EqualTo(firstResultCount), "Per-habitat/category counts should reconcile with total and existing species counts.");
                 foreach (VegetationInstanceRuntime instance in firstInstances)
                 {
                     Assert.That(instance.transform.parent.parent.name, Is.EqualTo($"Chunk_{instance.ChunkX}_{instance.ChunkZ}"));
-                    Assert.That(first.Result.GetVegetationCount(instance.BiomeId, instance.SpeciesId), Is.GreaterThan(0));
+                    Assert.That(first.Result.GetVegetationCount(instance.HabitatId, instance.SpeciesId), Is.GreaterThan(0));
                     Assert.IsFalse(first.IslandTopography.IsWaterAt(instance.transform.position.x, instance.transform.position.z), "Generated vegetation placement must not be in water.");
-                    Assert.AreEqual(instance.BiomeId, first.IslandTopography.GetBiomeIdAt(instance.transform.position), "Placement metadata must match the authoritative dense biome map.");
-                    TopographyCell cell = first.IslandTopography.GetCellAt(instance.transform.position);
+                    Assert.AreEqual(instance.HabitatId, first.IslandTopography.GetHabitatIdAt(instance.transform.position), "Placement metadata must match the authoritative dense habitat map.");
+                    Assert.IsTrue(first.IslandTopography.TryGetEnvironmentAt(instance.transform.position,
+                        out VegetationEnvironmentSample environment));
                     VegetationSpeciesAsset species = FindSpecies(catalog, instance.SpeciesId);
                     Assert.IsNotNull(species);
-                    Assert.That(cell.SlopeDegrees, Is.LessThanOrEqualTo(species.MaxSlopeDegrees + 0.05f), $"{instance.SpeciesId} exceeds its slope profile.");
+                    Assert.That(environment.SlopeDegrees, Is.LessThanOrEqualTo(species.MaxSlopeDegrees + 0.05f), $"{instance.SpeciesId} exceeds its slope profile.");
+                    Assert.That(species.AllowsTerrain(environment.TerrainType), Is.True);
+                    Assert.That(environment.DistanceToCoast, Is.InRange(species.MinDistanceToCoast, species.MaxDistanceToCoast));
                     if (species.Category == VegetationCategory.Tree || species.Category == VegetationCategory.DeadTree)
                     {
                         Assert.That(HorizontalDistance(instance.transform.position, first.Player.transform.position), Is.GreaterThanOrEqualTo(generator.StartClearingRadius - 0.05f), "Large trees must respect the configured player clearing.");
@@ -207,7 +210,7 @@ namespace ApexShift.Tests.Regression
         private static BiomeCatalogAsset BuildBiomeCatalog(GameObject visual)
         {
             string[] biomeIds = { "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" };
-            var allowed = new List<string>(biomeIds);
+            var allowed = new List<string>(HabitatVegetationProfileAsset.CanonicalHabitatIds);
             var species = ScriptableObject.CreateInstance<VegetationSpeciesAsset>();
             species.Configure("lifecycle_test_tree", "Lifecycle Test Tree", visual, VegetationCategory.Tree,
                 0.9f, 1.1f, 2.5f, 0f, 50f, 0f, 1f, 0f, 1f, allowed, true, true, "leafy_tree", null,
@@ -218,9 +221,6 @@ namespace ApexShift.Tests.Regression
             {
                 var biome = ScriptableObject.CreateInstance<BiomeDefinitionAsset>();
                 biome.Configure(biomeId, biomeId, Color.green, biomeId == "hearth_meadow", new List<VegetationSpawnEntryAsset>());
-                var profile = ScriptableObject.CreateInstance<BiomeVegetationProfileAsset>();
-                profile.Configure(biomeId, 1f, new[] { new BiomeVegetationSpeciesEntry(species, 1f, 1f) });
-                biome.SetVegetationProfile(profile);
                 biomes.Add(biome);
             }
             var water = ScriptableObject.CreateInstance<BiomeDefinitionAsset>();
@@ -229,6 +229,16 @@ namespace ApexShift.Tests.Regression
 
             var catalog = ScriptableObject.CreateInstance<BiomeCatalogAsset>();
             catalog.SetBiomes(biomes);
+            var habitatCatalog = ScriptableObject.CreateInstance<HabitatVegetationCatalogAsset>();
+            var profiles = new List<HabitatVegetationProfileAsset>();
+            foreach (string habitat in HabitatVegetationProfileAsset.CanonicalHabitatIds)
+            {
+                var profile = ScriptableObject.CreateInstance<HabitatVegetationProfileAsset>();
+                profile.Configure(habitat, 1.2f, new[] { new HabitatVegetationSpeciesEntry(species, 1f, 1f) });
+                profiles.Add(profile);
+            }
+            habitatCatalog.SetProfiles(profiles);
+            catalog.SetHabitatVegetationCatalog(habitatCatalog);
             // The test owns all transient profile/biome/species objects via a hide-and-destroy helper list.
             TransientVegetationTestAssets.Register(catalog, species, biomes);
             return catalog;
@@ -236,17 +246,14 @@ namespace ApexShift.Tests.Regression
 
         private static string ToMetadata(VegetationInstanceRuntime instance)
         {
-            return $"{instance.InstanceId}|{instance.SpeciesId}|{instance.BiomeId}|{instance.ChunkX}|{instance.ChunkZ}|{instance.transform.position.x:R}|{instance.transform.position.y:R}|{instance.transform.position.z:R}";
+            return $"{instance.InstanceId}|{instance.SpeciesId}|{instance.HabitatId}|{instance.ChunkX}|{instance.ChunkZ}|{instance.transform.position.x:R}|{instance.transform.position.y:R}|{instance.transform.position.z:R}";
         }
 
         private static VegetationSpeciesAsset FindSpecies(BiomeCatalogAsset catalog, string id)
         {
-            foreach (BiomeDefinitionAsset biome in catalog.Biomes)
-            {
-                if (biome == null || biome.VegetationProfile == null || biome.VegetationProfile.Species == null) continue;
-                foreach (BiomeVegetationSpeciesEntry entry in biome.VegetationProfile.Species)
+            foreach (HabitatVegetationProfileAsset profile in catalog.HabitatVegetationCatalog.Profiles)
+                foreach (HabitatVegetationSpeciesEntry entry in profile.Species)
                     if (entry.Species != null && entry.Species.SpeciesId == id) return entry.Species;
-            }
             return null;
         }
 
@@ -265,10 +272,11 @@ namespace ApexShift.Tests.Regression
             {
                 Assets.Add(catalog);
                 Assets.Add(species);
+                Assets.Add(catalog.HabitatVegetationCatalog);
+                foreach (HabitatVegetationProfileAsset profile in catalog.HabitatVegetationCatalog.Profiles) Assets.Add(profile);
                 foreach (BiomeDefinitionAsset biome in biomes)
                 {
                     Assets.Add(biome);
-                    if (biome.VegetationProfile != null) Assets.Add(biome.VegetationProfile);
                 }
             }
             public static void Destroy(BiomeCatalogAsset catalog)

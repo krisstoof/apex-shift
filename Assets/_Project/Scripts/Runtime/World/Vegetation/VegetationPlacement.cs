@@ -5,7 +5,7 @@ namespace ApexShift.Runtime.World.Vegetation
     public readonly struct VegetationPlacement
     {
         public readonly string InstanceId;
-        public readonly string BiomeId;
+        public readonly string HabitatId;
         public readonly string SpeciesId;
         public readonly Vector3 Position;
         public readonly float Yaw;
@@ -17,11 +17,11 @@ namespace ApexShift.Runtime.World.Vegetation
         public readonly VegetationCollisionMode CollisionMode;
         public readonly VegetationSpeciesAsset SpeciesAsset;
 
-        public VegetationPlacement(string instanceId, string biomeId, VegetationSpeciesAsset species,
+        public VegetationPlacement(string instanceId, string habitatId, VegetationSpeciesAsset species,
             Vector3 position, float yaw, float scale, int chunkX, int chunkZ)
         {
             InstanceId = instanceId;
-            BiomeId = biomeId;
+            HabitatId = habitatId;
             SpeciesAsset = species;
             SpeciesId = species != null ? species.SpeciesId : string.Empty;
             Position = position;

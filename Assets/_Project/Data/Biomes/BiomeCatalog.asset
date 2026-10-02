@@ -19,3 +19,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 02f651be8ca73ef41913c930ea629737, type: 2}
   - {fileID: 11400000, guid: e76e22ca9c14bc24cb3bc3cb3c1c2ace, type: 2}
   - {fileID: 11400000, guid: 7a0ca2e03b784914d9b42574289c92d5, type: 2}
+  habitatVegetationCatalog: {fileID: 11400000, guid: f547e4f56973abe409b9fe7b12442469, type: 2}

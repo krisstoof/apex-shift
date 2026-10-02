@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using ApexShift.Core.World.Biomes;
 using UnityEngine;
+using ApexShift.Runtime.World.Vegetation;
 
 namespace ApexShift.Runtime.World.Biomes
 {
@@ -9,6 +10,15 @@ namespace ApexShift.Runtime.World.Biomes
     public sealed class BiomeCatalogAsset : ScriptableObject
     {
         [SerializeField] private List<BiomeDefinitionAsset> biomes = new List<BiomeDefinitionAsset>();
+
+        // Transitional data anchor for serialized scenes; placement uses only habitat profiles.
+        [SerializeField] private HabitatVegetationCatalogAsset habitatVegetationCatalog;
+        public HabitatVegetationCatalogAsset HabitatVegetationCatalog => habitatVegetationCatalog;
+
+#if UNITY_EDITOR
+        public void SetHabitatVegetationCatalog(HabitatVegetationCatalogAsset catalog)
+            => habitatVegetationCatalog = catalog;
+#endif
 
         private Dictionary<string, BiomeDefinitionAsset> _lookup;
 

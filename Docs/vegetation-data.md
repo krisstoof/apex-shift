@@ -1,26 +1,62 @@
 # Vegetation data authoring
 
-The vegetation data model introduced for #90 is authored independently from
-the current legacy vegetation spawner. `VegetationCatalog.asset` resolves stable
-species IDs; biome profiles reference catalog species by asset and define their
-weights and density multipliers. `BiomeDefinitionAsset.VegetationProfile` is
-the canonical profile reference. Its previous vegetation list remains intact
-for compatibility until the later spawning migration.
+Production placement uses `HabitatVegetationCatalog.asset` and neutral
+`HabitatVegetationProfileAsset` profiles in
+`Assets/_Project/Data/Vegetation/Habitats/`. The active relative densities are:
 
-Create or update the catalog, five species and five biome profiles with
-`Apex Shift/World/Create or Update Vegetation Data`. The operation is
-idempotent and preserves manually assigned presentation prefab references.
-Validate via `Apex Shift/Validation/Validate Vegetation Data`; validation never
-repairs assets.
+| Habitat | Density | Mix |
+| --- | ---: | --- |
+| coast | 0.45 | Sparse broadleaf trees (0.25 multiplier), shrubs (0.6), groundcover |
+| lowland_jungle | 1.55 | Broadleaf trees, shrubs, groundcover |
+| jungle_interior | 1.85 | Broadleaf trees, shrubs, groundcover |
+| wet_jungle | 2.10 | Broadleaf trees, shrubs, groundcover |
+| rocky_upland | 0.45 | Shrubs and groundcover; no large trees |
 
-Species IDs: `tree_leafy_01`, `tree_conifer_01`, `tree_dead_01`,
-`shrub_forest_01`, and `groundcover_forest_01`. Profiles are provided for
-`hearth_meadow`, `westwood`, `south_thicket`, `stoneback_ridge`, and
-`redfang_wilds`.
+No vegetation profile exists for water. Existing conifer and dead-tree species
+assets remain available but are not in the active tropical mix. No new models or
+placeholder tropical assets are generated.
 
-This checkout does not contain verified SpeedTree presentation prefabs for
-these species. The generated species assets intentionally have unassigned
-visual prefabs; the validator reports each as a content dependency. Do not
-replace them with primitives or unrelated vegetation prefabs. Assign approved
-SpeedTree prefabs when those dependencies are added. No runtime spawner,
-harvesting behavior, or legacy vegetation assets are changed here.
+`VegetationCatalog.asset` resolves stable species IDs. Each
+`VegetationSpeciesAsset` declares allowed habitat IDs, slope, normalized
+elevation, moisture, minimum/maximum `DistanceToCoast`, and optional allowed
+`TerrainType` values. An empty terrain list accepts all land terrain types,
+never water; the default maximum coast distance is unbounded (`float.MaxValue`).
+`ResourceKind` names a ResourceDefinition kind, not its dropped item ID.
+
+`VegetationForm` describes canopy/understory trees, palms, shrubs, ferns,
+broadleaf understory, vines, fallen logs, groundcover and standing dead trees.
+It is separate from the unchanged coarse `VegetationCategory` values used by
+streaming budgets, spacing and harvesting. Future forms require approved assets;
+a conifer is not treated as a palm.
+
+The planner consumes cached authoritative environment samples directly from
+IslandTopographyRuntime, without legacy biome mapping or shoreline-point scans.
+Both species coast limits and category coastal clearance must pass. Water,
+shoreline, incompatible terrain/habitat and environmental ranges are rejected;
+player and landmark clearings and spatial spacing remain enforced.
+
+WorldGeneratorRuntime uses an explicitly assigned habitat catalog first, then
+the transitional `BiomeCatalogAsset.HabitatVegetationCatalog` reference. This
+data anchor lets the existing serialized RuntimeWorld setup use habitat
+vegetation without rewriting the scene. BiomeVegetationProfileAsset and
+`Data/Vegetation/Biomes/` are legacy compatibility data, not production placement
+sources; broader removal belongs to #106. Fauna/resource biome systems are
+unchanged.
+
+Create/update with `Apex Shift/World/Create or Update Vegetation Data`. Repeated
+runs do not duplicate assets and preserve assigned VisualPrefab and
+DepletedVisualPrefab references. Validate with
+`Apex Shift/Validation/Validate Vegetation Data`; validation reports missing
+dependencies and malformed data without repairing assets.
+
+Chunking, streaming, pooling and gameplay budgets remain unchanged: distant
+decorations need not have GameObjects, while streamed-out harvestable trees
+retain their state. Stable InstanceId uses seed, species ID and quantized X/Z,
+not habitat naming. TreeId equals placement InstanceId and remains stable across
+stream out/in and save/load; the tree-save DTO and lifecycle are unchanged.
+Reports/debug counters use habitat/species keys and habitat/terrain/coast
+rejection reasons.
+This checkout still has unassigned VisualPrefab references on the five canonical
+species assets. The validator reports those content dependencies; assign approved
+presentation prefabs before expecting the production tropical mix to be visible.
+The creator preserves such assignments rather than substituting placeholder assets.

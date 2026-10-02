@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using ApexShift.Runtime.World.Biomes;
 using ApexShift.Runtime.World.Generation;
 using UnityEngine;
 
@@ -25,23 +24,22 @@ namespace ApexShift.Runtime.World.Vegetation
         private const float LocalDensityMaximum = 1.35f;
         private const float LocalDensityCellSize = 48f;
 
-        public List<VegetationPlacement> Plan(int seed, BiomeCatalogAsset biomeCatalog,
+        public List<VegetationPlacement> Plan(int seed, HabitatVegetationCatalogAsset habitatCatalog,
             VegetationGenerationSettings settings, Bounds worldBounds,
             Func<Vector3, VegetationEnvironmentSample> sampleEnvironment,
             Func<Vector3, float> sampleHeight, Vector3 playerSpawn, float startClearingRadius,
-            IReadOnlyList<VegetationLandmarkClearance> landmarks, IReadOnlyList<Vector3> shorelinePoints,
+            IReadOnlyList<VegetationLandmarkClearance> landmarks,
             VegetationRejectionCounts rejectionCounts = null)
         {
             var placements = new List<VegetationPlacement>();
-            if (biomeCatalog == null || settings == null || sampleEnvironment == null || sampleHeight == null) return placements;
+            if (habitatCatalog == null || settings == null || sampleEnvironment == null || sampleHeight == null) return placements;
 
             spacing.Clear();
             emittedMissingPrefabWarnings.Clear();
-            spacingCellSize = FindMaximumSpacing(biomeCatalog);
+            spacingCellSize = FindMaximumSpacing(habitatCatalog);
 
-            foreach (BiomeDefinitionAsset biome in biomeCatalog.Biomes)
+            foreach (HabitatVegetationProfileAsset profile in habitatCatalog.Profiles)
             {
-                BiomeVegetationProfileAsset profile = biome != null ? biome.VegetationProfile : null;
                 if (profile == null || profile.Species == null || profile.Species.Count == 0) continue;
                 float[] categoryWeights = new float[4];
                 categoryWeights[(int)VegetationCategory.Tree] = CalculateCategoryWeight(profile.Species, VegetationCategory.Tree);
@@ -51,13 +49,13 @@ namespace ApexShift.Runtime.World.Vegetation
 
                 for (int i = 0; i < profile.Species.Count; i++)
                 {
-                    BiomeVegetationSpeciesEntry entry = profile.Species[i];
+                    HabitatVegetationSpeciesEntry entry = profile.Species[i];
                     VegetationSpeciesAsset speciesAsset = entry != null ? entry.Species : null;
                     if (speciesAsset == null || entry.Weight <= 0f || entry.DensityMultiplier <= 0f) continue;
                     float categoryWeight = categoryWeights[(int)speciesAsset.Category];
                     if (categoryWeight <= 0f) continue;
-                    string biomeId = biome.BiomeId;
-                    if (!speciesAsset.AllowsBiome(biomeId)) continue;
+                    string habitatId = profile.HabitatId;
+                    if (!speciesAsset.AllowsHabitat(habitatId)) continue;
                     if (speciesAsset.VisualPrefab == null)
                     {
                         if (emittedMissingPrefabWarnings.Add(speciesAsset.SpeciesId))
@@ -70,32 +68,32 @@ namespace ApexShift.Runtime.World.Vegetation
                         * entry.DensityMultiplier
                         * (entry.Weight / categoryWeight);
                     if (!IsFinite(density) || density <= 0f) continue;
-                    PlanSpecies(seed, biomeId, speciesAsset, density, settings, worldBounds,
+                    PlanSpecies(seed, habitatId, speciesAsset, density, settings, worldBounds,
                         sampleEnvironment, sampleHeight, playerSpawn, startClearingRadius,
-                        landmarks, shorelinePoints, placements, rejectionCounts);
+                        landmarks, placements, rejectionCounts);
                 }
             }
             return placements;
         }
 
-        private static float CalculateCategoryWeight(IReadOnlyList<BiomeVegetationSpeciesEntry> entries, VegetationCategory category)
+        private static float CalculateCategoryWeight(IReadOnlyList<HabitatVegetationSpeciesEntry> entries, VegetationCategory category)
         {
             if (entries == null) return 0f;
             float total = 0f;
             for (int i = 0; i < entries.Count; i++)
             {
-                BiomeVegetationSpeciesEntry entry = entries[i];
+                HabitatVegetationSpeciesEntry entry = entries[i];
                 if (entry?.Species != null && entry.Species.Category == category)
                     total += Mathf.Max(0f, entry.Weight);
             }
             return total;
         }
 
-        private void PlanSpecies(int seed, string biomeId, VegetationSpeciesAsset species,
+        private void PlanSpecies(int seed, string habitatId, VegetationSpeciesAsset species,
             float density, VegetationGenerationSettings settings, Bounds worldBounds,
             Func<Vector3, VegetationEnvironmentSample> sampleEnvironment, Func<Vector3, float> sampleHeight,
             Vector3 playerSpawn, float startClearingRadius,
-            IReadOnlyList<VegetationLandmarkClearance> landmarks, IReadOnlyList<Vector3> shorelinePoints,
+            IReadOnlyList<VegetationLandmarkClearance> landmarks,
             List<VegetationPlacement> output, VegetationRejectionCounts rejections)
         {
             // Candidate density uses the modulation ceiling; the local field then
@@ -107,7 +105,6 @@ namespace ApexShift.Runtime.World.Vegetation
             int maxX = Mathf.CeilToInt(worldBounds.max.x / cellSize);
             int minZ = Mathf.FloorToInt(worldBounds.min.z / cellSize);
             int maxZ = Mathf.CeilToInt(worldBounds.max.z / cellSize);
-            float jitter = settings.JitterFraction * 0.5f;
             float coastClearance = settings.GetCoastalClearance(species.Category);
             int spacingGroup = GetSpacingGroup(species.Category);
 
@@ -119,23 +116,27 @@ namespace ApexShift.Runtime.World.Vegetation
                 var basePosition = new Vector3(baseX, 0f, baseZ);
                 VegetationEnvironmentSample baseEnvironment = sampleEnvironment(basePosition);
                 if (!baseEnvironment.IsLand || baseEnvironment.IsWater) { if (rejections != null) rejections.Water++; continue; }
-                if (!string.Equals(baseEnvironment.BiomeId, biomeId, StringComparison.Ordinal)) { if (rejections != null) rejections.BiomeMismatch++; continue; }
+                if (!string.Equals(baseEnvironment.HabitatId, habitatId, StringComparison.Ordinal)) { if (rejections != null) rejections.HabitatMismatch++; continue; }
 
                 int baseChunkX = Mathf.FloorToInt(baseX / settings.ChunkSize);
                 int baseChunkZ = Mathf.FloorToInt(baseZ / settings.ChunkSize);
-                var random = new LocalDeterministicRandom(StableHash(seed, baseChunkX, baseChunkZ, biomeId, species.SpeciesId, gridX, gridZ));
+                var random = new LocalDeterministicRandom(StableHash(seed, baseChunkX, baseChunkZ, habitatId, species.SpeciesId, gridX, gridZ));
                 float x = baseX + (random.Next01() - 0.5f) * cellSize * settings.JitterFraction;
                 float z = baseZ + (random.Next01() - 0.5f) * cellSize * settings.JitterFraction;
                 var candidate = new Vector3(x, 0f, z);
                 VegetationEnvironmentSample environment = sampleEnvironment(candidate);
                 if (!environment.IsLand || environment.IsWater) { if (rejections != null) rejections.Water++; continue; }
-                if (!string.Equals(environment.BiomeId, biomeId, StringComparison.Ordinal) || !species.AllowsBiome(environment.BiomeId)) { if (rejections != null) rejections.BiomeMismatch++; continue; }
+                if (!string.Equals(environment.HabitatId, habitatId, StringComparison.Ordinal) || !species.AllowsHabitat(environment.HabitatId)) { if (rejections != null) rejections.HabitatMismatch++; continue; }
                 if (environment.SlopeDegrees < species.MinSlopeDegrees || environment.SlopeDegrees > species.MaxSlopeDegrees) { if (rejections != null) rejections.ExcessiveSlope++; continue; }
                 if (environment.NormalizedElevation < species.MinElevation01 || environment.NormalizedElevation > species.MaxElevation01) { if (rejections != null) rejections.Elevation++; continue; }
                 if (environment.Moisture01 < species.MinMoisture01 || environment.Moisture01 > species.MaxMoisture01) { if (rejections != null) rejections.Moisture++; continue; }
+                if (!species.AllowsTerrain(environment.TerrainType))
+                { if (rejections != null) rejections.Terrain++; continue; }
+                if (environment.DistanceToCoast < species.MinDistanceToCoast || environment.DistanceToCoast > species.MaxDistanceToCoast)
+                { if (rejections != null) rejections.CoastDistance++; continue; }
                 if (environment.IsShoreline) { if (rejections != null) rejections.ShorelineOrClearing++; continue; }
                 if (!CanPlaceInStartClearing(species.Category, settings, candidate, playerSpawn, startClearingRadius)
-                    || IsNearLandmark(candidate, landmarks) || IsNearShoreline(candidate, shorelinePoints, coastClearance))
+                    || IsNearLandmark(candidate, landmarks) || environment.DistanceToCoast < coastClearance)
                 { if (rejections != null) rejections.ShorelineOrClearing++; continue; }
 
                 float localDensityMultiplier = SampleLocalDensityMultiplier(seed, candidate.x, candidate.z);
@@ -149,24 +150,11 @@ namespace ApexShift.Runtime.World.Vegetation
                 float scale = Mathf.Lerp(species.MinScale, species.MaxScale, random.Next01());
                 int chunkX = Mathf.FloorToInt(candidate.x / settings.ChunkSize);
                 int chunkZ = Mathf.FloorToInt(candidate.z / settings.ChunkSize);
-                string instanceId = BuildInstanceId(seed, biomeId, species.SpeciesId, candidate);
-                var placement = new VegetationPlacement(instanceId, biomeId, species, candidate, yaw, scale, chunkX, chunkZ);
+                string instanceId = BuildInstanceId(seed, species.SpeciesId, candidate);
+                var placement = new VegetationPlacement(instanceId, habitatId, species, candidate, yaw, scale, chunkX, chunkZ);
                 AddSpacingPoint(candidate, species.MinimumSpacing, spacingGroup);
                 output.Add(placement);
             }
-        }
-
-        private static bool IsEnvironmentValid(VegetationSpeciesAsset species, string expectedBiome, VegetationEnvironmentSample environment)
-        {
-            return environment.IsLand && !environment.IsWater && !environment.IsShoreline
-                && string.Equals(environment.BiomeId, expectedBiome, StringComparison.Ordinal)
-                && species.AllowsBiome(environment.BiomeId)
-                && environment.NormalizedElevation >= species.MinElevation01
-                && environment.NormalizedElevation <= species.MaxElevation01
-                && environment.SlopeDegrees >= species.MinSlopeDegrees
-                && environment.SlopeDegrees <= species.MaxSlopeDegrees
-                && environment.Moisture01 >= species.MinMoisture01
-                && environment.Moisture01 <= species.MaxMoisture01;
         }
 
         private static bool CanPlaceInStartClearing(VegetationCategory category, VegetationGenerationSettings settings,
@@ -186,15 +174,6 @@ namespace ApexShift.Runtime.World.Vegetation
                 VegetationLandmarkClearance landmark = landmarks[i];
                 if (HorizontalSqrDistance(candidate, landmark.Position) < landmark.Radius * landmark.Radius) return true;
             }
-            return false;
-        }
-
-        private static bool IsNearShoreline(Vector3 candidate, IReadOnlyList<Vector3> shorelinePoints, float clearance)
-        {
-            if (shorelinePoints == null || clearance <= 0f) return false;
-            float sqr = clearance * clearance;
-            for (int i = 0; i < shorelinePoints.Count; i++)
-                if (HorizontalSqrDistance(candidate, shorelinePoints[i]) < sqr) return true;
             return false;
         }
 
@@ -228,12 +207,12 @@ namespace ApexShift.Runtime.World.Vegetation
             points.Add(new AcceptedPoint(position, Mathf.Max(0f, minimumSpacing)));
         }
 
-        private static float FindMaximumSpacing(BiomeCatalogAsset catalog)
+        private static float FindMaximumSpacing(HabitatVegetationCatalogAsset catalog)
         {
             float max = 0.1f;
-            foreach (BiomeDefinitionAsset biome in catalog.Biomes)
+            foreach (HabitatVegetationProfileAsset profile in catalog.Profiles)
             {
-                IReadOnlyList<BiomeVegetationSpeciesEntry> entries = biome != null ? biome.VegetationProfile?.Species : null;
+                IReadOnlyList<HabitatVegetationSpeciesEntry> entries = profile != null ? profile.Species : null;
                 if (entries == null) continue;
                 for (int i = 0; i < entries.Count; i++)
                     if (entries[i]?.Species != null) max = Mathf.Max(max, entries[i].Species.MinimumSpacing);
@@ -259,11 +238,10 @@ namespace ApexShift.Runtime.World.Vegetation
             return x * x + z * z;
         }
 
-        private static string BuildInstanceId(int seed, string biomeId, string speciesId, Vector3 position)
+        private static string BuildInstanceId(int seed, string speciesId, Vector3 position)
         {
             ulong hash = FnvOffset;
             AddInt(ref hash, seed);
-            AddString(ref hash, biomeId);
             AddString(ref hash, speciesId);
             AddInt(ref hash, Mathf.RoundToInt(position.x * 1000f));
             AddInt(ref hash, Mathf.RoundToInt(position.z * 1000f));
@@ -295,13 +273,13 @@ namespace ApexShift.Runtime.World.Vegetation
 
         private static float Smooth01(float value) => value * value * (3f - 2f * value);
 
-        private static ulong StableHash(int seed, int chunkX, int chunkZ, string biomeId, string speciesId, int gridX, int gridZ)
+        private static ulong StableHash(int seed, int chunkX, int chunkZ, string habitatId, string speciesId, int gridX, int gridZ)
         {
             ulong hash = FnvOffset;
             AddInt(ref hash, seed);
             AddInt(ref hash, chunkX);
             AddInt(ref hash, chunkZ);
-            AddString(ref hash, biomeId);
+            AddString(ref hash, habitatId);
             AddString(ref hash, speciesId);
             AddInt(ref hash, gridX);
             AddInt(ref hash, gridZ);

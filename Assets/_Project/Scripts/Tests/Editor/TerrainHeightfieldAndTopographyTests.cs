@@ -326,6 +326,17 @@ namespace ApexShift.Tests.Editor
                 {
                     Assert.That(topography.TryGetEnvironmentAt(position,
                         out ApexShift.Runtime.World.Environment.EnvironmentSample sample), Is.True);
+                    Assert.That(topography.TryGetEnvironmentAt(position,
+                        out ApexShift.Runtime.World.Vegetation.VegetationEnvironmentSample vegetation), Is.True);
+                    Assert.That(vegetation.HabitatId, Is.EqualTo(sample.HabitatId));
+                    Assert.That(vegetation.TerrainType, Is.EqualTo(sample.TerrainType));
+                    Assert.That(vegetation.DistanceToCoast, Is.EqualTo(sample.DistanceToCoast));
+                    Assert.That(vegetation.NormalizedElevation, Is.EqualTo(sample.NormalizedElevation));
+                    Assert.That(vegetation.Moisture01, Is.EqualTo(sample.Moisture01));
+                    Assert.That(vegetation.SlopeDegrees, Is.EqualTo(sample.SlopeDegrees));
+                    Assert.That(vegetation.IsLand, Is.EqualTo(sample.IsLand));
+                    Assert.That(vegetation.IsWater, Is.EqualTo(sample.IsWater));
+                    Assert.That(vegetation.IsShoreline, Is.EqualTo(sample.IsShoreline));
                     Assert.That(topography.GetDistanceToCoastAt(position), Is.EqualTo(sample.DistanceToCoast));
                     Assert.That(topography.GetTerrainTypeAt(position), Is.EqualTo(sample.TerrainType));
                 }

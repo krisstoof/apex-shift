@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.IO;
 using ApexShift.Runtime.World.Biomes;
+using ApexShift.Runtime.World.Environment;
+using ApexShift.Runtime.World.Topography;
 using ApexShift.Runtime.World.Vegetation;
 using UnityEditor;
 using UnityEngine;
@@ -11,8 +13,9 @@ namespace ApexShift.Editor.World
     {
         private const string Root = "Assets/_Project/Data/Vegetation";
         private const string SpeciesFolder = Root + "/Species";
-        private const string ProfilesFolder = Root + "/Biomes";
+        private const string ProfilesFolder = Root + "/Habitats";
         private const string CatalogPath = Root + "/VegetationCatalog.asset";
+        private const string HabitatCatalogPath = Root + "/HabitatVegetationCatalog.asset";
         private const string BiomeCatalogPath = "Assets/_Project/Data/Biomes/BiomeCatalog.asset";
 
         [MenuItem("Apex Shift/World/Create or Update Vegetation Data")]
@@ -20,7 +23,7 @@ namespace ApexShift.Editor.World
         {
             EnsureAssets();
             AssetDatabase.SaveAssets();
-            Debug.Log("Vegetation species, biome profiles, catalog, and biome assignments created/updated. Visual prefab dependencies are reported by vegetation validation.");
+            Debug.Log("Vegetation species and tropical habitat profiles created/updated. Assigned visual/stump prefabs preserved.");
         }
 
         public static void EnsureAssets()
@@ -28,131 +31,75 @@ namespace ApexShift.Editor.World
             EnsureFolder(Root);
             EnsureFolder(SpeciesFolder);
             EnsureFolder(ProfilesFolder);
-
+            var habitats = HabitatVegetationProfileAsset.CanonicalHabitatIds;
             var species = new List<VegetationSpeciesAsset>
             {
-                EnsureSpecies("tree_leafy_01", "Leafy Tree 01", VegetationCategory.Tree, 4.2f, 0.20f, 1.9f, 0.95f, 100f, 5, 1.2f, new[] { "hearth_meadow", "westwood", "south_thicket" }, true, "leafy_tree"),
-                EnsureSpecies("tree_conifer_01", "Conifer Tree 01", VegetationCategory.Tree, 3.8f, 0.16f, 2.1f, 1.05f, 120f, 6, 1.35f, new[] { "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" }, true, "conifer_tree"),
-                EnsureSpecies("tree_dead_01", "Dead Tree 01", VegetationCategory.DeadTree, 4.5f, 0.18f, 1.5f, 0.75f, 70f, 4, 0.9f, new[] { "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" }, true, "dry_tree"),
-                EnsureSpecies("shrub_forest_01", "Forest Shrub 01", VegetationCategory.Shrub, 1.4f, 0.08f, 0.6f, 0.3f, 100f, 0, 0f, new[] { "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" }, true, "berry_bush"),
-                EnsureSpecies("groundcover_forest_01", "Forest Groundcover 01", VegetationCategory.GroundCover, 0.55f, 0.05f, 0.25f, 0.125f, 100f, 0, 0f, new[] { "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds" }, false, string.Empty)
+                EnsureSpecies("tree_leafy_01", "Leafy Tree 01", VegetationCategory.Tree, VegetationForm.CanopyTree, 4.2f, .20f, 1.9f, .95f, 100f, 5, 1.2f, habitats, true, "leafy_tree"),
+                EnsureSpecies("tree_conifer_01", "Conifer Tree 01", VegetationCategory.Tree, VegetationForm.CanopyTree, 3.8f, .16f, 2.1f, 1.05f, 120f, 6, 1.35f, new[] { HabitatIds.RockyUpland }, true, "conifer_tree"),
+                EnsureSpecies("tree_dead_01", "Dead Tree 01", VegetationCategory.DeadTree, VegetationForm.StandingDeadTree, 4.5f, .18f, 1.5f, .75f, 70f, 4, .9f, habitats, true, "dry_tree"),
+                EnsureSpecies("shrub_forest_01", "Forest Shrub 01", VegetationCategory.Shrub, VegetationForm.Shrub, 1.4f, .08f, .6f, .3f, 100f, 0, 0f, habitats, true, "berry_bush"),
+                EnsureSpecies("groundcover_forest_01", "Forest Groundcover 01", VegetationCategory.GroundCover, VegetationForm.GroundCover, .55f, .05f, .25f, .125f, 100f, 0, 0f, habitats, false, string.Empty)
             };
-
             VegetationCatalogAsset catalog = LoadOrCreate<VegetationCatalogAsset>(CatalogPath);
             catalog.SetSpecies(species);
             EditorUtility.SetDirty(catalog);
 
-            BiomeCatalogAsset biomeCatalog = AssetDatabase.LoadAssetAtPath<BiomeCatalogAsset>(BiomeCatalogPath);
-            if (biomeCatalog == null) throw new FileNotFoundException("Required biome catalog is missing.", BiomeCatalogPath);
-            var profiles = new Dictionary<string, BiomeVegetationProfileAsset>();
-            foreach (string biomeId in VegetationSpeciesAsset.CanonicalBiomeIds)
+            var profiles = new List<HabitatVegetationProfileAsset>();
+            foreach (string habitat in habitats)
             {
-                string path = ProfilesFolder + "/" + biomeId + "_vegetation.asset";
-                var profile = LoadOrCreate<BiomeVegetationProfileAsset>(path);
-                profile.Configure(biomeId, DensityFor(biomeId), BuildEntries(biomeId, species));
+                var profile = LoadOrCreate<HabitatVegetationProfileAsset>(ProfilesFolder + "/" + habitat + "_vegetation.asset");
+                var entries = new List<HabitatVegetationSpeciesEntry>();
+                // Existing broadleaf/shrub/groundcover visuals form the tropical slice.
+                // Conifer/dead assets remain available but are not part of its active mix.
+                if (habitat != HabitatIds.RockyUpland)
+                    entries.Add(new HabitatVegetationSpeciesEntry(species[0], 1f, habitat == HabitatIds.Coast ? .25f : 1f));
+                entries.Add(new HabitatVegetationSpeciesEntry(species[3], 1f, habitat == HabitatIds.Coast ? .6f : 1f));
+                entries.Add(new HabitatVegetationSpeciesEntry(species[4], 1f, 1f));
+                profile.Configure(habitat, DensityFor(habitat), entries);
                 EditorUtility.SetDirty(profile);
-                profiles.Add(biomeId, profile);
-
-                BiomeDefinitionAsset biome = biomeCatalog.GetBiome(biomeId);
-                if (biome == null) throw new System.InvalidOperationException("Biome catalog has no definition for '" + biomeId + "'.");
-                biome.SetVegetationProfile(profile);
-                EditorUtility.SetDirty(biome);
+                profiles.Add(profile);
             }
+
+            HabitatVegetationCatalogAsset habitatCatalog = LoadOrCreate<HabitatVegetationCatalogAsset>(HabitatCatalogPath);
+            habitatCatalog.SetProfiles(profiles);
+            EditorUtility.SetDirty(habitatCatalog);
+            // Existing serialized RuntimeWorld points at this asset; no scene migration is needed.
+            BiomeCatalogAsset biomeCatalog = AssetDatabase.LoadAssetAtPath<BiomeCatalogAsset>(BiomeCatalogPath);
+            if (biomeCatalog == null) throw new FileNotFoundException("Required world data anchor is missing.", BiomeCatalogPath);
+            biomeCatalog.SetHabitatVegetationCatalog(habitatCatalog);
+            EditorUtility.SetDirty(biomeCatalog);
         }
 
-        private static VegetationSpeciesAsset EnsureSpecies(string id, string label, VegetationCategory category, float minimumSpacing,
-            float trunkRadius, float trunkHeight, float trunkCenterY, float maxTreeHealth, int treeRegrowthDays, float treeFallDuration,
-            string[] biomes, bool harvestable, string resourceKind)
+        private static VegetationSpeciesAsset EnsureSpecies(string id, string label, VegetationCategory category,
+            VegetationForm form, float spacing, float trunkRadius, float trunkHeight, float trunkCenterY,
+            float health, int regrowthDays, float fallDuration, IEnumerable<string> habitats, bool harvestable, string resourceKind)
         {
             var asset = LoadOrCreate<VegetationSpeciesAsset>(SpeciesFolder + "/" + id + ".asset");
-            GameObject visual = asset.VisualPrefab; // Preserve any manually assigned content reference.
-            GameObject depletedVisual = asset.DepletedVisualPrefab; // Preserve any manually assigned depleted/stump visual.
-            asset.Configure(id, label, visual, category, 0.8f, 1.2f,
-                minimumSpacing,
-                0f, category == VegetationCategory.GroundCover ? 35f : 40f,
-                0f, 1f, 0f, 1f, biomes, true, harvestable, resourceKind, depletedVisual,
+            GameObject visual = asset.VisualPrefab;
+            GameObject depleted = asset.DepletedVisualPrefab;
+            asset.Configure(id, label, visual, category, .8f, 1.2f, spacing,
+                0f, category == VegetationCategory.Tree ? 28f : category == VegetationCategory.GroundCover ? 35f : 40f,
+                0f, 1f, 0f, 1f, habitats, true, harvestable, resourceKind, depleted,
                 category == VegetationCategory.GroundCover ? VegetationCollisionMode.None : VegetationCollisionMode.GameplayResource,
-                trunkRadius, trunkHeight, trunkCenterY, maxTreeHealth, treeRegrowthDays, treeFallDuration);
+                trunkRadius, trunkHeight, trunkCenterY, health, regrowthDays, fallDuration);
+            asset.ConfigureEnvironment(form, 0f, float.MaxValue,
+                category == VegetationCategory.Tree
+                    ? new[] { TerrainType.Plain, TerrainType.Forest, TerrainType.Hills, TerrainType.Beach }
+                    : null);
             EditorUtility.SetDirty(asset);
             return asset;
         }
 
-        private static List<BiomeVegetationSpeciesEntry> BuildEntries(string biomeId, List<VegetationSpeciesAsset> species)
+        private static float DensityFor(string habitat)
         {
-            var result = new List<BiomeVegetationSpeciesEntry>();
-            for (int i = 0; i < species.Count; i++)
+            switch (habitat)
             {
-                float weight = WeightFor(biomeId, species[i].SpeciesId);
-                if (weight > 0f && species[i].AllowsBiome(biomeId))
-                    result.Add(new BiomeVegetationSpeciesEntry(species[i], weight, 1f));
-            }
-            return result;
-        }
-
-        private static float WeightFor(string biomeId, string speciesId)
-        {
-            switch (biomeId)
-            {
-                case "westwood":
-                    switch (speciesId)
-                    {
-                        case "tree_conifer_01": return 3f;
-                        case "tree_leafy_01": return 2f;
-                        case "tree_dead_01": return 0.35f;
-                        case "shrub_forest_01": return 1.5f;
-                        case "groundcover_forest_01": return 2.5f;
-                    }
-                    break;
-                case "south_thicket":
-                    switch (speciesId)
-                    {
-                        case "tree_leafy_01": return 2.2f;
-                        case "tree_conifer_01": return 0.8f;
-                        case "tree_dead_01": return 0.2f;
-                        case "shrub_forest_01": return 3f;
-                        case "groundcover_forest_01": return 3.2f;
-                    }
-                    break;
-                case "hearth_meadow":
-                    switch (speciesId)
-                    {
-                        case "tree_leafy_01": return 1f;
-                        case "shrub_forest_01": return 0.8f;
-                        case "groundcover_forest_01": return 2f;
-                    }
-                    break;
-                case "stoneback_ridge":
-                    switch (speciesId)
-                    {
-                        case "tree_conifer_01": return 2.2f;
-                        case "tree_dead_01": return 1.1f;
-                        case "shrub_forest_01": return 0.5f;
-                        case "groundcover_forest_01": return 0.8f;
-                    }
-                    break;
-                case "redfang_wilds":
-                    switch (speciesId)
-                    {
-                        case "tree_dead_01": return 2.2f;
-                        case "tree_conifer_01": return 0.5f;
-                        case "shrub_forest_01": return 0.45f;
-                        case "groundcover_forest_01": return 0.35f;
-                    }
-                    break;
-            }
-            return 0f;
-        }
-
-        private static float DensityFor(string id)
-        {
-            switch (id)
-            {
-                case "hearth_meadow": return 0.45f;
-                case "westwood": return 1.55f;
-                case "south_thicket": return 1.70f;
-                case "stoneback_ridge": return 0.65f;
-                case "redfang_wilds": return 0.55f;
-                default: return 1f;
+                case HabitatIds.Coast: return .45f;
+                case HabitatIds.LowlandJungle: return 1.55f;
+                case HabitatIds.JungleInterior: return 1.85f;
+                case HabitatIds.WetJungle: return 2.10f;
+                case HabitatIds.RockyUpland: return .45f;
+                default: throw new System.ArgumentException("Unknown habitat", nameof(habitat));
             }
         }
 
@@ -169,9 +116,8 @@ namespace ApexShift.Editor.World
         {
             if (AssetDatabase.IsValidFolder(path)) return;
             string parent = Path.GetDirectoryName(path).Replace('\\', '/');
-            string folder = Path.GetFileName(path);
             if (!AssetDatabase.IsValidFolder(parent)) EnsureFolder(parent);
-            AssetDatabase.CreateFolder(parent, folder);
+            AssetDatabase.CreateFolder(parent, Path.GetFileName(path));
         }
     }
 }

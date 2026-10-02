@@ -1,5 +1,6 @@
 using System.Collections.Generic;
-using ApexShift.Runtime.World.Biomes;
+using ApexShift.Runtime.World.Environment;
+using ApexShift.Runtime.World.Topography;
 using ApexShift.Runtime.World.Landmarks;
 using ApexShift.Runtime.World.Generation;
 using ApexShift.Runtime.World.Vegetation;
@@ -35,6 +36,9 @@ namespace ApexShift.Tests.Editor
             bool anyLayoutDifference = false;
             for (int i = 0; i < first.Count; i++)
             {
+                Assert.That(repeated[i].HabitatId, Is.EqualTo(first[i].HabitatId));
+                Assert.That(repeated[i].ChunkX, Is.EqualTo(first[i].ChunkX));
+                Assert.That(repeated[i].ChunkZ, Is.EqualTo(first[i].ChunkZ));
                 Assert.That(repeated[i].SpeciesId, Is.EqualTo(first[i].SpeciesId));
                 Assert.That(repeated[i].Position, Is.EqualTo(first[i].Position));
                 Assert.That(repeated[i].Yaw, Is.EqualTo(first[i].Yaw));
@@ -45,12 +49,12 @@ namespace ApexShift.Tests.Editor
             Assert.That(anyLayoutDifference || differentSeed.Count != first.Count, Is.True);
         }
 
-        [TestCase(false, true, false, 0.5f, 5f, 0.5f, "westwood", TestName = "WaterCandidatesAreRejected")]
-        [TestCase(true, false, true, 0.5f, 5f, 0.5f, "westwood", TestName = "ShorelineCandidatesAreRejected")]
-        [TestCase(true, false, false, 0.5f, 55f, 0.5f, "westwood", TestName = "SteepCandidatesAreRejected")]
-        [TestCase(true, false, false, 0.95f, 5f, 0.5f, "westwood", TestName = "ElevationOutsideSpeciesRangeIsRejected")]
-        [TestCase(true, false, false, 0.5f, 5f, 0.95f, "westwood", TestName = "MoistureOutsideSpeciesRangeIsRejected")]
-        [TestCase(true, false, false, 0.5f, 5f, 0.5f, "south_thicket", TestName = "WrongDenseBiomeIsRejected")]
+        [TestCase(false, true, false, 0.5f, 5f, 0.5f, "jungle_interior", TestName = "WaterCandidatesAreRejected")]
+        [TestCase(true, false, true, 0.5f, 5f, 0.5f, "jungle_interior", TestName = "ShorelineCandidatesAreRejected")]
+        [TestCase(true, false, false, 0.5f, 55f, 0.5f, "jungle_interior", TestName = "SteepCandidatesAreRejected")]
+        [TestCase(true, false, false, 0.95f, 5f, 0.5f, "jungle_interior", TestName = "ElevationOutsideSpeciesRangeIsRejected")]
+        [TestCase(true, false, false, 0.5f, 5f, 0.95f, "jungle_interior", TestName = "MoistureOutsideSpeciesRangeIsRejected")]
+        [TestCase(true, false, false, 0.5f, 5f, 0.5f, "wet_jungle", TestName = "WrongDenseHabitatIsRejected")]
         public void EnvironmentConstraintsRejectInvalidCandidates(bool land, bool water, bool shoreline,
             float elevation, float slope, float moisture, string biome)
         {
@@ -59,10 +63,15 @@ namespace ApexShift.Tests.Editor
             Assert.That(Plan(fixture, 17, environment).Count, Is.EqualTo(0));
         }
 
-        [Test]
-        public void PlayerAndLandmarkClearingsRejectInsideAndAllowJustOutsideRadius()
+        [TestCase(VegetationCategory.Tree)]
+        [TestCase(VegetationCategory.Shrub)]
+        public void PlayerAndLandmarkClearingsRejectInsideAndAllowJustOutsideRadius(VegetationCategory category)
         {
             Fixture fixture = CreateFixture();
+            fixture.Species.Configure("test_tree", "Test Clearing Vegetation", fixture.Visual, category,
+                .8f, 1.2f, 1f, 0f, 40f, .1f, .9f, .1f, .9f,
+                new[] { HabitatIds.JungleInterior }, true, false, "", null, VegetationCollisionMode.None);
+            fixture.Settings.ConfigureDensities(.04f, 0f, .04f, 0f);
             List<VegetationPlacement> baseline = Plan(fixture, 82);
             Assert.That(baseline.Count, Is.GreaterThan(0));
             VegetationPlacement target = baseline[0];
@@ -118,10 +127,10 @@ namespace ApexShift.Tests.Editor
         [Test]
         public void GroundCoverWeightDoesNotChangeTreePlacements()
         {
-            Fixture equalWeights = CreateProfileFixture("westwood",
+            Fixture equalWeights = CreateProfileFixture("jungle_interior",
                 new EntrySpec("test_tree", VegetationCategory.Tree, 1f),
                 new EntrySpec("test_groundcover", VegetationCategory.GroundCover, 1f));
-            Fixture heavyGroundCover = CreateProfileFixture("westwood",
+            Fixture heavyGroundCover = CreateProfileFixture("jungle_interior",
                 new EntrySpec("test_tree", VegetationCategory.Tree, 1f),
                 new EntrySpec("test_groundcover", VegetationCategory.GroundCover, 100f));
 
@@ -141,7 +150,7 @@ namespace ApexShift.Tests.Editor
         [Test]
         public void TreeSpeciesWeightsInfluenceCompositionWithinCategory()
         {
-            Fixture fixture = CreateProfileFixture("westwood",
+            Fixture fixture = CreateProfileFixture("jungle_interior",
                 new EntrySpec("test_conifer", VegetationCategory.Tree, 3f),
                 new EntrySpec("test_leafy", VegetationCategory.Tree, 1f));
             List<VegetationPlacement> placements = Plan(fixture, 1205,
@@ -154,22 +163,22 @@ namespace ApexShift.Tests.Editor
         }
 
         [Test]
-        public void BiomeProfilesProduceExpectedRelativeCategoryDensities()
+        public void HabitatProfilesProduceExpectedRelativeCategoryDensities()
         {
             const int seed = 8512;
             var bounds = new Bounds(Vector3.zero, new Vector3(600f, 1f, 600f));
-            int westwoodTrees = CountFor("westwood", VegetationCategory.Tree, seed, bounds);
-            int ridgeTrees = CountFor("stoneback_ridge", VegetationCategory.Tree, seed, bounds);
-            int meadowTrees = CountFor("hearth_meadow", VegetationCategory.Tree, seed, bounds);
-            int southShrubs = CountFor("south_thicket", VegetationCategory.Shrub, seed, bounds);
-            int westwoodShrubs = CountFor("westwood", VegetationCategory.Shrub, seed, bounds);
-            int southGroundcover = CountFor("south_thicket", VegetationCategory.GroundCover, seed, bounds);
-            int meadowGroundcover = CountFor("hearth_meadow", VegetationCategory.GroundCover, seed, bounds);
+            int interiorTrees = CountFor("jungle_interior", VegetationCategory.Tree, seed, bounds);
+            int ridgeTrees = CountFor("rocky_upland", VegetationCategory.Tree, seed, bounds);
+            int coastTrees = CountFor("coast", VegetationCategory.Tree, seed, bounds);
+            int wetShrubs = CountFor("wet_jungle", VegetationCategory.Shrub, seed, bounds);
+            int interiorShrubs = CountFor("jungle_interior", VegetationCategory.Shrub, seed, bounds);
+            int wetGroundcover = CountFor("wet_jungle", VegetationCategory.GroundCover, seed, bounds);
+            int coastGroundcover = CountFor("coast", VegetationCategory.GroundCover, seed, bounds);
 
-            Assert.That(westwoodTrees, Is.GreaterThan(ridgeTrees));
-            Assert.That(westwoodTrees, Is.GreaterThan(meadowTrees));
-            Assert.That(southShrubs, Is.GreaterThan(westwoodShrubs));
-            Assert.That(southGroundcover, Is.GreaterThan(meadowGroundcover));
+            Assert.That(interiorTrees, Is.GreaterThan(ridgeTrees));
+            Assert.That(interiorTrees, Is.GreaterThan(coastTrees));
+            Assert.That(wetShrubs, Is.GreaterThan(interiorShrubs));
+            Assert.That(wetGroundcover, Is.GreaterThan(coastGroundcover));
         }
 
         [Test]
@@ -182,16 +191,16 @@ namespace ApexShift.Tests.Editor
             Assert.That(settings.GroundCoverBaseDensity, Is.EqualTo(0.075f).Within(0.000001f));
 
             var result = new WorldGenerationResult();
-            result.RecordVegetation("westwood", "test_tree", VegetationCategory.Tree);
-            result.RecordVegetation("westwood", "test_dead_tree", VegetationCategory.DeadTree);
-            result.RecordVegetation("westwood", "test_shrub", VegetationCategory.Shrub);
-            result.RecordVegetation("westwood", "test_groundcover", VegetationCategory.GroundCover);
+            result.RecordVegetation("jungle_interior", "test_tree", VegetationCategory.Tree);
+            result.RecordVegetation("jungle_interior", "test_dead_tree", VegetationCategory.DeadTree);
+            result.RecordVegetation("jungle_interior", "test_shrub", VegetationCategory.Shrub);
+            result.RecordVegetation("jungle_interior", "test_groundcover", VegetationCategory.GroundCover);
             Assert.That(result.VegetationInstanceCount, Is.EqualTo(4));
-            Assert.That(result.GetVegetationCount("westwood", "test_tree"), Is.EqualTo(1));
-            Assert.That(result.GetVegetationCount("westwood", VegetationCategory.Tree), Is.EqualTo(1));
-            Assert.That(result.GetVegetationCount("westwood", VegetationCategory.DeadTree), Is.EqualTo(1));
-            Assert.That(result.GetVegetationCount("westwood", VegetationCategory.Shrub), Is.EqualTo(1));
-            Assert.That(result.GetVegetationCount("westwood", VegetationCategory.GroundCover), Is.EqualTo(1));
+            Assert.That(result.GetVegetationCount("jungle_interior", "test_tree"), Is.EqualTo(1));
+            Assert.That(result.GetVegetationCount("jungle_interior", VegetationCategory.Tree), Is.EqualTo(1));
+            Assert.That(result.GetVegetationCount("jungle_interior", VegetationCategory.DeadTree), Is.EqualTo(1));
+            Assert.That(result.GetVegetationCount("jungle_interior", VegetationCategory.Shrub), Is.EqualTo(1));
+            Assert.That(result.GetVegetationCount("jungle_interior", VegetationCategory.GroundCover), Is.EqualTo(1));
         }
 
         [Test]
@@ -200,7 +209,7 @@ namespace ApexShift.Tests.Editor
             Fixture fixture = CreateFixture();
             fixture.Species.Configure("test_tree", "Test Tree", fixture.Visual, VegetationCategory.GroundCover,
                 0.8f, 1.2f, 0.2f, 0f, 40f, 0.1f, 0.9f, 0.1f, 0.9f,
-                new[] { "westwood", "south_thicket" }, true, false, string.Empty, null, VegetationCollisionMode.None);
+                new[] { "jungle_interior", "wet_jungle" }, true, false, string.Empty, null, VegetationCollisionMode.None);
             fixture.Settings.ConfigureDensities(0f, 0f, 0f, 0.04f);
             List<VegetationPlacement> baseline = Plan(fixture, 99);
             Assert.That(baseline.Count, Is.GreaterThan(0));
@@ -212,30 +221,86 @@ namespace ApexShift.Tests.Editor
             Assert.That(ContainsId(allowed, candidate.InstanceId), Is.True);
         }
 
+        [Test]
+        public void CoastProfileHonorsHabitatSpeciesDistanceAndCategoryClearance()
+        {
+            Fixture fixture = CreateProfileFixture(HabitatIds.Coast, new EntrySpec("coast_tree", VegetationCategory.Tree, 1f));
+            fixture.Species.ConfigureEnvironment(VegetationForm.CanopyTree, 2f, 10f, new[] { TerrainType.Beach });
+            fixture.Settings.ConfigureClearances(4f, 0f, 0f, 0f, 0f, 0f, 0f, 0f);
+            VegetationEnvironmentSample Sample(string habitat, float distance) =>
+                new VegetationEnvironmentSample(true, false, false, habitat, .5f, 5f, .5f, TerrainType.Beach, distance);
+
+            Assert.That(Plan(fixture, 81, Sample(HabitatIds.Coast, 5f)), Is.Not.Empty);
+            Assert.That(Plan(fixture, 81, Sample(HabitatIds.WetJungle, 5f)), Is.Empty);
+            Assert.That(Plan(fixture, 81, Sample(HabitatIds.Coast, 1f)), Is.Empty, "Species minimum");
+            Assert.That(Plan(fixture, 81, Sample(HabitatIds.Coast, 3f)), Is.Empty, "Category coastal clearance");
+            Assert.That(Plan(fixture, 81, Sample(HabitatIds.Coast, 11f)), Is.Empty, "Species maximum");
+            Assert.That(Plan(fixture, 81, Sample(HabitatIds.Coast, 4f)), Is.Not.Empty, "Clearance boundary is inclusive");
+            Assert.That(Plan(fixture, 81, Sample(HabitatIds.Coast, 10f)), Is.Not.Empty, "Species maximum is inclusive");
+        }
+
+        [Test]
+        public void WetJungleSupportsDenseValidCanopyButRejectsRockyTerrainAndSlope()
+        {
+            Fixture fixture = CreateProfileFixture(HabitatIds.WetJungle, new EntrySpec("wet_canopy", VegetationCategory.Tree, 1f));
+            fixture.Species.ConfigureEnvironment(VegetationForm.CanopyTree, 3f, 100f, new[] { TerrainType.Forest });
+            VegetationEnvironmentSample Sample(TerrainType terrain, float slope, bool land = true, bool water = false) =>
+                new VegetationEnvironmentSample(land, water, false, HabitatIds.WetJungle, .4f, slope, .85f, terrain, 20f);
+            Assert.That(Plan(fixture, 56, Sample(TerrainType.Forest, 5f)), Is.Not.Empty);
+            Assert.That(Plan(fixture, 56, Sample(TerrainType.Ridge, 5f)), Is.Empty);
+            Assert.That(Plan(fixture, 56, Sample(TerrainType.Forest, 91f)), Is.Empty);
+            Assert.That(Plan(fixture, 56, Sample(TerrainType.Water, 0f, false, true)), Is.Empty);
+        }
+
+        [Test]
+        public void InstanceIdentityAtSamePositionDoesNotDependOnHabitatName()
+        {
+            Fixture first = CreateProfileFixture(HabitatIds.LowlandJungle, new EntrySpec("same_tree", VegetationCategory.Tree, 1f));
+            Fixture second = CreateProfileFixture(HabitatIds.WetJungle, new EntrySpec("same_tree", VegetationCategory.Tree, 1f));
+            foreach (Fixture fixture in new[] { first, second })
+            {
+                fixture.Catalog.Profiles[0].Configure(fixture.Catalog.Profiles[0].HabitatId, 1f,
+                    new[] { new HabitatVegetationSpeciesEntry(fixture.Species, 1f, 1f) });
+                fixture.Settings.ConfigurePlacement(24f, 0f, false);
+            }
+            var bounds = new Bounds(Vector3.zero, new Vector3(120f, 1f, 120f));
+            List<VegetationPlacement> a = Plan(first, 782, bounds,
+                new VegetationEnvironmentSample(true, false, false, HabitatIds.LowlandJungle, .5f, 0f, .5f));
+            List<VegetationPlacement> b = Plan(second, 782, bounds,
+                new VegetationEnvironmentSample(true, false, false, HabitatIds.WetJungle, .5f, 0f, .5f));
+            var idsByPosition = new Dictionary<Vector3, string>();
+            foreach (VegetationPlacement placement in a) idsByPosition.Add(placement.Position, placement.InstanceId);
+            int common = 0;
+            foreach (VegetationPlacement placement in b)
+                if (idsByPosition.TryGetValue(placement.Position, out string id))
+                {
+                    Assert.That(placement.InstanceId, Is.EqualTo(id));
+                    common++;
+                }
+            Assert.That(common, Is.GreaterThan(0));
+        }
+
         private Fixture CreateFixture(bool includeDeadTree = false)
         {
             var visual = Track(new GameObject("test_vegetation_visual"));
             var species = Track(ScriptableObject.CreateInstance<VegetationSpeciesAsset>());
             species.Configure("test_tree", "Test Tree", visual, VegetationCategory.Tree,
                 0.8f, 1.2f, includeDeadTree ? 5f : 1f, 0f, 40f, 0.1f, 0.9f, 0.1f, 0.9f,
-                new[] { "westwood", "south_thicket" }, true, true, "leafy_tree", null, VegetationCollisionMode.None);
+                new[] { "jungle_interior", "wet_jungle" }, true, true, "leafy_tree", null, VegetationCollisionMode.None);
 
-            var biome = Track(ScriptableObject.CreateInstance<BiomeDefinitionAsset>());
-            biome.Configure("westwood", "Westwood", Color.green, false, new List<VegetationSpawnEntryAsset>());
-            var profile = Track(ScriptableObject.CreateInstance<BiomeVegetationProfileAsset>());
-            var entries = new List<BiomeVegetationSpeciesEntry> { new BiomeVegetationSpeciesEntry(species, 1f, 1f) };
+            var profile = Track(ScriptableObject.CreateInstance<HabitatVegetationProfileAsset>());
+            var entries = new List<HabitatVegetationSpeciesEntry> { new HabitatVegetationSpeciesEntry(species, 1f, 1f) };
             if (includeDeadTree)
             {
                 var deadTree = Track(ScriptableObject.CreateInstance<VegetationSpeciesAsset>());
                 deadTree.Configure("test_dead_tree", "Test Dead Tree", visual, VegetationCategory.DeadTree,
                     0.8f, 1.2f, 5f, 0f, 40f, 0.1f, 0.9f, 0.1f, 0.9f,
-                    new[] { "westwood" }, true, true, "dry_tree", null, VegetationCollisionMode.None);
-                entries.Add(new BiomeVegetationSpeciesEntry(deadTree, 1f, 1f));
+                    new[] { "jungle_interior" }, true, true, "dry_tree", null, VegetationCollisionMode.None);
+                entries.Add(new HabitatVegetationSpeciesEntry(deadTree, 1f, 1f));
             }
-            profile.Configure("westwood", 1f, entries);
-            biome.SetVegetationProfile(profile);
-            var catalog = Track(ScriptableObject.CreateInstance<BiomeCatalogAsset>());
-            catalog.SetBiomes(new[] { biome });
+            profile.Configure("jungle_interior", 1f, entries);
+            var catalog = Track(ScriptableObject.CreateInstance<HabitatVegetationCatalogAsset>());
+            catalog.SetProfiles(new[] { profile });
             var settings = new VegetationGenerationSettings();
             settings.ConfigureDensities(0.04f, 0f, 0f, 0f);
             settings.ConfigurePlacement(16f, 0.9f, false);
@@ -261,31 +326,28 @@ namespace ApexShift.Tests.Editor
                 bounds,
                 _ => selectedEnvironment,
                 position => position.x * 0.1f + position.z * 0.05f,
-                playerSpawn ?? (Vector3.one * 1000f), clearingRadius, landmarks, null);
+                playerSpawn ?? (Vector3.one * 1000f), clearingRadius, landmarks);
         }
 
-        private Fixture CreateProfileFixture(string biomeId, params EntrySpec[] specs)
+        private Fixture CreateProfileFixture(string habitatId, params EntrySpec[] specs)
         {
             var visual = Track(new GameObject("profile_test_visual"));
-            var entries = new List<BiomeVegetationSpeciesEntry>();
+            var entries = new List<HabitatVegetationSpeciesEntry>();
             VegetationSpeciesAsset firstSpecies = null;
             for (int i = 0; i < specs.Length; i++)
             {
                 var species = Track(ScriptableObject.CreateInstance<VegetationSpeciesAsset>());
                 species.Configure(specs[i].Id, specs[i].Id, visual, specs[i].Category,
                     1f, 1f, 0.05f, 0f, 90f, 0f, 1f, 0f, 1f,
-                    VegetationSpeciesAsset.CanonicalBiomeIds, true, false, string.Empty, null, VegetationCollisionMode.None);
+                    HabitatVegetationProfileAsset.CanonicalHabitatIds, true, false, string.Empty, null, VegetationCollisionMode.None);
                 firstSpecies ??= species;
-                entries.Add(new BiomeVegetationSpeciesEntry(species, specs[i].Weight, 1f));
+                entries.Add(new HabitatVegetationSpeciesEntry(species, specs[i].Weight, 1f));
             }
 
-            var biome = Track(ScriptableObject.CreateInstance<BiomeDefinitionAsset>());
-            biome.Configure(biomeId, biomeId, Color.green, false, new List<VegetationSpawnEntryAsset>());
-            var profile = Track(ScriptableObject.CreateInstance<BiomeVegetationProfileAsset>());
-            profile.Configure(biomeId, ProfileDensity(biomeId), entries);
-            biome.SetVegetationProfile(profile);
-            var catalog = Track(ScriptableObject.CreateInstance<BiomeCatalogAsset>());
-            catalog.SetBiomes(new[] { biome });
+            var profile = Track(ScriptableObject.CreateInstance<HabitatVegetationProfileAsset>());
+            profile.Configure(habitatId, ProfileDensity(habitatId), entries);
+            var catalog = Track(ScriptableObject.CreateInstance<HabitatVegetationCatalogAsset>());
+            catalog.SetProfiles(new[] { profile });
             var settings = new VegetationGenerationSettings();
             settings.ConfigureDensities(0.016f, 0.0025f, 0.030f, 0.075f);
             settings.ConfigurePlacement(24f, 0.88f, false);
@@ -293,22 +355,22 @@ namespace ApexShift.Tests.Editor
             return new Fixture(catalog, settings, firstSpecies, visual);
         }
 
-        private int CountFor(string biomeId, VegetationCategory category, int seed, Bounds bounds)
+        private int CountFor(string habitatId, VegetationCategory category, int seed, Bounds bounds)
         {
-            Fixture fixture = CreateProfileFixture(biomeId, new EntrySpec("test_" + category, category, 1f));
-            var environment = new VegetationEnvironmentSample(true, false, false, biomeId, 0.5f, 0f, 0.5f);
+            Fixture fixture = CreateProfileFixture(habitatId, new EntrySpec("test_" + category, category, 1f));
+            var environment = new VegetationEnvironmentSample(true, false, false, habitatId, 0.5f, 0f, 0.5f);
             return FilterCategory(Plan(fixture, seed, bounds, environment), category).Count;
         }
 
-        private static float ProfileDensity(string biomeId)
+        private static float ProfileDensity(string habitatId)
         {
-            switch (biomeId)
+            switch (habitatId)
             {
-                case "hearth_meadow": return 0.45f;
-                case "westwood": return 1.55f;
-                case "south_thicket": return 1.70f;
-                case "stoneback_ridge": return 0.65f;
-                case "redfang_wilds": return 0.55f;
+                case "coast": return 0.45f;
+                case "jungle_interior": return 1.85f;
+                case "wet_jungle": return 2.10f;
+                case "rocky_upland": return 0.45f;
+                case "lowland_jungle": return 1.55f;
                 default: return 1f;
             }
         }
@@ -320,7 +382,7 @@ namespace ApexShift.Tests.Editor
             => placements.FindAll(p => p.SpeciesId == speciesId).Count;
 
         private static readonly VegetationEnvironmentSample ValidEnvironment =
-            new VegetationEnvironmentSample(true, false, false, "westwood", 0.5f, 5f, 0.5f);
+            new VegetationEnvironmentSample(true, false, false, "jungle_interior", 0.5f, 5f, 0.5f);
 
         private static bool ContainsId(List<VegetationPlacement> placements, string id)
         {
@@ -335,11 +397,11 @@ namespace ApexShift.Tests.Editor
 
         private sealed class Fixture
         {
-            public readonly BiomeCatalogAsset Catalog;
+            public readonly HabitatVegetationCatalogAsset Catalog;
             public readonly VegetationGenerationSettings Settings;
             public readonly VegetationSpeciesAsset Species;
             public readonly GameObject Visual;
-            public Fixture(BiomeCatalogAsset catalog, VegetationGenerationSettings settings, VegetationSpeciesAsset species, GameObject visual)
+            public Fixture(HabitatVegetationCatalogAsset catalog, VegetationGenerationSettings settings, VegetationSpeciesAsset species, GameObject visual)
             { Catalog = catalog; Settings = settings; Species = species; Visual = visual; }
         }
 

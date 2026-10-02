@@ -32,6 +32,7 @@ namespace ApexShift.Runtime.World.Generation
         [Header("Data")]
         [SerializeField] private BiomeCatalogAsset biomeCatalog;
         [SerializeField] private WorldGenerationSettings settings;
+        [SerializeField] private HabitatVegetationCatalogAsset habitatVegetationCatalog;
         [SerializeField] private PrefabRegistry prefabRegistry;
 
         [Header("Assets")]
@@ -121,6 +122,9 @@ namespace ApexShift.Runtime.World.Generation
         public event System.Action<GameObject> OnGenerationComplete;
         public int Seed => seed;
         public float StartClearingRadius => clearingRadius;
+        public void SetHabitatVegetationCatalog(HabitatVegetationCatalogAsset catalog)
+            => habitatVegetationCatalog = catalog;
+
         public WorldGenerationSettings GenerationSettings
             => settings ?? (settings = new WorldGenerationSettings());
         public InputActionAsset InputActions => inputActions;
@@ -554,15 +558,10 @@ namespace ApexShift.Runtime.World.Generation
 
         private void GenerateVegetation()
         {
-            if (biomeCatalog == null || _islandTopography == null || !_islandTopography.IsBuilt || _vegetationRoot == null) return;
+            HabitatVegetationCatalogAsset vegetationCatalog = habitatVegetationCatalog != null
+                ? habitatVegetationCatalog : biomeCatalog != null ? biomeCatalog.HabitatVegetationCatalog : null;
+            if (vegetationCatalog == null || _islandTopography == null || !_islandTopography.IsBuilt || _vegetationRoot == null) return;
             VegetationGenerationSettings vegetationSettings = settings != null ? settings.Vegetation : new VegetationGenerationSettings();
-            var shorelinePoints = new List<Vector3>();
-            TopographyCell[,] grid = _islandTopography.GetGridReadOnly();
-            if (grid != null)
-                for (int z = 0; z < grid.GetLength(1); z++)
-                    for (int x = 0; x < grid.GetLength(0); x++)
-                        if (grid[x, z] != null && grid[x, z].IsShoreline) shorelinePoints.Add(grid[x, z].WorldCenter);
-
             var landmarkClearances = new List<VegetationLandmarkClearance>();
             IReadOnlyList<LandmarkRuntime> landmarks = LandmarkRegistry.Landmarks;
             for (int i = 0; i < landmarks.Count; i++)
@@ -575,10 +574,10 @@ namespace ApexShift.Runtime.World.Generation
 
             _vegetationPlanner = new VegetationPlacementPlanner();
             List<VegetationPlacement> placements = _vegetationPlanner.Plan(
-                seed, biomeCatalog, vegetationSettings, _islandTopography.WorldBounds,
+                seed, vegetationCatalog, vegetationSettings, _islandTopography.WorldBounds,
                 position => _islandTopography.TryGetEnvironmentAt(position, out VegetationEnvironmentSample sample) ? sample : default,
                 SampleTerrainHeight, _islandTopography.GetSafePlayerSpawnPoint(), clearingRadius,
-                landmarkClearances, shorelinePoints, _vegetationRejections);
+                landmarkClearances, _vegetationRejections);
             VegetationRuntimeController controller = _vegetationRoot.GetComponent<VegetationRuntimeController>();
             if (controller == null) controller = _vegetationRoot.gameObject.AddComponent<VegetationRuntimeController>();
             Vector3 initialTarget = _islandTopography.GetSafePlayerSpawnPoint();
@@ -588,7 +587,7 @@ namespace ApexShift.Runtime.World.Generation
             {
                 VegetationSpeciesAsset species = placements[i].SpeciesAsset;
                 if (species == null || species.VisualPrefab == null) continue;
-                _lastResult.RecordVegetation(placements[i].BiomeId, placements[i].SpeciesId, placements[i].Category, species.Harvestable);
+                _lastResult.RecordVegetation(placements[i].HabitatId, placements[i].SpeciesId, placements[i].Category, species.Harvestable);
             }
         }
 
@@ -600,15 +599,15 @@ namespace ApexShift.Runtime.World.Generation
             var summary = new System.Text.StringBuilder();
             summary.Append($"World Generation Complete. Biome regions: {result.BiomeCount}, Resources: {result.ResourceCount}, Seed: {result.Seed}")
                 .AppendLine().Append("Vegetation total: ").Append(result.VegetationInstanceCount);
-            string[] biomeIds = VegetationSpeciesAsset.CanonicalBiomeIds;
-            for (int i = 0; i < biomeIds.Length; i++)
+            IReadOnlyList<string> habitatIds = HabitatVegetationProfileAsset.CanonicalHabitatIds;
+            for (int i = 0; i < habitatIds.Count; i++)
             {
-                string biomeId = biomeIds[i];
-                summary.AppendLine().Append(biomeId).Append(": trees=")
-                    .Append(result.GetVegetationCount(biomeId, VegetationCategory.Tree) + result.GetVegetationCount(biomeId, VegetationCategory.DeadTree))
-                    .Append(" shrubs=").Append(result.GetVegetationCount(biomeId, VegetationCategory.Shrub))
-                    .Append(" groundcover=").Append(result.GetVegetationCount(biomeId, VegetationCategory.GroundCover))
-                    .Append(" deadTrees=").Append(result.GetVegetationCount(biomeId, VegetationCategory.DeadTree));
+                string habitatId = habitatIds[i];
+                summary.AppendLine().Append(habitatId).Append(": trees=")
+                    .Append(result.GetVegetationCount(habitatId, VegetationCategory.Tree) + result.GetVegetationCount(habitatId, VegetationCategory.DeadTree))
+                    .Append(" shrubs=").Append(result.GetVegetationCount(habitatId, VegetationCategory.Shrub))
+                    .Append(" groundcover=").Append(result.GetVegetationCount(habitatId, VegetationCategory.GroundCover))
+                    .Append(" deadTrees=").Append(result.GetVegetationCount(habitatId, VegetationCategory.DeadTree));
             }
             foreach (KeyValuePair<string, int> entry in result.VegetationCounts)
                 summary.AppendLine().Append("  ").Append(entry.Key).Append(": ").Append(entry.Value);

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ApexShift.Runtime.World.Vegetation
 {
@@ -7,7 +8,8 @@ namespace ApexShift.Runtime.World.Vegetation
     {
         [SerializeField] private string instanceId = string.Empty;
         [SerializeField] private string speciesId = string.Empty;
-        [SerializeField] private string biomeId = string.Empty;
+        [FormerlySerializedAs("biomeId")]
+        [SerializeField] private string habitatId = string.Empty;
         [SerializeField] private int chunkX;
         [SerializeField] private int chunkZ;
         [SerializeField] private bool harvestableMetadata;
@@ -15,7 +17,7 @@ namespace ApexShift.Runtime.World.Vegetation
 
         public string InstanceId => instanceId;
         public string SpeciesId => speciesId;
-        public string BiomeId => biomeId;
+        public string HabitatId => habitatId;
         public int ChunkX => chunkX;
         public int ChunkZ => chunkZ;
         public bool HarvestableMetadata => harvestableMetadata;
@@ -25,7 +27,7 @@ namespace ApexShift.Runtime.World.Vegetation
         {
             instanceId = placement.InstanceId;
             speciesId = placement.SpeciesId;
-            biomeId = placement.BiomeId;
+            habitatId = placement.HabitatId;
             chunkX = placement.ChunkX;
             chunkZ = placement.ChunkZ;
             harvestableMetadata = placement.SpeciesAsset != null && placement.SpeciesAsset.Harvestable;

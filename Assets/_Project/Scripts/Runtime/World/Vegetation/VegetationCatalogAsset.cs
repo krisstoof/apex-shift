@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using ApexShift.Runtime.World.Biomes;
 using UnityEngine;
 
 namespace ApexShift.Runtime.World.Vegetation
@@ -31,18 +30,9 @@ namespace ApexShift.Runtime.World.Vegetation
             lookup = null;
         }
 
-        public List<string> Validate(BiomeCatalogAsset biomeCatalog)
+        public List<string> Validate()
         {
             var errors = new List<string>();
-            var biomeIds = new HashSet<string>(StringComparer.Ordinal);
-            if (biomeCatalog != null)
-            {
-                foreach (BiomeDefinitionAsset biome in biomeCatalog.Biomes)
-                    if (biome != null) biomeIds.Add(VegetationSpeciesAsset.NormalizeSpeciesId(biome.BiomeId));
-            }
-            if (biomeIds.Count == 0)
-                foreach (string id in VegetationSpeciesAsset.CanonicalBiomeIds) biomeIds.Add(id);
-
             var seen = new HashSet<string>(StringComparer.Ordinal);
             if (species == null)
             {
@@ -57,7 +47,7 @@ namespace ApexShift.Runtime.World.Vegetation
                     continue;
                 }
                 if (!seen.Add(item.SpeciesId)) errors.Add($"Vegetation catalog contains duplicate species ID '{item.SpeciesId}'.");
-                errors.AddRange(item.Validate(biomeIds));
+                errors.AddRange(item.Validate());
             }
             return errors;
         }

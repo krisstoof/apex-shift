@@ -23,15 +23,15 @@ namespace ApexShift.Runtime.World.Generation
         public IReadOnlyDictionary<string, int> VegetationHarvestableCounts => vegetationHarvestableCounts;
         public IReadOnlyDictionary<string, int> VegetationDecorativeCounts => vegetationDecorativeCounts;
 
-        public void RecordVegetation(string biomeId, string speciesId, VegetationCategory category)
-            => RecordVegetation(biomeId, speciesId, category, category != VegetationCategory.GroundCover);
+        public void RecordVegetation(string habitatId, string speciesId, VegetationCategory category)
+            => RecordVegetation(habitatId, speciesId, category, category != VegetationCategory.GroundCover);
 
-        public void RecordVegetation(string biomeId, string speciesId, VegetationCategory category, bool harvestable)
+        public void RecordVegetation(string habitatId, string speciesId, VegetationCategory category, bool harvestable)
         {
-            string key = (biomeId ?? string.Empty) + "/" + (speciesId ?? string.Empty);
+            string key = (habitatId ?? string.Empty) + "/" + (speciesId ?? string.Empty);
             vegetationCounts.TryGetValue(key, out int count);
             vegetationCounts[key] = count + 1;
-            string categoryKey = (biomeId ?? string.Empty) + "/" + category;
+            string categoryKey = (habitatId ?? string.Empty) + "/" + category;
             vegetationCategoryCounts.TryGetValue(categoryKey, out int categoryCount);
             vegetationCategoryCounts[categoryKey] = categoryCount + 1;
             Dictionary<string, int> target = harvestable ? vegetationHarvestableCounts : vegetationDecorativeCounts;
@@ -40,15 +40,15 @@ namespace ApexShift.Runtime.World.Generation
             VegetationInstanceCount++;
         }
 
-        public int GetVegetationCount(string biomeId, string speciesId)
+        public int GetVegetationCount(string habitatId, string speciesId)
         {
-            string key = (biomeId ?? string.Empty) + "/" + (speciesId ?? string.Empty);
+            string key = (habitatId ?? string.Empty) + "/" + (speciesId ?? string.Empty);
             return vegetationCounts.TryGetValue(key, out int count) ? count : 0;
         }
 
-        public int GetVegetationCount(string biomeId, VegetationCategory category)
+        public int GetVegetationCount(string habitatId, VegetationCategory category)
         {
-            string key = (biomeId ?? string.Empty) + "/" + category;
+            string key = (habitatId ?? string.Empty) + "/" + category;
             return vegetationCategoryCounts.TryGetValue(key, out int count) ? count : 0;
         }
     }

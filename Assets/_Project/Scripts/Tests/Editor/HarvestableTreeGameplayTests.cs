@@ -60,7 +60,7 @@ namespace ApexShift.Tests.Editor
             Assert.NotNull(node);
             Assert.That(tree.TreeId, Is.EqualTo(harvestableInstance.GetComponent<VegetationInstanceRuntime>().InstanceId));
             Assert.That(tree.SpeciesId, Is.EqualTo("tree_leafy_01"));
-            Assert.That(tree.BiomeId, Is.EqualTo("westwood"));
+            Assert.That(tree.HabitatId, Is.EqualTo("jungle_interior"));
             Assert.That(tree.ResourceKind, Is.EqualTo("leafy_tree"));
             Assert.That(node.State.ResourceId, Is.EqualTo("leafy_tree"));
             Assert.That(node.ShowOnResourceMap, Is.False);
@@ -210,7 +210,7 @@ namespace ApexShift.Tests.Editor
         {
             GameObject visual = Track(new GameObject("tree_visual"));
             VegetationSpeciesAsset species = CreateSpecies("tree_leafy_01", visual, VegetationCategory.Tree, true, "leafy_tree");
-            var placement = new VegetationPlacement("stable_tree_91_104_207", "westwood", species,
+            var placement = new VegetationPlacement("stable_tree_91_104_207", "jungle_interior", species,
                 new Vector3(10.4f, 0f, 20.7f), 17f, 1.1f, 0, 0);
 
             Transform firstRoot = Track(new GameObject("first_generation_vegetation")).transform;
@@ -317,7 +317,7 @@ namespace ApexShift.Tests.Editor
         {
             GameObject visual = Track(new GameObject("tree_visual"));
             VegetationSpeciesAsset species = CreateSpecies("tree_leafy_01", visual, VegetationCategory.Tree, true, "leafy_tree");
-            var placement = new VegetationPlacement("tree_partial_save_id", "westwood", species, Vector3.zero, 0f, 1f, 0, 0);
+            var placement = new VegetationPlacement("tree_partial_save_id", "jungle_interior", species, Vector3.zero, 0f, 1f, 0, 0);
             Transform firstRoot = Track(new GameObject("first_generation")).transform;
             new VegetationSpawner().Spawn(new[] { placement }, firstRoot, null);
             HarvestableTreeRuntime firstTree = firstRoot.GetComponentInChildren<HarvestableTreeRuntime>();
@@ -490,7 +490,7 @@ namespace ApexShift.Tests.Editor
             GameObject stumpVisual = Track(new GameObject(id + "_stump_visual"));
             float maxHealth = id == "tree_conifer_01" ? 120f : id == "tree_dead_01" ? 70f : 100f;
             species.Configure(id, id, visual, category, 1f, 1f, 3.8f, 0f, 90f, 0f, 1f, 0f, 1f,
-                VegetationSpeciesAsset.CanonicalBiomeIds, true, harvestable, resourceKind, stumpVisual,
+                HabitatVegetationProfileAsset.CanonicalHabitatIds, true, harvestable, resourceKind, stumpVisual,
                 VegetationCollisionMode.GameplayResource, 0.18f, 1.8f, 0.9f, maxHealth, regrowthDays, fallDuration);
             return species;
         }
@@ -520,7 +520,7 @@ namespace ApexShift.Tests.Editor
         private static void SpawnOne(VegetationSpeciesAsset species, Transform root, Vector3 position)
         {
             string stableId = $"stable_test_{species.SpeciesId}_{Mathf.RoundToInt(position.x * 100f)}_{Mathf.RoundToInt(position.z * 100f)}";
-            var placement = new VegetationPlacement(stableId, "westwood", species, position,
+            var placement = new VegetationPlacement(stableId, "jungle_interior", species, position,
                 0f, 1f, Mathf.FloorToInt(position.x / 24f), Mathf.FloorToInt(position.z / 24f));
             new VegetationSpawner().Spawn(new[] { placement }, root, null);
         }

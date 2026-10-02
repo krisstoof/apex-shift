@@ -16,6 +16,10 @@ MonoBehaviour:
   displayName: Leafy Tree 01
   visualPrefab: {fileID: 0}
   category: 0
+  form: 0
+  minDistanceToCoast: 0
+  maxDistanceToCoast: 3.4028235e+38
+  allowedTerrainTypes: 02000000030000000400000001000000i
   minScale: 0.8
   maxScale: 1.2
   minimumSpacing: 4.2
@@ -26,15 +30,17 @@ MonoBehaviour:
   treeRegrowthDays: 5
   treeFallDuration: 1.2
   minSlopeDegrees: 0
-  maxSlopeDegrees: 40
+  maxSlopeDegrees: 28
   minElevation01: 0
   maxElevation01: 1
   minMoisture01: 0
   maxMoisture01: 1
-  allowedBiomeIds:
-  - hearth_meadow
-  - westwood
-  - south_thicket
+  allowedHabitatIds:
+  - coast
+  - lowland_jungle
+  - jungle_interior
+  - wet_jungle
+  - rocky_upland
   randomYaw: 1
   harvestable: 1
   resourceKind: leafy_tree

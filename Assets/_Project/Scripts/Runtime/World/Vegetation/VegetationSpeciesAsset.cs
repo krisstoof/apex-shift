@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
+using ApexShift.Runtime.World.Topography;
 
 namespace ApexShift.Runtime.World.Vegetation
 {
@@ -23,15 +25,14 @@ namespace ApexShift.Runtime.World.Vegetation
     [CreateAssetMenu(menuName = "Apex Shift/World/Vegetation Species", fileName = "VegetationSpecies")]
     public sealed class VegetationSpeciesAsset : ScriptableObject
     {
-        public static readonly string[] CanonicalBiomeIds =
-        {
-            "hearth_meadow", "westwood", "south_thicket", "stoneback_ridge", "redfang_wilds"
-        };
-
         [SerializeField] private string speciesId = string.Empty;
         [SerializeField] private string displayName = string.Empty;
         [SerializeField] private GameObject visualPrefab;
         [SerializeField] private VegetationCategory category;
+        [SerializeField] private VegetationForm form;
+        [SerializeField, Min(0f)] private float minDistanceToCoast;
+        [SerializeField, Min(0f)] private float maxDistanceToCoast = float.MaxValue;
+        [SerializeField] private List<TerrainType> allowedTerrainTypes = new List<TerrainType>();
         [SerializeField, Min(0.01f)] private float minScale = 0.8f;
         [SerializeField, Min(0.01f)] private float maxScale = 1.2f;
         [SerializeField, Min(0f)] private float minimumSpacing = 1f;
@@ -49,7 +50,8 @@ namespace ApexShift.Runtime.World.Vegetation
         [SerializeField, Range(0f, 1f)] private float maxElevation01 = 1f;
         [SerializeField, Range(0f, 1f)] private float minMoisture01;
         [SerializeField, Range(0f, 1f)] private float maxMoisture01 = 1f;
-        [SerializeField] private List<string> allowedBiomeIds = new List<string>();
+        [FormerlySerializedAs("allowedBiomeIds")]
+        [SerializeField] private List<string> allowedHabitatIds = new List<string>();
         [SerializeField] private bool randomYaw = true;
         [SerializeField] private bool harvestable;
         [Tooltip("Apex Shift ResourceDefinition kind (for example leafy_tree), not the resulting drop/item ID.")]
@@ -61,6 +63,10 @@ namespace ApexShift.Runtime.World.Vegetation
         public string DisplayName => displayName;
         public GameObject VisualPrefab => visualPrefab;
         public VegetationCategory Category => category;
+        public VegetationForm Form => form;
+        public float MinDistanceToCoast => minDistanceToCoast;
+        public float MaxDistanceToCoast => maxDistanceToCoast;
+        public IReadOnlyList<TerrainType> AllowedTerrainTypes => allowedTerrainTypes;
         public float MinScale => minScale;
         public float MaxScale => maxScale;
         public float MinimumSpacing => minimumSpacing;
@@ -76,7 +82,7 @@ namespace ApexShift.Runtime.World.Vegetation
         public float MaxElevation01 => maxElevation01;
         public float MinMoisture01 => minMoisture01;
         public float MaxMoisture01 => maxMoisture01;
-        public IReadOnlyList<string> AllowedBiomeIds => allowedBiomeIds;
+        public IReadOnlyList<string> AllowedHabitatIds => allowedHabitatIds;
         public bool RandomYaw => randomYaw;
         public bool Harvestable => harvestable;
         /// <summary>The Apex Shift ResourceDefinition kind, not the resulting drop/item ID.</summary>
@@ -87,7 +93,7 @@ namespace ApexShift.Runtime.World.Vegetation
         public void Configure(string id, string label, GameObject prefab, VegetationCategory vegetationCategory,
             float minimumScale, float maximumScale, float spacing,
             float minimumSlope, float maximumSlope, float minimumElevation, float maximumElevation,
-            float minimumMoisture, float maximumMoisture, IEnumerable<string> biomeIds,
+            float minimumMoisture, float maximumMoisture, IEnumerable<string> habitatIds,
             bool yawRandomized, bool canHarvest, string harvestResourceKind,
             GameObject depletedPrefab, VegetationCollisionMode collision,
             float treeTrunkRadius = 0.18f, float treeTrunkHeight = 1.8f, float treeTrunkCenterY = 0.9f,
@@ -112,10 +118,10 @@ namespace ApexShift.Runtime.World.Vegetation
             maxElevation01 = maximumElevation;
             minMoisture01 = minimumMoisture;
             maxMoisture01 = maximumMoisture;
-            allowedBiomeIds = new List<string>();
-            if (biomeIds != null)
-                foreach (string biomeId in biomeIds)
-                    allowedBiomeIds.Add(NormalizeSpeciesId(biomeId));
+            allowedHabitatIds = new List<string>();
+            if (habitatIds != null)
+                foreach (string habitatId in habitatIds)
+                    allowedHabitatIds.Add(NormalizeSpeciesId(habitatId));
             randomYaw = yawRandomized;
             harvestable = canHarvest;
             resourceKind = harvestResourceKind ?? string.Empty;
@@ -123,7 +129,7 @@ namespace ApexShift.Runtime.World.Vegetation
             collisionMode = collision;
         }
 
-        public List<string> Validate(ICollection<string> validBiomeIds = null)
+        public List<string> Validate()
         {
             var errors = new List<string>();
             string normalizedId = NormalizeSpeciesId(speciesId);
@@ -149,28 +155,48 @@ namespace ApexShift.Runtime.World.Vegetation
             if (harvestable && string.IsNullOrWhiteSpace(resourceKind))
                 errors.Add($"Harvestable species '{speciesId}' has no resourceKind.");
 
-            var seenBiomes = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string biomeId in allowedBiomeIds ?? new List<string>())
+            var seenHabitats = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string habitatId in allowedHabitatIds ?? new List<string>())
             {
-                string normalizedBiome = NormalizeSpeciesId(biomeId);
-                if (string.IsNullOrWhiteSpace(biomeId) || !string.Equals(biomeId, normalizedBiome, StringComparison.Ordinal))
-                    errors.Add($"Species '{speciesId}' has invalid biome ID '{biomeId}'.");
-                if (!seenBiomes.Add(normalizedBiome))
-                    errors.Add($"Species '{speciesId}' repeats allowed biome ID '{normalizedBiome}'.");
-                ICollection<string> knownBiomes = validBiomeIds;
-                if (knownBiomes == null) knownBiomes = CanonicalBiomeSet;
-                if (!knownBiomes.Contains(normalizedBiome))
-                    errors.Add($"Species '{speciesId}' references unknown biome ID '{biomeId}'.");
+                string normalizedHabitat = NormalizeSpeciesId(habitatId);
+                if (string.IsNullOrWhiteSpace(habitatId) || !string.Equals(habitatId, normalizedHabitat, StringComparison.Ordinal))
+                    errors.Add($"Species '{speciesId}' has invalid habitat ID '{habitatId}'.");
+                if (!seenHabitats.Add(normalizedHabitat))
+                    errors.Add($"Species '{speciesId}' repeats allowed habitat ID '{normalizedHabitat}'.");
+                if (!HabitatVegetationProfileAsset.IsValidHabitatId(normalizedHabitat))
+                    errors.Add($"Species '{speciesId}' references unknown habitat ID '{habitatId}'.");
             }
+            if (!IsFinite(minDistanceToCoast) || !IsFinite(maxDistanceToCoast)
+                || minDistanceToCoast < 0f || maxDistanceToCoast < minDistanceToCoast)
+                errors.Add($"Species '{speciesId}' has invalid distance-to-coast range.");
+            if (!Enum.IsDefined(typeof(VegetationForm), form))
+                errors.Add($"Species '{speciesId}' has invalid vegetation form.");
+            var terrainSet = new HashSet<TerrainType>();
+            foreach (TerrainType terrain in allowedTerrainTypes ?? new List<TerrainType>())
+                if (!Enum.IsDefined(typeof(TerrainType), terrain) || terrain == TerrainType.Water || !terrainSet.Add(terrain))
+                    errors.Add($"Species '{speciesId}' has invalid or duplicate land TerrainType '{terrain}'.");
             return errors;
         }
 
-        public bool AllowsBiome(string biomeId)
+        public void ConfigureEnvironment(VegetationForm vegetationForm, float minimumCoastDistance = 0f,
+            float maximumCoastDistance = float.MaxValue, IEnumerable<TerrainType> terrainTypes = null)
         {
-            if (allowedBiomeIds == null || allowedBiomeIds.Count == 0) return true;
-            string normalized = NormalizeSpeciesId(biomeId);
-            for (int i = 0; i < allowedBiomeIds.Count; i++)
-                if (string.Equals(allowedBiomeIds[i], normalized, StringComparison.Ordinal)) return true;
+            form = vegetationForm;
+            minDistanceToCoast = minimumCoastDistance;
+            maxDistanceToCoast = maximumCoastDistance;
+            allowedTerrainTypes = terrainTypes == null ? new List<TerrainType>() : new List<TerrainType>(terrainTypes);
+        }
+
+        public bool AllowsTerrain(TerrainType terrain)
+            => terrain != TerrainType.Water && (allowedTerrainTypes == null || allowedTerrainTypes.Count == 0 || allowedTerrainTypes.Contains(terrain));
+
+        public bool AllowsHabitat(string habitatId)
+        {
+            string normalized = NormalizeSpeciesId(habitatId);
+            if (!HabitatVegetationProfileAsset.IsValidHabitatId(normalized)) return false;
+            if (allowedHabitatIds == null || allowedHabitatIds.Count == 0) return true;
+            for (int i = 0; i < allowedHabitatIds.Count; i++)
+                if (string.Equals(allowedHabitatIds[i], normalized, StringComparison.Ordinal)) return true;
             return false;
         }
 
@@ -193,7 +219,6 @@ namespace ApexShift.Runtime.World.Vegetation
             return result.ToString();
         }
 
-        private static readonly HashSet<string> CanonicalBiomeSet = new HashSet<string>(CanonicalBiomeIds, StringComparer.Ordinal);
 
         private void ValidateUnitRange(string label, float min, float max, List<string> errors)
         {

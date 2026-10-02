@@ -5,7 +5,9 @@ namespace ApexShift.Runtime.World.Generation
     {
         public int Water { get; internal set; }
         public int ExcessiveSlope { get; internal set; }
-        public int BiomeMismatch { get; internal set; }
+        public int HabitatMismatch { get; internal set; }
+        public int Terrain { get; internal set; }
+        public int CoastDistance { get; internal set; }
         public int Elevation { get; internal set; }
         public int Moisture { get; internal set; }
         public int ShorelineOrClearing { get; internal set; }
@@ -13,8 +15,8 @@ namespace ApexShift.Runtime.World.Generation
 
         public void Reset()
         {
-            Water = ExcessiveSlope = BiomeMismatch = Elevation = Moisture = 0;
-            ShorelineOrClearing = SpacingOrCollision = 0;
+            Water = ExcessiveSlope = HabitatMismatch = Elevation = Moisture = 0;
+            ShorelineOrClearing = SpacingOrCollision = Terrain = CoastDistance = 0;
         }
     }
 }

@@ -22,7 +22,7 @@ namespace ApexShift.Runtime.World.Generation
         public IReadOnlyList<int> SlopeBuckets => slopeBuckets;
         public IReadOnlyDictionary<string, int> HabitatCells => habitatCells;
         public IReadOnlyDictionary<string, float> HabitatLandPercentages => habitatLandPercentages;
-        public IReadOnlyDictionary<string, int> VegetationByBiomeSpecies => vegetationByBiomeSpecies;
+        public IReadOnlyDictionary<string, int> VegetationByHabitatSpecies => vegetationByHabitatSpecies;
         public int Harvestable { get; private set; }
         public int Decorative { get; private set; }
         public int Trees { get; private set; }
@@ -33,7 +33,7 @@ namespace ApexShift.Runtime.World.Generation
         private readonly int[] slopeBuckets = new int[5];
         private readonly SortedDictionary<string, int> habitatCells = new SortedDictionary<string, int>(StringComparer.Ordinal);
         private readonly SortedDictionary<string, float> habitatLandPercentages = new SortedDictionary<string, float>(StringComparer.Ordinal);
-        private readonly SortedDictionary<string, int> vegetationByBiomeSpecies = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        private readonly SortedDictionary<string, int> vegetationByHabitatSpecies = new SortedDictionary<string, int>(StringComparer.Ordinal);
 
         public static WorldGenerationReport Create(WorldGenerationResult result, IslandTopographyRuntime topography,
             VegetationRejectionCounts rejections)
@@ -43,7 +43,7 @@ namespace ApexShift.Runtime.World.Generation
             {
                 report.VegetationPlacements = result.VegetationInstanceCount;
                 foreach (KeyValuePair<string, int> item in result.VegetationCounts)
-                    report.vegetationByBiomeSpecies.Add(item.Key, item.Value);
+                    report.vegetationByHabitatSpecies.Add(item.Key, item.Value);
                 foreach (KeyValuePair<string, int> item in result.VegetationHarvestableCounts) report.Harvestable += item.Value;
                 foreach (KeyValuePair<string, int> item in result.VegetationDecorativeCounts) report.Decorative += item.Value;
                 foreach (KeyValuePair<string, int> item in result.VegetationCategoryCounts)
@@ -104,9 +104,9 @@ namespace ApexShift.Runtime.World.Generation
             bool firstPercent = true;
             foreach (KeyValuePair<string, float> item in habitatLandPercentages)
             { if (!firstPercent) text.Append(','); firstPercent = false; text.Append(item.Key).Append(':').Append(F(item.Value)); }
-            AppendMap(text, ";species=", vegetationByBiomeSpecies);
+            AppendMap(text, ";species=", vegetationByHabitatSpecies);
             text.Append(";rejected=").Append(I(Rejections.Water)).Append(',').Append(I(Rejections.ExcessiveSlope)).Append(',')
-                .Append(I(Rejections.BiomeMismatch)).Append(',').Append(I(Rejections.Elevation)).Append(',').Append(I(Rejections.Moisture)).Append(',')
+                .Append(I(Rejections.HabitatMismatch)).Append(',').Append(I(Rejections.Terrain)).Append(',').Append(I(Rejections.CoastDistance)).Append(',').Append(I(Rejections.Elevation)).Append(',').Append(I(Rejections.Moisture)).Append(',')
                 .Append(I(Rejections.ShorelineOrClearing)).Append(',').Append(I(Rejections.SpacingOrCollision));
             return text.ToString();
         }
@@ -116,7 +116,7 @@ namespace ApexShift.Runtime.World.Generation
             return new VegetationRejectionCounts
             {
                 Water = source?.Water ?? 0, ExcessiveSlope = source?.ExcessiveSlope ?? 0,
-                BiomeMismatch = source?.BiomeMismatch ?? 0, Elevation = source?.Elevation ?? 0,
+                HabitatMismatch = source?.HabitatMismatch ?? 0, Terrain = source?.Terrain ?? 0, CoastDistance = source?.CoastDistance ?? 0, Elevation = source?.Elevation ?? 0,
                 Moisture = source?.Moisture ?? 0, ShorelineOrClearing = source?.ShorelineOrClearing ?? 0,
                 SpacingOrCollision = source?.SpacingOrCollision ?? 0
             };

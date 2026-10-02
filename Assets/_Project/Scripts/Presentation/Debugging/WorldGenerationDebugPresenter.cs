@@ -83,9 +83,20 @@ namespace ApexShift.Presentation.Debugging
                 $"Land/water/shore/ridge: {report.LandCells}/{report.WaterCells}/{report.ShoreCells}/{report.RidgeCells}\n" +
                 $"Vegetation: {report.VegetationPlacements} (harvestable {report.Harvestable}, decorative {report.Decorative})\n" +
                 $"Trees/shrubs/ground: {report.Trees}/{report.Shrubs}/{report.GroundCover}\n" +
-                $"Habitat cells: {FormatHabitatCounts(report)}\nRejected water/slope/legacy-profile/elev/moist/clear/spacing: " +
-                $"{report.Rejections.Water}/{report.Rejections.ExcessiveSlope}/{report.Rejections.BiomeMismatch}/{report.Rejections.Elevation}/{report.Rejections.Moisture}/{report.Rejections.ShorelineOrClearing}/{report.Rejections.SpacingOrCollision}\n" +
+                $"Habitat cells: {FormatHabitatCounts(report)}\nVegetation per habitat/species: {FormatVegetationCounts(report)}\nRejected water/slope/habitat/terrain/coast/elev/moist/clear/spacing: " +
+                $"{report.Rejections.Water}/{report.Rejections.ExcessiveSlope}/{report.Rejections.HabitatMismatch}/{report.Rejections.Terrain}/{report.Rejections.CoastDistance}/{report.Rejections.Elevation}/{report.Rejections.Moisture}/{report.Rejections.ShorelineOrClearing}/{report.Rejections.SpacingOrCollision}\n" +
                 $"Chunks active/total: {stats.ActiveTreeChunks + stats.ActiveShrubChunks + stats.ActiveGroundCoverChunks}/{stats.TotalChunks}; gameplay trees: {stats.ActiveHarvestableTrees}";
+        }
+
+        private static string FormatVegetationCounts(WorldGenerationReport report)
+        {
+            var text = new System.Text.StringBuilder();
+            foreach (KeyValuePair<string, int> item in report.VegetationByHabitatSpecies)
+            {
+                if (text.Length > 0) text.Append("  ");
+                text.Append(item.Key).Append(':').Append(item.Value);
+            }
+            return text.ToString();
         }
 
         private static string FormatHabitatCounts(WorldGenerationReport report)

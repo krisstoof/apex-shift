@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a51b6d36799982044a3e2775fd860206, type: 3}
+  m_Name: HabitatVegetationCatalog
+  m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.World.Vegetation.HabitatVegetationCatalogAsset
+  profiles:
+  - {fileID: 11400000, guid: a549ae3054434934783bf176963d0f59, type: 2}
+  - {fileID: 11400000, guid: 255e09ef8d3392044b90504d59f2b66b, type: 2}
+  - {fileID: 11400000, guid: 879324ea01ca136439ca7a142ee97ef8, type: 2}
+  - {fileID: 11400000, guid: 71057027969edaa4b80fa02b89842978, type: 2}
+  - {fileID: 11400000, guid: eb646e6a318373f49ac9d0d7f88bcdc7, type: 2}

@@ -260,14 +260,14 @@ namespace ApexShift.Runtime.World.Topography
             return true;
         }
 
-        /// <summary>Legacy vegetation adapter. Habitat remains the authoritative topography identity.</summary>
+        /// <summary>Vegetation consumes the same cached habitat and physical fields as other environment queries.</summary>
         public bool TryGetEnvironmentAt(Vector3 worldPos, out VegetationEnvironmentSample sample)
         {
             sample = default;
             if (!TryGetEnvironmentAt(worldPos, out EnvironmentSample environment)) return false;
             sample = new VegetationEnvironmentSample(environment.IsLand, environment.IsWater, environment.IsShoreline,
-                LegacyBiomeCompatibility.ToLegacyBiomeId(environment.HabitatId), environment.NormalizedElevation,
-                environment.SlopeDegrees, environment.Moisture01);
+                environment.HabitatId, environment.NormalizedElevation,
+                environment.SlopeDegrees, environment.Moisture01, environment.TerrainType, environment.DistanceToCoast);
             return true;
         }
 

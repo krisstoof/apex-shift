@@ -16,24 +16,31 @@ MonoBehaviour:
   displayName: Forest Groundcover 01
   visualPrefab: {fileID: 0}
   category: 2
+  form: 8
+  minDistanceToCoast: 0
+  maxDistanceToCoast: 3.4028235e+38
+  allowedTerrainTypes: 
   minScale: 0.8
   maxScale: 1.2
   minimumSpacing: 0.55
   trunkRadius: 0.05
   trunkHeight: 0.25
   trunkCenterY: 0.125
+  treeMaxHealth: 100
+  treeRegrowthDays: 0
+  treeFallDuration: 0
   minSlopeDegrees: 0
   maxSlopeDegrees: 35
   minElevation01: 0
   maxElevation01: 1
   minMoisture01: 0
   maxMoisture01: 1
-  allowedBiomeIds:
-  - hearth_meadow
-  - westwood
-  - south_thicket
-  - stoneback_ridge
-  - redfang_wilds
+  allowedHabitatIds:
+  - coast
+  - lowland_jungle
+  - jungle_interior
+  - wet_jungle
+  - rocky_upland
   randomYaw: 1
   harvestable: 0
   resourceKind: 

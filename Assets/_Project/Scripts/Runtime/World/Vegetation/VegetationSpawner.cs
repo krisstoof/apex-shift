@@ -21,7 +21,7 @@ namespace ApexShift.Runtime.World.Vegetation
                 if (species == null || species.VisualPrefab == null) continue;
                 Transform parent = GetChunkRoot(vegetationRoot, placement.ChunkX, placement.ChunkZ);
                 GameObject instance = CreateInstance(placement, parent);
-                result?.RecordVegetation(placement.BiomeId, placement.SpeciesId, placement.Category);
+                result?.RecordVegetation(placement.HabitatId, placement.SpeciesId, placement.Category);
                 if (instance != null) spawned++;
             }
             return spawned;

@@ -16,6 +16,10 @@ MonoBehaviour:
   displayName: Dead Tree 01
   visualPrefab: {fileID: 0}
   category: 3
+  form: 9
+  minDistanceToCoast: 0
+  maxDistanceToCoast: 3.4028235e+38
+  allowedTerrainTypes: 
   minScale: 0.8
   maxScale: 1.2
   minimumSpacing: 4.5
@@ -31,11 +35,12 @@ MonoBehaviour:
   maxElevation01: 1
   minMoisture01: 0
   maxMoisture01: 1
-  allowedBiomeIds:
-  - westwood
-  - south_thicket
-  - stoneback_ridge
-  - redfang_wilds
+  allowedHabitatIds:
+  - coast
+  - lowland_jungle
+  - jungle_interior
+  - wet_jungle
+  - rocky_upland
   randomYaw: 1
   harvestable: 1
   resourceKind: dry_tree

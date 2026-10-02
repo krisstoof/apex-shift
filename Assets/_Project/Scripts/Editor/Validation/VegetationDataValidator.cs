@@ -8,65 +8,70 @@ namespace ApexShift.EditorTools.Validation
 {
     public static class VegetationDataValidator
     {
-        private const string VegetationCatalogPath = "Assets/_Project/Data/Vegetation/VegetationCatalog.asset";
-        private const string BiomeCatalogPath = "Assets/_Project/Data/Biomes/BiomeCatalog.asset";
-
+        private const string Root = "Assets/_Project/Data/Vegetation/";
         [MenuItem("Apex Shift/Validation/Validate Vegetation Data")]
-        public static void ValidateFromMenu()
-        {
-            List<string> errors = CollectProblems();
-            if (errors.Count == 0) Debug.Log("Apex Shift vegetation data is valid.");
-            else Debug.LogError("Apex Shift vegetation data is invalid:\n- " + string.Join("\n- ", errors));
-        }
+        public static void ValidateFromMenu() => Validate();
 
         public static bool Validate(bool logResult = true)
         {
             List<string> errors = CollectProblems();
-            if (errors.Count == 0)
+            if (logResult)
             {
-                if (logResult) Debug.Log("Apex Shift vegetation data is valid.");
-                return true;
+                if (errors.Count == 0) Debug.Log("Apex Shift vegetation data is valid.");
+                else Debug.LogError("Apex Shift vegetation data is invalid:\n- " + string.Join("\n- ", errors));
             }
-            if (logResult) Debug.LogError("Apex Shift vegetation data is invalid:\n- " + string.Join("\n- ", errors));
-            return false;
+            return errors.Count == 0;
         }
 
         public static void ValidateOrThrow()
         {
             List<string> errors = CollectProblems();
-            if (errors.Count > 0) throw new System.InvalidOperationException("Apex Shift vegetation data is invalid:\n- " + string.Join("\n- ", errors));
+            if (errors.Count > 0) throw new System.InvalidOperationException(string.Join("\n", errors));
             Debug.Log("Apex Shift vegetation data is valid.");
         }
 
-        private static List<string> CollectProblems()
+        public static List<string> CollectProblems()
         {
             var errors = new List<string>();
-            var catalog = AssetDatabase.LoadAssetAtPath<VegetationCatalogAsset>(VegetationCatalogPath);
-            var biomeCatalog = AssetDatabase.LoadAssetAtPath<BiomeCatalogAsset>(BiomeCatalogPath);
-            if (catalog == null) errors.Add("Missing vegetation catalog at " + VegetationCatalogPath + ".");
-            if (biomeCatalog == null) errors.Add("Missing biome catalog at " + BiomeCatalogPath + ".");
-            if (catalog == null || biomeCatalog == null) return errors;
-            errors.AddRange(catalog.Validate(biomeCatalog));
-            foreach (BiomeDefinitionAsset biome in biomeCatalog.Biomes)
+            var species = AssetDatabase.LoadAssetAtPath<VegetationCatalogAsset>(Root + "VegetationCatalog.asset");
+            var habitats = AssetDatabase.LoadAssetAtPath<HabitatVegetationCatalogAsset>(Root + "HabitatVegetationCatalog.asset");
+            if (species == null) errors.Add("Missing VegetationCatalog.asset.");
+            if (habitats == null) errors.Add("Missing HabitatVegetationCatalog.asset.");
+            if (species != null)
             {
-                if (biome == null) { errors.Add("Biome catalog contains a null biome definition."); continue; }
-                // Non-land entries such as the synthetic water biome do not own vegetation profiles.
-                if (System.Array.IndexOf(VegetationSpeciesAsset.CanonicalBiomeIds,
-                        VegetationSpeciesAsset.NormalizeSpeciesId(biome.BiomeId)) < 0)
-                    continue;
-                if (biome.VegetationProfile == null)
-                {
-                    errors.Add($"Biome '{biome.BiomeId}' has no vegetation profile assigned.");
-                    continue;
-                }
-                var ids = new HashSet<string>();
-                foreach (BiomeDefinitionAsset known in biomeCatalog.Biomes)
-                    if (known != null) ids.Add(VegetationSpeciesAsset.NormalizeSpeciesId(known.BiomeId));
-                errors.AddRange(biome.VegetationProfile.Validate(ids, catalog));
-                if (biome.VegetationProfile.BiomeId != VegetationSpeciesAsset.NormalizeSpeciesId(biome.BiomeId))
-                    errors.Add($"Biome '{biome.BiomeId}' references profile for '{biome.VegetationProfile.BiomeId}'.");
+                errors.AddRange(species.Validate());
+                foreach (VegetationSpeciesAsset item in species.Species)
+                    if (item != null)
+                    {
+                        ValidatePrefab(item.VisualPrefab, item.SpeciesId, errors);
+                        if (item.DepletedVisualPrefab != null) ValidatePrefab(item.DepletedVisualPrefab, item.SpeciesId + " depleted", errors);
+                    }
             }
+            if (habitats != null)
+            {
+                errors.AddRange(habitats.Validate(species));
+                foreach (string id in HabitatVegetationProfileAsset.CanonicalHabitatIds)
+                    if (habitats.GetProfile(id) == null) errors.Add("Missing habitat profile '" + id + "'.");
+            }
+            // Optional scene-integration anchor; vegetation data validation itself is neutral.
+            var bridge = AssetDatabase.LoadAssetAtPath<BiomeCatalogAsset>("Assets/_Project/Data/Biomes/BiomeCatalog.asset");
+            if (bridge != null && bridge.HabitatVegetationCatalog != habitats)
+                errors.Add("World data anchor does not reference the canonical habitat vegetation catalog.");
             return errors;
+        }
+
+        private static void ValidatePrefab(GameObject prefab, string label, List<string> errors)
+        {
+            if (prefab == null) return; // Species validation reports the missing visual.
+            foreach (Transform child in prefab.GetComponentsInChildren<Transform>(true))
+            {
+                if (GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(child.gameObject) > 0)
+                    errors.Add(label + " prefab has a missing script dependency.");
+                MeshFilter filter = child.GetComponent<MeshFilter>();
+                if (filter != null && filter.sharedMesh == null) errors.Add(label + " prefab has a missing mesh dependency.");
+                SkinnedMeshRenderer skin = child.GetComponent<SkinnedMeshRenderer>();
+                if (skin != null && skin.sharedMesh == null) errors.Add(label + " prefab has a missing skinned mesh dependency.");
+            }
         }
     }
 }

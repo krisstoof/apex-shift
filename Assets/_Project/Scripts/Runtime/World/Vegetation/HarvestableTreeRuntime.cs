@@ -5,6 +5,7 @@ using ApexShift.Core.Save;
 using ApexShift.Runtime.Items;
 using ApexShift.Runtime.Resources;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ApexShift.Runtime.World.Vegetation
 {
@@ -23,7 +24,8 @@ namespace ApexShift.Runtime.World.Vegetation
 
         [SerializeField] private string treeId = string.Empty;
         [SerializeField] private string speciesId = string.Empty;
-        [SerializeField] private string biomeId = string.Empty;
+        [FormerlySerializedAs("biomeId")]
+        [SerializeField] private string habitatId = string.Empty;
         [SerializeField] private string resourceKind = string.Empty;
         [SerializeField] private ResourceNodeView resourceNode;
         [SerializeField, Min(1f)] private float maxHealth = 100f;
@@ -48,7 +50,7 @@ namespace ApexShift.Runtime.World.Vegetation
 
         public string TreeId => treeId;
         public string SpeciesId => speciesId;
-        public string BiomeId => biomeId;
+        public string HabitatId => habitatId;
         public string ResourceKind => resourceKind;
         public ResourceNodeView ResourceNode => resourceNode;
         public float MaxHealth => maxHealth;
@@ -86,7 +88,7 @@ namespace ApexShift.Runtime.World.Vegetation
 
             treeId = marker.InstanceId;
             speciesId = marker.SpeciesId;
-            biomeId = marker.BiomeId;
+            habitatId = marker.HabitatId;
             resourceKind = string.IsNullOrWhiteSpace(species.ResourceKind) ? marker.ResourceKind : species.ResourceKind.Trim().ToLowerInvariant();
             resourceNode = node;
             maxHealth = Mathf.Max(1f, species.TreeMaxHealth);
