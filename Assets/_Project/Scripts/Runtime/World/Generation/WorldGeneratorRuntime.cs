@@ -121,7 +121,8 @@ namespace ApexShift.Runtime.World.Generation
         public event System.Action<GameObject> OnGenerationComplete;
         public int Seed => seed;
         public float StartClearingRadius => clearingRadius;
-        public WorldGenerationSettings GenerationSettings => settings;
+        public WorldGenerationSettings GenerationSettings
+            => settings ?? (settings = new WorldGenerationSettings());
         public InputActionAsset InputActions => inputActions;
         public WorldGenerationContext CurrentGeneration => _generationContext;
         public IReadOnlyList<string> LastGenerationStageOrder => _generationCoordinator != null
