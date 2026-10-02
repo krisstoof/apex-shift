@@ -1,6 +1,6 @@
 using System.Linq;
-using ApexShift.Runtime.PlayerInput;
-using ApexShift.Runtime.Player;
+using ApexShift.Runtime.Flow;
+using ApexShift.EditorTools.Validation;
 using ApexShift.Runtime.World.Generation;
 using NUnit.Framework;
 using UnityEditor;
@@ -29,7 +29,7 @@ namespace ApexShift.Tests.Editor
         }
 
         [Test]
-        public void ProductionScene_ContainsAuthoredBiomeWorldAndGameplayFlow()
+        public void ProductionScene_ContainsStartupShellWithoutSerializedGameplay()
         {
             Scene previousScene = SceneManager.GetActiveScene();
             string previousPath = previousScene.IsValid() ? previousScene.path : string.Empty;
@@ -37,26 +37,27 @@ namespace ApexShift.Tests.Editor
 
             try
             {
-                Transform[] transforms = productionScene.GetRootGameObjects()
-                    .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
-                    .ToArray();
-                foreach (string objectName in new[] { "RuntimeWorldGenerator", "Player", "Main Camera", "PlayerFollowCamera", "UI", "TerrainRoot", "ResourceRoot", "CreatureRoot" })
+                GameObject[] roots = productionScene.GetRootGameObjects();
+                WorldGeneratorRuntime generator = roots.SelectMany(root => root.GetComponentsInChildren<WorldGeneratorRuntime>(true)).Single();
+                Assert.That(generator.GetComponents<MonoBehaviour>().Any(component => component != null &&
+                    component.GetType().FullName == "ApexShift.Presentation.HUD.RuntimeHUDProvisioner"), Is.True);
+                Assert.That(roots.SelectMany(root => root.GetComponentsInChildren<GameStartupController>(true)), Is.Not.Empty);
+                var configured = new SerializedObject(generator);
+                Assert.That(configured.FindProperty("generateOnStart").boolValue, Is.False);
+                foreach (string field in new[] { "biomeCatalog", "prefabRegistry", "playerPrefab", "playerAnimatorController" })
+                    Assert.That(configured.FindProperty(field).objectReferenceValue, Is.Not.Null, field);
+                WorldRuntimeOwner owner = generator.GetComponent<WorldRuntimeOwner>();
+                if (owner != null && owner.GenerationRoot != null)
                 {
-                    Assert.That(transforms.Any(transform => transform.name == objectName), Is.True,
-                        $"Production scene is missing gameplay/world object: {objectName}");
+                    Transform preview = owner.GenerationRoot;
+                    Assert.That(preview.Find("TerrainRoot"), Is.Not.Null);
+                    foreach (string name in new[] { "ResourceRoot", "VegetationRoot", "BuildingRoot", "LandmarkRoot",
+                        "CreatureRoot", "Player", "Main Camera", "WorldBounds" })
+                        Assert.That(preview.Find(name), Is.Null, "Stale generated content: " + name);
+                    Assert.That(preview.GetComponentsInChildren<ApexShift.Runtime.Resources.ResourceNodeView>(true), Is.Empty);
+                    Assert.That(preview.GetComponentsInChildren<ApexShift.Runtime.Creatures.CreatureAgentView>(true), Is.Empty);
                 }
-
-                Assert.That(productionScene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<WorldGeneratorRuntime>(true)).Any(), Is.True);
-                Assert.That(productionScene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<MonoBehaviour>(true))
-                    .Any(component => component != null && component.GetType().Name == "ResourceNodeView"), Is.True);
-                Assert.That(productionScene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<MonoBehaviour>(true))
-                    .Any(component => component != null && component.GetType().Name == "CreatureAgentView"), Is.True);
-
-                foreach (string populatedRoot in new[] { "TerrainRoot", "ResourceRoot", "CreatureRoot" })
-                {
-                    Transform root = transforms.First(transform => transform.name == populatedRoot);
-                    Assert.That(root.childCount, Is.GreaterThan(0), $"Production scene root is empty: {populatedRoot}");
-                }
+                Assert.That(BuildInputConfigurationValidator.Validate(false), Is.True);
             }
             finally
             {
@@ -68,7 +69,7 @@ namespace ApexShift.Tests.Editor
         }
 
         [Test]
-        public void ProductionScene_PlayerAnimationHasControllerAndLocomotionTransitions()
+        public void ProductionScene_PlayerAnimationAssetsHaveControllerAndLocomotionTransitions()
         {
             Scene previousScene = SceneManager.GetActiveScene();
             string previousPath = previousScene.IsValid() ? previousScene.path : string.Empty;
@@ -76,19 +77,15 @@ namespace ApexShift.Tests.Editor
 
             try
             {
-                GameObject player = productionScene.GetRootGameObjects()
-                    .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
-                    .First(transform => transform.name == "Player")
-                    .gameObject;
-                Animator animator = player.GetComponentInChildren<Animator>(true);
-                PlayerAnimationDriver driver = player.GetComponentInChildren<PlayerAnimationDriver>(true);
-
-                Assert.That(animator, Is.Not.Null);
-                Assert.That(driver, Is.Not.Null);
-                Assert.That(animator.runtimeAnimatorController, Is.Not.Null);
+                WorldGeneratorRuntime generator = productionScene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<WorldGeneratorRuntime>(true)).Single();
+                var configuration = new SerializedObject(generator);
+                GameObject prefab = configuration.FindProperty("playerPrefab").objectReferenceValue as GameObject;
+                Assert.That(prefab, Is.Not.Null);
+                Assert.That(prefab.GetComponentInChildren<Animator>(true), Is.Not.Null);
+                Assert.That(configuration.FindProperty("playerAnimatorController").objectReferenceValue, Is.Not.Null);
                 RuntimeAnimatorController generated = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(
                     "Assets/_Project/Generated/Animation/GeneratedKevinIglesiasPlayerItemUse.controller");
-                Assert.That(animator.runtimeAnimatorController, Is.SameAs(generated));
                 Assert.That(generated, Is.Not.Null);
                 Assert.That(generated.animationClips.Any(clip => clip.name == "Idle"), Is.True);
                 Assert.That(generated.animationClips.Any(clip => clip.name == "Walking"), Is.True);
@@ -153,7 +150,7 @@ namespace ApexShift.Tests.Editor
         }
 
         [Test]
-        public void ProductionScene_PlayerInputReaderUsesCanonicalInputActions()
+        public void ProductionScene_GeneratorUsesCanonicalInputActionsForSpawnedPlayer()
         {
             Scene previousScene = SceneManager.GetActiveScene();
             string previousPath = previousScene.IsValid() ? previousScene.path : string.Empty;
@@ -162,15 +159,9 @@ namespace ApexShift.Tests.Editor
             try
             {
                 InputActionAsset canonical = LoadCanonicalAsset();
-                PlayerInputReader reader = Resources.FindObjectsOfTypeAll<PlayerInputReader>()
-                    .FirstOrDefault(candidate => candidate.gameObject.scene == gameScene);
-
-                Assert.That(reader, Is.Not.Null, "RuntimeWorld.unity does not contain a PlayerInputReader.");
-                SerializedObject serializedReader = new SerializedObject(reader);
-                SerializedProperty inputActions = serializedReader.FindProperty("inputActions");
-
-                Assert.That(inputActions, Is.Not.Null);
-                Assert.That(inputActions.objectReferenceValue, Is.SameAs(canonical));
+                WorldGeneratorRuntime generator = gameScene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<WorldGeneratorRuntime>(true)).Single();
+                Assert.That(generator.InputActions, Is.SameAs(canonical));
             }
             finally
             {

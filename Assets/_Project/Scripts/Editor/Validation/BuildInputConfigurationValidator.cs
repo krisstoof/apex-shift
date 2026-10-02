@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ApexShift.Runtime.Player;
-using ApexShift.Runtime.PlayerInput;
+using ApexShift.Presentation.HUD;
+using ApexShift.Runtime.Flow;
 using ApexShift.Runtime.World.Generation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -133,70 +133,42 @@ namespace ApexShift.EditorTools.Validation
                 return;
             }
 
-            Scene scene = default;
+            Scene scene = SceneManager.GetSceneByPath(ProductionScenePath);
+            bool openedForValidation = !scene.IsValid() || !scene.isLoaded;
             try
             {
-                scene = EditorSceneManager.OpenScene(ProductionScenePath, OpenSceneMode.Additive);
+                if (openedForValidation) scene = EditorSceneManager.OpenScene(ProductionScenePath, OpenSceneMode.Additive);
                 GameObject[] roots = scene.GetRootGameObjects();
-                Transform[] transforms = roots.SelectMany(root => root.GetComponentsInChildren<Transform>(true)).ToArray();
-                string[] requiredObjects =
+                WorldGeneratorRuntime[] generators = roots.SelectMany(root => root.GetComponentsInChildren<WorldGeneratorRuntime>(true)).ToArray();
+                if (generators.Length != 1)
                 {
-                    "RuntimeWorldGenerator", "Player", "Main Camera",
-                    "PlayerFollowCamera", "UI", "TerrainRoot", "ResourceRoot", "CreatureRoot"
-                };
-
-                foreach (string objectName in requiredObjects)
-                {
-                    if (!transforms.Any(transform => transform.name == objectName))
-                    {
-                        problems.Add($"Production scene is missing gameplay/world object '{objectName}'.");
-                    }
-                }
-
-                GameObject player = transforms.FirstOrDefault(transform => transform.name == "Player")?.gameObject;
-                if (player == null)
-                {
+                    problems.Add("Production scene must contain exactly one WorldGeneratorRuntime.");
                     return;
                 }
 
-                if (player.GetComponentInChildren<PlayerInputReader>(true) == null ||
-                    player.GetComponentInChildren<PlayerAnimationDriver>(true) == null)
-                {
-                    problems.Add("Production scene Player is missing the required input or animation driver.");
-                }
+                WorldGeneratorRuntime generator = generators[0];
+                if (generator.GetComponent<RuntimeHUDProvisioner>() == null)
+                    problems.Add("Production scene generator is missing RuntimeHUDProvisioner.");
+                if (!roots.SelectMany(root => root.GetComponentsInChildren<GameStartupController>(true)).Any())
+                    problems.Add("Production scene is missing the New Game startup/menu flow.");
+                InputActionAsset canonical = AssetDatabase.LoadAssetAtPath<InputActionAsset>(CanonicalInputPath);
+                if (generator.InputActions == null || generator.InputActions != canonical)
+                    problems.Add("Production generator must use the canonical input actions for spawned players.");
+                var serialized = new SerializedObject(generator);
+                foreach (string reference in new[] { "biomeCatalog", "prefabRegistry", "playerPrefab", "playerAnimatorController" })
+                    if (serialized.FindProperty(reference)?.objectReferenceValue == null)
+                        problems.Add("Production generator is missing configured asset: " + reference);
+                if (serialized.FindProperty("generateOnStart").boolValue)
+                    problems.Add("Production scene must wait for New Game, not generate automatically on Start.");
 
-                RuntimeAnimatorController prototypeController = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(
-                    "Assets/_Project/Animations/Player/PlayerPrototype.controller");
-                Animator animator = player.GetComponentInChildren<Animator>(true);
-                if (prototypeController == null || animator == null || animator.runtimeAnimatorController != prototypeController)
+                // An optional owned bare-island preview is permitted, but never saved gameplay.
+                WorldRuntimeOwner owner = generator.GetComponent<WorldRuntimeOwner>();
+                if (owner != null && owner.GenerationRoot != null)
                 {
-                    problems.Add("Production scene Player must use Assets/_Project/Animations/Player/PlayerPrototype.controller.");
-                }
-
-                if (roots.SelectMany(root => root.GetComponentsInChildren<WorldGeneratorRuntime>(true)).Any() == false)
-                {
-                    problems.Add("Production scene is missing WorldGeneratorRuntime; the world would not boot its generation systems.");
-                }
-
-                foreach (string populatedRoot in new[] { "TerrainRoot", "ResourceRoot", "CreatureRoot" })
-                {
-                    Transform root = transforms.FirstOrDefault(transform => transform.name == populatedRoot);
-                    if (root != null && root.childCount == 0)
-                    {
-                        problems.Add($"Production scene '{populatedRoot}' is empty; the build would not contain the authored world flow.");
-                    }
-                }
-
-                if (!transforms.SelectMany(transform => transform.GetComponents<MonoBehaviour>())
-                    .Any(component => component != null && component.GetType().Name == "ResourceNodeView"))
-                {
-                    problems.Add("Production scene contains no authored resource nodes.");
-                }
-
-                if (!transforms.SelectMany(transform => transform.GetComponents<MonoBehaviour>())
-                    .Any(component => component != null && component.GetType().Name == "CreatureAgentView"))
-                {
-                    problems.Add("Production scene contains no creature gameplay entities.");
+                    foreach (Transform child in owner.GenerationRoot)
+                        if (child.name != "TerrainRoot" && child.name != "BiomeRoot" &&
+                            child.GetComponent<ApexShift.Runtime.World.Topography.IslandTopographyRuntime>() == null)
+                            problems.Add("Production preview contains stale generated content: " + child.name);
                 }
             }
             catch (System.Exception exception)
@@ -205,7 +177,7 @@ namespace ApexShift.EditorTools.Validation
             }
             finally
             {
-                if (scene.IsValid() && scene.isLoaded)
+                if (openedForValidation && scene.IsValid() && scene.isLoaded)
                 {
                     EditorSceneManager.CloseScene(scene, true);
                 }

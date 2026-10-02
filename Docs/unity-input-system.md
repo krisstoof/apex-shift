@@ -8,8 +8,10 @@ Canonical InputActionAsset:
 fall back to the legacy `Player` map or the removed template asset. The
 global `InputSystem.actions` configuration points to this same canonical
 asset, and `Assets/_Project/Scenes/RuntimeWorld.unity` is the canonical
-production/startup scene. It contains the runtime world generator, authored
-terrain/resources, creatures, player, camera and survival HUD. `Game.unity`
+production/startup scene. It stores the generator and menu/HUD shell, optionally
+with an owned bare island terrain/water preview. Player, resources, vegetation,
+creatures and runtime cameras/systems are created by New Game, not baked into
+production scene data. `Game.unity`
 remains the base playable prototype scene used by `ApexShiftSceneBuilder`, not
 the production world build scene.
 

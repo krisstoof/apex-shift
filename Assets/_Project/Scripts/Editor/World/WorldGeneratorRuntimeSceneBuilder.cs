@@ -113,28 +113,12 @@ namespace ApexShift.Editor.World
             
             so.ApplyModifiedProperties();
 
-            // Generate once in Edit mode
-            generator.Generate();
-
-            // Manually trigger HUD creation for Edit Mode visibility
-GameObject player = GameObject.Find("Player");
-            if (player != null)
-            {
-                var provisioner = generatorGo.GetComponent<RuntimeHUDProvisioner>();
-                if (provisioner != null)
-                {
-                    provisioner.CreateHUD(player);
-                }
-            }
+            // Author only the startup shell. New Game owns procedural world/player creation.
+            hudProvisioner.CreateHUD(null);
 
             const string scenePath = "Assets/_Project/Scenes/RuntimeWorld.unity";
             EditorSceneManager.SetActiveScene(newScene);
-            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath) != null)
-            {
-                AssetDatabase.DeleteAsset(scenePath);
-            }
-            AssetDatabase.Refresh();
-
+            // Save in place so the production scene GUID and build reference remain stable.
             EditorSceneManager.MarkSceneDirty(newScene);
             EditorSceneManager.SaveScene(newScene, scenePath);
             EditorSceneManager.OpenScene(scenePath);
