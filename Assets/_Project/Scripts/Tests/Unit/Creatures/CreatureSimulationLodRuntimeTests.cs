@@ -21,14 +21,14 @@ namespace ApexShift.Tests.Unit.Creatures
         }
 
         [Test]
-        public void ResolveLevelForcesVarnakNearInsideSpecialDistance()
+        public void ResolveLevelForcesPredatorNearInsideSpecialDistance()
         {
             CreatureSimulationLodLevel level = CreatureSimulationLodRuntime.ResolveLevel(
                 distanceToPlayer: 65f,
                 nearDistance: 50f,
                 mediumDistance: 180f,
-                creatureType: "varnak",
-                forceVarnakNearDistance: 70f);
+                role: CreatureRole.Predator,
+                forcePredatorNearDistance: 70f);
 
             Assert.AreEqual(CreatureSimulationLodLevel.Near, level);
         }

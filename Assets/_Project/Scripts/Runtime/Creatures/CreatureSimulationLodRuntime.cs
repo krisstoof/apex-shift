@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Config;
 
@@ -20,7 +21,8 @@ namespace ApexShift.Runtime.Creatures
         // defaults are scaled down by 10 while preserving the same near/medium/far ratio.
         [SerializeField] private float nearDistance = 90f;
         [SerializeField] private float mediumDistance = 180f;
-        [SerializeField] private float forceVarnakNearDistance = 70f;
+        [FormerlySerializedAs("forceVarnakNearDistance")]
+        [SerializeField] private float forcePredatorNearDistance = 70f;
         [SerializeField] private float mediumAiIntervalMultiplier = 3f;
         [SerializeField] private float mediumSpatialUpdateMultiplier = 2f;
         [SerializeField] private float farUpdateIntervalSeconds = 3f;
@@ -161,7 +163,7 @@ namespace ApexShift.Runtime.Creatures
 
             nearDistance = config.NearDistance;
             mediumDistance = config.MediumDistance;
-            forceVarnakNearDistance = config.ForceVarnakNearDistance;
+            forcePredatorNearDistance = config.ForcePredatorNearDistance;
             mediumAiIntervalMultiplier = config.MediumAiIntervalMultiplier;
             mediumSpatialUpdateMultiplier = config.MediumSpatialUpdateMultiplier;
             farUpdateIntervalSeconds = config.FarUpdateIntervalSeconds;
@@ -169,26 +171,25 @@ namespace ApexShift.Runtime.Creatures
             debugEnabled = config.DebugEnabled;
         }
 
-        public void ForceDistancesForTests(float near, float medium, float forceVarnakNear)
+        public void ForceDistancesForTests(float near, float medium, float forcePredatorNear)
         {
             nearDistance = Mathf.Max(0.01f, near);
             mediumDistance = Mathf.Max(nearDistance, medium);
-            forceVarnakNearDistance = Mathf.Max(0f, forceVarnakNear);
+            forcePredatorNearDistance = Mathf.Max(0f, forcePredatorNear);
         }
 
         public static CreatureSimulationLodLevel ResolveLevel(
             float distanceToPlayer,
             float nearDistance,
             float mediumDistance,
-            string creatureType = null,
-            float forceVarnakNearDistance = 0f)
+            CreatureRole role = CreatureRole.SmallPrey,
+            float forcePredatorNearDistance = 0f)
         {
             float distance = Mathf.Max(0f, distanceToPlayer);
             float near = Mathf.Max(0.01f, nearDistance);
             float medium = Mathf.Max(near, mediumDistance);
-            string normalizedType = (creatureType ?? string.Empty).Trim().ToLowerInvariant();
 
-            if (normalizedType == "varnak" && forceVarnakNearDistance > 0f && distance <= forceVarnakNearDistance)
+            if (role == CreatureRole.Predator && forcePredatorNearDistance > 0f && distance <= forcePredatorNearDistance)
             {
                 return CreatureSimulationLodLevel.Near;
             }
@@ -230,11 +231,7 @@ namespace ApexShift.Runtime.Creatures
             }
 
             DistanceToPlayer = HorizontalDistance(transform.position, _player.position);
-            string resolvedCreatureId = string.IsNullOrWhiteSpace(creatureId)
-                ? _agentView != null ? _agentView.CreatureId : string.Empty
-                : creatureId;
-
-            SetLevel(ResolveLevel(DistanceToPlayer, nearDistance, mediumDistance, resolvedCreatureId, forceVarnakNearDistance));
+            SetLevel(ResolveLevel(DistanceToPlayer, nearDistance, mediumDistance, _agentView != null ? _agentView.Role : CreatureRole.SmallPrey, forcePredatorNearDistance));
         }
 
         private void SetLevel(CreatureSimulationLodLevel nextLevel)

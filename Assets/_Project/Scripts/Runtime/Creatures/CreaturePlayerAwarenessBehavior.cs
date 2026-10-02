@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Fire;
@@ -12,12 +13,17 @@ namespace ApexShift.Runtime.Creatures
     {
         [SerializeField] private float decisionInterval = 0.20f;
         [SerializeField] private float preyFleeRange = 4.5f;
-        [SerializeField] private float grazerFleeRange = 6f;
+        [FormerlySerializedAs("grazerFleeRange")]
+        [SerializeField] private float herbivoreFleeRange = 6f;
         [SerializeField] private float fleeDistance = 8f;
-        [SerializeField] private float varnakChaseRange = 28f;
-        [SerializeField] private float varnakStopDistance = 2.5f;
-        [SerializeField] private float varnakFireFearRangeMultiplier = 1.45f;
-        [SerializeField] private float varnakFireFearMinimumRange = 12f;
+        [FormerlySerializedAs("varnakChaseRange")]
+        [SerializeField] private float predatorChaseRange = 28f;
+        [FormerlySerializedAs("varnakStopDistance")]
+        [SerializeField] private float predatorStopDistance = 2.5f;
+        [FormerlySerializedAs("varnakFireFearRangeMultiplier")]
+        [SerializeField] private float fireFearRangeMultiplier = 1.45f;
+        [FormerlySerializedAs("varnakFireFearMinimumRange")]
+        [SerializeField] private float fireFearMinimumRange = 12f;
         [SerializeField] private float forcedThreatDuration = 1.25f;
         [SerializeField] private float navSampleDistance = 4f;
 
@@ -104,31 +110,31 @@ namespace ApexShift.Runtime.Creatures
                 }
             }
 
-            string id = ResolveCreatureId();
+            CreatureRole role = view != null ? view.Role : GetComponent<CreatureAgentView>().Role;
             float distance = HorizontalDistance(transform.position, player.position);
             CreatureBehaviorState currentState = behavior != null ? behavior.State : CreatureBehaviorState.Idle;
             bool forced = forcedThreatTimer > 0f;
 
-            if ((id == "small_prey" || id == "prey") && (forced || distance <= preyFleeRange))
+            if ((role == CreatureRole.SmallPrey) && (forced || distance <= preyFleeRange))
             {
                 FleeFromPlayer(forced ? "combat_threat" : $"player_near d:{distance:0.0}");
                 return;
             }
 
-            if ((id == "grazer" || id == "deer") && (forced || distance <= grazerFleeRange))
+            if ((role == CreatureRole.HerbivoreOmnivore) && (forced || distance <= herbivoreFleeRange))
             {
                 FleeFromPlayer(forced ? "combat_threat" : $"player_near d:{distance:0.0}");
                 return;
             }
 
-            if (id == "varnak" && TryAvoidFire(distance))
+            if (role == CreatureRole.Predator && TryAvoidFire(distance))
             {
                 return;
             }
 
-            if (id == "varnak" && (forced || IsPassiveState(currentState)) && distance <= varnakChaseRange)
+            if (role == CreatureRole.Predator && (forced || IsPassiveState(currentState)) && distance <= predatorChaseRange)
             {
-                if (distance > varnakStopDistance)
+                if (distance > predatorStopDistance)
                 {
                     behavior?.SetBehaviorStateForTests(CreatureBehaviorState.Chase, forced ? "player_combat_noise" : $"player_detected d:{distance:0.0}");
                     view.MoveTo(player.position);
@@ -140,9 +146,9 @@ namespace ApexShift.Runtime.Creatures
                 }
             }
 
-            if (!forced && (id == "small_prey" || id == "prey" || id == "grazer" || id == "deer"))
+            if (!forced && (role == CreatureRole.SmallPrey || role == CreatureRole.HerbivoreOmnivore))
             {
-                RestoreWanderIfSafe(distance, id);
+                RestoreWanderIfSafe(distance, role);
             }
         }
 
@@ -206,7 +212,7 @@ namespace ApexShift.Runtime.Creatures
 
         private bool TryAvoidFire(float playerDistance)
         {
-            if (!FireSourceRegistry.TryGetStrongestSource(transform.position, varnakFireFearRangeMultiplier, out FireSourceRuntime source))
+            if (!FireSourceRegistry.TryGetStrongestSource(transform.position, fireFearRangeMultiplier, out FireSourceRuntime source))
             {
                 return false;
             }
@@ -220,7 +226,7 @@ namespace ApexShift.Runtime.Creatures
             }
 
             float radius = Mathf.Max(1f, source.ProtectionRadius);
-            float fleeRange = Mathf.Max(varnakFireFearMinimumRange, radius * Mathf.Max(1f, varnakFireFearRangeMultiplier));
+            float fleeRange = Mathf.Max(fireFearMinimumRange, radius * Mathf.Max(1f, fireFearRangeMultiplier));
             Vector3 target = transform.position + direction.normalized * fleeRange;
             CreatureNavigationAdapter adapter = view.GetNavigationAdapter();
             if (adapter != null && adapter.TrySamplePosition(target, out Vector3 sampled, navSampleDistance))
@@ -234,22 +240,22 @@ namespace ApexShift.Runtime.Creatures
                 GameplayEventKind.VarnakScaredByFire,
                 transform.position,
                 "global",
-                "varnak",
+                view.SpeciesId,
                 source.SourceId,
                 amount: Mathf.Max(0f, playerDistance),
                 message: "varnak_scared_by_fire");
             return true;
         }
 
-        private void RestoreWanderIfSafe(float distance, string id)
+        private void RestoreWanderIfSafe(float distance, CreatureRole role)
         {
             if (wander == null || wander.enabled)
             {
                 return;
             }
 
-            float safeDistance = id == "grazer" || id == "deer"
-                ? grazerFleeRange * 1.10f
+            float safeDistance = role == CreatureRole.HerbivoreOmnivore
+                ? herbivoreFleeRange * 1.10f
                 : preyFleeRange * 1.10f;
 
             if (distance > safeDistance)
@@ -283,9 +289,9 @@ namespace ApexShift.Runtime.Creatures
 
         private void OnDrawGizmosSelected()
         {
-            string id = ResolveCreatureId();
-            Gizmos.color = id == "varnak" ? Color.red : Color.cyan;
-            float radius = id == "varnak" ? varnakChaseRange : Mathf.Max(preyFleeRange, grazerFleeRange);
+            CreatureRole role = view != null ? view.Role : GetComponent<CreatureAgentView>().Role;
+            Gizmos.color = role == CreatureRole.Predator ? Color.red : Color.cyan;
+            float radius = role == CreatureRole.Predator ? predatorChaseRange : Mathf.Max(preyFleeRange, herbivoreFleeRange);
             Gizmos.DrawWireSphere(transform.position, radius);
         }
     }

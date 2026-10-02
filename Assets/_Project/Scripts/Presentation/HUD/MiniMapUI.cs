@@ -276,7 +276,7 @@ namespace ApexShift.Presentation.HUD
             for (int i = 0; i < creatures.Count && added < cap; i++)
             {
                 CreatureAgentView creature = creatures[i];
-                if (!IsVisibleCreature(creature) || !IsVarnak(creature))
+                if (!IsVisibleCreature(creature) || !IsPredator(creature))
                 {
                     continue;
                 }
@@ -288,7 +288,7 @@ namespace ApexShift.Presentation.HUD
             for (int i = 0; i < creatures.Count && added < cap; i++)
             {
                 CreatureAgentView creature = creatures[i];
-                if (!IsVisibleCreature(creature) || IsVarnak(creature))
+                if (!IsVisibleCreature(creature) || IsPredator(creature))
                 {
                     continue;
                 }
@@ -468,10 +468,10 @@ namespace ApexShift.Presentation.HUD
             return health == null || !health.IsDead;
         }
 
-        private static bool IsVarnak(CreatureAgentView creature)
+        private static bool IsPredator(CreatureAgentView creature)
         {
             string id = creature != null ? creature.CreatureId : string.Empty;
-            return string.Equals(id != null ? id.Trim() : string.Empty, "varnak", System.StringComparison.OrdinalIgnoreCase);
+            return creature != null && creature.Role == CreatureRole.Predator;
         }
 
         private void HideMarkers()
@@ -555,9 +555,9 @@ namespace ApexShift.Presentation.HUD
             }
 
             string id = (creature.CreatureId ?? string.Empty).Trim().ToLowerInvariant();
-            if (id == "varnak") return new Color(0.95f, 0.24f, 0.24f, 1f);
-            if (id == "grazer") return new Color(0.95f, 0.74f, 0.18f, 1f);
-            if (id == "small_prey") return new Color(0.8f, 0.92f, 0.25f, 1f);
+            if (creature.Role == CreatureRole.Predator) return new Color(0.95f, 0.24f, 0.24f, 1f);
+            if (creature.Role == CreatureRole.HerbivoreOmnivore) return new Color(0.95f, 0.74f, 0.18f, 1f);
+            if (creature.Role == CreatureRole.SmallPrey) return new Color(0.8f, 0.92f, 0.25f, 1f);
             return new Color(0.9f, 0.35f, 0.35f, 1f);
         }
 

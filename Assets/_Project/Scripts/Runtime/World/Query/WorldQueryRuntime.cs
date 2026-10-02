@@ -129,6 +129,13 @@ namespace ApexShift.Runtime.World.Query
             return ecosystem != null && ecosystem.TryFindNearestFood(position, preferredKind, maxDistance, out source);
         }
 
+        public bool TryFindNearestCreatureByRole(Vector3 position, CreatureRole role, float maxDistance, out CreatureAgentView creature)
+        {
+            ResolveEcosystem();
+            creature = ecosystem != null ? ecosystem.TryFindNearestCreatureByRole(position, role, maxDistance) : null;
+            return creature != null;
+        }
+
         public bool TryFindNearestCreatureById(Vector3 position, string creatureId, float maxDistance, out CreatureAgentView creature)
         {
             creature = null;

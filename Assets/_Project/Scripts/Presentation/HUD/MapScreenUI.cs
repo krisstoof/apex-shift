@@ -405,8 +405,8 @@ namespace ApexShift.Presentation.HUD
                             continue;
                         }
 
-                        bool isVarnak = Normalize(creature.CreatureId) == "varnak";
-                        ShowMarker(ref index, creature.transform.position, GetCreatureColor(creature), isVarnak ? new Vector2(12f, 12f) : new Vector2(8f, 8f), isVarnak ? "varnak" : "creature");
+                        bool isPredator = creature.Role == CreatureRole.Predator;
+                        ShowMarker(ref index, creature.transform.position, GetCreatureColor(creature), isPredator ? new Vector2(12f, 12f) : new Vector2(8f, 8f), isPredator ? "predator" : "creature");
                         count++;
                     }
                 }
@@ -790,9 +790,9 @@ namespace ApexShift.Presentation.HUD
         private static Color GetCreatureColor(CreatureAgentView creature)
         {
             string id = creature != null ? Normalize(creature.CreatureId) : string.Empty;
-            if (id == "varnak") return new Color(1f, 0.12f, 0.12f, 1f);
-            if (id == "grazer") return new Color(0.95f, 0.72f, 0.18f, 1f);
-            if (id == "small_prey") return new Color(0.82f, 0.94f, 0.26f, 1f);
+            if (creature.Role == CreatureRole.Predator) return new Color(1f, 0.12f, 0.12f, 1f);
+            if (creature.Role == CreatureRole.HerbivoreOmnivore) return new Color(0.95f, 0.72f, 0.18f, 1f);
+            if (creature.Role == CreatureRole.SmallPrey) return new Color(0.82f, 0.94f, 0.26f, 1f);
             return new Color(0.92f, 0.35f, 0.35f, 1f);
         }
 

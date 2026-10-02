@@ -106,18 +106,16 @@ namespace ApexShift.Runtime.Creatures
 
         private void PlayHitAudio()
         {
-            AudioClip[] clips = creatureAudioProfile != null
-                ? (creatureAudioProfile.varnakHurtClips != null && creatureAudioProfile.varnakHurtClips.Length > 0
-                    ? creatureAudioProfile.varnakHurtClips
-                    : creatureAudioProfile.grazerAlertClips != null && creatureAudioProfile.grazerAlertClips.Length > 0
-                        ? creatureAudioProfile.grazerAlertClips
-                        : creatureAudioProfile.smallPreyAlarmClips)
-                : null;
+            CreatureRole role = GetComponent<CreatureAgentView>()?.Role ?? CreatureRole.SmallPrey;
+            AudioClip[] clips = creatureAudioProfile == null ? null
+                : role == CreatureRole.Predator ? creatureAudioProfile.varnakHurtClips
+                : role == CreatureRole.HerbivoreOmnivore ? creatureAudioProfile.grazerAlertClips
+                : creatureAudioProfile.smallPreyAlarmClips;
 
             if (clips == null || clips.Length == 0)
             {
                 // Fallback to AudioLibrary
-                AudioClip clip = AudioLibrary.GetRandomVarnakHurt() ?? AudioLibrary.GetRandomGrazerAlert();
+                AudioClip clip = role == CreatureRole.Predator ? AudioLibrary.GetRandomVarnakHurt() : role == CreatureRole.HerbivoreOmnivore ? AudioLibrary.GetRandomGrazerAlert() : AudioLibrary.GetRandomSmallPreyAlarm();
                 if (clip != null)
                 {
                 PlaySpatialAudio(clip, transform.position, 0.26f);
@@ -133,7 +131,8 @@ namespace ApexShift.Runtime.Creatures
             if (creatureAudioProfile == null || creatureAudioProfile.deathVoiceClips == null || creatureAudioProfile.deathVoiceClips.Length == 0)
             {
                 // Fallback to AudioLibrary - try to find death audio based on creature type
-                AudioClip clip = AudioLibrary.GetRandomVarnakDeath() ?? AudioLibrary.GetRandomGrazerDeath();
+                CreatureRole role = GetComponent<CreatureAgentView>()?.Role ?? CreatureRole.SmallPrey;
+                AudioClip clip = role == CreatureRole.Predator ? AudioLibrary.GetRandomVarnakDeath() : role == CreatureRole.HerbivoreOmnivore ? AudioLibrary.GetRandomGrazerDeath() : AudioLibrary.GetRandomSmallPreyAlarm();
                 if (clip != null)
                 {
                     PlaySpatialAudio(clip, transform.position, 0.9f);

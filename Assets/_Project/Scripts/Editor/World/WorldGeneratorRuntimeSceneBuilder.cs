@@ -448,9 +448,9 @@ namespace ApexShift.Editor.World
             prop.ClearArray();
 
             // Using reliable animal models from ithappy Animals_FREE
-            AddCreatureEntries(prop, "small_prey", "Chicken_001", "Dog_001");
-            AddCreatureEntries(prop, "grazer", "Deer_001");
-            AddCreatureEntries(prop, "varnak", "Tiger_001");
+            AddCreatureEntries(prop, "island_small_prey", "Chicken_001", "Dog_001");
+            AddCreatureEntries(prop, "island_forager", "Deer_001");
+            AddCreatureEntries(prop, "island_predator", "Tiger_001");
             registrySo.ApplyModifiedProperties();
             EditorUtility.SetDirty(registry);
             AssetDatabase.SaveAssets();

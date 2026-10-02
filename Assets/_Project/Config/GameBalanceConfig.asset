@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: GameBalanceConfig
   m_EditorClassIdentifier: 
   speciesDefinitions:
-  - {fileID: 11400000, guid: c02ae3866bdd460c931c0c4ba50c0352, type: 3}
-  - {fileID: 11400000, guid: 2893ecdc6aad42e09e1efecc809ba5e8, type: 3}
-  - {fileID: 11400000, guid: f6f18ccc670a4fca80c03f4845c989c0, type: 3}
-  simulationLodConfig: {fileID: 11400000, guid: 8a4e7180fe46d8c44a91d4a0d05cb814, type: 3}
-  ecosystemBalanceConfig: {fileID: 11400000, guid: 65fa568dbda32864db6b9ae7030dd09a, type: 3}
-  resourceBalanceConfig: {fileID: 11400000, guid: 52e55e15d2eadea4fbefa1bfd16224a2, type: 3}
+  - {fileID: 11400000, guid: e2035f0a75fd3784b8514e08b7e05754, type: 2}
+  - {fileID: 11400000, guid: 89e81e47431896445862eda71ae3f0e1, type: 2}
+  - {fileID: 11400000, guid: 3f197098b154a8042863017652176504, type: 2}
+  simulationLodConfig: {fileID: 11400000, guid: 3a7f9af0f9d14abc9f08aec6e802a29b, type: 2}
+  ecosystemBalanceConfig: {fileID: 11400000, guid: 5280c969f36c476b91d547dd9015c84f, type: 2}
+  resourceBalanceConfig: {fileID: 11400000, guid: ac669f891ba444309273cf23d5083d95, type: 2}

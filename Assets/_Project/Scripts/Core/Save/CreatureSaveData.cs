@@ -17,6 +17,10 @@ namespace ApexShift.Core.Save
         public float hunger;
         public float energy;
         public string behaviorState;
+        public string currentHabitatId;
+        public string homeHabitatId;
+        public string populationHabitatId;
+        // Retained only for old save input. Runtime performs compatibility conversion.
         public string currentBiomeId;
         public string homeBiomeId;
         public string populationBiomeId;
@@ -35,6 +39,9 @@ namespace ApexShift.Core.Save
         public float Hunger => hunger;
         public float Energy => energy;
         public string BehaviorState => behaviorState;
+        public string CurrentHabitatId => currentHabitatId;
+        public string HomeHabitatId => homeHabitatId;
+        public string PopulationHabitatId => populationHabitatId;
         public string CurrentBiomeId => currentBiomeId;
         public string HomeBiomeId => homeBiomeId;
         public string PopulationBiomeId => populationBiomeId;

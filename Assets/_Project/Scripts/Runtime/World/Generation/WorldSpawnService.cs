@@ -1,4 +1,6 @@
 using UnityEngine;
+using ApexShift.Runtime.Config;
+using ApexShift.Runtime.Creatures;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.World.Biomes;
 
@@ -23,10 +25,10 @@ namespace ApexShift.Runtime.World.Generation
             return fallback;
         }
 
-        public GameObject SpawnCreature(GameObject prefab, string creatureId, Vector3 position, float yaw, Transform parent)
+        public GameObject SpawnCreature(GameObject prefab, SpeciesDefinition definition, Vector3 position, float yaw, Transform parent)
         {
             if (prefab != null) return Spawn(prefab, position, yaw, parent);
-            GameObject fallback = CreateCreatureFallback(creatureId, position);
+            GameObject fallback = CreateCreatureFallback(definition.Role, definition.SpeciesId, position);
             fallback.transform.SetParent(parent, true);
             fallback.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             return fallback;
@@ -64,11 +66,11 @@ namespace ApexShift.Runtime.World.Generation
             return root;
         }
 
-        private static GameObject CreateCreatureFallback(string creatureId, Vector3 position)
+        private static GameObject CreateCreatureFallback(CreatureRole role, string creatureId, Vector3 position)
         {
-            PrimitiveType primitive = creatureId == "small_prey" ? PrimitiveType.Sphere : PrimitiveType.Capsule;
-            Color color = creatureId == "varnak" ? Color.red : creatureId == "grazer" ? new Color(0.6f, 0.4f, 0.2f) : new Color(0.9f, 0.9f, 0.9f);
-            Vector3 scale = creatureId == "small_prey" ? Vector3.one * 0.5f : creatureId == "grazer" ? new Vector3(0.8f, 0.8f, 0.8f) : new Vector3(1f, 1.2f, 1f);
+            PrimitiveType primitive = role == CreatureRole.SmallPrey ? PrimitiveType.Sphere : PrimitiveType.Capsule;
+            Color color = role == CreatureRole.Predator ? Color.red : role == CreatureRole.HerbivoreOmnivore ? new Color(0.6f, 0.4f, 0.2f) : new Color(0.9f, 0.9f, 0.9f);
+            Vector3 scale = role == CreatureRole.SmallPrey ? Vector3.one * 0.5f : role == CreatureRole.HerbivoreOmnivore ? new Vector3(0.8f, 0.8f, 0.8f) : new Vector3(1f, 1.2f, 1f);
             GameObject root = new GameObject($"Creature_{creatureId}_Fallback");
             root.transform.position = position;
             GameObject visual = GameObject.CreatePrimitive(primitive);

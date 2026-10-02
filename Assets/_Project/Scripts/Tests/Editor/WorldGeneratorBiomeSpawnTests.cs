@@ -10,7 +10,7 @@ namespace ApexShift.Tests.Editor
     public sealed class WorldGeneratorBiomeSpawnTests
     {
         [Test]
-        public void ResourceAndCreatureSpawningRejectCandidatesOutsideDenseRegionBiome()
+        public void ResourceSpawningRejectsCandidatesOutsideDenseRegionBiome()
         {
             GameObject topographyObject = new GameObject("SpawnBiomeTopography");
             GameObject generatorObject = new GameObject("SpawnBiomeGenerator");
@@ -37,18 +37,10 @@ namespace ApexShift.Tests.Editor
 
                 Assert.That(InvokeResourceBiomeGuard(generator, candidate, region), Is.False,
                     "A resource candidate whose dense biome is south_thicket must not spawn from westwood.");
-                Assert.That(InvokeCreatureBiomeGuard(generator, candidate, "westwood"), Is.False,
-                    "A creature candidate whose dense biome is south_thicket must not spawn from westwood.");
-                Assert.That(TryGetSafeCreatureSpawnPoint(generator, candidate, "westwood"), Is.False,
-                    "The creature spawn-point selector must reject the mismatched dense biome.");
 
                 SetDenseBiome(topography, candidate, "westwood");
                 Assert.That(InvokeResourceBiomeGuard(generator, candidate, region), Is.True,
                     "A resource candidate in the region's dense westwood biome should be accepted.");
-                Assert.That(InvokeCreatureBiomeGuard(generator, candidate, "westwood"), Is.True,
-                    "A creature candidate in the expected dense westwood biome should be accepted.");
-                Assert.That(TryGetSafeCreatureSpawnPoint(generator, candidate, "westwood"), Is.True,
-                    "The creature spawn-point selector should accept a safe candidate in westwood.");
             }
             finally
             {
@@ -66,28 +58,6 @@ namespace ApexShift.Tests.Editor
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null);
             return (bool)method.Invoke(generator, new object[] { position, region });
-        }
-
-        private static bool InvokeCreatureBiomeGuard(WorldGeneratorRuntime generator, Vector3 position,
-            string expectedBiomeId)
-        {
-            MethodInfo method = typeof(WorldGeneratorRuntime).GetMethod("IsCreatureBiomeCandidate",
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(method, Is.Not.Null);
-            return (bool)method.Invoke(generator, new object[] { position, expectedBiomeId });
-        }
-
-        private static bool TryGetSafeCreatureSpawnPoint(WorldGeneratorRuntime generator, Vector3 position,
-            string expectedBiomeId)
-        {
-            MethodInfo method = typeof(WorldGeneratorRuntime).GetMethod("TryGetSafeCreatureSpawnPoint",
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(method, Is.Not.Null);
-            object[] arguments =
-            {
-                new Bounds(position, Vector3.zero), "small_prey", expectedBiomeId, default(Vector3)
-            };
-            return (bool)method.Invoke(generator, arguments);
         }
 
         private static void SetDenseBiome(IslandTopographyRuntime topography, Vector3 position, string biomeId)

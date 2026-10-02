@@ -1,5 +1,6 @@
 using ApexShift.Core.Ecosystem;
 using ApexShift.Runtime.Creatures;
+using ApexShift.Runtime.Config;
 using ApexShift.Runtime.Ecosystem;
 using NUnit.Framework;
 using UnityEngine;
@@ -14,11 +15,11 @@ namespace ApexShift.Tests.GodotParity
             GameObject creature = new GameObject("Creature_small_prey");
             try
             {
-                creature.AddComponent<CreatureAgentView>().Configure("small_prey");
+                creature.AddComponent<CreatureAgentView>().Configure("island_small_prey");
                 CreatureNeedsRuntime needs = creature.AddComponent<CreatureNeedsRuntime>();
-                needs.Configure("small_prey");
+                needs.Configure("island_small_prey");
                 CreatureHealthRuntime health = creature.AddComponent<CreatureHealthRuntime>();
-                health.Configure("small_prey");
+                health.Configure("island_small_prey");
 
                 Assert.Greater(needs.Diet.PlantPreference, 0f);
                 Assert.AreEqual(0f, needs.Diet.MeatPreference, 0.001f);
@@ -37,9 +38,9 @@ namespace ApexShift.Tests.GodotParity
         }
 
         [Test]
-        public void GrazerPrefersPlantsButCanUseMeatAndScavenge()
+        public void ForagerRolePrefersPlantsButCanUseMeatAndScavenge()
         {
-            CreatureDietProfile diet = CreatureDietProfile.GetDefault("grazer");
+            CreatureDietProfile diet = SpeciesDefinition.CreateDefault("island_forager").CreateDietProfile();
 
             Assert.Greater(diet.PlantPreference, diet.MeatPreference);
             Assert.Greater(diet.PlantPreference, diet.ScavengerPreference);
@@ -48,9 +49,9 @@ namespace ApexShift.Tests.GodotParity
         }
 
         [Test]
-        public void VarnakUsesMeatAndScavengerDietButNotPlants()
+        public void PredatorRoleUsesMeatAndScavengerDietButNotPlants()
         {
-            CreatureDietProfile diet = CreatureDietProfile.GetDefault("varnak");
+            CreatureDietProfile diet = SpeciesDefinition.CreateDefault("island_predator").CreateDietProfile();
 
             Assert.AreEqual(0f, diet.PlantPreference, 0.001f);
             Assert.Greater(diet.MeatPreference, 0f);
@@ -59,7 +60,7 @@ namespace ApexShift.Tests.GodotParity
         }
 
         [Test]
-        public void VarnakHasHigherHealthThanPreySpecies()
+        public void PredatorRoleHasHigherHealthThanPreySpecies()
         {
             GameObject smallPrey = new GameObject("Creature_small_prey");
             GameObject grazer = new GameObject("Creature_grazer");
@@ -70,9 +71,9 @@ namespace ApexShift.Tests.GodotParity
                 CreatureHealthRuntime grazerHealth = grazer.AddComponent<CreatureHealthRuntime>();
                 CreatureHealthRuntime varnakHealth = varnak.AddComponent<CreatureHealthRuntime>();
 
-                smallPreyHealth.Configure("small_prey");
-                grazerHealth.Configure("grazer");
-                varnakHealth.Configure("varnak");
+                smallPreyHealth.Configure("island_small_prey");
+                grazerHealth.Configure("island_forager");
+                varnakHealth.Configure("island_predator");
 
                 Assert.Greater(varnakHealth.MaxHealth, grazerHealth.MaxHealth);
                 Assert.Greater(grazerHealth.MaxHealth, smallPreyHealth.MaxHealth);

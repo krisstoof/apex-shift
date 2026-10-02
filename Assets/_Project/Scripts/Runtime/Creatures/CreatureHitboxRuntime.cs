@@ -1,4 +1,5 @@
 using UnityEngine;
+using ApexShift.Runtime.Config;
 
 namespace ApexShift.Runtime.Creatures
 {
@@ -53,30 +54,11 @@ namespace ApexShift.Runtime.Creatures
 
         public void Configure(string creatureId)
         {
-            string id = string.IsNullOrWhiteSpace(creatureId) ? string.Empty : creatureId.Trim().ToLowerInvariant();
-            switch (id)
-            {
-                case "small_prey":
-                    radius = 0.35f;
-                    height = 0.70f;
-                    center = new Vector3(0f, 0.38f, 0f);
-                    break;
-                case "grazer":
-                    radius = 0.65f;
-                    height = 1.35f;
-                    center = new Vector3(0f, 0.72f, 0f);
-                    break;
-                case "varnak":
-                    radius = 0.70f;
-                    height = 1.65f;
-                    center = new Vector3(0f, 0.90f, 0f);
-                    break;
-                default:
-                    radius = 0.55f;
-                    height = 1.25f;
-                    center = new Vector3(0f, 0.75f, 0f);
-                    break;
-            }
+            var view = GetComponent<CreatureAgentView>();
+            SpeciesDefinition definition = view != null ? view.Definition : SpeciesDefinition.CreateDefault(creatureId);
+            radius = definition.HitboxRadius;
+            height = definition.HitboxHeight;
+            center = new Vector3(0f, definition.HitboxCenterY, 0f);
 
             EnsureHitbox();
         }

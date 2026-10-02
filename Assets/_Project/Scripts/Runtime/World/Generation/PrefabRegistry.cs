@@ -1,4 +1,5 @@
 using System;
+using ApexShift.Runtime.Creatures;
 using System.Collections.Generic;
 using System.Linq;
 using ApexShift.Runtime.World.Biomes;
@@ -42,11 +43,11 @@ namespace ApexShift.Runtime.World.Generation
             prefab = null;
             if (string.IsNullOrWhiteSpace(creatureId)) return false;
 
-            string normalized = creatureId.Trim();
+            string normalized = CreatureSpeciesCompatibility.Canonicalize(creatureId);
             List<GameObject> matches = creaturePrefabs
                 .Where(entry => entry != null
                                 && entry.Prefab != null
-                                && string.Equals(entry.CreatureId.Trim(), normalized, StringComparison.OrdinalIgnoreCase))
+                                && string.Equals(CreatureSpeciesCompatibility.Canonicalize(entry.CreatureId), normalized, StringComparison.OrdinalIgnoreCase))
                 .Select(entry => entry.Prefab)
                 .ToList();
             if (matches.Count == 0) return false;

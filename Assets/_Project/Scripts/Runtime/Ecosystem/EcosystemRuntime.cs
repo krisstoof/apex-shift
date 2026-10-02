@@ -114,7 +114,7 @@ namespace ApexShift.Runtime.Ecosystem
 
             results.Clear();
             float maxSqrDistance = Mathf.Max(0f, radius) * Mathf.Max(0f, radius);
-            string expectedId = string.IsNullOrWhiteSpace(creatureId) ? null : creatureId.Trim();
+            string expectedId = string.IsNullOrWhiteSpace(creatureId) ? null : CreatureSpeciesCompatibility.Canonicalize(creatureId);
 
             for (int i = _creatures.Count - 1; i >= 0; i--)
             {
@@ -150,7 +150,7 @@ namespace ApexShift.Runtime.Ecosystem
         {
             CreatureAgentView nearest = null;
             float minSqrDistance = Mathf.Max(0f, maxDistance) * Mathf.Max(0f, maxDistance);
-            string expectedId = string.IsNullOrWhiteSpace(creatureId) ? null : creatureId.Trim();
+            string expectedId = string.IsNullOrWhiteSpace(creatureId) ? null : CreatureSpeciesCompatibility.Canonicalize(creatureId);
 
             for (int i = _creatures.Count - 1; i >= 0; i--)
             {
@@ -241,6 +241,23 @@ namespace ApexShift.Runtime.Ecosystem
             return source != null;
         }
 
+        public static bool IsValidPrey(CreatureAgentView candidate) => candidate != null
+            && (candidate.Role == CreatureRole.SmallPrey || candidate.Role == CreatureRole.HerbivoreOmnivore);
+
+        public CreatureAgentView TryFindNearestCreatureByRole(Vector3 position, CreatureRole role, float maxDistance)
+        {
+            CreatureAgentView found = null;
+            float distanceSquared = maxDistance * maxDistance;
+            foreach (var candidate in _creatures)
+            {
+                if (candidate == null || !candidate.isActiveAndEnabled || candidate.Role != role
+                    || (candidate.CachedHealth != null && candidate.CachedHealth.IsDead)) continue;
+                float distance = (candidate.transform.position - position).sqrMagnitude;
+                if (distance <= distanceSquared) { found = candidate; distanceSquared = distance; }
+            }
+            return found;
+        }
+
         public CreatureAgentView TryFindNearestPrey(Vector3 position, string hunterCreatureId, float maxDistance = 40f)
         {
             CreatureAgentView prey = null;
@@ -261,13 +278,13 @@ namespace ApexShift.Runtime.Ecosystem
                 }
 
                 string candidateId = (candidate.CreatureId ?? string.Empty).Trim().ToLowerInvariant();
-                if (string.Equals(candidateId, hunterCreatureId, System.StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(candidateId, CreatureSpeciesCompatibility.Canonicalize(hunterCreatureId), System.StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
                 // In this slice Varnak should hunt prey animals, not other predators.
-                if (candidateId != "small_prey" && candidateId != "grazer")
+                if (!IsValidPrey(candidate))
                 {
                     continue;
                 }
@@ -293,7 +310,7 @@ namespace ApexShift.Runtime.Ecosystem
         {
             CreatureAgentView found = null;
             float minSqrDist = Mathf.Max(0f, maxDistance) * Mathf.Max(0f, maxDistance);
-            string expectedId = (creatureId ?? string.Empty).Trim().ToLowerInvariant();
+            string expectedId = CreatureSpeciesCompatibility.Canonicalize(creatureId);
 
             for (int i = _creatures.Count - 1; i >= 0; i--)
             {
@@ -339,7 +356,7 @@ namespace ApexShift.Runtime.Ecosystem
 
         public int GetCreatureCount(string creatureId)
         {
-            return _creatures.Count(c => c != null && string.Equals(c.CreatureId, creatureId, System.StringComparison.OrdinalIgnoreCase));
+            return _creatures.Count(c => c != null && string.Equals(c.SpeciesId, CreatureSpeciesCompatibility.Canonicalize(creatureId), System.StringComparison.OrdinalIgnoreCase));
         }
 
         public float GetAverageBiomassRatio(FoodKind kind)

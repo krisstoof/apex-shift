@@ -3,6 +3,7 @@ using ApexShift.Runtime.DayNight;
 using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Player;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ApexShift.Runtime.Buildings
 {
@@ -27,8 +28,10 @@ namespace ApexShift.Runtime.Buildings
         [SerializeField, Range(0f, 24f)] private float wakeUpHour = 6.25f;
 
         [Header("Safety")]
-        [SerializeField] private bool blockSleepNearVarnak = true;
-        [SerializeField] private float unsafeVarnakRadius = 34f;
+        [FormerlySerializedAs("blockSleepNearVarnak")]
+        [SerializeField] private bool blockSleepNearPredator = true;
+        [FormerlySerializedAs("unsafeVarnakRadius")]
+        [SerializeField] private float unsafePredatorRadius = 34f;
 
         public string Prompt => sleepPrompt;
         public float InteractionDuration => Mathf.Max(0.1f, sleepInteractionDuration);
@@ -77,7 +80,7 @@ namespace ApexShift.Runtime.Buildings
                 return Report(TentSleepResult.Failed("You are too hungry to sleep."), actor);
             }
 
-            if (IsThreatenedByVarnak(actor.transform.position))
+            if (IsThreatenedByPredator(actor.transform.position))
             {
                 return Report(TentSleepResult.Failed("Cannot sleep while threatened."), actor);
             }
@@ -121,9 +124,9 @@ namespace ApexShift.Runtime.Buildings
             return Mathf.Max(0.5f, daytimeNapHours);
         }
 
-        private bool IsThreatenedByVarnak(Vector3 position)
+        private bool IsThreatenedByPredator(Vector3 position)
         {
-            if (!blockSleepNearVarnak)
+            if (!blockSleepNearPredator)
             {
                 return false;
             }
@@ -134,8 +137,8 @@ namespace ApexShift.Runtime.Buildings
                 return false;
             }
 
-            CreatureAgentView varnak = ecosystem.TryFindNearestCreatureById(position, "varnak", Mathf.Max(0f, unsafeVarnakRadius));
-            return varnak != null;
+            CreatureAgentView predator = ecosystem.TryFindNearestCreatureByRole(position, CreatureRole.Predator, Mathf.Max(0f, unsafePredatorRadius));
+            return predator != null;
         }
 
         private bool IsActorCloseEnough(GameObject actor)

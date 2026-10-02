@@ -19,7 +19,7 @@ namespace ApexShift.Tests.Regression
 
                 CreatureDebugData data = CreatureDebugData.Capture(creature);
 
-                Assert.AreEqual("small_prey", data.speciesId);
+                Assert.AreEqual("island_small_prey", data.speciesId);
                 Assert.AreEqual("none", data.currentTarget);
                 Assert.AreEqual("none", data.targetDetails);
                 Assert.AreEqual("missing", data.navStatus);
@@ -67,7 +67,7 @@ namespace ApexShift.Tests.Regression
 
                 CreatureDebugData data = CreatureDebugData.Capture(creature);
 
-                Assert.AreEqual("grazer", data.speciesId);
+                Assert.AreEqual("island_forager", data.speciesId);
                 Assert.AreEqual(70f, data.hunger, 0.001f);
                 Assert.Greater(data.maxHealth, 0f);
                 Assert.AreEqual("near", data.simulationLevel);

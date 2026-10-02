@@ -17,6 +17,9 @@ using ApexShift.Runtime.World.Generation;
 using ApexShift.Runtime.World.Landmarks;
 using ApexShift.Runtime.World.Vegetation;
 using UnityEngine;
+using ApexShift.Runtime.World.Environment;
+using ApexShift.Runtime.Config;
+using ApexShift.Runtime.World.Query;
 
 namespace ApexShift.Runtime.Save
 {
@@ -333,7 +336,7 @@ namespace ApexShift.Runtime.Save
                 CreatureNeedsRuntime needs = agent.GetComponent<CreatureNeedsRuntime>();
                 CreatureBehaviorBrain brain = agent.GetComponent<CreatureBehaviorBrain>();
                 Vector3 p = agent.transform.position;
-                string creatureId = CreatureSaveData.NormalizeCreatureId(agent.CreatureId);
+                string creatureId = agent.SpeciesId;
                 CreatureBehaviorState state = brain != null ? brain.State : CreatureBehaviorState.Wander;
 
                 creatures.Add(new CreatureSaveData(
@@ -349,14 +352,20 @@ namespace ApexShift.Runtime.Save
                     needs != null ? needs.State.Hunger : 0f,
                     needs != null ? needs.State.Energy : 1f,
                     state.ToString(),
-                    brain != null ? brain.CurrentBiomeId : "default",
-                    brain != null ? brain.HomeBiomeId : "default",
-                    brain != null ? brain.PopulationBiomeId : "default",
+                    null,
+                    null,
+                    null,
                     brain != null ? brain.DecisionReason : "save_capture",
                     brain != null ? brain.LastFoodSource : "none",
                     brain != null ? brain.AttackCooldown : 0f,
                     brain != null ? brain.CurrentNiche : "HERBIVORE",
-                    brain != null ? brain.HuntDrive : 0f));
+                    brain != null ? brain.HuntDrive : 0f)
+                {
+                    currentBiomeId = null, homeBiomeId = null, populationBiomeId = null,
+                    currentHabitatId = brain != null ? brain.CurrentHabitatId : WorldQueryRuntime.Active?.GetHabitatIdForPosition(p),
+                    homeHabitatId = brain != null ? brain.HomeHabitatId : WorldQueryRuntime.Active?.GetHabitatIdForPosition(p),
+                    populationHabitatId = brain != null ? brain.PopulationHabitatId : WorldQueryRuntime.Active?.GetHabitatIdForPosition(p)
+                });
             }
 
             return creatures;
@@ -418,7 +427,7 @@ namespace ApexShift.Runtime.Save
 
         private static CreatureAgentView FindBestCreatureMatch(CreatureSaveData saved, IReadOnlyList<CreatureAgentView> candidates, ISet<CreatureAgentView> used)
         {
-            string expectedId = CreatureSaveData.NormalizeCreatureId(saved.CreatureId);
+            string expectedId = CreatureSpeciesCompatibility.Canonicalize(string.IsNullOrWhiteSpace(saved.SpeciesId) ? saved.CreatureId : saved.SpeciesId);
             CreatureAgentView best = null;
             float bestDistance = float.PositiveInfinity;
             Vector3 savedPosition = new Vector3(saved.x, saved.y, saved.z);
@@ -430,7 +439,7 @@ namespace ApexShift.Runtime.Save
                     continue;
                 }
 
-                if (CreatureSaveData.NormalizeCreatureId(candidate.CreatureId) != expectedId)
+                if (candidate.SpeciesId != expectedId)
                 {
                     continue;
                 }
@@ -453,26 +462,24 @@ namespace ApexShift.Runtime.Save
                 return null;
             }
 
-            string creatureId = CreatureSaveData.NormalizeCreatureId(saved.CreatureId);
+            string creatureId = CreatureSpeciesCompatibility.Canonicalize(string.IsNullOrWhiteSpace(saved.SpeciesId) ? saved.CreatureId : saved.SpeciesId);
             if (string.IsNullOrWhiteSpace(creatureId))
             {
                 creatureId = "creature";
             }
 
+            var definition = worldGenerator != null ? worldGenerator.ResolveSpecies(creatureId) : SpeciesDefinition.CreateDefault(creatureId);
+            if (worldGenerator != null)
+                return worldGenerator.SpawnCreature(definition, new Vector3(saved.x, saved.y, saved.z));
             Transform parent = ResolveCreatureRestoreParent();
-            GameObject go = new GameObject($"Creature_{creatureId}_restored");
-            if (parent != null)
-            {
-                go.transform.SetParent(parent, false);
-            }
-
-            go.transform.position = new Vector3(saved.x, saved.y, saved.z);
+            GameObject go = new WorldSpawnService().SpawnCreature(null, definition,
+                new Vector3(saved.x, saved.y, saved.z), 0f, parent);
 
             CreatureAgentView agent = go.AddComponent<CreatureAgentView>();
             agent.Configure(creatureId);
 
             CreatureNeedsRuntime needs = go.AddComponent<CreatureNeedsRuntime>();
-            needs.Configure(creatureId);
+            needs.Configure(creatureId, definition);
 
             CreatureHealthRuntime health = go.AddComponent<CreatureHealthRuntime>();
             health.Configure(creatureId);
@@ -495,14 +502,11 @@ namespace ApexShift.Runtime.Save
 
         private Transform ResolveCreatureRestoreParent()
         {
-            GameObject creatureRoot = GameObject.Find("CreatureRoot");
-            if (creatureRoot != null)
-            {
-                return creatureRoot.transform;
-            }
-
-            return worldGenerator != null ? worldGenerator.transform : null;
+            return worldGenerator != null ? worldGenerator.CurrentGeneration?.CreatureRoot : null;
         }
+
+        private static string ResolveSavedHabitat(string habitat, string legacyBiome) =>
+            !string.IsNullOrWhiteSpace(habitat) ? HabitatIds.Normalize(habitat) : LegacyBiomeCompatibility.FromLegacyBiomeId(legacyBiome);
 
         private static void RestoreCreatureState(CreatureAgentView agent, CreatureSaveData saved)
         {
@@ -532,9 +536,9 @@ namespace ApexShift.Runtime.Save
                     saved.BehaviorState,
                     saved.DecisionReason,
                     saved.LastFoodSource,
-                    saved.CurrentBiomeId,
-                    saved.HomeBiomeId,
-                    saved.PopulationBiomeId,
+                    ResolveSavedHabitat(saved.CurrentHabitatId, saved.CurrentBiomeId),
+                    ResolveSavedHabitat(saved.HomeHabitatId, saved.HomeBiomeId),
+                    ResolveSavedHabitat(saved.PopulationHabitatId, saved.PopulationBiomeId),
                     saved.AttackCooldown,
                     saved.CurrentNiche,
                     saved.HuntDrive);

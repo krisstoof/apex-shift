@@ -46,6 +46,7 @@ namespace ApexShift.Runtime.Ecosystem
         }
 
         public string CreatureId => creatureId;
+        public SpeciesDefinition Definition { get { EnsureInitialized(); return speciesDefinition; } }
         public bool IsHungry => State.IsHungry;
         public float PreySeekHungerThreshold => preySeekHungerThreshold;
         public float FleeHungerThreshold => fleeHungerThreshold;
@@ -62,15 +63,16 @@ namespace ApexShift.Runtime.Ecosystem
 
         public void Configure(string id, SpeciesDefinition overrideDefinition)
         {
-            creatureId = string.IsNullOrWhiteSpace(id) ? "small_prey" : id.Trim().ToLowerInvariant();
+            creatureId = SpeciesDefinition.NormalizeSpeciesId(id);
 
             SpeciesDefinition resolved = GameBalanceConfigProvider.ResolveSpeciesDefinition(gameBalanceConfig, overrideDefinition != null ? overrideDefinition : speciesDefinition, creatureId, this);
+            speciesDefinition = resolved;
             if (useSpeciesDefaults)
             {
                 ApplySpeciesDefinition(resolved);
             }
 
-            _diet = useSpeciesDefaults ? resolved.CreateDietProfile() : CreatureDietProfile.GetDefault(creatureId);
+            _diet = useSpeciesDefaults ? resolved.CreateDietProfile() : resolved.CreateDietProfile();
             _state = new CreatureNeedsState(maxHunger, hungerGrowthRate, hungryThreshold, starvingThreshold, desperateThreshold);
 
             float seededHunger = Random.Range(initialHungerMin, initialHungerMax);

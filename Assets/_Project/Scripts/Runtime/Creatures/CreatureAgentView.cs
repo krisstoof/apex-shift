@@ -1,4 +1,5 @@
 using UnityEngine;
+using ApexShift.Runtime.Config;
 using UnityEngine.AI;
 using ApexShift.Runtime.Ecosystem;
 
@@ -31,7 +32,19 @@ namespace ApexShift.Runtime.Creatures
         public NavMeshAgent CachedNavMeshAgent { get; private set; }
         public CreaturePlayerAwarenessBehavior CachedAwareness { get; private set; }
 
-        public string CreatureId => creatureId;
+        public string SpeciesId => CreatureSpeciesCompatibility.Canonicalize(creatureId);
+        public string CreatureId => SpeciesId;
+        private SpeciesDefinition _fallbackDefinition;
+        public SpeciesDefinition Definition
+        {
+            get
+            {
+                if (CachedNeeds == null) CachedNeeds = GetComponent<CreatureNeedsRuntime>();
+                if (CachedNeeds != null) return CachedNeeds.Definition;
+                return _fallbackDefinition != null ? _fallbackDefinition : (_fallbackDefinition = SpeciesDefinition.CreateDefault(SpeciesId));
+            }
+        }
+        public CreatureRole Role => Definition.Role;
 
         private void Awake()
         {
@@ -58,7 +71,8 @@ namespace ApexShift.Runtime.Creatures
 
         public void Configure(string id)
         {
-            creatureId = id;
+            creatureId = CreatureSpeciesCompatibility.Canonicalize(id);
+            _fallbackDefinition = null;
         }
 
         public void MoveTo(Vector3 position)

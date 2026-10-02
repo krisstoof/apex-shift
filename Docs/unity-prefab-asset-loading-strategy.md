@@ -93,12 +93,12 @@ Creature prefabs are keyed by stable creature id.
 Examples:
 
 ```text
-small_prey
-grazer
-varnak
+island_small_prey
+island_forager
+island_predator
 ```
 
-The id should match biome spawn data and creature runtime configuration.
+The id matches SpeciesDefinition and runtime identity. Production creature spawning uses habitat/environment samples, not biome spawn entries. Legacy IDs are accepted by CreatureSpeciesCompatibility only at configuration/save boundaries.
 
 ## Building prefabs
 

@@ -1,13 +1,75 @@
 using ApexShift.Core.Ecosystem;
 using UnityEngine;
+using System.Collections.Generic;
+using ApexShift.Runtime.Creatures;
+using ApexShift.Runtime.World.Environment;
+using ApexShift.Runtime.World.Topography;
 
 namespace ApexShift.Runtime.Config
 {
     [CreateAssetMenu(menuName = "Apex Shift/Balance/Species Definition", fileName = "SpeciesDefinition")]
     public sealed class SpeciesDefinition : ScriptableObject
     {
-        [SerializeField] private string speciesId = "small_prey";
-        [SerializeField] private string displayName = "Small Prey";
+        [SerializeField] private string speciesId = "island_small_prey";
+        [SerializeField] private string displayName = "Island Small Prey";
+
+        [SerializeField] private CreatureRole role;
+        [SerializeField] private CreaturePopulationRules populationRules = new CreaturePopulationRules();
+        [SerializeField] private string[] allowedHabitatIds = { HabitatIds.Coast, HabitatIds.LowlandJungle, HabitatIds.JungleInterior, HabitatIds.WetJungle };
+        [SerializeField] private TerrainType[] allowedTerrainTypes = { TerrainType.Plain, TerrainType.Forest, TerrainType.Hills, TerrainType.Ridge, TerrainType.Beach };
+        [SerializeField] private float minElevation01, minMoisture01, minSlopeDegrees, minDistanceToCoast = 2f;
+        [SerializeField] private float maxElevation01 = 1f, maxMoisture01 = 1f, maxSlopeDegrees = 28f, maxDistanceToCoast = 10000f;
+        [SerializeField] private bool allowShoreline;
+        [SerializeField] private float hitboxRadius = 0.35f, hitboxHeight = 0.70f, hitboxCenterY = 0.38f;
+        [SerializeField] private int meatDropAmount = 1, boneDropMin, boneDropMax;
+        public CreatureRole Role => role;
+        public CreaturePopulationRules PopulationRules => populationRules ?? (populationRules = new CreaturePopulationRules());
+        public IReadOnlyList<string> AllowedHabitatIds => allowedHabitatIds ?? System.Array.Empty<string>();
+        public IReadOnlyList<TerrainType> AllowedTerrainTypes => allowedTerrainTypes ?? System.Array.Empty<TerrainType>();
+        public float MinElevation01 => minElevation01;
+        public float MaxElevation01 => maxElevation01;
+        public float MinMoisture01 => minMoisture01;
+        public float MaxMoisture01 => maxMoisture01;
+        public float MinSlopeDegrees => minSlopeDegrees;
+        public float MaxSlopeDegrees => maxSlopeDegrees;
+        public float MinDistanceToCoast => minDistanceToCoast;
+        public float MaxDistanceToCoast => maxDistanceToCoast;
+        public bool AllowShoreline => allowShoreline;
+        public float HitboxRadius => hitboxRadius;
+        public float HitboxHeight => hitboxHeight;
+        public float HitboxCenterY => hitboxCenterY;
+        public int MeatDropAmount => meatDropAmount;
+        public int BoneDropMin => boneDropMin;
+        public int BoneDropMax => boneDropMax;
+        public void ConfigureRole(CreatureRole value) => role = value;
+        public void ConfigureEnvironment(string[] habitats, TerrainType[] terrain, float minElevation = 0f,
+            float maxElevation = 1f, float minMoisture = 0f, float maxMoisture = 1f,
+            float minSlope = 0f, float maxSlope = 28f, float minCoast = 2f, float maxCoast = 10000f, bool shoreline = false)
+        {
+            allowedHabitatIds = habitats; allowedTerrainTypes = terrain;
+            minElevation01 = minElevation; maxElevation01 = maxElevation;
+            minMoisture01 = minMoisture; maxMoisture01 = maxMoisture;
+            minSlopeDegrees = minSlope; maxSlopeDegrees = maxSlope;
+            minDistanceToCoast = minCoast; maxDistanceToCoast = maxCoast; allowShoreline = shoreline;
+        }
+        public IEnumerable<string> ValidateProfile()
+        {
+            if (string.IsNullOrWhiteSpace(speciesId)) yield return "Missing SpeciesId";
+            if (!System.Enum.IsDefined(typeof(CreatureRole), role)) yield return "Invalid role";
+            if (!PopulationRules.IsValid) yield return "Invalid population rules";
+            if (AllowedHabitatIds.Count == 0) yield return "No allowed habitats";
+            foreach (string habitat in AllowedHabitatIds)
+                if (habitat == HabitatIds.Water || HabitatIds.Normalize(habitat) != habitat)
+                    yield return "Invalid land habitat: " + habitat;
+            if (AllowedTerrainTypes.Count == 0) yield return "No allowed terrain";
+            if (minElevation01 < 0f || maxElevation01 > 1f || minElevation01 > maxElevation01
+                || minMoisture01 < 0f || maxMoisture01 > 1f || minMoisture01 > maxMoisture01
+                || minSlopeDegrees < 0f || maxSlopeDegrees > 90f || minSlopeDegrees > maxSlopeDegrees
+                || minDistanceToCoast < 0f || minDistanceToCoast > maxDistanceToCoast)
+                yield return "Invalid environment ranges";
+            if (hitboxRadius <= 0f || hitboxHeight < hitboxRadius * 2f || meatDropAmount < 0 || boneDropMin < 0 || boneDropMax < boneDropMin)
+                yield return "Invalid physical/drop profile";
+        }
 
         [Header("Health")]
         [SerializeField] private float maxHealth = 20f;
@@ -103,30 +165,40 @@ namespace ApexShift.Runtime.Config
 
             switch (normalized)
             {
-                case "grazer":
-                    definition.Configure("grazer", "Grazer", 45f, 100f, 30f, 35f, 60f, 82f, 120f, 170f, 46f, 26f, 36f, 52f, 0.85f, 0.05f, 0.10f);
+                case "island_forager":
+                    definition.Configure(normalized, "Island Forager", 45f, 100f, 30f, 35f, 60f, 82f, 120f, 170f, 46f, 26f, 36f, 52f, 0.85f, 0.05f, 0.10f);
                     break;
-                case "varnak":
-                    definition.Configure("varnak", "Varnak", 90f, 100f, 18f, 32f, 58f, 80f, 140f, 200f, 38f, 22f, 36f, 58f, 0f, 1f, 0.45f);
+                case "island_predator":
+                    definition.Configure(normalized, "Island Predator", 90f, 100f, 18f, 32f, 58f, 80f, 140f, 200f, 38f, 22f, 36f, 58f, 0f, 1f, 0.45f);
                     break;
-                case "small_prey":
+                case "island_small_prey":
                 default:
-                    definition.Configure("small_prey", "Small Prey", 20f, 100f, 20f, 35f, 60f, 82f, 110f, 160f, 50f, 24f, 36f, 48f, 1f, 0f, 0f);
+                    definition.Configure(normalized, "Island Small Prey", 20f, 100f, 20f, 35f, 60f, 82f, 110f, 160f, 50f, 24f, 36f, 48f, 1f, 0f, 0f);
                     break;
             }
 
+            if (normalized == "island_forager")
+            {
+                definition.role = CreatureRole.HerbivoreOmnivore;
+                definition.allowedHabitatIds = new[] { HabitatIds.LowlandJungle, HabitatIds.JungleInterior, HabitatIds.WetJungle };
+                definition.populationRules.Configure(3, 6, 6);
+                definition.hitboxRadius = 0.65f; definition.hitboxHeight = 1.35f; definition.hitboxCenterY = 0.72f;
+                definition.meatDropAmount = 2;
+            }
+            else if (normalized == "island_predator")
+            {
+                definition.role = CreatureRole.Predator;
+                definition.allowedHabitatIds = new[] { HabitatIds.JungleInterior, HabitatIds.WetJungle, HabitatIds.RockyUpland };
+                definition.populationRules.Configure(0, 0, 5, 2, 2, 1, 64, 0.65f, 48f);
+                definition.hitboxRadius = 0.70f; definition.hitboxHeight = 1.65f; definition.hitboxCenterY = 0.9f;
+                definition.meatDropAmount = 3; definition.boneDropMin = 1; definition.boneDropMax = 2;
+            }
             return definition;
         }
 
         public static string NormalizeSpeciesId(string id)
         {
-            string normalized = string.IsNullOrWhiteSpace(id) ? "small_prey" : id.Trim().ToLowerInvariant();
-            if (normalized == "smallprey" || normalized == "small-prey")
-            {
-                return "small_prey";
-            }
-
-            return normalized;
+            return CreatureSpeciesCompatibility.Canonicalize(id);
         }
 
         private void OnValidate()

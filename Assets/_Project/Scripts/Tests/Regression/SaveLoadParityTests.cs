@@ -40,7 +40,7 @@ namespace ApexShift.Tests.Regression
                 GameSaveData state = save.CaptureCurrentState();
 
                 Assert.AreEqual(1, state.World.CreatureStates.Count);
-                Assert.AreEqual("small_prey", state.World.CreatureStates[0].CreatureId);
+                Assert.AreEqual("island_small_prey", state.World.CreatureStates[0].SpeciesId);
                 Assert.AreEqual(62f, state.World.CreatureStates[0].Hunger, 0.001f);
                 Assert.AreEqual(1, state.World.BiomeStates.Count);
                 Assert.AreEqual(40f, state.World.BiomeStates[0].PlantBiomass, 0.001f);
@@ -92,9 +92,9 @@ namespace ApexShift.Tests.Regression
                             77f,
                             0.55f,
                             "Scavenge",
-                            "forest",
-                            "forest",
-                            "forest",
+                            "westwood",
+                            "westwood",
+                            "westwood",
                             "loaded_scavenge",
                             "meat_drop",
                             0.8f,
@@ -114,7 +114,7 @@ namespace ApexShift.Tests.Regression
                 CreatureBehaviorBrain brain = creature.GetComponent<CreatureBehaviorBrain>();
                 Assert.AreEqual(CreatureBehaviorState.Scavenge, brain.State);
                 Assert.AreEqual("loaded_scavenge", brain.DecisionReason);
-                Assert.AreEqual("forest", brain.CurrentBiomeId);
+                Assert.AreEqual("westwood", brain.CurrentBiomeId);
                 Assert.AreEqual("meat_drop", brain.LastFoodSource);
                 Assert.AreEqual(1, world.Day);
                 Assert.AreEqual(0f, world.TimeOfDay, 0.001f);

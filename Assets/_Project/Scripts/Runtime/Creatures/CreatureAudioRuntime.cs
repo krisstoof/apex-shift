@@ -44,7 +44,7 @@ namespace ApexShift.Runtime.Creatures
             }
             if (state != lastState)
             {
-                if (voiceCooldownTimer <= 0f) PlayStateVoice(id, state);
+                if (voiceCooldownTimer <= 0f) PlayStateVoice(GetComponent<CreatureAgentView>()?.Role ?? CreatureRole.SmallPrey, state);
                 lastState = state;
             }
 
@@ -104,7 +104,7 @@ namespace ApexShift.Runtime.Creatures
             return view != null ? view.CreatureId : string.Empty;
         }
 
-        private void PlayStateVoice(string id, CreatureBehaviorState state)
+        private void PlayStateVoice(CreatureRole role, CreatureBehaviorState state)
         {
             if (state == CreatureBehaviorState.Dead)
             {
@@ -112,7 +112,7 @@ namespace ApexShift.Runtime.Creatures
                 return;
             }
 
-            if (id == "varnak")
+            if (role == CreatureRole.Predator)
             {
                 if (state == CreatureBehaviorState.Attack || state == CreatureBehaviorState.Chase || state == CreatureBehaviorState.Stalk)
                 {
@@ -128,7 +128,7 @@ namespace ApexShift.Runtime.Creatures
                 return;
             }
 
-            if (id == "grazer")
+            if (role == CreatureRole.HerbivoreOmnivore)
             {
                 if (PlayRandom(creatureAudioProfile?.grazerAlertClips, 0.24f))
                     return;
@@ -136,7 +136,7 @@ namespace ApexShift.Runtime.Creatures
                 return;
             }
 
-            if (id == "small_prey")
+            if (role == CreatureRole.SmallPrey)
             {
                 if (PlayRandom(creatureAudioProfile?.smallPreyAlarmClips, 0.20f))
                     return;

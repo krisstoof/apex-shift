@@ -7,6 +7,7 @@ namespace ApexShift.Runtime.Config
     {
         [SerializeField] private float defaultMaxPlantBiomass = 100f;
         [SerializeField] private float defaultPlantRegrowthPerDay = 6f;
+        // Legacy biomass simulation/save DTO baselines only. Production populations use SpeciesDefinition.PopulationRules.
         [SerializeField] private float defaultSmallPreyPopulation = 4f;
         [SerializeField] private float defaultGrazerPopulation = 3f;
         [SerializeField] private float defaultVarnakPopulation = 1f;

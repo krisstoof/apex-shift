@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using ApexShift.Runtime.Creatures;
 
 namespace ApexShift.Runtime.Config
 {
@@ -47,9 +48,18 @@ namespace ApexShift.Runtime.Config
         public List<string> ValidateConfig()
         {
             List<string> errors = new List<string>();
-            if (GetSpecies("small_prey") == null) errors.Add("Missing species definition: small_prey");
-            if (GetSpecies("grazer") == null) errors.Add("Missing species definition: grazer");
-            if (GetSpecies("varnak") == null) errors.Add("Missing species definition: varnak");
+            var ids = new HashSet<string>();
+            var roles = new HashSet<CreatureRole>();
+            if (speciesDefinitions == null || speciesDefinitions.Length == 0) errors.Add("Missing species list");
+            foreach (var species in SpeciesDefinitions)
+            {
+                if (species == null) { errors.Add("Null species definition"); continue; }
+                if (!ids.Add(species.SpeciesId)) errors.Add("Duplicate species: " + species.SpeciesId);
+                roles.Add(species.Role);
+                foreach (string problem in species.ValidateProfile()) errors.Add(species.SpeciesId + ": " + problem);
+            }
+            foreach (var role in new[] { CreatureRole.SmallPrey, CreatureRole.HerbivoreOmnivore, CreatureRole.Predator })
+                if (!roles.Contains(role)) errors.Add("Missing species role: " + role);
             if (simulationLodConfig == null) errors.Add("Missing CreatureSimulationLodConfig");
             if (ecosystemBalanceConfig == null) errors.Add("Missing EcosystemBalanceConfig");
             if (resourceBalanceConfig == null) errors.Add("Missing ResourceBalanceConfig");
@@ -62,9 +72,9 @@ namespace ApexShift.Runtime.Config
             config.ConfigureForRuntime(
                 new[]
                 {
-                    SpeciesDefinition.CreateDefault("small_prey"),
-                    SpeciesDefinition.CreateDefault("grazer"),
-                    SpeciesDefinition.CreateDefault("varnak")
+                    SpeciesDefinition.CreateDefault("island_small_prey"),
+                    SpeciesDefinition.CreateDefault("island_forager"),
+                    SpeciesDefinition.CreateDefault("island_predator")
                 },
                 CreatureSimulationLodConfig.CreateDefault(),
                 EcosystemBalanceConfig.CreateDefault(),

@@ -48,26 +48,6 @@ namespace ApexShift.Runtime.World.Generation
         [SerializeField] private bool enableAmbientMusic = true;
         [SerializeField, Range(0f, 1f)] private float ambientMusicVolume = 0.22f;
 
-        [Header("Creature Population Balance")]
-        [SerializeField] private float creatureSpawnDensityMultiplier = 0.85f;
-        [SerializeField] private bool scaleVarnaksByDay = true;
-        [SerializeField] private int varnakDayOneMaxCount = 0;
-        [SerializeField] private int varnakAddEveryDays = 1;
-        [SerializeField] private int varnakAbsoluteMaxCount = 5;
-        [SerializeField] private float varnakDayOneSpawnMultiplier = 0.05f;
-        [SerializeField] private float varnakSpawnMultiplierPerDay = 0.10f;
-        [SerializeField] private float varnakMaxSpawnMultiplier = 0.65f;
-        [SerializeField] private float minCreatureDistanceFromPlayer = 30f;
-        [SerializeField] private float minVarnakDistanceFromPlayer = 48f;
-        [SerializeField] private int creatureSpawnPositionAttempts = 36;
-        [SerializeField] private int nonVarnakMinimumPerBiomeEntry = 1;
-
-        [Header("Daily Varnak Spawning")]
-        [SerializeField] private bool spawnVarnaksOnDayChange = true;
-        [SerializeField] private int firstVarnakSpawnDay = 2;
-        [SerializeField] private int varnakDailySpawnAttempts = 8;
-        [SerializeField] private float varnakDailySpawnChanceMultiplier = 1.35f;
-
         [Header("Resource Size / Tool Gating")]
         [SerializeField] private float bigTreeScaleThreshold = 0.92f;
         [SerializeField] private float bigRockScaleThreshold = 0.88f;
@@ -100,7 +80,6 @@ namespace ApexShift.Runtime.World.Generation
         private List<Vector3> _allTileCenters = new List<Vector3>();
         private List<Vector3> _landTileCenters = new List<Vector3>();
         private Transform _playerTransform;
-        private int _spawnedVarnakCount;
         private int _currentSpawnDay = 1;
         private IslandTopographyRuntime _islandTopography;
         private DayNightRuntime _dayNightRuntime;
@@ -197,7 +176,6 @@ namespace ApexShift.Runtime.World.Generation
                     _playerTransform = context.Player != null ? context.Player.transform : null;
                     context.VegetationRuntime?.SetTarget(_playerTransform);
                     _currentSpawnDay = ResolveCurrentDay();
-                    _spawnedVarnakCount = 0;
                 }),
                 new WorldGenerationStage("ConfigureCamera", context =>
                 {
@@ -215,7 +193,7 @@ namespace ApexShift.Runtime.World.Generation
                 new WorldGenerationStage("SpawnCreatures", context =>
                 {
                     EnsureCreatureIslandBoundsRuntime();
-                    SpawnAllRegionCreatures();
+                    SpawnSpeciesPopulations(true);
                 }),
                 new WorldGenerationStage("FinalizeGeneration", context =>
                 {
@@ -846,113 +824,27 @@ namespace ApexShift.Runtime.World.Generation
             return string.Equals(actualBiome, region.Biome.BiomeId, System.StringComparison.Ordinal);
         }
 
-        private void SpawnRegionCreatures(GeneratedBiomeRegion region)
+        private GameBalanceConfig _fallbackBalance;
+        private GameBalanceConfig EffectiveBalance => gameBalanceConfig != null
+            ? gameBalanceConfig : (_fallbackBalance != null ? _fallbackBalance : (_fallbackBalance = GameBalanceConfig.CreateFallback()));
+
+        private void SpawnSpeciesPopulations(bool initial)
         {
-            float padding = settings?.Padding ?? 5f;
-            Bounds spawnBounds = region.Bounds;
-            float actualPadding = Mathf.Min(padding, region.Bounds.size.x * 0.2f);
-            spawnBounds.Expand(new Vector3(-actualPadding * 2, 0, -actualPadding * 2));
-
-            float originalRegionSize = 40f;
-            float spawnProbability = (region.Bounds.size.x * region.Bounds.size.z) / (originalRegionSize * originalRegionSize);
-
-            foreach (var entry in region.Biome.Creatures)
+            if (_islandTopography == null || _creatureRoot == null) return;
+            var ecosystem = EcosystemRuntime.Instance;
+            foreach (SpeciesDefinition definition in EffectiveBalance.SpeciesDefinitions)
             {
-                if (entry == null) continue;
-                string creatureId = NormalizeCreatureId(entry.CreatureId);
-                if (creatureId == "varnak" && !CanSpawnMoreVarnaks())
-                {
-                    continue;
-                }
-
-                float creatureSpawnProbability = spawnProbability;
-                if (creatureId == "varnak")
-                {
-                    creatureSpawnProbability *= GetVarnakSpawnMultiplierForDay(_currentSpawnDay);
-                    if (creatureSpawnProbability <= 0f)
-                    {
-                        continue;
-                    }
-                }
-
-                int count = Mathf.CeilToInt(Random.Range(entry.MinCount, entry.MaxCount + 1) * Mathf.Clamp01(creatureSpawnDensityMultiplier));
-                count = Mathf.Max(0, count);
-                if (creatureId != "varnak" && entry.MaxCount > 0)
-                {
-                    count = Mathf.Max(Mathf.Clamp(nonVarnakMinimumPerBiomeEntry, 0, Mathf.Max(1, entry.MaxCount)), count);
-                }
-                if (creatureId == "varnak")
-                {
-                    count = Mathf.Min(count, GetRemainingVarnakSpawnCapacity());
-                }
-
-                int countToSpawn = 0;
-                for (int i = 0; i < count; i++)
-                {
-                    if (Random.value < creatureSpawnProbability)
-                    {
-                        countToSpawn++;
-                    }
-                }
-
-                if (creatureId == "varnak")
-                {
-                    countToSpawn = Mathf.Min(countToSpawn, GetRemainingVarnakSpawnCapacity());
-                }
-
-                for (int i = 0; i < countToSpawn; i++)
-                {
-                    if (!TryGetSafeCreatureSpawnPoint(spawnBounds, creatureId, region.Biome.BiomeId, out Vector3 pos))
-                    {
-                        continue;
-                    }
-
-                    SpawnCreature(entry, pos);
-                }
+                if (definition == null) continue;
+                int count = 0;
+                if (ecosystem != null)
+                    foreach (var creature in ecosystem.Creatures)
+                        if (creature != null && creature.isActiveAndEnabled && creature.SpeciesId == definition.SpeciesId
+                            && (creature.CachedHealth == null || !creature.CachedHealth.IsDead)) count++;
+                var placements = CreaturePopulationPlanner.Plan(seed, definition, _currentSpawnDay,
+                    _islandTopography.WorldBounds, _islandTopography.TryGetEnvironmentAt,
+                    _playerTransform != null ? _playerTransform.position : Vector3.zero, count, initial);
+                foreach (var placement in placements) SpawnCreature(definition, placement.Position);
             }
-        }
-
-        private void SpawnAllRegionCreatures()
-        {
-            foreach (GeneratedBiomeRegion region in _lastResult.Regions)
-            {
-                if (region?.Biome == null || region.Biome.BiomeId == "water")
-                {
-                    continue;
-                }
-
-                SpawnRegionCreatures(region);
-            }
-        }
-
-        private bool TryGetSafeCreatureSpawnPoint(Bounds spawnBounds, string creatureId, string expectedBiomeId, out Vector3 pos)
-        {
-            int attempts = Mathf.Max(1, creatureSpawnPositionAttempts);
-            float minDistance = creatureId == "varnak"
-                ? Mathf.Max(minCreatureDistanceFromPlayer, minVarnakDistanceFromPlayer)
-                : Mathf.Max(clearingRadius, minCreatureDistanceFromPlayer);
-
-            for (int attempt = 0; attempt < attempts; attempt++)
-            {
-                Vector3 candidate = GetRandomPointInBounds(spawnBounds);
-                CreatureIslandBoundsRuntime bounds = CreatureIslandBoundsRuntime.Active;
-                if (bounds != null && bounds.HasLand)
-                {
-                    bounds.TryClampToLand(candidate, out candidate);
-                }
-
-                if (!IsCreatureBiomeCandidate(candidate, expectedBiomeId)
-                    || !IsCreatureSpawnPointSafe(candidate, minDistance))
-                {
-                    continue;
-                }
-
-                pos = candidate;
-                return true;
-            }
-
-            pos = default;
-            return false;
         }
 
         private void UnsubscribeFromDayNightRuntime()
@@ -967,178 +859,13 @@ namespace ApexShift.Runtime.World.Generation
         private void HandleDayChanged(int day)
         {
             _currentSpawnDay = Mathf.Max(1, day);
-            TrySpawnVarnaksForDay(_currentSpawnDay);
-        }
-
-        private void TrySpawnVarnaksForDay(int day)
-        {
-            if (!spawnVarnaksOnDayChange || _lastResult == null || _creatureRoot == null)
-            {
-                return;
-            }
-
-            int safeDay = Mathf.Max(1, day);
-            if (safeDay < Mathf.Max(2, firstVarnakSpawnDay))
-            {
-                return;
-            }
-
-            int remainingCapacity = GetRemainingVarnakSpawnCapacity();
-            if (remainingCapacity <= 0)
-            {
-                Debug.Log($"[VarnakSpawn] Day {safeDay}: capacity reached ({_spawnedVarnakCount}/{GetVarnakMaxCountForDay(safeDay)}).", this);
-                return;
-            }
-
-            int spawned = 0;
-            int attempts = Mathf.Max(1, varnakDailySpawnAttempts);
-            float chance = Mathf.Clamp01(GetVarnakSpawnMultiplierForDay(safeDay) * Mathf.Max(0f, varnakDailySpawnChanceMultiplier));
-            CreatureSpawnEntryAsset varnakEntry = new CreatureSpawnEntryAsset("varnak", 1, 1, 1f);
-
-            for (int attempt = 0; attempt < attempts && spawned < remainingCapacity; attempt++)
-            {
-                if (Random.value > chance)
-                {
-                    continue;
-                }
-
-                if (!TryGetVarnakSpawnPoint(out Vector3 pos))
-                {
-                    continue;
-                }
-
-                SpawnCreature(varnakEntry, pos);
-                spawned++;
-            }
-
-            if (spawned > 0)
-            {
-                Debug.Log($"[VarnakSpawn] Day {safeDay}: spawned {spawned}. Total={_spawnedVarnakCount}/{GetVarnakMaxCountForDay(safeDay)}.", this);
-            }
-        }
-
-        private bool TryGetVarnakSpawnPoint(out Vector3 pos)
-        {
-            pos = default;
-            if (_lastResult == null || _lastResult.Regions == null || _lastResult.Regions.Count == 0)
-            {
-                return false;
-            }
-
-            List<GeneratedBiomeRegion> preferred = _lastResult.Regions
-                .Where(region => region?.Biome != null
-                                 && region.Biome.BiomeId != "water"
-                                 && region.Biome.Creatures != null
-                                 && region.Biome.Creatures.Any(entry => entry != null && NormalizeCreatureId(entry.CreatureId) == "varnak"))
-                .ToList();
-
-            List<GeneratedBiomeRegion> candidates = preferred.Count > 0
-                ? preferred
-                : _lastResult.Regions.Where(region => region?.Biome != null && region.Biome.BiomeId != "water").ToList();
-
-            if (candidates.Count == 0)
-            {
-                return false;
-            }
-
-            int attempts = Mathf.Max(8, creatureSpawnPositionAttempts);
-            for (int i = 0; i < attempts; i++)
-            {
-                GeneratedBiomeRegion region = candidates[Random.Range(0, candidates.Count)];
-                Bounds spawnBounds = region.Bounds;
-                float padding = settings?.Padding ?? 5f;
-                float actualPadding = Mathf.Min(padding, region.Bounds.size.x * 0.2f);
-                spawnBounds.Expand(new Vector3(-actualPadding * 2f, 0f, -actualPadding * 2f));
-
-                if (TryGetSafeCreatureSpawnPoint(spawnBounds, "varnak", region.Biome.BiomeId, out pos))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private bool IsCreatureBiomeCandidate(Vector3 position, string expectedBiomeId)
-        {
-            return _islandTopography == null
-                   || string.Equals(_islandTopography.GetBiomeIdAt(position), expectedBiomeId, System.StringComparison.Ordinal);
-        }
-
-        private bool IsCreatureSpawnPointSafe(Vector3 pos, float minDistanceFromPlayer)
-        {
-            if (pos.magnitude < clearingRadius) return false;
-
-            // Topography: reject water, shoreline, and out-of-island positions
-            if (_islandTopography != null && !_islandTopography.IsSafeForCreatureAt(pos.x, pos.z))
-                return false;
-
-            if (_playerTransform != null)
-            {
-                // Player can be snapped to terrain after creation, so always use current transform.
-                Vector3 delta = pos - _playerTransform.position;
-                delta.y = 0f;
-                if (delta.sqrMagnitude < minDistanceFromPlayer * minDistanceFromPlayer)
-                {
-                    return false;
-                }
-            }
-
-            // Extra safety against center/start-area spawns even if player reference is missing.
-            float startSafeRadius = Mathf.Max(clearingRadius, minCreatureDistanceFromPlayer);
-            if (pos.sqrMagnitude < startSafeRadius * startSafeRadius)
-            {
-                return false;
-            }
-
-            return true;
+            SpawnSpeciesPopulations(false);
         }
 
         private int ResolveCurrentDay()
         {
-            ApexShift.Runtime.DayNight.DayNightRuntime dayNight = ApexShift.Runtime.DayNight.DayNightRuntime.Active;
+            var dayNight = DayNightRuntime.Active;
             return dayNight != null ? Mathf.Max(1, dayNight.Day) : 1;
-        }
-
-        private int GetVarnakMaxCountForDay(int day)
-        {
-            if (!scaleVarnaksByDay)
-            {
-                return Mathf.Max(0, varnakAbsoluteMaxCount);
-            }
-
-            int safeDay = Mathf.Max(1, day);
-            int addEvery = Mathf.Max(1, varnakAddEveryDays);
-            int additional = Mathf.FloorToInt((safeDay - 1) / (float)addEvery);
-            int maxForDay = Mathf.Max(0, varnakDayOneMaxCount) + additional;
-            return Mathf.Clamp(maxForDay, 0, Mathf.Max(0, varnakAbsoluteMaxCount));
-        }
-
-        private float GetVarnakSpawnMultiplierForDay(int day)
-        {
-            if (!scaleVarnaksByDay)
-            {
-                return 1f;
-            }
-
-            int safeDay = Mathf.Max(1, day);
-            float multiplier = varnakDayOneSpawnMultiplier + Mathf.Max(0, safeDay - 1) * Mathf.Max(0f, varnakSpawnMultiplierPerDay);
-            return Mathf.Clamp(multiplier, 0f, Mathf.Max(0f, varnakMaxSpawnMultiplier));
-        }
-
-        private int GetRemainingVarnakSpawnCapacity()
-        {
-            return Mathf.Max(0, GetVarnakMaxCountForDay(_currentSpawnDay) - _spawnedVarnakCount);
-        }
-
-        private bool CanSpawnMoreVarnaks()
-        {
-            return GetRemainingVarnakSpawnCapacity() > 0;
-        }
-
-        private static string NormalizeCreatureId(string creatureId)
-        {
-            return string.IsNullOrWhiteSpace(creatureId) ? string.Empty : creatureId.Trim().ToLowerInvariant();
         }
 
         private Vector3 GetRandomPointInBounds(Bounds bounds)
@@ -1315,25 +1042,13 @@ namespace ApexShift.Runtime.World.Generation
             }
         }
 
-        private void SpawnCreature(CreatureSpawnEntryAsset entry, Vector3 position)
+        public SpeciesDefinition ResolveSpecies(string id) => EffectiveBalance.GetSpecies(id) ?? SpeciesDefinition.CreateDefault(id);
+
+        public CreatureAgentView SpawnCreature(SpeciesDefinition definition, Vector3 position)
         {
-            CreatureIslandBoundsRuntime bounds = CreatureIslandBoundsRuntime.Active;
-            if (bounds != null && bounds.HasLand)
-            {
-                bounds.TryClampToLand(position, out position);
-            }
-
-            GameObject prefab = GetPrefabForCreature(entry.CreatureId);
-            GameObject instance;
-
-            float yaw = Random.Range(0f, 360f);
-            instance = _worldSpawnService.SpawnCreature(prefab, entry.CreatureId, position, yaw, _creatureRoot);
-
-            instance.name = $"Creature_{entry.CreatureId}";
-            if (NormalizeCreatureId(entry.CreatureId) == "varnak")
-            {
-                _spawnedVarnakCount++;
-            }
+            GameObject prefab = GetPrefabForCreature(definition.SpeciesId);
+            GameObject instance = (_worldSpawnService ?? (_worldSpawnService = new WorldSpawnService())).SpawnCreature(prefab, definition, position, Mathf.Repeat(position.x * 17f + position.z * 31f, 360f), _creatureRoot);
+            instance.name = $"Creature_{definition.SpeciesId}";
 
             // Remove existing movement components from asset pack prefabs to prevent player input interference
             var moveInput = instance.GetComponent("MovePlayerInput");
@@ -1367,7 +1082,7 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
 
             var view = instance.GetComponent<CreatureAgentView>();
             if (view == null) view = instance.AddComponent<CreatureAgentView>();
-            view.Configure(entry.CreatureId);
+            view.Configure(definition.SpeciesId);
 
             var wander = instance.GetComponent<CreatureWanderBehavior>();
             if (wander == null) wander = instance.AddComponent<CreatureWanderBehavior>();
@@ -1375,22 +1090,22 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             var needs = instance.GetComponent<CreatureNeedsRuntime>();
             if (needs == null) needs = instance.AddComponent<CreatureNeedsRuntime>();
             needs.SetGameBalanceConfigForTests(gameBalanceConfig);
-            needs.Configure(entry.CreatureId);
+            needs.Configure(definition.SpeciesId, definition);
 
             var health = instance.GetComponent<CreatureHealthRuntime>();
             if (health == null) health = instance.AddComponent<CreatureHealthRuntime>();
             health.SetGameBalanceConfigForTests(gameBalanceConfig);
             health.SetCreatureAudioProfileForTests(creatureAudioProfile);
-            health.Configure(entry.CreatureId);
+            health.Configure(definition.SpeciesId, definition);
 
             var hitbox = instance.GetComponent<CreatureHitboxRuntime>();
             if (hitbox == null) hitbox = instance.AddComponent<CreatureHitboxRuntime>();
-            hitbox.Configure(entry.CreatureId);
+            hitbox.Configure(definition.SpeciesId);
 
             var creatureAudio = instance.GetComponent<CreatureAudioRuntime>();
             if (creatureAudio == null) creatureAudio = instance.AddComponent<CreatureAudioRuntime>();
             creatureAudio.SetCreatureAudioProfile(creatureAudioProfile);
-            creatureAudio.Configure(entry.CreatureId);
+            creatureAudio.Configure(definition.SpeciesId);
 
             var oldFoodSeeking = instance.GetComponent<CreatureFoodSeekingBehavior>();
             if (oldFoodSeeking != null) oldFoodSeeking.enabled = false;
@@ -1398,7 +1113,7 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             var playerAwareness = instance.GetComponent<CreaturePlayerAwarenessBehavior>();
             if (playerAwareness == null) playerAwareness = instance.AddComponent<CreaturePlayerAwarenessBehavior>();
             playerAwareness.enabled = true;
-            playerAwareness.Configure(entry.CreatureId);
+            playerAwareness.Configure(definition.SpeciesId);
 
             var behavior = instance.GetComponent<CreatureBehaviorRuntime>();
             if (behavior == null) behavior = instance.AddComponent<CreatureBehaviorRuntime>();
@@ -1406,30 +1121,31 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             var animDriver = instance.GetComponent<CreatureAnimationDriver>();
             if (animDriver == null) animDriver = instance.AddComponent<CreatureAnimationDriver>();
             float runThreshold = 2.0f;
-            if (entry.CreatureId == "grazer") runThreshold = 1.2f;
-            else if (entry.CreatureId == "small_prey") runThreshold = 2.5f;
-            else if (entry.CreatureId == "varnak") runThreshold = 3.5f;
+            if (definition.Role == CreatureRole.HerbivoreOmnivore) runThreshold = 1.2f;
+            else if (definition.Role == CreatureRole.SmallPrey) runThreshold = 2.5f;
+            else if (definition.Role == CreatureRole.Predator) runThreshold = 3.5f;
             animDriver.Configure(runThreshold);
 
-            ConfigureCreatureMovement(entry.CreatureId, adapter, wander);
+            ConfigureCreatureMovement(definition.Role, adapter, wander);
 
             var ecosystem = EcosystemRuntime.Instance;
             ecosystem?.RegisterCreature(view);
+            return view;
         }
 
-        private void ConfigureCreatureMovement(string creatureId, CreatureNavigationAdapter adapter, CreatureWanderBehavior wander)
+        private void ConfigureCreatureMovement(CreatureRole role, CreatureNavigationAdapter adapter, CreatureWanderBehavior wander)
         {
-            switch (creatureId)
+            switch (role)
             {
-                case "small_prey":
+                case CreatureRole.SmallPrey:
                     adapter.ConfigureMovement(speed: 3.5f, acceleration: 8f, stoppingDistance: 0.5f);
                     wander.Configure(radius: 8f, minWait: 2f, maxWait: 4f);
                     break;
-                case "grazer":
+                case CreatureRole.HerbivoreOmnivore:
                     adapter.ConfigureMovement(speed: 2f, acceleration: 4f, stoppingDistance: 0.75f);
                     wander.Configure(radius: 12f, minWait: 4f, maxWait: 8f);
                     break;
-                case "varnak":
+                case CreatureRole.Predator:
                     adapter.ConfigureMovement(speed: 5f, acceleration: 12f, stoppingDistance: 1f);
                     wander.Configure(radius: 15f, minWait: 1f, maxWait: 3f);
                     break;

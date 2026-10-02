@@ -47,7 +47,7 @@ Include:
 | Action bar / held item | Assign or select a tool/item, switch slots and use the held item. | Held item/action bar state changes correctly and item use triggers expected behavior. | Not tested | |
 | Combat | Attack a creature with an available weapon or tool. | Creature can take damage, player feedback is readable and combat does not soft-lock. | Not tested | |
 | Animals AI | Observe nearby animals for movement, fleeing, chasing or needs behavior. | Animals move and react without freezing, jittering endlessly or spamming errors. | Not tested | |
-| Varnak days 1-5 | Progress or simulate the first five days and observe Varnak behavior, especially at night. | Varnak pressure appears without immediate unavoidable failure or broken AI state. | Not tested | |
+| Predator population progression | Progress or simulate the first five days and observe data-driven predator population and behavior. | Species population caps and player safety distances hold; hunting and fire fear remain functional. | Not tested | |
 | Death/game over | Let survival stats or combat reduce player health to failure. | Death/game-over flow triggers and the game can return to menu or restart cleanly. | Not tested | |
 | Fatigue/exhaustion | Stay active long enough to reduce rest/stamina or trigger fatigue. | Fatigue/exhaustion changes player state without corrupting movement or HUD. | Not tested | |
 | Tent sleep | Place a tent, lower rest/stamina, interact with the tent. | Player sleeps, time advances, rest/stamina increase, hunger decreases. Sleep is blocked if threatened. | Not tested | |

@@ -12,28 +12,15 @@ namespace ApexShift.Runtime.Creatures
                 return;
             }
 
-            string id = string.IsNullOrWhiteSpace(sourceCreature.CreatureId)
-                ? string.Empty
-                : sourceCreature.CreatureId.Trim().ToLowerInvariant();
-
-            int amount = ResolveMeatAmount(id);
+            string id = sourceCreature.SpeciesId;
+            int amount = sourceCreature.Definition.MeatDropAmount;
+            if (amount <= 0) return;
             Vector3 dropPosition = position + new Vector3(0f, 0.18f, 0f);
 
             GameObject drop = ItemPickupSpawner.Spawn("meat", amount, dropPosition, Quaternion.identity);
             if (drop != null)
             {
                 drop.name = $"MeatDrop_{id}";
-            }
-        }
-
-        private static int ResolveMeatAmount(string creatureId)
-        {
-            switch (creatureId)
-            {
-                case "small_prey": return 1;
-                case "grazer": return 2;
-                case "varnak": return 3;
-                default: return 1;
             }
         }
 
@@ -44,13 +31,10 @@ namespace ApexShift.Runtime.Creatures
                 return;
             }
 
-            string id = string.IsNullOrWhiteSpace(sourceCreature.CreatureId) ? string.Empty : sourceCreature.CreatureId.Trim().ToLowerInvariant();
-            if (id != "varnak")
-            {
-                return;
-            }
+            var definition = sourceCreature.Definition;
+            if (definition.BoneDropMax <= 0) return;
 
-            ItemPickupSpawner.Spawn("bone", Random.Range(1, 3), position + new Vector3(0.35f, 0.15f, 0.15f), Quaternion.identity);
+            ItemPickupSpawner.Spawn("bone", Random.Range(definition.BoneDropMin, definition.BoneDropMax + 1), position + new Vector3(0.35f, 0.15f, 0.15f), Quaternion.identity);
         }
     }
 }

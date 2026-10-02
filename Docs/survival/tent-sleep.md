@@ -34,7 +34,7 @@ Default sleep rules:
 - small health bonus: `2`
 - if it is night: sleep until around `06:15`
 - if it is day: nap for `3h`
-- block sleep if a living Varnak is within `34m`
+- block sleep if a living creature with the Predator role is within `34m`
 
 ## Failure cases
 
@@ -45,7 +45,7 @@ Sleep is blocked when:
 - `PlayerSurvivalRuntime` is missing,
 - the player is dead,
 - hunger is too low,
-- a Varnak is nearby.
+- a Predator-role creature is nearby.
 
 Failures are logged and routed through `PlayerActionFeedback.ShowMessage()` when available.
 
@@ -66,7 +66,7 @@ The tent itself is already saved as a building. On restore, `PlaceableStructureR
 7. Confirm rest and stamina increase.
 8. Confirm hunger decreases.
 9. Confirm time advances through `DayNightRuntime`.
-10. Try sleeping while a Varnak is nearby and confirm it is blocked.
+10. Try sleeping while a Predator-role creature is nearby and confirm it is blocked.
 11. Save/load and verify the restored tent still allows sleeping.
 
 ## Future improvements

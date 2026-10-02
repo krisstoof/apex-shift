@@ -174,7 +174,7 @@ namespace ApexShift.Tests.Regression
 
                 CreatureBehaviorBrain brain = grazerObject.GetComponent<CreatureBehaviorBrain>();
                 Assert.AreEqual(CreatureBehaviorState.Flee, brain.State);
-                Assert.IsTrue(brain.DecisionReason.Contains("flee_varnak"));
+                Assert.IsTrue(brain.DecisionReason.Contains("flee_predator"));
             }
             finally
             {
@@ -198,7 +198,7 @@ namespace ApexShift.Tests.Regression
                 grazerObject.GetComponent<CreatureHealthRuntime>().TakeDamage(999f);
 
                 int meatDrops = Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include)
-                    .Count(go => go != null && go.name.StartsWith("MeatDrop_grazer"));
+                    .Count(go => go != null && go.name.StartsWith("MeatDrop_island_forager"));
 
                 Assert.AreEqual(1, meatDrops);
                 Assert.AreEqual(CreatureBehaviorState.Dead, grazerObject.GetComponent<CreatureBehaviorBrain>().State);

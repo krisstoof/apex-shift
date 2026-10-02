@@ -1,3 +1,5 @@
+> Historical migration balance snapshot. Creature population fields and IDs below describe the pre-#99 implementation, not current production guidance. See [habitat fauna configuration](../creature-habitat-profiles.md) for per-species population progression.
+
 # Balance parity report - Godot source vs Unity runtime
 
 Issue: #49 - `[MIGRATION] Validate migrated balance and species data against Godot source`

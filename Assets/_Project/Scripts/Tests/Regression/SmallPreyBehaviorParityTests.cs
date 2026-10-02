@@ -74,7 +74,7 @@ namespace ApexShift.Tests.Regression
 
                 CreatureBehaviorBrain brain = preyObject.GetComponent<CreatureBehaviorBrain>();
                 Assert.AreEqual(CreatureBehaviorState.Flee, brain.State);
-                Assert.IsTrue(brain.DecisionReason.Contains("flee_varnak"));
+                Assert.IsTrue(brain.DecisionReason.Contains("flee_predator"));
             }
             finally
             {
