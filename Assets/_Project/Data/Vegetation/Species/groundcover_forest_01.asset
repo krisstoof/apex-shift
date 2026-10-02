@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.World.Vegetation.VegetationSpeciesAsset
   speciesId: groundcover_forest_01
   displayName: Forest Groundcover 01
-  visualPrefab: {fileID: 0}
+  visualPrefab: {fileID: 3375006452098112039, guid: bccc6ea16b030f9469ca951864c0c79f, type: 3}
   category: 2
   form: 8
   minDistanceToCoast: 0

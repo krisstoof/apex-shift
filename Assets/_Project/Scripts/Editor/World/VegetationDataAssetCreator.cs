@@ -17,6 +17,7 @@ namespace ApexShift.Editor.World
         private const string CatalogPath = Root + "/VegetationCatalog.asset";
         private const string HabitatCatalogPath = Root + "/HabitatVegetationCatalog.asset";
         private const string BiomeCatalogPath = "Assets/_Project/Data/Biomes/BiomeCatalog.asset";
+        private const string DefaultVisualFolder = "Assets/_Project/Prefabs/World/Resources/Embersstorm/";
 
         [MenuItem("Apex Shift/World/Create or Update Vegetation Data")]
         public static void CreateOrUpdateAssets()
@@ -34,11 +35,11 @@ namespace ApexShift.Editor.World
             var habitats = HabitatVegetationProfileAsset.CanonicalHabitatIds;
             var species = new List<VegetationSpeciesAsset>
             {
-                EnsureSpecies("tree_leafy_01", "Leafy Tree 01", VegetationCategory.Tree, VegetationForm.CanopyTree, 4.2f, .20f, 1.9f, .95f, 100f, 5, 1.2f, habitats, true, "leafy_tree"),
-                EnsureSpecies("tree_conifer_01", "Conifer Tree 01", VegetationCategory.Tree, VegetationForm.CanopyTree, 3.8f, .16f, 2.1f, 1.05f, 120f, 6, 1.35f, new[] { HabitatIds.RockyUpland }, true, "conifer_tree"),
-                EnsureSpecies("tree_dead_01", "Dead Tree 01", VegetationCategory.DeadTree, VegetationForm.StandingDeadTree, 4.5f, .18f, 1.5f, .75f, 70f, 4, .9f, habitats, true, "dry_tree"),
-                EnsureSpecies("shrub_forest_01", "Forest Shrub 01", VegetationCategory.Shrub, VegetationForm.Shrub, 1.4f, .08f, .6f, .3f, 100f, 0, 0f, habitats, true, "berry_bush"),
-                EnsureSpecies("groundcover_forest_01", "Forest Groundcover 01", VegetationCategory.GroundCover, VegetationForm.GroundCover, .55f, .05f, .25f, .125f, 100f, 0, 0f, habitats, false, string.Empty)
+                EnsureSpecies("tree_leafy_01", "Leafy Tree 01", VegetationCategory.Tree, VegetationForm.CanopyTree, 4.2f, .20f, 1.9f, .95f, 100f, 5, 1.2f, habitats, true, "leafy_tree", "ES_LeafyTree.prefab"),
+                EnsureSpecies("tree_conifer_01", "Conifer Tree 01", VegetationCategory.Tree, VegetationForm.CanopyTree, 3.8f, .16f, 2.1f, 1.05f, 120f, 6, 1.35f, new[] { HabitatIds.RockyUpland }, true, "conifer_tree", "ES_ConiferTree.prefab"),
+                EnsureSpecies("tree_dead_01", "Dead Tree 01", VegetationCategory.DeadTree, VegetationForm.StandingDeadTree, 4.5f, .18f, 1.5f, .75f, 70f, 4, .9f, habitats, true, "dry_tree", "ES_DryTree.prefab"),
+                EnsureSpecies("shrub_forest_01", "Forest Shrub 01", VegetationCategory.Shrub, VegetationForm.Shrub, 1.4f, .08f, .6f, .3f, 100f, 0, 0f, habitats, true, "berry_bush", "ES_BerryBush.prefab"),
+                EnsureSpecies("groundcover_forest_01", "Forest Groundcover 01", VegetationCategory.GroundCover, VegetationForm.GroundCover, .55f, .05f, .25f, .125f, 100f, 0, 0f, habitats, false, string.Empty, "ES_GrassPatch.prefab")
             };
             VegetationCatalogAsset catalog = LoadOrCreate<VegetationCatalogAsset>(CatalogPath);
             catalog.SetSpecies(species);
@@ -72,10 +73,20 @@ namespace ApexShift.Editor.World
 
         private static VegetationSpeciesAsset EnsureSpecies(string id, string label, VegetationCategory category,
             VegetationForm form, float spacing, float trunkRadius, float trunkHeight, float trunkCenterY,
-            float health, int regrowthDays, float fallDuration, IEnumerable<string> habitats, bool harvestable, string resourceKind)
+            float health, int regrowthDays, float fallDuration, IEnumerable<string> habitats, bool harvestable, string resourceKind,
+            string defaultPrefabName)
         {
             var asset = LoadOrCreate<VegetationSpeciesAsset>(SpeciesFolder + "/" + id + ".asset");
             GameObject visual = asset.VisualPrefab;
+            if (visual == null)
+            {
+                string defaultPrefabPath = DefaultVisualFolder + defaultPrefabName;
+                visual = AssetDatabase.LoadAssetAtPath<GameObject>(defaultPrefabPath);
+                if (visual == null)
+                    throw new FileNotFoundException(
+                        $"Vegetation species '{id}' has no assigned VisualPrefab and its default prefab is missing: {defaultPrefabPath}",
+                        defaultPrefabPath);
+            }
             GameObject depleted = asset.DepletedVisualPrefab;
             asset.Configure(id, label, visual, category, .8f, 1.2f, spacing,
                 0f, category == VegetationCategory.Tree ? 28f : category == VegetationCategory.GroundCover ? 35f : 40f,

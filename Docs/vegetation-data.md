@@ -56,7 +56,11 @@ not habitat naming. TreeId equals placement InstanceId and remains stable across
 stream out/in and save/load; the tree-save DTO and lifecycle are unchanged.
 Reports/debug counters use habitat/species keys and habitat/terrain/coast
 rejection reasons.
-This checkout still has unassigned VisualPrefab references on the five canonical
-species assets. The validator reports those content dependencies; assign approved
-presentation prefabs before expecting the production tropical mix to be visible.
-The creator preserves such assignments rather than substituting placeholder assets.
+When VisualPrefab is unassigned, the creator binds existing repository wrappers
+under `Assets/_Project/Prefabs/World/Resources/Embersstorm/`:
+`tree_leafy_01` → `ES_LeafyTree`, `tree_conifer_01` → `ES_ConiferTree`,
+`tree_dead_01` → `ES_DryTree`, `shrub_forest_01` → `ES_BerryBush`,
+and `groundcover_forest_01` → `ES_GrassPatch`. These provide the current vertical
+slice, not new SpeedTree models. Existing manual visuals and depleted/stump
+references remain untouched. Missing defaults cause an explicit authoring error.
+Conifers and dead trees remain outside the active tropical mix.

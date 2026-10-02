@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.World.Vegetation.VegetationSpeciesAsset
   speciesId: tree_leafy_01
   displayName: Leafy Tree 01
-  visualPrefab: {fileID: 0}
+  visualPrefab: {fileID: 3171389467917301603, guid: 874dc56b8045a354584c2f9bdde9232a, type: 3}
   category: 0
   form: 0
   minDistanceToCoast: 0

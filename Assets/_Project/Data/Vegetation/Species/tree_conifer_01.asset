@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.World.Vegetation.VegetationSpeciesAsset
   speciesId: tree_conifer_01
   displayName: Conifer Tree 01
-  visualPrefab: {fileID: 0}
+  visualPrefab: {fileID: 7836714227607170837, guid: ad80fb25998d60b4ca8d6829674016a0, type: 3}
   category: 0
   form: 0
   minDistanceToCoast: 0

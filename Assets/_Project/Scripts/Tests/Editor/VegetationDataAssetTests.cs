@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ApexShift.Editor.World;
+using ApexShift.EditorTools.Validation;
 using ApexShift.Runtime.World.Vegetation;
 using UnityEditor;
 using ApexShift.Runtime.World.Topography;
@@ -211,6 +212,80 @@ namespace ApexShift.Tests.Editor
             Assert.That(errors.Exists(error => error.Contains("null")), Is.True);
             Assert.That(catalog.GetProfile(" COAST "), Is.SameAs(profile));
             Assert.That(catalog.GetProfile("water"), Is.Null);
+        }
+
+        [Test]
+        public void ProductionHabitatSpeciesHaveSpawnableVisualsAndPassValidation()
+        {
+            const string root = "Assets/_Project/Data/Vegetation/";
+            var speciesCatalog = AssetDatabase.LoadAssetAtPath<VegetationCatalogAsset>(root + "VegetationCatalog.asset");
+            var habitatCatalog = AssetDatabase.LoadAssetAtPath<HabitatVegetationCatalogAsset>(root + "HabitatVegetationCatalog.asset");
+            Assert.That(speciesCatalog, Is.Not.Null);
+            Assert.That(habitatCatalog, Is.Not.Null);
+            Assert.That(habitatCatalog.Profiles, Is.Not.Empty);
+            foreach (HabitatVegetationProfileAsset profile in habitatCatalog.Profiles)
+            {
+                Assert.That(profile.Species, Is.Not.Empty, profile.HabitatId);
+                foreach (HabitatVegetationSpeciesEntry entry in profile.Species)
+                {
+                    Assert.That(entry.Species, Is.Not.Null);
+                    Assert.That(entry.Species, Is.SameAs(speciesCatalog.GetSpecies(entry.Species.SpeciesId)));
+                    Assert.That(entry.Species.VisualPrefab, Is.Not.Null, profile.HabitatId + "/" + entry.Species.SpeciesId);
+                }
+                var placements = new VegetationPlacementPlanner().Plan(981,
+                    habitatCatalog, new VegetationGenerationSettings(),
+                    new Bounds(Vector3.zero, new Vector3(80f, 1f, 80f)),
+                    _ => new VegetationEnvironmentSample(true, false, false, profile.HabitatId,
+                        .5f, 0f, .5f, TerrainType.Forest, 20f),
+                    _ => 0f, Vector3.one * 1000f, 0f, null);
+                Assert.That(placements, Is.Not.Empty, profile.HabitatId + " must produce spawnable production placements.");
+                foreach (VegetationPlacement placement in placements)
+                    Assert.That(placement.HabitatId, Is.EqualTo(profile.HabitatId));
+            }
+            foreach (VegetationSpeciesAsset species in speciesCatalog.Species)
+                Assert.That(species.VisualPrefab, Is.Not.Null, species.SpeciesId);
+            Assert.That(VegetationDataValidator.CollectProblems(), Is.Empty,
+                "Canonical production vegetation must have valid prefab dependencies, not just valid profiles.");
+        }
+
+        [Test]
+        public void EnsureAssets_BindsRepositoryDefaultsOnlyWhenVisualIsMissing()
+        {
+            const string root = "Assets/_Project/Data/Vegetation/Species/";
+            const string visuals = "Assets/_Project/Prefabs/World/Resources/Embersstorm/";
+            var defaults = new Dictionary<string, string>
+            {
+                { "tree_leafy_01", "ES_LeafyTree.prefab" },
+                { "tree_conifer_01", "ES_ConiferTree.prefab" },
+                { "tree_dead_01", "ES_DryTree.prefab" },
+                { "shrub_forest_01", "ES_BerryBush.prefab" },
+                { "groundcover_forest_01", "ES_GrassPatch.prefab" }
+            };
+            var depletedById = new Dictionary<string, GameObject>();
+            foreach (var pair in defaults)
+            {
+                var species = AssetDatabase.LoadAssetAtPath<VegetationSpeciesAsset>(root + pair.Key + ".asset");
+                Assert.That(species, Is.Not.Null);
+                var backup = ScriptableObject.CreateInstance<VegetationSpeciesAsset>();
+                EditorUtility.CopySerialized(species, backup);
+                speciesBackups.Add(species, backup);
+                var serialized = new SerializedObject(species);
+                serialized.FindProperty("visualPrefab").objectReferenceValue = null;
+                GameObject depleted = CreateTemporaryPrefab("Assets/_Project/Data/Vegetation/__Test_Default_" + pair.Key + "_Depleted.prefab");
+                depletedById.Add(pair.Key, depleted);
+                serialized.FindProperty("depletedVisualPrefab").objectReferenceValue = depleted;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
+            VegetationDataAssetCreator.EnsureAssets();
+            VegetationDataAssetCreator.EnsureAssets();
+            foreach (var pair in defaults)
+            {
+                var species = AssetDatabase.LoadAssetAtPath<VegetationSpeciesAsset>(root + pair.Key + ".asset");
+                GameObject expected = AssetDatabase.LoadAssetAtPath<GameObject>(visuals + pair.Value);
+                Assert.That(expected, Is.Not.Null, visuals + pair.Value);
+                Assert.That(species.VisualPrefab, Is.SameAs(expected), pair.Key);
+                Assert.That(species.DepletedVisualPrefab, Is.SameAs(depletedById[pair.Key]));
+            }
         }
 
         private static void AssertProfileDensity(string habitatId, float expected)

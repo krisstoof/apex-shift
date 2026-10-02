@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: ApexShift.Runtime::ApexShift.Runtime.World.Vegetation.VegetationSpeciesAsset
   speciesId: tree_dead_01
   displayName: Dead Tree 01
-  visualPrefab: {fileID: 0}
+  visualPrefab: {fileID: 864783069106214523, guid: 65088dc32015aca498efb83513de2139, type: 3}
   category: 3
   form: 9
   minDistanceToCoast: 0
