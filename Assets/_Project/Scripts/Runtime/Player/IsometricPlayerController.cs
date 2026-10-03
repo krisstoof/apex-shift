@@ -316,6 +316,9 @@ namespace ApexShift.Runtime.Player
             movementEnabled = enabled;
         }
 
+        public bool MovementEnabled => movementEnabled;
+        public void RefreshWaterState() => SyncWaterStateFromTopography();
+
         /// <summary>Called by PlayerWaterDetector when the player enters a water trigger volume.</summary>
         public void EnterWater()
         {

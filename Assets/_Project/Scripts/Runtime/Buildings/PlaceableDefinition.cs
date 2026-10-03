@@ -40,6 +40,9 @@ namespace ApexShift.Runtime.Buildings
         [SerializeField] private bool rejectWater = true;
         [SerializeField] private bool requireWorldBounds = true;
         [SerializeField] private bool requireNavMeshSample;
+        [SerializeField] private PlaceableSurfaceMode surfaceMode;
+        [SerializeField] private float minDistanceToCoast;
+        [SerializeField] private float maxDistanceToCoast = 16f;
 
         public string BuildingId => Normalize(buildingId, itemId);
         public string ItemId => BuildingId;
@@ -56,6 +59,9 @@ namespace ApexShift.Runtime.Buildings
         public bool RejectWater => rejectWater;
         public bool RequireWorldBounds => requireWorldBounds;
         public bool RequireNavMeshSample => requireNavMeshSample;
+        public PlaceableSurfaceMode SurfaceMode => surfaceMode;
+        public float MinDistanceToCoast => Mathf.Max(0f, minDistanceToCoast);
+        public float MaxDistanceToCoast => Mathf.Max(MinDistanceToCoast, maxDistanceToCoast);
 
         public bool MatchesBuilding(string candidateBuildingId)
         {
@@ -64,13 +70,18 @@ namespace ApexShift.Runtime.Buildings
 
         public bool MatchesItem(string candidateItemId) => MatchesBuilding(candidateItemId);
 
-        public static PlaceableDefinition CreateRuntime(string buildingId, string displayName, Vector3 footprintSize, IEnumerable<PlaceableBuildCost> buildCosts)
+        public static PlaceableDefinition CreateRuntime(string buildingId, string displayName, Vector3 footprintSize, IEnumerable<PlaceableBuildCost> buildCosts,
+            PlaceableSurfaceMode surfaceMode = PlaceableSurfaceMode.Land, float minDistanceToCoast = 0f, float maxDistanceToCoast = 16f)
         {
             PlaceableDefinition definition = CreateInstance<PlaceableDefinition>();
             definition.buildingId = Normalize(buildingId, buildingId);
             definition.itemId = definition.buildingId;
             definition.displayName = string.IsNullOrWhiteSpace(displayName) ? definition.buildingId : displayName.Trim();
             definition.footprintSize = footprintSize;
+            definition.surfaceMode = surfaceMode;
+            definition.minDistanceToCoast = minDistanceToCoast;
+            definition.maxDistanceToCoast = maxDistanceToCoast;
+            definition.rejectWater = surfaceMode == PlaceableSurfaceMode.Land;
             definition.materialCosts = buildCosts != null ? buildCosts.Where(cost => cost != null).ToList() : new List<PlaceableBuildCost>();
             definition.name = $"RuntimePlaceable_{definition.buildingId}";
             return definition;

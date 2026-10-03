@@ -506,7 +506,7 @@ namespace ApexShift.Runtime.World.Topography
             {
                 for (int z = 0; z < size; z++)
                     for (int x = 0; x < size; x++)
-                        result[x, z] = isLand[x, z] ? noCoast : 0f;
+                        result[x, z] = noCoast;
                 return result;
             }
 
@@ -515,7 +515,9 @@ namespace ApexShift.Runtime.World.Topography
                 for (int z = 0; z < size; z++) input[z] = horizontal[x, z];
                 DistanceTransform1D(input, output, size, sites, boundaries);
                 for (int z = 0; z < size; z++)
-                    result[x, z] = isLand[x, z] ? Mathf.Sqrt(output[z]) * tileSize : 0f;
+                    // The shoreline distance is authoritative on both sides of the coast.
+                    // Water needs the same cached distance for launch validation and ocean danger.
+                    result[x, z] = Mathf.Sqrt(output[z]) * tileSize;
             }
             return result;
         }

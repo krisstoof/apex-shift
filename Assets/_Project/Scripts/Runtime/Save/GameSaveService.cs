@@ -122,6 +122,9 @@ namespace ApexShift.Runtime.Save
             if (playerSurvival != null)
             {
                 Vector3 pos = playerSurvival.transform.position;
+                if (buildingRegistry != null && buildingRegistry.TryGetActiveRaftAttempt(out var raft)
+                    && raft.MountedPlayer == playerSurvival.gameObject)
+                    pos = raft.SafeReturnPoint;
                 survival.SetPosition(pos.x, pos.y, pos.z);
             }
 

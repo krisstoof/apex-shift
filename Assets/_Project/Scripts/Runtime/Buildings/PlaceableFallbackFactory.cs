@@ -21,6 +21,7 @@ namespace ApexShift.Runtime.Buildings
                 case "wall": BuildWall(root.transform); break;
                 case "trap": BuildTrap(root.transform); break;
                 case "tent": BuildTent(root.transform); break;
+                case "raft": BuildRaft(root.transform); break;
                 default: AddBox(root.transform, "FallbackBlock", Vector3.up * 0.5f, new Vector3(1f, 1f, 1f), Wood()); break;
             }
 
@@ -38,7 +39,25 @@ namespace ApexShift.Runtime.Buildings
                 case "wall": return new Vector3(3.2f, 2.2f, 0.6f);
                 case "trap": return new Vector3(2.4f, 1.1f, 2.0f);
                 case "tent": return new Vector3(3.0f, 2.0f, 2.4f);
+                case "raft": return new Vector3(4.8f, 0.6f, 2.7f);
                 default: return new Vector3(1.5f, 1f, 1.5f);
+            }
+        }
+
+        private static void BuildRaft(Transform root)
+        {
+            GameObject visual = new GameObject("RaftVisual");
+            visual.transform.SetParent(root, false);
+            for (int i = 0; i < 7; i++)
+                AddBox(visual.transform, "DeckLog", new Vector3(0f, 0.25f, (i - 3) * 0.37f),
+                    new Vector3(4.8f, 0.32f, 0.32f), i % 2 == 0 ? Wood() : WoodLight());
+            foreach (float x in new[] { -1.6f, 1.6f })
+            {
+                AddBox(visual.transform, "CrossBeam", new Vector3(x, 0.08f, 0f),
+                    new Vector3(0.22f, 0.16f, 2.7f), WoodDark());
+                foreach (float z in new[] { -0.85f, 0.85f })
+                    AddBox(visual.transform, "RopeBinding", new Vector3(x, 0.43f, z),
+                        new Vector3(0.32f, 0.06f, 0.65f), Cloth());
             }
         }
 

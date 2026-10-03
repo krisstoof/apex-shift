@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using ApexShift.Core.Save;
+using ApexShift.Runtime.Escape;
+using ApexShift.Runtime.World;
 using ApexShift.Runtime.World.Generation;
 using UnityEngine;
 
@@ -68,7 +70,8 @@ namespace ApexShift.Runtime.Buildings
         public List<BuildingSaveData> CaptureSaveData()
         {
             return structures
-                .Where(structure => structure != null && structure.gameObject != null)
+                .Where(structure => structure != null && structure.gameObject.activeSelf
+                    && (structure.Raft == null || structure.Raft.State == RaftState.Placed))
                 .OrderBy(structure => structure.InstanceId)
                 .Select(structure => structure.ToSaveData())
                 .Where(data => data != null)
@@ -88,14 +91,16 @@ namespace ApexShift.Runtime.Buildings
             {
                 Vector3 position = new Vector3(data.X, data.Y, data.Z);
                 GameObject prefab = ResolvePrefab(data.BuildingId);
-                if (prefab == null)
+                if (prefab == null && data.BuildingId != "raft")
                 {
                     Debug.LogError($"[BuildingRegistry] Cannot restore '{data.BuildingId}' ({data.InstanceId}): no prefab is registered.", this);
                     continue;
                 }
 
                 Quaternion rotation = WorldSpawnRotation.ComposeYawWithPrefabRotation(prefab, data.RotationY);
-                GameObject instance = Instantiate(prefab, position, rotation, targetParent);
+                if (data.BuildingId == "raft") position.y = WorldWaterLevel.SurfaceY;
+                GameObject instance = prefab != null ? Instantiate(prefab, position, rotation, targetParent)
+                    : PlaceableFallbackFactory.CreateFallback(data.BuildingId, position, rotation, targetParent);
 
                 instance.name = $"Building_{data.BuildingId}_{data.InstanceId}";
                 PlaceableStructureRuntime structure = instance.GetComponent<PlaceableStructureRuntime>();
@@ -120,6 +125,13 @@ namespace ApexShift.Runtime.Buildings
             return null;
         }
 
+        public bool TryGetActiveRaftAttempt(out RaftRuntime raft)
+        {
+            raft = structures.Where(structure => structure != null).Select(structure => structure.Raft)
+                .FirstOrDefault(candidate => candidate != null && candidate.IsAttemptActive);
+            return raft != null;
+        }
+
         private void ClearRuntimeStructures()
         {
             PlaceableStructureRuntime[] existing = structures.Where(item => item != null).ToArray();
@@ -133,6 +145,7 @@ namespace ApexShift.Runtime.Buildings
 
                 if (Application.isPlaying)
                 {
+                    structure.gameObject.SetActive(false);
                     Destroy(structure.gameObject);
                 }
                 else

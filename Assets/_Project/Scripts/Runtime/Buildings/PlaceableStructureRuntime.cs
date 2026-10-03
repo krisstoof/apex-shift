@@ -4,6 +4,7 @@ using ApexShift.Runtime.Audio;
 using ApexShift.Runtime.Fire;
 using ApexShift.Runtime.Interaction;
 using ApexShift.Runtime.Player;
+using ApexShift.Runtime.Escape;
 using UnityEngine;
 
 namespace ApexShift.Runtime.Buildings
@@ -23,14 +24,15 @@ namespace ApexShift.Runtime.Buildings
         public string InstanceId => Normalize(instanceId, string.Empty);
         public Vector3 FootprintSize => new Vector3(Mathf.Max(0.25f, footprintSize.x), Mathf.Max(0.25f, footprintSize.y), Mathf.Max(0.25f, footprintSize.z));
         public bool BlocksPlacement => blocksPlacement;
-        public string Prompt => SleepRuntime != null ? SleepRuntime.Prompt : (string.IsNullOrWhiteSpace(prompt) ? $"Use {BuildingId}" : prompt);
-        public int Priority => BuildingId == "tent" ? 35 : 25;
+        public string Prompt => Raft != null ? Raft.Prompt : SleepRuntime != null ? SleepRuntime.Prompt : (string.IsNullOrWhiteSpace(prompt) ? $"Use {BuildingId}" : prompt);
+        public int Priority => Raft != null ? 40 : BuildingId == "tent" ? 35 : 25;
         public float InteractionDuration => SleepRuntime != null ? SleepRuntime.InteractionDuration : Mathf.Max(0.05f, interactionDuration);
         public StorageContainerRuntime StorageContainer => GetComponent<StorageContainerRuntime>();
         public TrapDamageRuntime TrapDamage => GetComponent<TrapDamageRuntime>();
         public CampfireRuntime Campfire => GetComponent<CampfireRuntime>();
         public TentSleepRuntime SleepRuntime => GetComponent<TentSleepRuntime>();
         public TentRestRuntime TentRest => GetComponent<TentRestRuntime>();
+        public RaftRuntime Raft => GetComponent<RaftRuntime>();
 
         private void OnEnable()
         {
@@ -40,6 +42,7 @@ namespace ApexShift.Runtime.Buildings
                 EnsureTrapDamageIfNeeded();
                 EnsureCampfireIfNeeded();
                 EnsureTentSleepIfNeeded();
+                EnsureRaftIfNeeded();
                 BuildingRegistry.Active?.Register(this);
             }
         }
@@ -65,6 +68,7 @@ namespace ApexShift.Runtime.Buildings
             EnsureCampfireIfNeeded();
             EnsureTentSleepIfNeeded();
             EnsureTentRestIfNeeded();
+            EnsureRaftIfNeeded();
             BuildingRegistry.Active?.Register(this);
         }
 
@@ -89,6 +93,8 @@ namespace ApexShift.Runtime.Buildings
                 return false;
             }
 
+            if (Raft != null) return Raft.CanInteract(actor);
+
             TentSleepRuntime sleepRuntime = SleepRuntime;
             if (sleepRuntime != null)
             {
@@ -104,6 +110,8 @@ namespace ApexShift.Runtime.Buildings
             {
                 return false;
             }
+
+            if (Raft != null) return Raft.TryLaunch(actor);
 
             StorageContainerRuntime container = StorageContainer;
             if (container != null)
@@ -189,6 +197,12 @@ namespace ApexShift.Runtime.Buildings
             }
         }
 
+        private void EnsureRaftIfNeeded()
+        {
+            if (BuildingId == "raft")
+                _ = GetComponent<RaftRuntime>() ?? gameObject.AddComponent<RaftRuntime>();
+        }
+
         private void EnsureCollider()
         {
             Collider existing = GetComponentInChildren<Collider>();
@@ -211,6 +225,7 @@ namespace ApexShift.Runtime.Buildings
                 case "wall": return "Inspect wall";
                 case "trap": return "Inspect trap";
                 case "tent": return "Sleep in tent";
+                case "raft": return "Board raft";
                 default: return "Use structure";
             }
         }

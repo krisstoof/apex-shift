@@ -85,6 +85,11 @@ namespace ApexShift.Core.Crafting
                 {
                     new RecipeIngredient(new ItemId("wood"), 4)
                 }),
+                new RecipeDefinition(new RecipeId("raft"), new ItemId("raft"), 1, new[]
+                {
+                    new RecipeIngredient(new ItemId("wood"), 10),
+                    new RecipeIngredient(new ItemId("fiber"), 6)
+                }),
                 new RecipeDefinition(new RecipeId("tent"), new ItemId("tent"), 1, new[]
                 {
                     new RecipeIngredient(new ItemId("wood"), 4),

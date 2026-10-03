@@ -8,6 +8,9 @@ using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Resources;
 using ApexShift.Runtime.World;
 using ApexShift.Runtime.World.Generation;
+using ApexShift.Runtime.World.Topography;
+using ApexShift.Runtime.Events;
+using ApexShift.Runtime.Story;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.EventSystems;
@@ -155,6 +158,24 @@ namespace ApexShift.Runtime.Buildings
                 Debug.Log($"[BuildingPlacement] Cannot place {selectedDefinition.BuildingId}: {currentValidation.reason}", this);
                 return false;
             }
+            return TryPlaceCurrentPose();
+        }
+
+        /// <summary>Explicit pose using the same validation/consumption path as cursor placement.</summary>
+        public bool TryPlaceAt(string buildingId, Vector3 position, Quaternion rotation)
+        {
+            ResolveReferences();
+            if (!SelectBuilding(buildingId)) return false;
+            currentPosition = position;
+            currentRotation = rotation;
+            currentYaw = rotation.eulerAngles.y;
+            return TryPlaceCurrentPose();
+        }
+
+        private bool TryPlaceCurrentPose()
+        {
+            if (selectedDefinition.SurfaceMode == PlaceableSurfaceMode.ShorelineWater)
+                currentPosition.y = WorldWaterLevel.SurfaceY;
             currentValidation = ValidatePlacement(selectedDefinition, currentPosition, currentRotation);
             if (!currentValidation.isValid)
             {
@@ -169,7 +190,7 @@ namespace ApexShift.Runtime.Buildings
             }
 
             GameObject prefab = ResolvePrefab(selectedDefinition);
-            if (prefab == null)
+            if (prefab == null && selectedDefinition.BuildingId != "raft")
             {
                 currentValidation = PlacementValidationResult.Invalid("missing building prefab");
                 Debug.LogError($"[BuildingPlacement] Cannot place '{selectedDefinition.BuildingId}': no prefab is registered.", this);
@@ -177,7 +198,8 @@ namespace ApexShift.Runtime.Buildings
             }
 
             Quaternion spawnRotation = WorldSpawnRotation.ComposeYawWithPrefabRotation(prefab, currentYaw);
-            GameObject instance = Instantiate(prefab, currentPosition, spawnRotation, buildingParent);
+            GameObject instance = prefab != null ? Instantiate(prefab, currentPosition, spawnRotation, buildingParent)
+                : PlaceableFallbackFactory.CreateFallback(selectedDefinition.BuildingId, currentPosition, spawnRotation, buildingParent);
 
             PlaceableStructureRuntime structure = instance.GetComponent<PlaceableStructureRuntime>();
             if (structure == null)
@@ -186,6 +208,8 @@ namespace ApexShift.Runtime.Buildings
             }
 
             structure.Configure(selectedDefinition.BuildingId, null, selectedDefinition.FootprintSize);
+            if (structure.Raft != null)
+                structure.Raft.Configure(selectedDefinition.MinDistanceToCoast, selectedDefinition.MaxDistanceToCoast);
             buildingRegistry?.Register(structure);
 
             if (!RuntimeDebugSettings.FreeBuildingEnabled)
@@ -193,6 +217,8 @@ namespace ApexShift.Runtime.Buildings
                 ConsumeBuildMaterials(selectedDefinition);
             }
             WorldActionAudio.PlayBuild(instance.transform.position);
+            if (structure.Raft != null)
+                GameEventBus.PublishStorySignal(StorySignalIds.RaftBuilt, structure.InstanceId);
             Debug.Log($"[BuildingPlacement] Placed {selectedDefinition.BuildingId}.", instance);
 
             if (!RuntimeDebugSettings.FreeBuildingEnabled && !HasRequiredMaterials(selectedDefinition))
@@ -215,7 +241,13 @@ namespace ApexShift.Runtime.Buildings
                 return PlacementValidationResult.Invalid("outside world bounds");
             }
 
-            if (definition.RejectWater && IsWater(position))
+            if (definition.SurfaceMode == PlaceableSurfaceMode.ShorelineWater)
+            {
+                PlacementValidationResult surface = PlaceableSurfaceValidation.ValidateWater(position,
+                    IslandTopographyRuntime.Active, WorldBounds.Active, definition.MinDistanceToCoast, definition.MaxDistanceToCoast);
+                if (!surface.isValid) return surface;
+            }
+            else if (definition.RejectWater && IsWater(position))
             {
                 return PlacementValidationResult.Invalid("water placement rejected");
             }
@@ -336,6 +368,8 @@ namespace ApexShift.Runtime.Buildings
             }
 
             currentPosition = target;
+            if (selectedDefinition != null && selectedDefinition.SurfaceMode == PlaceableSurfaceMode.ShorelineWater)
+                currentPosition.y = WorldWaterLevel.SurfaceY;
             GameObject previewPrefab = selectedDefinition != null ? ResolvePrefab(selectedDefinition) : null;
             currentYaw = origin.eulerAngles.y;
             currentRotation = WorldSpawnRotation.ComposeYawWithPrefabRotation(previewPrefab, currentYaw);
@@ -459,6 +493,8 @@ namespace ApexShift.Runtime.Buildings
 
         private bool IsWater(Vector3 position)
         {
+            IslandTopographyRuntime topo = IslandTopographyRuntime.Active;
+            if (topo != null && topo.IsBuilt) return topo.IsWaterAt(position.x, position.z);
             EcosystemDirectorRuntime director = EcosystemDirectorRuntime.Active;
             if (director == null || !director.Initialized)
             {
@@ -688,6 +724,8 @@ namespace ApexShift.Runtime.Buildings
             runtimeDefinitions.Add(PlaceableDefinition.CreateRuntime("wall", "Wall", PlaceableFallbackFactory.GetDefaultFootprint("wall"), Costs(("wood", 3))));
             runtimeDefinitions.Add(PlaceableDefinition.CreateRuntime("trap", "Trap", PlaceableFallbackFactory.GetDefaultFootprint("trap"), Costs(("wood", 2), ("fiber", 2))));
             runtimeDefinitions.Add(PlaceableDefinition.CreateRuntime("tent", "Tent", PlaceableFallbackFactory.GetDefaultFootprint("tent"), Costs(("wood", 4), ("fiber", 3))));
+            runtimeDefinitions.Add(PlaceableDefinition.CreateRuntime("raft", "Raft", PlaceableFallbackFactory.GetDefaultFootprint("raft"),
+                Costs(("raft", 1)), PlaceableSurfaceMode.ShorelineWater, 0f, 16f));
         }
 
         private static IEnumerable<PlaceableDefinition.PlaceableBuildCost> Costs(params (string itemId, int amount)[] costs)

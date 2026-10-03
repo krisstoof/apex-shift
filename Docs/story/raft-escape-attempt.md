@@ -1,0 +1,117 @@
+# Raft escape attempt (#102)
+
+This is a controlled vertical slice, **not a full boat simulation**. No buoyancy,
+wind, currents, sails, vehicles framework or new Blender/third-party assets.
+
+## Craft and place
+
+Recipe `raft`: wood **10**, fiber **6** → raft **1** (maximum stack 1).
+Core defaults and production item/recipe assets use the same costs.
+Crafting only produces the inventory item; it does not publish RaftBuilt.
+The normal building menu lists Raft automatically. Placement consumes raft x1,
+not wood/fiber, and is not gated by story stage.
+
+The data-driven `ShorelineWater` surface mode requires authoritative cached
+environment data: water, not land, coast distance **0–16** units, and inclusion
+in normal playable WorldBounds. Land, open ocean, missing topography and
+out-of-bounds placement are rejected. The root snaps to
+`WorldWaterLevel.SurfaceY` (**0**), not the underwater support collider.
+
+Without an authored prefab, PlaceableFallbackFactory creates seven wooden deck
+pieces, two crossbeams and four rope-like bindings. Footprint: **4.8 × 0.6 × 2.7**.
+This is temporary prototype art; no final raft icon or hand-held model is added.
+
+## Boarding and controls
+
+Interact with **Board raft** (priority 40). Launch revalidates water/coast bounds,
+requires a player controller, and resolves safe land before starting.
+Null/non-player actors, reboarding, and invalid launch sites are rejected.
+
+Existing PlayerInputReader.Move drives camera-relative movement and turning at
+**3.5 units/second**. The player is synchronized to the deck while ordinary
+movement and CharacterController are temporarily disabled. Generation parenting
+is preserved, so loading/clearing cannot leak a mounted player.
+
+Raft movement deliberately ignores normal player WorldBounds: the raft can
+travel beyond shallow swimming limits. It remains within the physical topography
+grid, with a one-unit safety margin, and cannot drive across land. Turning back
+reduces current danger but does not repair already-lost durability.
+
+## Deterministic ocean danger
+
+Danger uses cached EnvironmentSample.DistanceToCoast, never world-origin distance.
+The shared coast-distance cache measures both land and water against the same
+shoreline. Water no longer has a placeholder distance of zero; terrain and land
+classification are unchanged.
+
+- **0–12**: calm, danger zero.
+- **12–38**: danger increases linearly from zero to one.
+- Around **30**: severe danger (about 0.69).
+- **38 or more**: guaranteed controlled failure.
+
+Durability starts at one. Danger below 0.25 causes no damage. Above it, normalized
+danger squared drains durability at up to **0.18/second**. Zero durability,
+crossing the physical grid safety margin, or an unavailable environment sample
+also causes failure. No RNG/noise participates. Deterministic sine bob/pitch/roll
+is visual feedback only and is applied to the RaftVisual child.
+
+## Safe return and failure
+
+SafeReturnPoint is selected before boarding: nearest deterministic land-cell
+candidate whose dense sample is land, not water or shoreline, slope ≤16°, and
+inside playable bounds. Equal-distance candidates retain stable iteration order.
+The existing safe spawn is a fallback only if it passes the same conditions.
+
+Failure is idempotent. The player is returned to this local safe point (not
+always the plane crash), controls/CharacterController and water state are
+restored, physics transforms synchronized, and the existing camera follow snapped
+when available. Health is not reduced. The raft unregisters immediately, becomes
+inactive, and is destroyed; it cannot appear in the next save.
+
+## Story and repeated attempts
+
+Only successful user placement publishes:
+
+```csharp
+GameEventBus.PublishStorySignal(StorySignalIds.RaftBuilt, structure.InstanceId);
+```
+
+Only controlled ocean failure publishes:
+
+```csharp
+GameEventBus.PublishStorySignal(StorySignalIds.RaftEscapeFailed, structure.InstanceId);
+```
+
+If the current generation already has raft_escape_failed, later failures suppress
+this bus signal. Repeated attempts remain craftable and usable. Story's existing
+idempotency protects repeated RaftBuilt. Restore never replays either event.
+The #101 transition table is unchanged; #103–#105 are not implemented.
+
+## Save/load policy
+
+- Placed, unlaunched raft: normal BuildingSaveData identity, pose and registry
+  restoration, including RaftRuntime. No RaftBuilt replay.
+- Active attempt: registry omits the launched raft; GameSaveService saves that
+  player's SafeReturnPoint instead of ocean position. Load returns a controllable
+  player to land without resuming a vehicle. AttemptRaftEscape remains unchanged
+  if failure had not happened, and another raft can be crafted.
+- After failure: no raft saved; safe player position and story milestone persist.
+
+Clear/load aborts an active raft without inventing a failure milestone.
+RuntimeWorld and generated animation assets are not authored or regenerated by
+this feature.
+
+## Validation
+
+Unity 6000.6.2f1: full EditMode **212/212 PASS**, full PlayMode **319/319 PASS**.
+Raft tests cover crafting and placement, missing bounds/cache, measured water
+coast distance, rejected actors/relaunch, movement beyond player bounds,
+returning toward shore, deterministic damage/failure, repeated attempts,
+safe return, and placed/active/failed save/load through GameSaveService.
+A production-generator integration test exercises craft -> place -> board ->
+travel -> failure -> save/load on seed 12345 with the existing production catalogs.
+No manual keyboard/controller playthrough is claimed.
+
+Reports: `Logs/Issue102/EditMode.xml` and `Logs/Issue102/PlayMode.xml` (local,
+ignored). Tests were run with simulation time enabled; the pre-existing paused
+editor setting was restored afterward.

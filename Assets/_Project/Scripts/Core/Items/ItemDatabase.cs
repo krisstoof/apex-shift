@@ -44,7 +44,8 @@ namespace ApexShift.Core.Items
                 new ItemDefinition(new ItemId("storage_box"), "Storage Box", 1),
                 new ItemDefinition(new ItemId("berries"), "Berries", 20, isEdible: true, hungerRestore: 18f, healthRestore: 1f, staminaRestore: 4f),
                 new ItemDefinition(new ItemId("grass"), "Grass", 20),
-                new ItemDefinition(new ItemId("tent"), "Tent", 1)
+                new ItemDefinition(new ItemId("tent"), "Tent", 1),
+                new ItemDefinition(new ItemId("raft"), "Raft", 1)
             });
         }
 
