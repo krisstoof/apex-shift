@@ -7,6 +7,12 @@ namespace ApexShift.Runtime.World.Vegetation
     [Serializable]
     public sealed class VegetationLandmarkClearanceSettings
     {
+        [SerializeField, Min(0f)] private float planeCrash = 20f;
+        [SerializeField, Min(0f)] private float freshwaterSource = 10f;
+        [SerializeField, Min(0f)] private float smugglerCache = 8f;
+        [SerializeField, Min(0f)] private float smugglerCamp = 14f;
+        [SerializeField, Min(0f)] private float baseEntrance = 12f;
+        // Legacy fields and Configure overload retain serialized/save tooling compatibility.
         [SerializeField, Min(0f)] private float oldTree = 18f;
         [SerializeField, Min(0f)] private float ruins = 10f;
         [SerializeField, Min(0f)] private float pond = 8f;
@@ -17,6 +23,11 @@ namespace ApexShift.Runtime.World.Vegetation
         {
             switch (type)
             {
+                case LandmarkType.PlaneCrash: return planeCrash;
+                case LandmarkType.FreshwaterSource: return freshwaterSource;
+                case LandmarkType.SmugglerCache: return smugglerCache;
+                case LandmarkType.SmugglerCamp: return smugglerCamp;
+                case LandmarkType.BaseEntrance: return baseEntrance;
                 case LandmarkType.OldTree: return oldTree;
                 case LandmarkType.Ruins: return ruins;
                 case LandmarkType.Pond: return pond;

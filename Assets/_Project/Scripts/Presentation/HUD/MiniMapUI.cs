@@ -347,7 +347,7 @@ namespace ApexShift.Presentation.HUD
             for (int i = 0; i < landmarks.Count; i++)
             {
                 LandmarkRuntime landmark = landmarks[i];
-                if (landmark == null || landmark.gameObject == null || !landmark.gameObject.activeInHierarchy)
+                if (!ShouldShowLandmark(landmark))
                 {
                     continue;
                 }
@@ -592,11 +592,19 @@ namespace ApexShift.Presentation.HUD
             return new Vector2(8f, 8f);
         }
 
+        public static bool ShouldShowLandmark(LandmarkRuntime landmark)
+            => landmark != null && landmark.IsDiscovered && landmark.gameObject.activeInHierarchy;
+
         private static Color GetLandmarkColor(LandmarkRuntime landmark)
         {
             if (landmark == null) return new Color(0.75f, 0.75f, 0.75f, 1f);
             switch (landmark.Type)
             {
+                case LandmarkType.PlaneCrash: return new Color(0.85f, 0.88f, 0.9f);
+                case LandmarkType.FreshwaterSource: return new Color(0.2f, 0.65f, 1f);
+                case LandmarkType.SmugglerCache: return new Color(0.85f, 0.7f, 0.2f);
+                case LandmarkType.SmugglerCamp: return new Color(1f, 0.45f, 0.15f);
+                case LandmarkType.BaseEntrance: return new Color(0.4f, 0.4f, 0.45f);
                 case LandmarkType.OldTree: return new Color(0.18f, 0.72f, 0.18f, 1f);
                 case LandmarkType.Ruins: return new Color(0.68f, 0.68f, 0.68f, 1f);
                 case LandmarkType.Pond: return new Color(0.18f, 0.58f, 0.88f, 1f);
@@ -611,6 +619,11 @@ namespace ApexShift.Presentation.HUD
             if (landmark == null) return new Vector2(8f, 8f);
             switch (landmark.Type)
             {
+                case LandmarkType.PlaneCrash: return new Vector2(12f, 9f);
+                case LandmarkType.FreshwaterSource: return new Vector2(9f, 9f);
+                case LandmarkType.SmugglerCache: return new Vector2(8f, 8f);
+                case LandmarkType.SmugglerCamp: return new Vector2(10f, 10f);
+                case LandmarkType.BaseEntrance: return new Vector2(7f, 9f);
                 case LandmarkType.OldTree: return new Vector2(10f, 10f);
                 case LandmarkType.Ruins: return new Vector2(9f, 9f);
                 case LandmarkType.Pond: return new Vector2(9f, 9f);

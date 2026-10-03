@@ -253,7 +253,7 @@ namespace ApexShift.Presentation.HUD
             CreateFilterButton(filters.transform, 1, "Creatures", new Vector2(16f, -84f), () => showCreatures = !showCreatures);
             CreateFilterButton(filters.transform, 2, "Buildings", new Vector2(16f, -114f), () => showBuildings = !showBuildings);
             CreateFilterButton(filters.transform, 3, "Fire sources", new Vector2(16f, -144f), () => showFireSources = !showFireSources);
-            CreateFilterButton(filters.transform, 4, "Landmarks (pending)", new Vector2(16f, -174f), () => showLandmarks = !showLandmarks);
+            CreateFilterButton(filters.transform, 4, "Landmarks", new Vector2(16f, -174f), () => showLandmarks = !showLandmarks);
             UpdateFilterLabels();
         }
 
@@ -454,7 +454,7 @@ namespace ApexShift.Presentation.HUD
                 for (int i = 0; i < landmarks.Count; i++)
                 {
                     LandmarkRuntime landmark = landmarks[i];
-                    if (landmark == null || landmark.gameObject == null || !landmark.gameObject.activeInHierarchy)
+                    if (!ShouldShowLandmark(landmark))
                     {
                         continue;
                     }
@@ -678,7 +678,7 @@ namespace ApexShift.Presentation.HUD
             SetFilterLabel(1, showCreatures, "Creatures");
             SetFilterLabel(2, showBuildings, "Buildings");
             SetFilterLabel(3, showFireSources, "Fire sources");
-            SetFilterLabel(4, showLandmarks, "Landmarks (pending)");
+            SetFilterLabel(4, showLandmarks, "Landmarks");
         }
 
         private void SetFilterLabel(int index, bool active, string label)
@@ -805,11 +805,19 @@ namespace ApexShift.Presentation.HUD
             return new Color(0.56f, 0.62f, 0.68f, 1f);
         }
 
+        public static bool ShouldShowLandmark(LandmarkRuntime landmark)
+            => landmark != null && landmark.IsDiscovered && landmark.gameObject.activeInHierarchy;
+
         private static Color GetLandmarkColor(LandmarkRuntime landmark)
         {
             if (landmark == null) return new Color(0.75f, 0.75f, 0.75f, 1f);
             switch (landmark.Type)
             {
+                case LandmarkType.PlaneCrash: return new Color(0.85f, 0.88f, 0.9f);
+                case LandmarkType.FreshwaterSource: return new Color(0.2f, 0.65f, 1f);
+                case LandmarkType.SmugglerCache: return new Color(0.85f, 0.7f, 0.2f);
+                case LandmarkType.SmugglerCamp: return new Color(1f, 0.45f, 0.15f);
+                case LandmarkType.BaseEntrance: return new Color(0.4f, 0.4f, 0.45f);
                 case LandmarkType.OldTree: return new Color(0.18f, 0.72f, 0.18f, 1f);
                 case LandmarkType.Ruins: return new Color(0.68f, 0.68f, 0.68f, 1f);
                 case LandmarkType.Pond: return new Color(0.18f, 0.58f, 0.88f, 1f);
@@ -824,6 +832,11 @@ namespace ApexShift.Presentation.HUD
             if (landmark == null) return new Vector2(10f, 10f);
             switch (landmark.Type)
             {
+                case LandmarkType.PlaneCrash: return new Vector2(12f, 9f);
+                case LandmarkType.FreshwaterSource: return new Vector2(9f, 9f);
+                case LandmarkType.SmugglerCache: return new Vector2(8f, 8f);
+                case LandmarkType.SmugglerCamp: return new Vector2(10f, 10f);
+                case LandmarkType.BaseEntrance: return new Vector2(7f, 9f);
                 case LandmarkType.OldTree: return new Vector2(14f, 14f);
                 case LandmarkType.Ruins: return new Vector2(12f, 12f);
                 case LandmarkType.Pond: return new Vector2(13f, 13f);

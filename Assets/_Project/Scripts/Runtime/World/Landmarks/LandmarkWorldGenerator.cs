@@ -7,17 +7,46 @@ namespace ApexShift.Runtime.World.Landmarks
 {
     public static class LandmarkWorldGenerator
     {
-        public static void Generate(Transform parent, IslandTopographyRuntime topography, int seed)
+        public static IReadOnlyList<LandmarkPlacementResult> Generate(Transform parent,
+            IslandTopographyRuntime topography, int seed, Func<Vector3, float> surfaceHeight = null)
         {
             LandmarkRegistry.ClearForWorldRegeneration();
             ClearExistingLandmarkChildren(parent);
-            if (parent == null || topography == null || !topography.IsBuilt || topography.GetGridReadOnly() == null) return;
+            var results = new List<LandmarkPlacementResult>();
+            if (parent == null || topography == null || !topography.IsBuilt) return results;
 
-            CreateLandmarkObject(parent, "old_tree", LandmarkType.OldTree, "Great Old Tree", "A huge ancient tree used as a natural orientation point.", PickCell(topography, c => c.IsLand && c.TerrainType == TerrainType.Forest, new Vector2(-46f, 8f), seed + 11), true);
-            CreateLandmarkObject(parent, "ruins", LandmarkType.Ruins, "Overgrown Ruins", "Collapsed stone remains from an older settlement.", PickCell(topography, c => c.IsLand && (c.TerrainType == TerrainType.Hills || c.TerrainType == TerrainType.Ridge), new Vector2(42f, 30f), seed + 23), true);
-            CreateLandmarkObject(parent, "pond", LandmarkType.Pond, "Freshwater Pond", "A small pond near the island interior.", PickCell(topography, c => c.IsWater || c.IsBeach, new Vector2(-18f, -36f), seed + 37), true);
-            CreateLandmarkObject(parent, "camp", LandmarkType.Camp, "Abandoned Camp", "A small abandoned camp with signs of previous survivors.", PickCell(topography, c => c.IsSafeForPlayerSpawn && c.TerrainType == TerrainType.Plain, new Vector2(22f, -10f), seed + 41), true);
-            CreateLandmarkObject(parent, "cave_placeholder", LandmarkType.CavePlaceholder, "Sealed Cave", "A blocked cave entrance prepared for future exploration content.", PickCell(topography, c => c.IsLand && c.TerrainType == TerrainType.Ridge, new Vector2(8f, 54f), seed + 53), true);
+            var candidates = new List<LandmarkPlacementCandidate>();
+            Bounds bounds = topography.WorldBounds;
+            // Dense cache is the authority, including coastline cells. No biome/region lookup.
+            for (float z = bounds.min.z + 2f; z < bounds.max.z; z += 4f)
+            for (float x = bounds.min.x + 2f; x < bounds.max.x; x += 4f)
+            {
+                Vector3 position = new Vector3(x, 0f, z);
+                if (topography.TryGetEnvironmentAt(position, out ApexShift.Runtime.World.Environment.EnvironmentSample sample))
+                {
+                    position.y = surfaceHeight != null ? surfaceHeight(position) : sample.Height;
+                    candidates.Add(new LandmarkPlacementCandidate(position, sample));
+                }
+            }
+            var planner = new LandmarkPlacementPlanner();
+            Vector3? start = null;
+            Vector3? cache = null;
+            foreach (LandmarkPlacementProfile profile in LandmarkPlacementProfile.Production())
+            {
+                LandmarkPlacementResult result = planner.Plan(seed, candidates, profile, results, start,
+                    profile.Type == LandmarkType.SmugglerCamp ? cache : null);
+                if (result == null)
+                {
+                    Debug.LogWarning($"No safe landmark placement for '{profile.LandmarkId}' (seed {seed}).");
+                    continue;
+                }
+                results.Add(result);
+                CreateLandmarkObject(parent, profile.LandmarkId, profile.Type, null, null,
+                    result.Position, profile.Type == LandmarkType.PlaneCrash);
+                if (profile.Type == LandmarkType.PlaneCrash) start = result.Position;
+                if (profile.Type == LandmarkType.SmugglerCache) cache = result.Position;
+            }
+            return results;
         }
 
         public static LandmarkRuntime CreateLandmarkObject(Transform parent, string id, LandmarkType type, string displayName, string description, Vector3 position, bool discovered)
@@ -28,6 +57,7 @@ namespace ApexShift.Runtime.World.Landmarks
             LandmarkRuntime runtime = go.AddComponent<LandmarkRuntime>();
             runtime.Configure(id, type, displayName, description, discovered);
             BuildVisual(runtime.transform, type);
+            go.AddComponent<LandmarkDiscoveryRuntime>();
             return runtime;
         }
 
@@ -58,33 +88,16 @@ namespace ApexShift.Runtime.World.Landmarks
             }
         }
 
-        private static Vector3 PickCell(IslandTopographyRuntime topography, Predicate<TopographyCell> predicate, Vector2 target, int salt)
-        {
-            TopographyCell[,] grid = topography.GetGridReadOnly();
-            int gridSize = topography.GridSize;
-            TopographyCell best = null;
-            float bestScore = float.PositiveInfinity;
-            float noiseBias = Mathf.Abs(Mathf.Sin(salt * 12.9898f) * 43758.5453f) % 1f;
-            for (int z = 0; z < gridSize; z++)
-            for (int x = 0; x < gridSize; x++)
-            {
-                TopographyCell cell = grid[x, z];
-                if (cell == null || predicate == null || !predicate(cell)) continue;
-                float dx = cell.WorldCenter.x - target.x;
-                float dz = cell.WorldCenter.z - target.y;
-                float score = dx * dx + dz * dz + Mathf.Abs(Mathf.Sin((x + 1) * 7.13f + (z + 1) * 3.91f + noiseBias)) * 4f;
-                if (score < bestScore) { best = cell; bestScore = score; }
-            }
-            return (best != null ? best.WorldCenter : topography.GetSafePlayerSpawnPoint()) + Vector3.up * 0.08f;
-        }
-
         private static readonly Dictionary<LandmarkType, string> AuthoredModelNames = new Dictionary<LandmarkType, string>
         {
             { LandmarkType.OldTree, "old_tree_landmark" },
             { LandmarkType.Ruins, "ruins_landmark" },
             { LandmarkType.Pond, "pond_landmark" },
             { LandmarkType.Camp, "camp_landmark" },
-            { LandmarkType.CavePlaceholder, "cave_landmark" }
+            { LandmarkType.CavePlaceholder, "cave_landmark" },
+            { LandmarkType.FreshwaterSource, "pond_landmark" },
+            { LandmarkType.SmugglerCamp, "camp_landmark" },
+            { LandmarkType.BaseEntrance, "cave_landmark" }
         };
 
         private static void BuildVisual(Transform root, LandmarkType type)
@@ -96,6 +109,17 @@ namespace ApexShift.Runtime.World.Landmarks
 
             switch (type)
             {
+                // Temporary prototype visuals only; no final art is generated here.
+                case LandmarkType.PlaneCrash:
+                    AddSphere(root, "PrototypeFuselage", new Vector3(0f, 0.65f, 0f), new Vector3(1.2f, 1.1f, 4.2f), new Color(0.75f, 0.77f, 0.78f));
+                    AddCube(root, "PrototypeBrokenWing", new Vector3(-1.4f, 0.35f, 0f), Quaternion.Euler(0f, 18f, -12f), new Vector3(3.2f, 0.15f, 0.85f), new Color(0.7f, 0.71f, 0.72f));
+                    AddCube(root, "PrototypeTail", new Vector3(0f, 0.9f, -1.7f), new Vector3(0.15f, 1.3f, 0.8f), new Color(0.55f, 0.15f, 0.1f));
+                    break;
+                case LandmarkType.SmugglerCache:
+                    AddCube(root, "PrototypeCrateA", new Vector3(-0.6f, 0.45f, 0f), Vector3.one * 0.9f, new Color(0.4f, 0.27f, 0.12f));
+                    AddCube(root, "PrototypeCrateB", new Vector3(0.5f, 0.35f, 0.2f), Vector3.one * 0.7f, new Color(0.48f, 0.32f, 0.13f));
+                    AddCube(root, "PrototypeTarp", new Vector3(0f, 0.85f, 0.1f), new Vector3(1.7f, 0.05f, 1.1f), new Color(0.22f, 0.28f, 0.15f));
+                    break;
                 case LandmarkType.OldTree:
                     AddCylinder(root, "Trunk", new Vector3(0f, 1.2f, 0f), new Vector3(0.55f, 1.2f, 0.55f), new Color(0.30f, 0.18f, 0.09f));
                     AddSphere(root, "Canopy", new Vector3(0f, 2.35f, 0f), new Vector3(2.0f, 1.3f, 2.0f), new Color(0.10f, 0.38f, 0.13f));
@@ -105,15 +129,18 @@ namespace ApexShift.Runtime.World.Landmarks
                     AddCube(root, "StoneB", new Vector3(0.48f, 0.55f, 0.18f), new Vector3(0.40f, 1.1f, 0.35f), new Color(0.40f, 0.39f, 0.35f));
                     AddCube(root, "StoneSlab", new Vector3(0f, 0.95f, 0f), new Vector3(1.5f, 0.22f, 0.38f), new Color(0.36f, 0.35f, 0.32f));
                     break;
+                case LandmarkType.FreshwaterSource:
                 case LandmarkType.Pond:
                     AddCylinder(root, "PondBank", new Vector3(0f, 0.01f, 0f), new Vector3(2.15f, 0.03f, 2.15f), new Color(0.32f, 0.26f, 0.15f));
                     AddCylinder(root, "PondWater", new Vector3(0f, 0.03f, 0f), new Vector3(1.8f, 0.04f, 1.8f), new Color(0.10f, 0.35f, 0.62f, 0.72f));
                     break;
+                case LandmarkType.SmugglerCamp:
                 case LandmarkType.Camp:
                     AddCube(root, "CampLogA", new Vector3(-0.35f, 0.12f, 0f), Quaternion.Euler(0f, 25f, 0f), new Vector3(0.18f, 0.18f, 1.15f), new Color(0.38f, 0.22f, 0.11f));
                     AddCube(root, "CampLogB", new Vector3(0.35f, 0.12f, 0f), Quaternion.Euler(0f, -25f, 0f), new Vector3(0.18f, 0.18f, 1.15f), new Color(0.38f, 0.22f, 0.11f));
                     AddSphere(root, "AshPit", new Vector3(0f, 0.08f, 0f), new Vector3(0.55f, 0.12f, 0.55f), new Color(0.12f, 0.12f, 0.11f));
                     break;
+                case LandmarkType.BaseEntrance:
                 case LandmarkType.CavePlaceholder:
                     AddCube(root, "RockWall", new Vector3(0f, 0.85f, 0.12f), new Vector3(1.6f, 1.7f, 0.38f), new Color(0.28f, 0.27f, 0.25f));
                     AddCube(root, "BlockedEntrance", new Vector3(0f, 0.55f, -0.12f), new Vector3(0.8f, 0.9f, 0.28f), new Color(0.10f, 0.09f, 0.08f));

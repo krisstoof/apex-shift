@@ -393,7 +393,7 @@ namespace ApexShift.Runtime.Save
 
         private void RestoreLandmarkStates(IReadOnlyList<LandmarkSaveData> landmarkStates)
         {
-            Transform landmarkRoot = worldGenerator != null ? worldGenerator.transform.Find("LandmarkRoot") : null;
+            Transform landmarkRoot = worldGenerator != null ? worldGenerator.CurrentGeneration?.LandmarkRoot : null;
             LandmarkRegistry.RestoreFromSaveData(landmarkStates, landmarkRoot);
         }
 

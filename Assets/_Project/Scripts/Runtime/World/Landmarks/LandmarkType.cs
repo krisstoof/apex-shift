@@ -7,6 +7,11 @@ namespace ApexShift.Runtime.World.Landmarks
         Ruins = 2,
         Pond = 3,
         Camp = 4,
-        CavePlaceholder = 5
+        CavePlaceholder = 5,
+        PlaneCrash = 6,
+        FreshwaterSource = 7,
+        SmugglerCache = 8,
+        SmugglerCamp = 9,
+        BaseEntrance = 10
     }
 }

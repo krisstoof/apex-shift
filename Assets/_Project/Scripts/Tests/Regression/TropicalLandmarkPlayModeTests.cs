@@ -1,0 +1,175 @@
+#if UNITY_EDITOR
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using ApexShift.Core.Save;
+using ApexShift.Presentation.HUD;
+using ApexShift.Runtime.Player;
+using ApexShift.Runtime.Save;
+using ApexShift.Runtime.World.Biomes;
+using ApexShift.Runtime.World.Environment;
+using ApexShift.Runtime.World.Generation;
+using ApexShift.Runtime.World.Landmarks;
+using ApexShift.Runtime.World.Vegetation;
+using NUnit.Framework;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.TestTools;
+
+namespace ApexShift.Tests.Regression
+{
+    public sealed class TropicalLandmarkPlayModeTests
+    {
+        [Test]
+        public void MapAndMinimapHideUndiscoveredLandmarksAndDiscoveryIsIdempotent()
+        {
+            var owner = new GameObject("UndiscoveredEntrance");
+            try
+            {
+                var landmark = owner.AddComponent<LandmarkRuntime>();
+                landmark.Configure("base_entrance", LandmarkType.BaseEntrance, null);
+                Assert.AreEqual("Hidden Entrance", landmark.DisplayName);
+                var discovery = owner.AddComponent<LandmarkDiscoveryRuntime>();
+                Assert.False(MapScreenUI.ShouldShowLandmark(landmark));
+                Assert.False(MiniMapUI.ShouldShowLandmark(landmark));
+                Assert.False(discovery.TryDiscoverAt(new Vector3(50f, 0f, 0f)));
+                int events = 0;
+                landmark.Discovered += _ => events++;
+                Assert.True(discovery.TryDiscoverAt(Vector3.zero));
+                Assert.False(landmark.Discover());
+                Assert.AreEqual(1, events);
+                Assert.True(MapScreenUI.ShouldShowLandmark(landmark));
+                Assert.True(MiniMapUI.ShouldShowLandmark(landmark));
+                owner.SetActive(false);
+                Assert.False(MapScreenUI.ShouldShowLandmark(landmark));
+                Assert.False(MiniMapUI.ShouldShowLandmark(landmark));
+            }
+            finally { Object.DestroyImmediate(owner); LandmarkRegistry.ClearForTests(); }
+        }
+
+        [UnityTest]
+        public IEnumerator RegisteredPlayerProximityDiscoversWithoutSceneScan()
+        {
+            var owner = new GameObject("ProximityLandmark");
+            var player = new GameObject("RegisteredTestPlayer");
+            try
+            {
+                var landmark = owner.AddComponent<LandmarkRuntime>();
+                landmark.Configure("smuggler_cache", LandmarkType.SmugglerCache, null);
+                owner.AddComponent<LandmarkDiscoveryRuntime>();
+                player.transform.position = new Vector3(50f, 0f, 0f);
+                player.AddComponent<PlayerPresenceRuntime>();
+                yield return null;
+                Assert.False(landmark.IsDiscovered);
+                player.transform.position = new Vector3(5f, 0f, 0f);
+                yield return null;
+                Assert.True(landmark.IsDiscovered);
+            }
+            finally
+            {
+                Object.DestroyImmediate(player);
+                Object.DestroyImmediate(owner);
+                LandmarkRegistry.ClearForTests();
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator ProductionGeneration_ThreeSeedsStartAtCrashAndPreserveDiscoveryThroughSaveLoad()
+        {
+            var owner = new GameObject("TropicalLandmarkGenerator");
+            GameObject saveOwner = null;
+            var generator = owner.AddComponent<WorldGeneratorRuntime>();
+            generator.SetGenerateOnStart(false);
+            var catalog = AssetDatabase.LoadAssetAtPath<BiomeCatalogAsset>("Assets/_Project/Data/Biomes/BiomeCatalog.asset");
+            Assert.NotNull(catalog);
+            generator.SetBiomeCatalog(catalog);
+            generator.SetHabitatVegetationCatalog(AssetDatabase.LoadAssetAtPath<HabitatVegetationCatalogAsset>(
+                "Assets/_Project/Data/Vegetation/HabitatVegetationCatalog.asset"));
+            try
+            {
+                foreach (int seed in new[] { 12345, 81281, 91284 })
+                {
+                    generator.SetSeed(seed);
+                    generator.Generate();
+                    // Check initial discovery before proximity Update.
+                    string[] ids = LandmarkPlacementProfile.Production().Select(p => p.LandmarkId).ToArray();
+                    CollectionAssert.AreEquivalent(ids, LandmarkRegistry.Landmarks.Select(l => l.LandmarkId).ToArray());
+                    foreach (LandmarkRuntime landmark in LandmarkRegistry.Landmarks)
+                        Assert.AreEqual(landmark.Type == LandmarkType.PlaneCrash, landmark.IsDiscovered, landmark.LandmarkId);
+
+                    WorldGenerationContext context = generator.CurrentGeneration;
+                    Assert.NotNull(context.VegetationRuntime);
+                    LandmarkRuntime crash = LandmarkRegistry.FindById("plane_crash");
+                    Vector3 playerPosition = context.Player.transform.position;
+                    float spawnDistance = LandmarkPlacementPlanner.Distance(playerPosition, crash.transform.position);
+                    Assert.That(spawnDistance, Is.InRange(2f, 8f));
+                    Assert.AreEqual(generator.ResolvePlayerSpawnPoint(), playerPosition);
+                    Assert.True(context.IslandTopography.TryGetEnvironmentAt(playerPosition, out EnvironmentSample environment));
+                    Assert.True(environment.IsLand);
+                    Assert.False(environment.IsWater);
+                    Assert.False(environment.IsShoreline);
+                    Assert.LessOrEqual(environment.SlopeDegrees, 14f);
+                    Assert.GreaterOrEqual(DistanceFromCrash("smuggler_cache"), 45f);
+                    Assert.GreaterOrEqual(DistanceFromCrash("smuggler_camp"), 60f);
+                    Assert.GreaterOrEqual(DistanceFromCrash("base_entrance"), 60f);
+
+                    var points = new List<VegetationDebugPoint>();
+                    context.VegetationRuntime.CopyDebugPoints(points);
+                    Assert.That(points.Count, Is.GreaterThan(0), "Production species must generate real placements.");
+                    foreach (VegetationDebugPoint point in points)
+                    {
+                        if (point.Category != VegetationCategory.Tree && point.Category != VegetationCategory.DeadTree) continue;
+                        Assert.GreaterOrEqual(LandmarkPlacementPlanner.Distance(point.Position, playerPosition),
+                            generator.StartClearingRadius - 0.05f);
+                        foreach (LandmarkRuntime landmark in LandmarkRegistry.Landmarks)
+                            Assert.GreaterOrEqual(LandmarkPlacementPlanner.Distance(point.Position, landmark.transform.position),
+                                generator.GenerationSettings.Vegetation.LandmarkClearances.GetRadius(landmark.Type) - 0.05f);
+                    }
+                    foreach (LandmarkPlacementResult result in generator.LandmarkPlacements)
+                    {
+                        Assert.True(context.IslandTopography.TryGetEnvironmentAt(result.Position, out EnvironmentSample sample));
+                        Assert.True(sample.IsLand); Assert.False(sample.IsWater); Assert.False(sample.IsShoreline);
+                        Assert.AreEqual(sample.HabitatId, result.HabitatId);
+                        Debug.Log($"[LandmarkPlacement] seed={seed} id={result.LandmarkId} position={result.Position:F3} habitat={result.HabitatId} terrain={result.TerrainType} slope={result.Slope:F2} elevation={result.Elevation:F3} coast={result.DistanceToCoast:F2} fallback={result.UsedFallback}");
+                        foreach (LandmarkPlacementResult other in generator.LandmarkPlacements)
+                            if (other != result) Assert.GreaterOrEqual(LandmarkPlacementPlanner.Distance(result.Position, other.Position),
+                                Mathf.Max(result.MinimumSeparation, other.MinimumSeparation) - 0.01f);
+                    }
+                    Debug.Log($"[LandmarkDistances] seed={seed} cache={DistanceFromCrash("smuggler_cache"):F3} camp={DistanceFromCrash("smuggler_camp"):F3} base={DistanceFromCrash("base_entrance"):F3}");
+                    Vector3[] positions = generator.LandmarkPlacements.Select(p => p.Position).ToArray();
+                    LandmarkRegistry.FindById("smuggler_cache").Discover();
+                    saveOwner = new GameObject("LandmarkSaveService");
+                    var service = saveOwner.AddComponent<GameSaveService>();
+                    // Exercise the real DTO serialization boundary, then regeneration/ApplyLoadedState.
+                    GameSaveData saved = JsonUtility.FromJson<GameSaveData>(JsonUtility.ToJson(service.CaptureCurrentState()));
+                    Assert.True(service.ApplyLoadedState(saved, "issue100"));
+                    CollectionAssert.AreEqual(positions, generator.LandmarkPlacements.Select(p => p.Position).ToArray());
+                    Assert.True(LandmarkRegistry.FindById("smuggler_cache").IsDiscovered);
+                    Assert.False(LandmarkRegistry.FindById("base_entrance").IsDiscovered);
+                    Assert.AreEqual(1, LandmarkRegistry.Landmarks.Count(l => l.LandmarkId == "smuggler_cache"));
+                    Assert.AreEqual(1, LandmarkRegistry.Landmarks.Count(l => l.LandmarkId == "base_entrance"));
+                    // A legacy save entry is restored under the owned generation, not a scene root.
+                    saved.World.landmarkStates.Add(new LandmarkSaveData("ruins", "Ruins", "Legacy Ruins", "",
+                        0f, 0f, 0f, true));
+                    Assert.True(service.ApplyLoadedState(saved, "issue100_legacy"));
+                    Assert.AreEqual(LandmarkType.Ruins, LandmarkRegistry.FindById("ruins").Type);
+                    Assert.True(LandmarkRegistry.FindById("ruins").transform.IsChildOf(generator.CurrentGeneration.LandmarkRoot));
+                    Object.DestroyImmediate(saveOwner);
+                    generator.ClearGeneratedWorld();
+                    yield return null;
+                }
+            }
+            finally
+            {
+                if (saveOwner != null) Object.DestroyImmediate(saveOwner);
+                generator.ClearGeneratedWorld();
+                Object.DestroyImmediate(owner);
+                LandmarkRegistry.ClearForTests();
+            }
+        }
+
+        private static float DistanceFromCrash(string id) => LandmarkPlacementPlanner.Distance(
+            LandmarkRegistry.FindById("plane_crash").transform.position, LandmarkRegistry.FindById(id).transform.position);
+    }
+}
+#endif

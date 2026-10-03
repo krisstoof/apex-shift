@@ -96,6 +96,10 @@ namespace ApexShift.Runtime.World.Generation
         private VegetationPlacementPlanner _vegetationPlanner;
         private VegetationRejectionCounts _vegetationRejections = new VegetationRejectionCounts();
 
+        private Vector3? _resolvedPlayerSpawn;
+        private IReadOnlyList<LandmarkPlacementResult> _landmarkPlacements = System.Array.Empty<LandmarkPlacementResult>();
+        public IReadOnlyList<LandmarkPlacementResult> LandmarkPlacements => _landmarkPlacements;
+
         private const string DefaultInputActionsPath = "Assets/_Project/Input/ApexShiftInputActions.inputactions";
 
         public event System.Action<GameObject> OnGenerationComplete;
@@ -233,6 +237,8 @@ namespace ApexShift.Runtime.World.Generation
             }
             if (_runtimeOwner != null) _runtimeOwner.Clear();
             _generationContext = null;
+            _resolvedPlayerSpawn = null;
+            _landmarkPlacements = System.Array.Empty<LandmarkPlacementResult>();
             _lastResult = null;
             _vegetationRejections.Reset();
             _terrainRoot = null;
@@ -501,7 +507,7 @@ namespace ApexShift.Runtime.World.Generation
         {
             if (_landmarkRoot != null && _islandTopography != null)
             {
-                LandmarkWorldGenerator.Generate(_landmarkRoot, _islandTopography, seed);
+                _landmarkPlacements = LandmarkWorldGenerator.Generate(_landmarkRoot, _islandTopography, seed, SampleTerrainHeight);
             }
         }
 
@@ -554,11 +560,11 @@ namespace ApexShift.Runtime.World.Generation
             List<VegetationPlacement> placements = _vegetationPlanner.Plan(
                 seed, vegetationCatalog, vegetationSettings, _islandTopography.WorldBounds,
                 position => _islandTopography.TryGetEnvironmentAt(position, out VegetationEnvironmentSample sample) ? sample : default,
-                SampleTerrainHeight, _islandTopography.GetSafePlayerSpawnPoint(), clearingRadius,
+                SampleTerrainHeight, ResolvePlayerSpawnPoint(), clearingRadius,
                 landmarkClearances, _vegetationRejections);
             VegetationRuntimeController controller = _vegetationRoot.GetComponent<VegetationRuntimeController>();
             if (controller == null) controller = _vegetationRoot.gameObject.AddComponent<VegetationRuntimeController>();
-            Vector3 initialTarget = _islandTopography.GetSafePlayerSpawnPoint();
+            Vector3 initialTarget = ResolvePlayerSpawnPoint();
             controller.Initialize(placements, vegetationSettings, initialTarget);
             if (_generationContext != null) _generationContext.VegetationRuntime = controller;
             for (int i = 0; i < placements.Count; i++)
@@ -1209,9 +1215,28 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             return null;
         }
 
-        private GameObject CreatePlayer()
+        /// <summary>One per-generation anchor shared by player, start clearing and vegetation streaming.</summary>
+        public Vector3 ResolvePlayerSpawnPoint()
         {
-            // Use topography to find a safe player spawn point (not shoreline, not ridge).
+            if (_resolvedPlayerSpawn.HasValue) return _resolvedPlayerSpawn.Value;
+            LandmarkRuntime crash = LandmarkRegistry.FindById("plane_crash");
+            if (crash != null && _islandTopography != null && _islandTopography.IsBuilt)
+            {
+                // Fixed ring order is deterministic and avoids the temporary fuselage/wing footprint.
+                for (int i = 0; i < 8; i++)
+                {
+                    float angle = i * Mathf.PI * 0.25f;
+                    Vector3 candidate = crash.transform.position + new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle)) * 4.5f;
+                    if (_islandTopography.TryGetEnvironmentAt(candidate, out EnvironmentSample environment)
+                        && environment.IsLand && !environment.IsWater && !environment.IsShoreline
+                        && environment.SlopeDegrees <= 14f && environment.TerrainType != TerrainType.Ridge)
+                    {
+                        candidate.y = SampleTerrainHeight(candidate);
+                        _resolvedPlayerSpawn = candidate;
+                        return candidate;
+                    }
+                }
+            }
             Vector3 spawnPos;
             if (_islandTopography != null && _islandTopography.IsBuilt)
             {
@@ -1233,6 +1258,14 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
             {
                 spawnPos = Vector3.up * 0.10f;
             }
+
+            _resolvedPlayerSpawn = spawnPos;
+            return spawnPos;
+        }
+
+        private GameObject CreatePlayer()
+        {
+            Vector3 spawnPos = ResolvePlayerSpawnPoint();
 
             GameObject player;
             if (playerPrefab != null)

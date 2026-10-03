@@ -11,7 +11,7 @@ namespace ApexShift.Runtime.World.Landmarks
         [SerializeField] private string displayName = "Unknown landmark";
         [TextArea]
         [SerializeField] private string description = string.Empty;
-        [SerializeField] private bool discovered = true;
+        [SerializeField] private bool discovered = false;
 
         public string LandmarkId => Normalize(landmarkId, "unknown");
         public LandmarkType Type => landmarkType;
@@ -23,7 +23,7 @@ namespace ApexShift.Runtime.World.Landmarks
         private void OnDisable() => LandmarkRegistry.Unregister(this);
         private void OnDestroy() => LandmarkRegistry.Unregister(this);
 
-        public void Configure(string id, LandmarkType type, string name, string details = null, bool isDiscovered = true)
+        public void Configure(string id, LandmarkType type, string name, string details = null, bool isDiscovered = false)
         {
             landmarkId = Normalize(id, "unknown");
             landmarkType = type;
@@ -31,6 +31,16 @@ namespace ApexShift.Runtime.World.Landmarks
             description = details ?? string.Empty;
             discovered = isDiscovered;
             LandmarkRegistry.Register(this);
+        }
+
+        public event System.Action<LandmarkRuntime> Discovered;
+
+        public bool Discover()
+        {
+            if (discovered) return false;
+            discovered = true;
+            Discovered?.Invoke(this);
+            return true;
         }
 
         public void SetDiscovered(bool value) => discovered = value;
@@ -59,6 +69,11 @@ namespace ApexShift.Runtime.World.Landmarks
             string normalized = value.Trim().ToLowerInvariant().Replace("_", string.Empty).Replace("-", string.Empty);
             switch (normalized)
             {
+                case "planecrash": return LandmarkType.PlaneCrash;
+                case "freshwatersource": return LandmarkType.FreshwaterSource;
+                case "smugglercache": return LandmarkType.SmugglerCache;
+                case "smugglercamp": return LandmarkType.SmugglerCamp;
+                case "baseentrance": return LandmarkType.BaseEntrance;
                 case "oldtree": return LandmarkType.OldTree;
                 case "ruins": return LandmarkType.Ruins;
                 case "pond": return LandmarkType.Pond;
@@ -73,6 +88,11 @@ namespace ApexShift.Runtime.World.Landmarks
         {
             switch (type)
             {
+                case LandmarkType.PlaneCrash: return "Plane Crash";
+                case LandmarkType.FreshwaterSource: return "Freshwater Source";
+                case LandmarkType.SmugglerCache: return "Smuggler Cache";
+                case LandmarkType.SmugglerCamp: return "Smuggler Camp";
+                case LandmarkType.BaseEntrance: return "Hidden Entrance";
                 case LandmarkType.OldTree: return "Great Old Tree";
                 case LandmarkType.Ruins: return "Ruins";
                 case LandmarkType.Pond: return "Pond";

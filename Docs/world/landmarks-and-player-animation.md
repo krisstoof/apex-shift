@@ -1,6 +1,8 @@
 # Landmark runtime and player animation polish
 
-This document covers Batch D:
+Landmark production behavior is documented in [Tropical landmarks](tropical-landmarks.md).
+
+This document also records the original Batch D integration:
 
 - #54 landmark runtime and map markers
 - #60 player character animation binding
@@ -16,7 +18,7 @@ Assets/_Project/Scripts/Runtime/World/Landmarks/LandmarkType.cs
 Assets/_Project/Scripts/Runtime/World/Landmarks/LandmarkWorldGenerator.cs
 ```
 
-Generated landmark types:
+Legacy save-compatible types (not the new-game production set):
 
 - `old_tree`
 - `ruins`
@@ -31,7 +33,7 @@ Each landmark stores:
 - display name
 - description
 - world position
-- `discovered` flag for future fog-of-war/discovery work
+- `discovered` flag controlling proximity discovery and map visibility
 
 ## Map/minimap
 
@@ -44,7 +46,7 @@ Assets/_Project/Scripts/Presentation/HUD/MapScreenUI.cs
 Assets/_Project/Scripts/Presentation/HUD/MiniMapUI.cs
 ```
 
-The full map and minimap use landmark colors/sizes based on `LandmarkType`.
+The full map and minimap show only discovered landmarks, with colors/sizes based on `LandmarkType`.
 
 ## Save/load
 
@@ -114,7 +116,7 @@ This scans imported animation clips, reports which roles were resolved, and can 
 
 1. Start New Game.
 2. Confirm at least one `Landmark_*` object exists under `LandmarkRoot`.
-3. Open map and confirm landmark markers are visible.
+3. Open map and confirm only Plane Crash is visible initially; approach another landmark to discover it.
 4. Check minimap for nearby landmark markers.
 5. Save and load.
 6. Confirm landmarks are restored and markers still appear.
