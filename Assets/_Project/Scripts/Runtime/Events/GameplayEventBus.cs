@@ -29,7 +29,8 @@ namespace ApexShift.Runtime.Events
         FireSourceActivated,
         FireSourceExpired,
         LandmarkDiscovered,
-        StorySignal
+        StorySignal,
+        StoryClueInspected
     }
 
     [Serializable]
@@ -104,6 +105,14 @@ namespace ApexShift.Runtime.Events
             {
                 signalId = string.IsNullOrWhiteSpace(signalId) ? string.Empty : signalId.Trim().ToLowerInvariant(),
                 subjectId = string.IsNullOrWhiteSpace(subjectId) ? string.Empty : subjectId.Trim()
+            });
+        }
+
+        public static void PublishStoryClueInspected(Vector3 position, string clueId)
+        {
+            Publish(new GameplayEvent(GameplayEventKind.StoryClueInspected, position)
+            {
+                subjectId = string.IsNullOrWhiteSpace(clueId) ? string.Empty : clueId.Trim().ToLowerInvariant()
             });
         }
 

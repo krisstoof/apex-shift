@@ -1,7 +1,8 @@
 # Persistent story progression (#101)
 
-#101 is framework only: no raft, survival detector, keys, interior, boat,
-rewards or ending cinematic are implemented. World placement is unchanged.
+#101 introduced the progression framework. #102 supplies raft construction and
+failure; #103 supplies environmental clue inspection. No keys, interior, boat,
+rewards or ending cinematic are implemented. Landmark placement is unchanged.
 
 ## Central production definition
 
@@ -14,14 +15,14 @@ Stable string IDs, objective texts and rules live in
 | establish_survival | survival_established | build_raft |
 | build_raft | raft_built | attempt_raft_escape |
 | attempt_raft_escape | raft_escape_failed | investigate_human_traces |
-| investigate_human_traces | landmark_discovered:smuggler_cache | locate_smuggler_base |
-| investigate_human_traces | landmark_discovered:smuggler_camp | locate_smuggler_base |
+| investigate_human_traces | human_traces_found | locate_smuggler_base |
 | locate_smuggler_base | landmark_discovered:base_entrance | gain_base_access |
 | gain_base_access | base_access_gained | prepare_boat |
 | prepare_boat | boat_prepared | escape_island |
 | escape_island | island_escaped | completed |
 
-Cache **or** camp is sufficient. Discovering the entrance does not grant access.
+Inspection of cache **or** camp evidence is sufficient; landmark proximity alone
+is not. Discovering the entrance does not grant access.
 `completed` has no outgoing rule. A generated, already-discovered plane crash
 does not imply `crash_survived`: every new generation starts at `survive_crash`
 with no milestones.
@@ -43,7 +44,7 @@ Milestones form an independent, permanent HashSet, not transient triggers.
 no-ops. StageChanged fires once per transition and MilestoneCompleted once per
 new milestone. StateChanged notifies presentation after evaluation.
 
-Out-of-order cache/entrance discoveries are retained. Once preceding milestones
+Out-of-order clue evidence/entrance discoveries are retained. Once preceding milestones
 arrive, rules reevaluate repeatedly and may traverse several stages without
 rediscovery. A stage-count-based limit prevents a malformed cycle from hanging.
 
@@ -60,6 +61,8 @@ No persistent singleton or DontDestroyOnLoad is used.
   "currentStageId": "locate_smuggler_base",
   "completedMilestoneIds": [
     "crash_survived",
+    "clue_discovered:smuggler_cache_manifest",
+    "human_traces_found",
     "landmark_discovered:smuggler_cache",
     "raft_built",
     "raft_escape_failed",
@@ -73,7 +76,7 @@ Capture sorts IDs ordinally. Old saves without storyState default to
 GameSaveService prefers the current generation's runtime, with a standalone
 fallback when no generator exists.
 
-After generation and landmark restoration, RestoreSaveData restores the saved
+After generation, landmark and clue restoration, RestoreSaveData restores the saved
 stage and normalized/deduplicated milestones **without reevaluating rules**.
 Unknown stages warn and fall back to the initial stage; valid unknown milestones
 are retained. Restore publishes no gameplay completion events, StageChanged or
@@ -87,7 +90,7 @@ CurrentObjectiveText immediately, and updates through StateChanged, not polling.
 Disable, unbind and destruction remove subscriptions; enabling refreshes state.
 Load updates the already-bound HUD after restoring the story.
 
-## Future producer API (#102–#105)
+## Producer API (#102–#105)
 
 Gameplay producers use the existing bus, without finding the story runtime:
 
@@ -95,7 +98,7 @@ Gameplay producers use the existing bus, without finding the story runtime:
 using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Story;
 
-// Future #102 raft construction / failed attempt:
+// #102 raft construction / failed attempt:
 GameEventBus.PublishStorySignal(StorySignalIds.RaftBuilt);
 GameEventBus.PublishStorySignal(StorySignalIds.RaftEscapeFailed);
 
@@ -109,5 +112,6 @@ GameEventBus.PublishStorySignal(StorySignalIds.IslandEscaped);
 
 An optional subjectId identifies the originating object; it is not the persistent
 milestone key. CrashSurvived and SurvivalEstablished are also accepted stable
-signals, but this issue provides no automatic producers. #103 can rely on
-existing landmark discovery; no clue chain or journal is added.
+signals, but the framework provides no automatic producers for those two.
+#103 publishes clue-specific milestones and human_traces_found through the same
+bus. See [smuggler-clue-chain.md](smuggler-clue-chain.md); no journal is added.

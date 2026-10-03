@@ -6,6 +6,7 @@ using ApexShift.Presentation.HUD;
 using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Save;
 using ApexShift.Runtime.Story;
+using ApexShift.Runtime.Story.Clues;
 using ApexShift.Runtime.World.Generation;
 using ApexShift.Runtime.World.Biomes;
 using ApexShift.Runtime.World.Vegetation;
@@ -209,6 +210,8 @@ namespace ApexShift.Tests.Regression
                 first.Signal(StorySignalIds.RaftEscapeFailed);
                 LandmarkRuntime cache = FindCache(generator);
                 Assert.IsTrue(cache.Discover());
+                Assert.AreEqual(StoryStageIds.InvestigateHumanTraces, first.CurrentStageId);
+                Assert.IsTrue(StoryClueRegistry.FindById("smuggler_cache_manifest").Discover());
                 Assert.AreEqual(StoryStageIds.LocateSmugglerBase, first.CurrentStageId);
                 GameSaveService service = serviceObject.AddComponent<GameSaveService>();
                 GameSaveData saved = service.CaptureCurrentState();

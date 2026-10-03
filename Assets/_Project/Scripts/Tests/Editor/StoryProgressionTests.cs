@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using ApexShift.Core.Save;
 using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Story;
+using ApexShift.Runtime.Story.Clues;
 using ApexShift.Runtime.World.Landmarks;
 using NUnit.Framework;
 using UnityEngine;
@@ -36,7 +37,7 @@ namespace ApexShift.Tests.Editor
         {
             StoryProgressionDefinition definition = StoryProgressionDefinition.Production;
             Assert.AreEqual(10, definition.Stages.Count);
-            Assert.AreEqual(10, definition.Transitions.Count);
+            Assert.AreEqual(9, definition.Transitions.Count);
             Assert.AreEqual(definition.Stages.Count, definition.Stages.Select(stage => stage.Id).Distinct().Count());
             foreach (StoryStageDefinition stage in definition.Stages)
             {
@@ -88,13 +89,15 @@ namespace ApexShift.Tests.Editor
             Assert.AreEqual(1, story.CompletedMilestones.Count);
         }
 
-        [TestCase("smuggler_cache")]
-        [TestCase("smuggler_camp")]
+        [TestCase("smuggler_cache_manifest")]
+        [TestCase("smuggler_camp_evidence")]
         public void EitherHumanTraceUnlocksBaseTrailThenEntranceUnlocksAccessObjective(string clue)
         {
             EarlyFlow();
             Assert.AreEqual(StoryStageIds.InvestigateHumanTraces, story.CurrentStageId);
-            story.Signal(StoryMilestoneIds.LandmarkDiscovered(clue));
+            var definition = StoryClueDefinition.Production().Single(d => d.ClueId == clue);
+            story.Signal(StoryMilestoneIds.ClueDiscovered(definition.ClueId));
+            story.Signal(definition.AdditionalMilestoneId);
             Assert.AreEqual(StoryStageIds.LocateSmugglerBase, story.CurrentStageId);
             story.Signal(StoryMilestoneIds.LandmarkDiscovered("base_entrance"));
             Assert.AreEqual(StoryStageIds.GainBaseAccess, story.CurrentStageId);
@@ -104,7 +107,7 @@ namespace ApexShift.Tests.Editor
         [Test]
         public void OutOfOrderDiscoveriesCascadeWithoutRediscoveryAndDuplicatesAreNoOps()
         {
-            story.Signal(StoryMilestoneIds.LandmarkDiscovered(" SMUGGLER_CACHE "));
+            story.Signal(StoryClueMilestoneIds.HumanTracesFound);
             story.Signal(StoryMilestoneIds.LandmarkDiscovered("base_entrance"));
             Assert.AreEqual(StoryStageIds.SurviveCrash, story.CurrentStageId);
             Assert.AreEqual(2, story.CompletedMilestones.Count);
@@ -122,7 +125,7 @@ namespace ApexShift.Tests.Editor
         public void CompleteFlowIsTerminalAndCaptureIsSortedAndIndependent()
         {
             EarlyFlow();
-            story.Signal(StoryMilestoneIds.LandmarkDiscovered("smuggler_cache"));
+            story.Signal(StoryClueMilestoneIds.HumanTracesFound);
             story.Signal(StoryMilestoneIds.LandmarkDiscovered("base_entrance"));
             story.Signal(StorySignalIds.BaseAccessGained);
             story.Signal(StorySignalIds.BoatPrepared);

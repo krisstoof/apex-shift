@@ -10,5 +10,11 @@ namespace ApexShift.Runtime.Story
             string id = Normalize(landmarkId);
             return id.Length == 0 ? string.Empty : "landmark_discovered:" + id;
         }
+
+        public static string ClueDiscovered(string clueId)
+        {
+            string id = Normalize(clueId);
+            return id.Length == 0 ? string.Empty : "clue_discovered:" + id;
+        }
     }
 }

@@ -140,6 +140,25 @@ namespace ApexShift.Presentation.HUD
             objectiveView.Bind(player != null ? generator?.CurrentGeneration?.StoryProgression : null);
             objectivePanel.SetActive(player != null && generator?.CurrentGeneration?.StoryProgression != null);
 
+            GameObject cluePanel = CreateUIPanel(hudGo.transform, "StoryCluePanel",
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(700f, 144f), new Vector2(0f, 170f));
+            cluePanel.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0f);
+            cluePanel.GetComponent<Image>().raycastTarget = false;
+            GameObject clueTitle = CreateMenuText(cluePanel.transform, "Title", string.Empty, 20,
+                TextAnchor.UpperCenter, new Vector2(0f, -12f));
+            GameObject clueBody = CreateMenuText(cluePanel.transform, "InspectionText", string.Empty, 18,
+                TextAnchor.UpperCenter, new Vector2(0f, -44f));
+            foreach (GameObject label in new[] { clueTitle, clueBody })
+            {
+                RectTransform rt = label.GetComponent<RectTransform>();
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
+                rt.pivot = new Vector2(0.5f, 1f);
+                rt.sizeDelta = new Vector2(660f, label == clueTitle ? 30f : 90f);
+                label.GetComponent<Text>().raycastTarget = false;
+            }
+            StoryClueHUDView clueView = hudGo.GetComponent<StoryClueHUDView>() ?? hudGo.AddComponent<StoryClueHUDView>();
+            clueView.Configure(cluePanel, clueTitle.GetComponent<Text>(), clueBody.GetComponent<Text>(), player != null);
+
             // Group 1: Stats (Top Left) - LARGER
             GameObject statsPanel = CreateUIPanel(hudGo.transform, "StatsPanel", new Vector2(0, 1), new Vector2(0, 1), new Vector2(240, 150), new Vector2(40, -40));
             StatBarUI healthBar = CreateStatBar(statsPanel.transform, "HealthBar", "Health", "health", Color.red, new Vector2(12, -15));

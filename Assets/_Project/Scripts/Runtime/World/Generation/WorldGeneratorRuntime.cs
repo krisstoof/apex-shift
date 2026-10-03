@@ -238,6 +238,7 @@ namespace ApexShift.Runtime.World.Generation
                 _dayNightRuntime = null;
             }
             if (_runtimeOwner != null) _runtimeOwner.Clear();
+            ApexShift.Runtime.Story.Clues.StoryClueRegistry.ClearForWorldRegeneration();
             _generationContext = null;
             _resolvedPlayerSpawn = null;
             _landmarkPlacements = System.Array.Empty<LandmarkPlacementResult>();
@@ -510,6 +511,7 @@ namespace ApexShift.Runtime.World.Generation
             if (_landmarkRoot != null && _islandTopography != null)
             {
                 _landmarkPlacements = LandmarkWorldGenerator.Generate(_landmarkRoot, _islandTopography, seed, SampleTerrainHeight);
+                ApexShift.Runtime.Story.Clues.StoryClueWorldGenerator.Generate(_landmarkRoot, _islandTopography, seed, SampleTerrainHeight);
             }
         }
 
@@ -559,6 +561,8 @@ namespace ApexShift.Runtime.World.Generation
             }
 
             _vegetationPlanner = new VegetationPlacementPlanner();
+            foreach (var clue in ApexShift.Runtime.Story.Clues.StoryClueRegistry.Clues)
+                landmarkClearances.Add(new VegetationLandmarkClearance(clue.transform.position, clue.VegetationClearanceRadius));
             List<VegetationPlacement> placements = _vegetationPlanner.Plan(
                 seed, vegetationCatalog, vegetationSettings, _islandTopography.WorldBounds,
                 position => _islandTopography.TryGetEnvironmentAt(position, out VegetationEnvironmentSample sample) ? sample : default,

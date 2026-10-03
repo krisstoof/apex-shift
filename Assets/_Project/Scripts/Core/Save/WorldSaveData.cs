@@ -17,6 +17,7 @@ namespace ApexShift.Core.Save
         public List<CreatureSaveData> creatureStates = new List<CreatureSaveData>();
         public List<BuildingSaveData> buildingStates = new List<BuildingSaveData>();
         public List<LandmarkSaveData> landmarkStates = new List<LandmarkSaveData>();
+        public List<StoryClueSaveData> clueStates = new List<StoryClueSaveData>();
         public StorySaveData storyState = StorySaveData.Default;
         public float ecosystemTickTimer;
         public string ecosystemStateSource = "generated";
@@ -32,6 +33,7 @@ namespace ApexShift.Core.Save
         public IReadOnlyList<CreatureSaveData> CreatureStates => creatureStates ?? (creatureStates = new List<CreatureSaveData>());
         public IReadOnlyList<BuildingSaveData> BuildingStates => buildingStates ?? (buildingStates = new List<BuildingSaveData>());
         public IReadOnlyList<LandmarkSaveData> LandmarkStates => landmarkStates ?? (landmarkStates = new List<LandmarkSaveData>());
+        public IReadOnlyList<StoryClueSaveData> ClueStates => clueStates ?? (clueStates = new List<StoryClueSaveData>());
         public float EcosystemTickTimer => ecosystemTickTimer;
         public string EcosystemStateSource => string.IsNullOrWhiteSpace(ecosystemStateSource) ? "generated" : ecosystemStateSource;
 

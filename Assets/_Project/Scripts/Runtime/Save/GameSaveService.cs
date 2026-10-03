@@ -182,6 +182,7 @@ namespace ApexShift.Runtime.Save
                 ecosystemDirector != null ? ecosystemDirector.EcosystemStateSource : "generated");
             
             world.landmarkStates = landmarkStates;
+            world.clueStates = ApexShift.Runtime.Story.Clues.StoryClueRegistry.CaptureSaveData();
             world.treeStates = treeStates;
             world.storyState = storyProgression != null ? storyProgression.CaptureSaveData() : StorySaveData.Default;
 
@@ -254,6 +255,7 @@ namespace ApexShift.Runtime.Save
             RestoreCreatureStates(saveData.World.CreatureStates);
             RestoreBuildingStates(saveData.World.BuildingStates);
             RestoreLandmarkStates(saveData.World.LandmarkStates);
+            ApexShift.Runtime.Story.Clues.StoryClueRegistry.RestoreFromSaveData(saveData.World.ClueStates);
             storyProgression?.RestoreSaveData(saveData.World.StoryState);
             if (dayNightRuntime != null)
             {
