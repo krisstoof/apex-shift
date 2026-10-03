@@ -17,10 +17,12 @@ namespace ApexShift.Core.Save
         public List<CreatureSaveData> creatureStates = new List<CreatureSaveData>();
         public List<BuildingSaveData> buildingStates = new List<BuildingSaveData>();
         public List<LandmarkSaveData> landmarkStates = new List<LandmarkSaveData>();
+        public StorySaveData storyState = StorySaveData.Default;
         public float ecosystemTickTimer;
         public string ecosystemStateSource = "generated";
 
         public int Seed => seed;
+        public StorySaveData StoryState => storyState ?? (storyState = StorySaveData.Default);
         public int Day => day;
         public float TimeOfDay => timeOfDay;
         public IReadOnlyList<ResourceSaveData> Resources => resources ?? (resources = new List<ResourceSaveData>());

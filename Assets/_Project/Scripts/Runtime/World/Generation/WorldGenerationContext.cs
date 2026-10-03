@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using Unity.AI.Navigation;
 using ApexShift.Runtime.DayNight;
+using ApexShift.Runtime.Story;
 using ApexShift.Runtime.World.Topography;
 using ApexShift.Runtime.World.Vegetation;
 
@@ -25,6 +26,7 @@ namespace ApexShift.Runtime.World.Generation
         public GameObject MainCamera { get; set; }
         public IslandTopographyRuntime IslandTopography { get; set; }
         public DayNightRuntime DayNight { get; set; }
+        public StoryProgressionRuntime StoryProgression { get; set; }
         public WorldBounds WorldBounds { get; set; }
         public NavMeshSurface NavMeshSurface { get; set; }
 

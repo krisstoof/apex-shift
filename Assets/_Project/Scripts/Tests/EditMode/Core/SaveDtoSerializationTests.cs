@@ -60,6 +60,9 @@ namespace ApexShift.Tests.EditMode.Core
             Assert.AreEqual(0.25f, restored.World.TimeOfDay, 0.001f);
             Assert.AreEqual(1, restored.World.Resources.Count);
             Assert.AreEqual(0, restored.World.TreeStates.Count);
+            Assert.IsNotNull(restored.World.StoryState);
+            Assert.AreEqual("survive_crash", restored.World.StoryState.CurrentStageId);
+            Assert.IsEmpty(restored.World.StoryState.CompletedMilestoneIds);
             Assert.IsTrue(restored.Version.IsCompatible);
         }
 
@@ -87,6 +90,36 @@ namespace ApexShift.Tests.EditMode.Core
             Assert.IsNotNull(save.Survival);
             Assert.IsNotNull(save.World);
             Assert.IsTrue(save.Version.IsCompatible);
+        }
+
+        [Test]
+        public void StoryStateRoundTripsStableStageAndMilestones()
+        {
+            GameSaveData original = new GameSaveData();
+            original.World.storyState = new StorySaveData
+            {
+                currentStageId = "locate_smuggler_base",
+                completedMilestoneIds = new List<string>
+                {
+                    "crash_survived", "survival_established", "raft_built", "raft_escape_failed",
+                    "landmark_discovered:smuggler_cache"
+                }
+            };
+            UnityJsonGameSaveSerializer serializer = new UnityJsonGameSaveSerializer();
+            GameSaveData restored = serializer.Deserialize(serializer.Serialize(original));
+            Assert.AreEqual(original.World.StoryState.CurrentStageId, restored.World.StoryState.CurrentStageId);
+            CollectionAssert.AreEqual(original.World.StoryState.CompletedMilestoneIds, restored.World.StoryState.CompletedMilestoneIds);
+        }
+
+        [Test]
+        public void LegacySaveWithoutStoryLoadsFreshInitialState()
+        {
+            GameSaveData restored = new UnityJsonGameSaveSerializer().Deserialize(
+                "{\"world\":{\"seed\":321,\"day\":3,\"timeOfDay\":0.5,\"resources\":[]}}");
+            Assert.AreEqual(321, restored.World.Seed);
+            Assert.AreEqual("survive_crash", restored.World.StoryState.CurrentStageId);
+            Assert.IsEmpty(restored.World.StoryState.CompletedMilestoneIds);
+            Assert.AreNotSame(StorySaveData.Default, StorySaveData.Default);
         }
     }
 }

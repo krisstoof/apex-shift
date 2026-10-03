@@ -119,6 +119,27 @@ namespace ApexShift.Presentation.HUD
 
             PlayerHUDController hudController = hudGo.GetComponent<PlayerHUDController>() ?? hudGo.AddComponent<PlayerHUDController>();
 
+            GameObject objectivePanel = CreateUIPanel(hudGo.transform, "ObjectivePanel",
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(620f, 76f), new Vector2(0f, -24f));
+            objectivePanel.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 1f);
+            objectivePanel.GetComponent<Image>().raycastTarget = false;
+            GameObject objectiveTitle = CreateMenuText(objectivePanel.transform, "Title", "OBJECTIVE", 14,
+                TextAnchor.UpperCenter, new Vector2(0f, -8f));
+            GameObject objectiveBody = CreateMenuText(objectivePanel.transform, "ObjectiveText", string.Empty, 18,
+                TextAnchor.UpperCenter, new Vector2(0f, -30f));
+            foreach (GameObject label in new[] { objectiveTitle, objectiveBody })
+            {
+                RectTransform rt = label.GetComponent<RectTransform>();
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
+                rt.pivot = new Vector2(0.5f, 1f);
+                rt.sizeDelta = new Vector2(600f, 40f);
+                label.GetComponent<Text>().raycastTarget = false;
+            }
+            ObjectiveHUDView objectiveView = objectivePanel.AddComponent<ObjectiveHUDView>();
+            objectiveView.Configure(objectiveBody.GetComponent<Text>());
+            objectiveView.Bind(player != null ? generator?.CurrentGeneration?.StoryProgression : null);
+            objectivePanel.SetActive(player != null && generator?.CurrentGeneration?.StoryProgression != null);
+
             // Group 1: Stats (Top Left) - LARGER
             GameObject statsPanel = CreateUIPanel(hudGo.transform, "StatsPanel", new Vector2(0, 1), new Vector2(0, 1), new Vector2(240, 150), new Vector2(40, -40));
             StatBarUI healthBar = CreateStatBar(statsPanel.transform, "HealthBar", "Health", "health", Color.red, new Vector2(12, -15));

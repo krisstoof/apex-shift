@@ -27,7 +27,9 @@ namespace ApexShift.Runtime.Events
         PlayerProjectileHit,
         TrapTriggered,
         FireSourceActivated,
-        FireSourceExpired
+        FireSourceExpired,
+        LandmarkDiscovered,
+        StorySignal
     }
 
     [Serializable]
@@ -40,6 +42,9 @@ namespace ApexShift.Runtime.Events
         public string targetKind;
         public string resourceId;
         public string itemId;
+        public string landmarkId;
+        public string signalId;
+        public string subjectId;
         public float amount;
         public float nutrition;
         public float biomassImpact;
@@ -85,6 +90,23 @@ namespace ApexShift.Runtime.Events
         private static int logCapacity = DefaultLogCapacity;
 
         public static int RecentEventCount => recentEvents.Count;
+        public static void PublishLandmarkDiscovered(Vector3 position, string landmarkId)
+        {
+            Publish(new GameplayEvent(GameplayEventKind.LandmarkDiscovered, position)
+            {
+                landmarkId = string.IsNullOrWhiteSpace(landmarkId) ? string.Empty : landmarkId.Trim().ToLowerInvariant()
+            });
+        }
+
+        public static void PublishStorySignal(string signalId, string subjectId = null)
+        {
+            Publish(new GameplayEvent(GameplayEventKind.StorySignal, Vector3.zero)
+            {
+                signalId = string.IsNullOrWhiteSpace(signalId) ? string.Empty : signalId.Trim().ToLowerInvariant(),
+                subjectId = string.IsNullOrWhiteSpace(subjectId) ? string.Empty : subjectId.Trim()
+            });
+        }
+
         public static IReadOnlyList<GameplayEvent> RecentEvents => recentEvents;
 
         public static IDisposable Subscribe(Action<GameplayEvent> handler)

@@ -11,6 +11,7 @@ using ApexShift.Runtime.Ecosystem;
 using ApexShift.Runtime.Items;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Resources;
+using ApexShift.Runtime.Story;
 using ApexShift.Runtime.DayNight;
 using ApexShift.Runtime.Camera;
 using ApexShift.Runtime.World.Generation;
@@ -35,6 +36,7 @@ namespace ApexShift.Runtime.Save
         [SerializeField] private BuildingRegistry buildingRegistry;
 
         private IGameSaveStore saveStore;
+        private StoryProgressionRuntime storyProgression;
 
         private IGameSaveStore GetSaveStore()
         {
@@ -57,6 +59,10 @@ namespace ApexShift.Runtime.Save
             {
                 worldGenerator = FindAnyObjectByType<WorldGeneratorRuntime>();
             }
+
+            storyProgression = worldGenerator != null
+                ? worldGenerator.CurrentGeneration?.StoryProgression
+                : FindAnyObjectByType<StoryProgressionRuntime>();
 
             if (playerInventory == null || playerSurvival == null)
             {
@@ -174,6 +180,7 @@ namespace ApexShift.Runtime.Save
             
             world.landmarkStates = landmarkStates;
             world.treeStates = treeStates;
+            world.storyState = storyProgression != null ? storyProgression.CaptureSaveData() : StorySaveData.Default;
 
             return new GameSaveData(inventory, survival, world);
         }
@@ -244,6 +251,7 @@ namespace ApexShift.Runtime.Save
             RestoreCreatureStates(saveData.World.CreatureStates);
             RestoreBuildingStates(saveData.World.BuildingStates);
             RestoreLandmarkStates(saveData.World.LandmarkStates);
+            storyProgression?.RestoreSaveData(saveData.World.StoryState);
             if (dayNightRuntime != null)
             {
                 dayNightRuntime.LoadFromWorldSaveData(saveData.World.Day, saveData.World.TimeOfDay);
@@ -310,6 +318,7 @@ namespace ApexShift.Runtime.Save
             ecosystemRuntime = null;
             dayNightRuntime = null;
             buildingRegistry = null;
+            storyProgression = null;
         }
 
         public void DeleteGame(string slotName)

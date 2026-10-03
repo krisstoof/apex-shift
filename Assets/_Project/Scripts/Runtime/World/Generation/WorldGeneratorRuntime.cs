@@ -169,6 +169,8 @@ namespace ApexShift.Runtime.World.Generation
                 {
                     EnsureRoots();
                     EnsureBuildingRegistry();
+                    context.StoryProgression = CreateRoot("StoryProgressionRuntime").gameObject
+                        .AddComponent<ApexShift.Runtime.Story.StoryProgressionRuntime>();
                 }),
                 new WorldGenerationStage("GenerateTerrainAndEnvironment", context => GenerateIslandLayout()),
                 new WorldGenerationStage("SpawnResources", context => SpawnAllRegionResources()),

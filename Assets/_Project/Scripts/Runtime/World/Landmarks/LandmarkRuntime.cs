@@ -1,4 +1,5 @@
 using ApexShift.Core.Save;
+using ApexShift.Runtime.Events;
 using UnityEngine;
 
 namespace ApexShift.Runtime.World.Landmarks
@@ -39,6 +40,7 @@ namespace ApexShift.Runtime.World.Landmarks
         {
             if (discovered) return false;
             discovered = true;
+            GameEventBus.PublishLandmarkDiscovered(transform.position, LandmarkId);
             Discovered?.Invoke(this);
             return true;
         }
