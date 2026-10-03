@@ -34,7 +34,8 @@ namespace ApexShift.Runtime.World.Landmarks
                 HabitatIds.Coast, HabitatIds.LowlandJungle);
             crash.AllowedTerrain = new[] { TerrainType.Plain, TerrainType.Forest, TerrainType.Hills };
             crash.MaxSlope = 14f; crash.MaxElevation = 0.65f; crash.MaxMoisture = 0.9f;
-            crash.MinCoastDistance = 8f; crash.PreferredMinCoast = 16f; crash.PreferredMaxCoast = 40f;
+            crash.MinCoastDistance = 8f; crash.MaxCoastDistance = 60f;
+            crash.PreferredMinCoast = 16f; crash.PreferredMaxCoast = 40f;
             crash.PreferredElevation = 0.15f; crash.PreferredSlope = 2f;
             crash.MinimumSeparation = 25f;
 
@@ -71,7 +72,18 @@ namespace ApexShift.Runtime.World.Landmarks
             return new[] { crash, freshwater, cache, camp, entrance, tree };
         }
 
-        private static LandmarkPlacementProfile New(string id, LandmarkType type, params string[] preferred)
-            => new LandmarkPlacementProfile { LandmarkId = id, Type = type, PreferredHabitats = preferred };
+        // Production uses the same explicit habitat set for eligibility and preference.
+        // Do not leave eligibility empty: fallback must never escape this set.
+        private static LandmarkPlacementProfile New(string id, LandmarkType type, params string[] habitats)
+        {
+            if (habitats == null || habitats.Length == 0)
+                throw new ArgumentException("Production landmarks require allowed habitats.", nameof(habitats));
+            return new LandmarkPlacementProfile
+            {
+                LandmarkId = id, Type = type,
+                AllowedHabitats = (string[])habitats.Clone(),
+                PreferredHabitats = (string[])habitats.Clone()
+            };
+        }
     }
 }

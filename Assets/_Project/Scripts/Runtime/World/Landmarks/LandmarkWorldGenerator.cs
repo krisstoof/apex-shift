@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using ApexShift.Runtime.World.Topography;
 
@@ -31,7 +32,10 @@ namespace ApexShift.Runtime.World.Landmarks
             var planner = new LandmarkPlacementPlanner();
             Vector3? start = null;
             Vector3? cache = null;
-            foreach (LandmarkPlacementProfile profile in LandmarkPlacementProfile.Production())
+            // Reserve scarce rocky/interior sites before the more flexible landmarks.
+            // This is placement priority, not discovery/story progression.
+            foreach (LandmarkPlacementProfile profile in LandmarkPlacementProfile.Production()
+                .OrderBy(p => p.Type == LandmarkType.PlaneCrash ? 0 : p.Type == LandmarkType.BaseEntrance ? 1 : 2))
             {
                 LandmarkPlacementResult result = planner.Plan(seed, candidates, profile, results, start,
                     profile.Type == LandmarkType.SmugglerCamp ? cache : null);

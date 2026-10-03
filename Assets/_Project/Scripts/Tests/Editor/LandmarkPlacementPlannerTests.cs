@@ -41,7 +41,7 @@ namespace ApexShift.Tests.Editor
             Assert.NotNull(result);
             Assert.AreEqual(candidates[2].Position, result.Position);
             Assert.IsNull(planner.Plan(123, new[] { candidates[0] }, profile, null, Vector3.zero));
-            result = planner.Plan(123, new[] { Candidate(70f, coast: 50f) }, profile, null, Vector3.zero);
+            result = planner.Plan(123, new[] { Candidate(70f, HabitatIds.JungleInterior, TerrainType.Hills, coast: 50f) }, profile, null, Vector3.zero);
             Assert.NotNull(result);
             Assert.True(result.UsedFallback);
             Assert.GreaterOrEqual(result.Position.x, profile.MinStartDistance);
@@ -57,6 +57,64 @@ namespace ApexShift.Tests.Editor
             Assert.NotNull(result);
             Assert.AreEqual(candidates[1].Position, result.Position);
             Assert.True(result.UsedFallback);
+        }
+
+        [Test]
+        public void ProductionProfilesHaveExplicitHardHabitatSets()
+        {
+            var expected = new[]
+            {
+                new[] { HabitatIds.Coast, HabitatIds.LowlandJungle },
+                new[] { HabitatIds.WetJungle, HabitatIds.LowlandJungle, HabitatIds.JungleInterior },
+                new[] { HabitatIds.LowlandJungle, HabitatIds.JungleInterior },
+                new[] { HabitatIds.JungleInterior, HabitatIds.WetJungle, HabitatIds.LowlandJungle },
+                new[] { HabitatIds.RockyUpland, HabitatIds.JungleInterior },
+                new[] { HabitatIds.JungleInterior, HabitatIds.WetJungle }
+            };
+            var profiles = LandmarkPlacementProfile.Production();
+            Assert.AreEqual(expected.Length, profiles.Length);
+            for (int i = 0; i < profiles.Length; i++)
+            {
+                Assert.That(profiles[i].AllowedHabitats, Is.Not.Empty, profiles[i].LandmarkId);
+                CollectionAssert.AreEquivalent(expected[i], profiles[i].AllowedHabitats, profiles[i].LandmarkId);
+            }
+        }
+
+        [Test]
+        public void CrashFallbackCannotEscapeAllowedHabitatOrHardCoastBand()
+        {
+            var profile = LandmarkPlacementProfile.Production()[0];
+            var planner = new LandmarkPlacementPlanner();
+            var interior = Candidate(0f, HabitatIds.JungleInterior, coast: 100f);
+            var tooFar = Candidate(20f, coast: profile.MaxCoastDistance + 1f);
+            // Outside preferred band forces pass two, while the hard band still admits it.
+            var permitted = Candidate(40f, coast: 50f, slope: 10f);
+            var result = planner.Plan(9, new[] { interior, tooFar, permitted }, profile, null);
+            Assert.NotNull(result);
+            Assert.AreEqual(permitted.Position, result.Position);
+            Assert.True(result.UsedFallback);
+            Assert.IsNull(planner.Plan(9, new[] { interior }, profile, null));
+            Assert.IsNull(planner.Plan(9, new[] { tooFar }, profile, null));
+            // Habitat rejection is independent of the coast-band rejection.
+            Assert.IsNull(planner.Plan(9, new[] { Candidate(0f, HabitatIds.JungleInterior, coast: 25f) }, profile, null));
+        }
+
+        [Test]
+        public void BaseFallbackRejectsLowlandPlainButAcceptsInteriorHills()
+        {
+            var profile = LandmarkPlacementProfile.Production()[4];
+            var planner = new LandmarkPlacementPlanner();
+            var lowland = Candidate(100f, coast: 50f);
+            var interior = Candidate(75f, HabitatIds.JungleInterior, TerrainType.Hills, coast: 50f);
+            var rocky = Candidate(110f, HabitatIds.RockyUpland, TerrainType.Ridge,
+                slope: 13f, coast: 50f, elevation: 0.7f);
+            Assert.IsNull(planner.Plan(9, new[] { lowland }, profile, null, Vector3.zero));
+            var fallback = planner.Plan(9, new[] { lowland, interior }, profile, null, Vector3.zero);
+            Assert.NotNull(fallback);
+            Assert.True(fallback.UsedFallback);
+            Assert.AreEqual(interior.Position, fallback.Position);
+            Assert.AreEqual(rocky.Position,
+                planner.Plan(9, new[] { lowland, interior, rocky }, profile, null, Vector3.zero).Position);
         }
 
         [Test]

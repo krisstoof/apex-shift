@@ -94,6 +94,9 @@ namespace ApexShift.Tests.Regression
                     // Check initial discovery before proximity Update.
                     string[] ids = LandmarkPlacementProfile.Production().Select(p => p.LandmarkId).ToArray();
                     CollectionAssert.AreEquivalent(ids, LandmarkRegistry.Landmarks.Select(l => l.LandmarkId).ToArray());
+                    CollectionAssert.AreEqual(new[] { "plane_crash", "base_entrance" },
+                        generator.LandmarkPlacements.Take(2).Select(p => p.LandmarkId).ToArray(),
+                        "Reserve the constrained base site before freshwater/cache/camp consume its legal candidates.");
                     foreach (LandmarkRuntime landmark in LandmarkRegistry.Landmarks)
                         Assert.AreEqual(landmark.Type == LandmarkType.PlaneCrash, landmark.IsDiscovered, landmark.LandmarkId);
 
@@ -130,6 +133,12 @@ namespace ApexShift.Tests.Regression
                         Assert.True(context.IslandTopography.TryGetEnvironmentAt(result.Position, out EnvironmentSample sample));
                         Assert.True(sample.IsLand); Assert.False(sample.IsWater); Assert.False(sample.IsShoreline);
                         Assert.AreEqual(sample.HabitatId, result.HabitatId);
+                        LandmarkPlacementProfile profile = LandmarkPlacementProfile.Production()
+                            .Single(p => p.LandmarkId == result.LandmarkId);
+                        CollectionAssert.Contains(profile.AllowedHabitats, sample.HabitatId,
+                            $"{result.LandmarkId} escaped its hard habitat constraint for seed {seed}.");
+                        Assert.That(sample.DistanceToCoast, Is.InRange(profile.MinCoastDistance, profile.MaxCoastDistance),
+                            $"{result.LandmarkId} escaped its hard coast band for seed {seed}.");
                         Debug.Log($"[LandmarkPlacement] seed={seed} id={result.LandmarkId} position={result.Position:F3} habitat={result.HabitatId} terrain={result.TerrainType} slope={result.Slope:F2} elevation={result.Elevation:F3} coast={result.DistanceToCoast:F2} fallback={result.UsedFallback}");
                         foreach (LandmarkPlacementResult other in generator.LandmarkPlacements)
                             if (other != result) Assert.GreaterOrEqual(LandmarkPlacementPlanner.Distance(result.Position, other.Position),

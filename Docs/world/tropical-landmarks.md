@@ -20,16 +20,22 @@ queries legacy biome IDs, instantiates objects, or changes Unity Random state.
 
 Serializable LandmarkPlacementProfile defines hard habitat/terrain eligibility,
 slope/elevation/moisture/coast ranges, start/anchor distances and separation.
+Every production profile supplies a nonempty AllowedHabitats set; neither placement
+pass may relax it. The helper rejects an empty production habitat list.
 Scoring rewards preferred habitat/terrain, elevation, slope, moisture, coast bands
 and relative anchor distance, with a small stable seed/ID/position hash jitter.
 Coordinate tie-breaks make candidate iteration order irrelevant.
 
-Crash prefers lowland/coast, coast distance 16–40, slope at most 14 degrees and no ridge.
+Crash permits only lowland/coast and a hard coast distance of 8–60, preferring 16–40,
+with slope at most 14 degrees and no ridge. Base permits only rocky_upland/jungle_interior.
 Freshwater prefers moist land (not ocean), at least 30 units from crash.
 Cache is at least 45 units away. Camp is at least 60 units away and prefers greater
 interior depth and a distance around 60 from cache. Base prefers rocky upland/hills/ridge
 and a start distance at least 90; controlled fallback retains an absolute minimum of 60.
 These are spatial preferences, not a clue chain or mandatory Euclidean progression.
+Placement reserves crash first, then the constrained base site, followed by freshwater,
+cache, camp and old tree. This prevents flexible landmarks from consuming every legal
+base candidate; no safety/separation constraint is weakened and discovery order is unchanged.
 
 All landmarks reject water/shoreline, unsafe slopes and overlaps.
 Separation uses the greater of each pair's configured radii (generic 18, crash/camp 25,
@@ -75,18 +81,20 @@ including legacy restore and owned-root cleanup. RuntimeWorld scene shell is not
 
 ## Validation (Unity 6000.6.2f1)
 
-Full EditMode: 186/186 passed. Full PlayMode through Unity MCP: 302/302 passed.
+Full EditMode: 189/189 passed. Full PlayMode through Unity MCP: 302/302 passed.
 The production integration test exercised seeds 12345, 81281 and 91284 and real
 GameSaveService serialization/restoration, not just direct LandmarkRuntime DTO calls.
 
 | Seed | Crash to cache | Crash to camp | Crash to entrance | Entrance environment |
 | --- | ---: | ---: | ---: | --- |
-| 12345 | 65.115 | 105.679 | 62.097 | jungle_interior / Hills |
-| 81281 | 62.225 | 73.539 | 82.073 | lowland_jungle / Plain (fallback) |
-| 91284 | 60.000 | 65.970 | 73.430 | rocky_upland / Ridge |
+| 12345 | 65.115 | 71.554 | 100.320 | rocky_upland / Ridge |
+| 81281 | 60.000 | 68.000 | 60.926 | rocky_upland / Ridge |
+| 91284 | 60.000 | 75.472 | 64.498 | rocky_upland / Ridge |
 
-All three entrances use the controlled fallback: the preferred 90-unit rocky/interior
-combination cannot be satisfied with the existing environment and landmark separation.
-Seed 81281 also relaxes the preferred habitat/terrain, but never water, shoreline,
-20-unit coast clearance, slope safety, 60-unit crash minimum or separation. No terrain
-or habitat algorithm is changed to manufacture an ideal candidate.
+Entrances for 81281 and 91284 use the controlled preferred-distance fallback, retaining
+the hard habitat restriction, 20-unit coast clearance, slope safety, 60-unit crash minimum
+and separation. No terrain or habitat algorithm is changed to manufacture an ideal candidate.
+
+For all three seeds: crash/cache/camp are lowland_jungle, freshwater is wet_jungle,
+base is rocky_upland/Ridge, and old tree is jungle_interior. Crash DistanceToCoast:
+12345 = 32.03, 81281 = 39.07, 91284 = 39.13 (hard maximum 60).
