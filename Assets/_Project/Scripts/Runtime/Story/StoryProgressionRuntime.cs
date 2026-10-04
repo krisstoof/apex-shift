@@ -18,7 +18,25 @@ namespace ApexShift.Runtime.Story
 
         public string CurrentStageId => currentStageId;
         public StoryStageDefinition CurrentStage => definition.GetStage(currentStageId);
-        public string CurrentObjectiveText => CurrentStage.ObjectiveText;
+        private string objectiveDetailOwner;
+        public string ObjectiveDetail { get; private set; } = string.Empty;
+        public string CurrentObjectiveText => CurrentStage.ObjectiveText
+            + (ObjectiveDetail.Length == 0 ? string.Empty : "\n" + ObjectiveDetail);
+        public void SetObjectiveDetail(string ownerId, string detail)
+        {
+            if (string.IsNullOrWhiteSpace(ownerId)) return;
+            string value = detail?.Trim() ?? string.Empty;
+            if (value.Length == 0) { ClearObjectiveDetail(ownerId); return; }
+            if (objectiveDetailOwner == ownerId && ObjectiveDetail == value) return;
+            objectiveDetailOwner = ownerId; ObjectiveDetail = value;
+            StateChanged?.Invoke();
+        }
+        public void ClearObjectiveDetail(string ownerId)
+        {
+            if (objectiveDetailOwner != ownerId || ObjectiveDetail.Length == 0) return;
+            objectiveDetailOwner = null; ObjectiveDetail = string.Empty;
+            StateChanged?.Invoke();
+        }
         public IReadOnlyCollection<string> CompletedMilestones => Array.AsReadOnly(milestones.OrderBy(id => id, StringComparer.Ordinal).ToArray());
         public event Action<StoryStageDefinition> StageChanged;
         public event Action<string> MilestoneCompleted;
@@ -60,6 +78,7 @@ namespace ApexShift.Runtime.Story
                     rule.FromStageId == currentStageId && milestones.Contains(rule.RequiredMilestoneId));
                 if (next == null) return;
                 currentStageId = next.ToStageId;
+                objectiveDetailOwner = null; ObjectiveDetail = string.Empty;
                 StageChanged?.Invoke(CurrentStage);
             }
             Debug.LogWarning("[Story] Transition limit reached; check story definition for a cycle.", this);
@@ -83,6 +102,7 @@ namespace ApexShift.Runtime.Story
                 stageId = definition.InitialStageId;
             }
             currentStageId = stageId;
+            objectiveDetailOwner = null; ObjectiveDetail = string.Empty;
             milestones.Clear();
             foreach (string value in data.CompletedMilestoneIds)
             {

@@ -32,6 +32,8 @@ namespace ApexShift.Runtime.World.Interiors
         public Transform BatteryAnchor { get; private set; }
         public Transform BoatKeyAnchor { get; private set; }
         public Transform BoatAnchor { get; private set; }
+        public ApexShift.Runtime.Escape.EscapeBoatRuntime EscapeBoat { get; private set; }
+        public void ConfigureEscapeBoat(ApexShift.Runtime.Escape.EscapeBoatRuntime boat) => EscapeBoat = boat;
         public Bounds InteriorMovementBounds { get; private set; }
         public Vector3 IslandReturnPosition { get; private set; }
 
@@ -74,7 +76,7 @@ namespace ApexShift.Runtime.World.Interiors
 
         public bool TryExit(GameObject player)
         {
-            if (!IsInsidePlayer(player)) return false;
+            if (!IsInsidePlayer(player) || (EscapeBoat != null && EscapeBoat.EscapeInProgress)) return false;
             var controller = player.GetComponent<IsometricPlayerController>();
             controller.ClearMovementBoundsOverride();
             Teleport(player, ResolveSafeReturn(IslandReturnPosition));

@@ -107,10 +107,13 @@ namespace ApexShift.Presentation.HUD
             menuScaler.matchWidthOrHeight = 0.5f;
 
             // CLEANUP
-            foreach (Transform t in hudGo.transform) 
-                if (t.name.EndsWith("Panel")) DestroyImmediate(t.gameObject);
-            foreach (Transform t in menuGo.transform) 
-                DestroyImmediate(t.gameObject);
+            for (int child = hudGo.transform.childCount - 1; child >= 0; child--)
+            {
+                Transform panel = hudGo.transform.GetChild(child);
+                if (panel.name.EndsWith("Panel")) DestroyImmediate(panel.gameObject);
+            }
+            for (int child = menuGo.transform.childCount - 1; child >= 0; child--)
+                DestroyImmediate(menuGo.transform.GetChild(child).gameObject);
 
             foreach (ActionBarView oldView in hudGo.GetComponentsInChildren<ActionBarView>(true))
                 if (oldView != null) DestroyImmediate(oldView.gameObject);
@@ -120,7 +123,7 @@ namespace ApexShift.Presentation.HUD
             PlayerHUDController hudController = hudGo.GetComponent<PlayerHUDController>() ?? hudGo.AddComponent<PlayerHUDController>();
 
             GameObject objectivePanel = CreateUIPanel(hudGo.transform, "ObjectivePanel",
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(620f, 76f), new Vector2(0f, -24f));
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(620f, 112f), new Vector2(0f, -24f));
             objectivePanel.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 1f);
             objectivePanel.GetComponent<Image>().raycastTarget = false;
             GameObject objectiveTitle = CreateMenuText(objectivePanel.transform, "Title", "OBJECTIVE", 14,
@@ -132,7 +135,7 @@ namespace ApexShift.Presentation.HUD
                 RectTransform rt = label.GetComponent<RectTransform>();
                 rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
                 rt.pivot = new Vector2(0.5f, 1f);
-                rt.sizeDelta = new Vector2(600f, 40f);
+                rt.sizeDelta = new Vector2(600f, label == objectiveBody ? 72f : 24f);
                 label.GetComponent<Text>().raycastTarget = false;
             }
             ObjectiveHUDView objectiveView = objectivePanel.AddComponent<ObjectiveHUDView>();
@@ -341,6 +344,24 @@ CreateMenuBackdropFrame(optionsMenu.transform);
             if (uiRoot.GetComponent<InputEnabler>() == null) uiRoot.AddComponent<InputEnabler>();
             menuGo.SetActive(true);
             startup.Configure(generator, startMenu, pauseMenu, hudGo, optionsMenu, startGrp, pauseGrp, optionsGrp);
+            GameObject completionPanel = CreateUIPanel(hudGo.transform, "RunCompletionPanel",
+                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(720f, 340f), Vector2.zero);
+            completionPanel.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0.5f);
+            completionPanel.GetComponent<Image>().color = new Color(0.05f, 0.07f, 0.05f, 0.98f);
+            var completionTitle = CreateMenuText(completionPanel.transform, "Title", string.Empty, 36, TextAnchor.MiddleCenter, new Vector2(0f, -70f));
+            var completionMessage = CreateMenuText(completionPanel.transform, "Message", string.Empty, 22, TextAnchor.MiddleCenter, new Vector2(0f, -145f));
+            var completionButton = CreateMenuButton(completionPanel.transform, "ReturnToMenu", "Return to Main Menu", new Vector2(225f, -240f));
+            foreach (var label in new[] { completionTitle, completionMessage })
+            {
+                var rect = label.GetComponent<RectTransform>();
+                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
+                rect.pivot = new Vector2(0.5f, 1f);
+                rect.sizeDelta = new Vector2(660f, 54f);
+            }
+            var completionView = hudGo.GetComponent<RunCompletionHUDView>() ?? hudGo.AddComponent<RunCompletionHUDView>();
+            completionView.Configure(completionPanel, completionTitle.GetComponent<Text>(), completionMessage.GetComponent<Text>(), completionButton, startup);
+            completionView.Bind(player != null ? generator?.CurrentGeneration?.StoryProgression : null,
+                player != null ? generator?.CurrentGeneration?.SmugglerBaseInterior?.EscapeBoat : null);
 
             continueButton.onClick.AddListener(() => { LogMenuClick("Continue"); startup.ContinueOrLoadGame(); });
             newGameButton.onClick.AddListener(() => { LogMenuClick("New Game"); startup.StartNewGame(); });

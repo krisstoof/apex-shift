@@ -38,7 +38,6 @@ namespace ApexShift.Runtime.World.Interiors
             anchors[1].gameObject.AddComponent<BaseInteriorExitRuntime>().Configure(runtime);
             Box(tunnel, "TimberExitDoor", new Vector3(0f, 1.1f, -5.8f), new Vector3(1.8f, 2.2f, 0.15f), Wood);
             Box(storage, "Crates", new Vector3(-3f, 0.6f, 0f), new Vector3(1.6f, 1.2f, 2f), Wood);
-            Box(anchors[4], "FuelCanPlaceholder", Vector3.up * 0.4f, new Vector3(0.5f, 0.8f, 0.4f), new Color(0.45f, 0.26f, 0.12f));
             Box(anchors[5], "BatteryShelf", Vector3.up * 0.5f, new Vector3(1.3f, 1f, 0.7f), Metal);
             Box(anchors[6], "KeyTable", Vector3.up * 0.4f, new Vector3(1.5f, 0.8f, 0.8f), Wood);
             Box(operations, "OperationsTable", new Vector3(-3f, 0.5f, 1f), new Vector3(1.6f, 1f, 2f), Wood);
@@ -51,6 +50,7 @@ namespace ApexShift.Runtime.World.Interiors
             Box(boat, "Transom", new Vector3(0f, 0.7f, -2.4f), new Vector3(2.4f, 0.6f, 0.2f), Wood);
             Box(boat, "Console", new Vector3(0f, 1f, 0.4f), new Vector3(0.8f, 1f, 0.8f), Wood);
             Box(boat, "EngineBlock", new Vector3(0f, 0.8f, -2.7f), new Vector3(0.7f, 1.4f, 0.8f), Metal);
+            runtime.ConfigureEscapeBoat(ApexShift.Runtime.Escape.EscapeBoatBuilder.Build(context, runtime, boat));
             context.SmugglerBaseInterior = runtime;
             if (entrance != null)
             {

@@ -189,6 +189,7 @@ namespace ApexShift.Runtime.Save
             world.storyState = storyProgression != null ? storyProgression.CaptureSaveData() : StorySaveData.Default;
             world.playerLocation = interior != null && playerSurvival != null
                 ? interior.CapturePlayerLocation(playerSurvival.gameObject) : PlayerLocationSaveData.Island;
+            world.escapeBoatState = interior?.EscapeBoat?.CaptureSaveData() ?? EscapeBoatSaveData.Default;
 
             return new GameSaveData(inventory, survival, world);
         }
@@ -275,6 +276,7 @@ namespace ApexShift.Runtime.Save
             {
                 playerSurvival.LoadFromSaveData(saveData.Survival);
                 var interior = worldGenerator != null ? worldGenerator.CurrentGeneration?.SmugglerBaseInterior : null;
+                interior?.EscapeBoat?.RestoreSaveData(saveData.World.EscapeBoatState);
                 Vector3 fallback = saveData.Survival.hasPosition
                     ? new Vector3(saveData.Survival.posX, saveData.Survival.posY, saveData.Survival.posZ)
                     : playerSurvival.transform.position;

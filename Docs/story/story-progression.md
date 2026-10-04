@@ -102,10 +102,10 @@ using ApexShift.Runtime.Story;
 GameEventBus.PublishStorySignal(StorySignalIds.RaftBuilt);
 GameEventBus.PublishStorySignal(StorySignalIds.RaftEscapeFailed);
 
-// Future #104 actual access:
+// #104 actual access:
 GameEventBus.PublishStorySignal(StorySignalIds.BaseAccessGained);
 
-// Future #105 boat readiness / completed escape:
+// #105 boat readiness / completed escape:
 GameEventBus.PublishStorySignal(StorySignalIds.BoatPrepared);
 GameEventBus.PublishStorySignal(StorySignalIds.IslandEscaped);
 ```
@@ -115,3 +115,12 @@ milestone key. CrashSurvived and SurvivalEstablished are also accepted stable
 signals, but the framework provides no automatic producers for those two.
 #103 publishes clue-specific milestones and human_traces_found through the same
 bus. See [smuggler-clue-chain.md](smuggler-clue-chain.md); no journal is added.
+
+The final flow is implemented: entering the hidden base produces BaseAccessGained,
+boat inspection records boat_discovered, collecting Boat Fuel and Boat Battery
+updates the objective through inventory events, and installation produces
+BoatPrepared. A separate two-second realtime escape produces IslandEscaped and
+enters Completed. The completion panel stops gameplay and persists across
+Continue/Load. See [final-boat-escape.md](final-boat-escape.md) for source IDs,
+atomic requirements, objective details, and save/load rules. No story transition
+table changes or general vehicle framework are needed.

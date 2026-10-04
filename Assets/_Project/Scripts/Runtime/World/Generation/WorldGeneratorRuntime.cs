@@ -1378,6 +1378,7 @@ if (navAgent == null) navAgent = instance.AddComponent<UnityEngine.AI.NavMeshAge
 
             PlayerInventoryRuntime inventory = player.GetComponent<PlayerInventoryRuntime>();
             if (inventory == null) inventory = player.AddComponent<PlayerInventoryRuntime>();
+            _generationContext?.SmugglerBaseInterior?.EscapeBoat?.BindPlayer(player);
 
             PlayerCraftingRuntime crafting = player.GetComponent<PlayerCraftingRuntime>();
             if (crafting == null) crafting = player.AddComponent<PlayerCraftingRuntime>();

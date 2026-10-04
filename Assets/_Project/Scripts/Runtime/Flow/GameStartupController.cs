@@ -296,14 +296,21 @@ menuCamera.backgroundColor = new Color(0.08f, 0.13f, 0.08f, 1f);
                 menuCamera.gameObject.SetActive(false);
             }
 
-            Time.timeScale = 1f;
-            GameSessionState.BeginGameplay();
             CreatureDebugOverlay.HideAllDebugFrames = false;
 
             if (generateWorld && worldGenerator != null)
             {
                 worldGenerator.Generate();
             }
+            if (worldGenerator?.CurrentGeneration?.StoryProgression?.CurrentStageId == ApexShift.Runtime.Story.StoryStageIds.Completed)
+            {
+                GameSessionState.EndGameplay();
+                Time.timeScale = 0f;
+                worldGenerator.CurrentGeneration.Player?.GetComponent<ApexShift.Runtime.Player.IsometricPlayerController>()?.SetMovementEnabled(false);
+                return;
+            }
+            Time.timeScale = 1f;
+            GameSessionState.BeginGameplay();
             
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;

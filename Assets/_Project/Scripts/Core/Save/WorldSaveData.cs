@@ -20,10 +20,12 @@ namespace ApexShift.Core.Save
         public List<StoryClueSaveData> clueStates = new List<StoryClueSaveData>();
         public StorySaveData storyState = StorySaveData.Default;
         public PlayerLocationSaveData playerLocation = PlayerLocationSaveData.Island;
+        public EscapeBoatSaveData escapeBoatState = EscapeBoatSaveData.Default;
         public float ecosystemTickTimer;
         public string ecosystemStateSource = "generated";
 
         public int Seed => seed;
+        public EscapeBoatSaveData EscapeBoatState => escapeBoatState ?? (escapeBoatState = EscapeBoatSaveData.Default);
         public PlayerLocationSaveData PlayerLocation => playerLocation ?? (playerLocation = PlayerLocationSaveData.Island);
         public StorySaveData StoryState => storyState ?? (storyState = StorySaveData.Default);
         public int Day => day;

@@ -30,7 +30,8 @@ namespace ApexShift.Runtime.Events
         FireSourceExpired,
         LandmarkDiscovered,
         StorySignal,
-        StoryClueInspected
+        StoryClueInspected,
+        FinalEscapeStarted
     }
 
     [Serializable]
@@ -114,6 +115,11 @@ namespace ApexShift.Runtime.Events
             {
                 subjectId = string.IsNullOrWhiteSpace(clueId) ? string.Empty : clueId.Trim().ToLowerInvariant()
             });
+        }
+
+        public static void PublishFinalEscapeStarted(Vector3 position)
+        {
+            Publish(new GameplayEvent(GameplayEventKind.FinalEscapeStarted, position) { subjectId = "smuggler_boat" });
         }
 
         public static IReadOnlyList<GameplayEvent> RecentEvents => recentEvents;

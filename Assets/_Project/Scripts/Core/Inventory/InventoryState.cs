@@ -150,6 +150,35 @@ namespace ApexShift.Core.Inventory
             return true;
         }
 
+        /// <summary>Validate the entire cost before mutation, then notify once after all removals.
+        /// Event listeners cannot observe or interrupt a partially consumed cost.</summary>
+        public bool TryConsumeItems(IReadOnlyDictionary<string, int> requirements)
+        {
+            if (requirements == null || requirements.Count == 0) return false;
+            var costs = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var requirement in requirements)
+            {
+                string id = itemDatabase.NormalizeItemId(requirement.Key).ToString();
+                if (requirement.Value <= 0 || !itemDatabase.HasItem(id)) return false;
+                costs.TryGetValue(id, out int previous);
+                if (previous > int.MaxValue - requirement.Value) return false;
+                costs[id] = previous + requirement.Value;
+            }
+            foreach (var cost in costs) if (GetAmount(cost.Key) < cost.Value) return false;
+            foreach (var cost in costs)
+            {
+                int remaining = cost.Value;
+                foreach (var slot in slots)
+                {
+                    if (slot.IsEmpty || slot.ItemId != cost.Key) continue;
+                    remaining -= slot.Stack.RemoveAmount(remaining);
+                    if (remaining == 0) break;
+                }
+            }
+            InventoryChanged?.Invoke();
+            return true;
+        }
+
         public int RemoveItemById(string itemId, int amount)
         {
             string normalizedId = itemDatabase.NormalizeItemId(itemId).ToString();
