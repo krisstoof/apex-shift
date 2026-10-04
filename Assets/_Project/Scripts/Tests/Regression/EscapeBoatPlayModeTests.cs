@@ -71,6 +71,8 @@ namespace ApexShift.Tests.Regression
                     Assert.IsTrue(fuel.IsCollected); Assert.IsFalse(fuel.gameObject.activeSelf); Assert.IsTrue(battery.gameObject.activeInHierarchy);
                     Assert.AreEqual(1, player.GetComponent<PlayerInventoryRuntime>().Inventory.GetAmount(EscapeBoatItemIds.Fuel));
                     Assert.AreEqual("Missing: Boat Battery.", story.ObjectiveDetail);
+                    Assert.AreEqual(EscapeBoatState.MissingRequirements, boat.State);
+                    Assert.IsFalse(story.HasMilestone(StorySignalIds.BoatPrepared));
                     Assert.AreEqual(0, prepared + escaped + discovered);
                     Assert.IsTrue(battery.Interact(player));
                     StringAssert.Contains("Return to the boat", story.CurrentObjectiveText);
@@ -87,6 +89,8 @@ namespace ApexShift.Tests.Regression
                     Assert.IsTrue(service.ApplyLoadedState(service.CaptureCurrentState()));
                     c = generator.CurrentGeneration; player = c.Player; boat = c.SmugglerBaseInterior.EscapeBoat;
                     Assert.AreEqual(EscapeBoatState.Ready, boat.State); Assert.AreEqual(1, prepared);
+                    Assert.AreEqual(StoryStageIds.EscapeIsland, c.StoryProgression.CurrentStageId);
+                    Assert.IsTrue(boat.Sources.All(s => s.IsCollected && !s.gameObject.activeSelf));
                     inventory = player.GetComponent<PlayerInventoryRuntime>().Inventory;
                     inventory.AddItem(EscapeBoatItemIds.Fuel, 1); inventory.AddItem(EscapeBoatItemIds.Battery, 1);
                     Assert.IsTrue(boat.Interact(player)); Assert.IsTrue(boat.EscapeInProgress);
@@ -115,7 +119,9 @@ namespace ApexShift.Tests.Regression
                     startup.ContinueOrLoadGame();
                     c = generator.CurrentGeneration; boat = c.SmugglerBaseInterior.EscapeBoat;
                     Assert.AreEqual(StoryStageIds.Completed, c.StoryProgression.CurrentStageId);
+                    Assert.IsTrue(c.StoryProgression.HasMilestone(StorySignalIds.IslandEscaped));
                     Assert.AreEqual(EscapeBoatState.Escaped, boat.State);
+                    Assert.IsFalse(boat.Interact(c.Player));
                     Assert.IsTrue(ui.GetComponentInChildren<RunCompletionHUDView>(true).IsVisible);
                     Assert.IsFalse(GameSessionState.IsGameplayActive); Assert.AreEqual(0f, Time.timeScale); Assert.AreEqual(1, escaped);
                     ui.transform.Find("PlayerHUD/RunCompletionPanel/ReturnToMenu").GetComponent<Button>().onClick.Invoke();

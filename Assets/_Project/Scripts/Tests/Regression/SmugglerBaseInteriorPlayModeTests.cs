@@ -142,6 +142,10 @@ namespace ApexShift.Tests.Regression
                     c = generator.CurrentGeneration; interior = c.SmugglerBaseInterior; player = c.Player;
                     c.StoryProgression.StageChanged += _ => transitions++;
                     Assert.IsTrue(interior.IsPlayerInside); Assert.IsTrue(c.InteriorRoot.gameObject.activeSelf);
+                    Assert.IsTrue(interior.InteriorMovementBounds.Contains(player.transform.position));
+                    Assert.IsTrue(c.StoryProgression.HasMilestone(StorySignalIds.BaseAccessGained));
+                    Assert.AreEqual(1, c.GenerationRoot.GetComponentsInChildren<SmugglerBaseInteriorRuntime>(true).Length);
+                    Assert.AreEqual(1, c.GenerationRoot.GetComponentsInChildren<PlayerPresenceRuntime>(true).Length);
                     Assert.AreEqual(22f, c.InteriorRoot.InverseTransformPoint(player.transform.position).z, 0.01f);
                     Assert.AreEqual(invBefore, JsonUtility.ToJson(player.GetComponent<PlayerInventoryRuntime>().ToSaveData()));
                     Assert.AreEqual(statsBefore, JsonUtility.ToJson(player.GetComponent<PlayerSurvivalRuntime>().ToSaveData()));

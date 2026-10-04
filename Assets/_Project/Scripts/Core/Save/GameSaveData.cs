@@ -41,6 +41,8 @@ namespace ApexShift.Core.Save
             inventory ??= InventorySaveData.Empty;
             survival ??= SurvivalSaveData.Default;
             world ??= WorldSaveData.Empty;
+            inventory.slots ??= new System.Collections.Generic.List<InventorySlotSaveData>();
+            world.EnsureDefaults();
         }
     }
 }

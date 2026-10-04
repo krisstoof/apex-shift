@@ -1,5 +1,13 @@
 # Vegetation data authoring
 
+## Current production architecture
+
+Production uses tropical habitat profiles. Legacy five-biome vegetation tables
+remain development/serialized compatibility content and do not drive placement.
+The #106 [migration validation](testing/issue106-migration-validation.md) checks
+actual generated instances against cached environment and species constraints,
+alongside the existing planner rejection tests.
+
 Production placement uses `HabitatVegetationCatalog.asset` and neutral
 `HabitatVegetationProfileAsset` profiles in
 `Assets/_Project/Data/Vegetation/Habitats/`. The active relative densities are:

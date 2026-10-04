@@ -109,6 +109,11 @@ RuntimeWorld.unity and Generated assets are not modified by this implementation.
 
 ## Validation
 
+#106 extends this acceptance test with explicit partial/ready/completed restore
+assertions and rejected completed interaction. Current full-suite results are in
+[migration validation](../testing/issue106-migration-validation.md); the counts
+below describe the original #105 run.
+
 Unity 6000.6.2f1, isolated project copy with a headless mouse fixture:
 - EditMode: 232/232 passed.
 - PlayMode: 329/330 passed, including the production boat acceptance test.

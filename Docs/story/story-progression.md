@@ -1,8 +1,13 @@
 # Persistent story progression (#101)
 
 #101 introduced the progression framework. #102 supplies raft construction and
-failure; #103 supplies environmental clue inspection. No keys, interior, boat,
-rewards or ending cinematic are implemented. Landmark placement is unchanged.
+failure; #103 supplies environmental clue inspection, #104 supplies the smuggler
+base interior and #105 supplies boat preparation and final escape. Production
+flow is crash -> survival -> raft -> failed escape -> human traces -> base ->
+boat preparation -> escape -> completed. Keys and rewards are not required.
+
+#106 protects this flow and old saves with the
+[migration validation suite](../testing/issue106-migration-validation.md).
 
 ## Central production definition
 

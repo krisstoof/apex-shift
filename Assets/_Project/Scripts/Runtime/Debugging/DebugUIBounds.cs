@@ -14,16 +14,14 @@ namespace ApexShift.Runtime.Debugging
         {
             Vector2 mousePos = Vector2.zero;
 #if ENABLE_INPUT_SYSTEM
-            if (UnityEngine.InputSystem.Mouse.current != null)
-            {
-                Vector2 rawPos = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
-                mousePos = new Vector2(rawPos.x, Screen.height - rawPos.y);
-            }
-            else
-#endif
+            if (UnityEngine.InputSystem.Mouse.current == null) return false;
+            Vector2 rawPos = UnityEngine.InputSystem.Mouse.current.position.ReadValue();
+            mousePos = new Vector2(rawPos.x, Screen.height - rawPos.y);
+#elif ENABLE_LEGACY_INPUT_MANAGER
             {
                 mousePos = new Vector2(UnityEngine.Input.mousePosition.x, Screen.height - UnityEngine.Input.mousePosition.y);
             }
+#endif
 
             if (WorldMapWindowVisible && WorldMapWindowRect.Contains(mousePos)) return true;
             if (PlayerActionWindowVisible && PlayerActionWindowRect.Contains(mousePos)) return true;

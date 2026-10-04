@@ -37,6 +37,8 @@ namespace ApexShift.Runtime.Creatures
         public string currentBiomeId;
         public string homeBiomeId;
         public string populationBiomeId;
+        public string currentHabitatId;
+        public string populationHabitatId;
         public string currentNiche;
         public float huntDrive;
         public string simulationLevel;
@@ -75,6 +77,8 @@ namespace ApexShift.Runtime.Creatures
                 currentBiomeId = "default",
                 homeBiomeId = "default",
                 populationBiomeId = "default",
+                currentHabitatId = "default",
+                populationHabitatId = "default",
                 currentNiche = "unknown",
                 simulationLevel = "none",
                 lastCombatEvent = "none",
@@ -130,6 +134,8 @@ namespace ApexShift.Runtime.Creatures
                 data.currentBiomeId = NormalizeDebugValue(brain.CurrentBiomeId, "default");
                 data.homeBiomeId = NormalizeDebugValue(brain.HomeBiomeId, data.currentBiomeId);
                 data.populationBiomeId = NormalizeDebugValue(brain.PopulationBiomeId, data.currentBiomeId);
+                data.currentHabitatId = NormalizeDebugValue(brain.CurrentHabitatId, "default");
+                data.populationHabitatId = NormalizeDebugValue(brain.PopulationHabitatId, data.currentHabitatId);
                 data.currentNiche = NormalizeDebugValue(brain.CurrentNiche, "unknown");
                 data.huntDrive = Mathf.Clamp01(brain.HuntDrive);
                 data.targetDetails = CaptureTargetDetails(source.transform, brain.CurrentTargetTransform);
@@ -183,7 +189,7 @@ namespace ApexShift.Runtime.Creatures
             builder.AppendLine($"en: {FormatValue(energy)}/{FormatValue(maxEnergy)} diet P:{plantDiet:0.00} M:{meatDiet:0.00} S:{scavengerDiet:0.00}");
             builder.AppendLine($"nav: {navStatus} rem:{navRemainingDistance:0.0} vel:{navVelocity:0.0} dP:{distanceToPlayer:0.0}");
             builder.AppendLine($"tgt: {Shorten(currentTarget, 24)} {Shorten(targetDetails, 24)}");
-            builder.AppendLine($"bio: {Shorten(currentBiomeId, 10)} pop:{Shorten(populationBiomeId, 10)} niche:{Shorten(currentNiche, 12)}");
+            builder.AppendLine($"habitat: {currentHabitatId} pop:{populationHabitatId} niche:{Shorten(currentNiche, 12)}");
             builder.AppendLine($"last: {Shorten(lastFoodSource, 14)} dec:{decisionCount} atk:{attackCooldown:0.0} hunt:{huntDrive:0.00}");
             builder.AppendLine($"cmb: {Shorten(lastCombatEvent, 32)} tgt:{Shorten(lastCombatTarget, 16)} dmg:{lastCombatDamage:0.0}");
             builder.Append($"sim: {simulationLevel} lod:{simulationLodChangeCount} ticks a:{activeSimulationTickCount} f:{farSimulationTickCount} b:{backgroundSimulationTickCount}");

@@ -4,6 +4,11 @@ using System.Linq;
 using System.Globalization;
 using ApexShift.Runtime.World.Biomes;
 using ApexShift.Runtime.Creatures;
+using ApexShift.Runtime.Events;
+using ApexShift.Runtime.Escape;
+using ApexShift.Runtime.Story;
+using ApexShift.Runtime.Story.Clues;
+using ApexShift.Runtime.World.Interiors;
 using ApexShift.Runtime.World.Generation;
 using ApexShift.Runtime.World.Landmarks;
 using ApexShift.Runtime.World.Topography;
@@ -27,6 +32,12 @@ namespace ApexShift.Tests.Regression
             WorldGeneratorRuntime generator = generatorObject.AddComponent<WorldGeneratorRuntime>();
             generator.SetGenerateOnStart(false);
             generator.SetSeed(81281);
+#if UNITY_EDITOR
+            generator.SetBiomeCatalog(UnityEditor.AssetDatabase.LoadAssetAtPath<BiomeCatalogAsset>(
+                "Assets/_Project/Data/Biomes/BiomeCatalog.asset"));
+            generator.SetHabitatVegetationCatalog(UnityEditor.AssetDatabase.LoadAssetAtPath<HabitatVegetationCatalogAsset>(
+                "Assets/_Project/Data/Vegetation/HabitatVegetationCatalog.asset"));
+#endif
 
             try
             {
@@ -35,6 +46,15 @@ namespace ApexShift.Tests.Regression
 
                 WorldGenerationContext first = generator.CurrentGeneration;
                 Assert.NotNull(first, "The first generation did not create a context.");
+                AssertStoryOwnership(first);
+                var oldLandmarks = LandmarkRegistry.Landmarks.ToArray();
+                var oldClues = StoryClueRegistry.Clues.ToArray();
+                var oldCreatures = first.CreatureRoot.GetComponentsInChildren<CreatureAgentView>(true);
+                var oldVegetation = first.VegetationRoot.GetComponentsInChildren<VegetationInstanceRuntime>(true);
+                var oldInterior = first.SmugglerBaseInterior;
+                var oldBoat = oldInterior.EscapeBoat;
+                int oldNotifications = 0;
+                first.StoryProgression.MilestoneCompleted += _ => oldNotifications++;
                 Assert.AreEqual(
                     new[]
                     {
@@ -67,6 +87,12 @@ namespace ApexShift.Tests.Regression
                 generator.ClearGeneratedWorld();
                 yield return null;
                 Assert.IsTrue(firstGenerationRoot == null, "The first generation root survived ClearGeneratedWorld().");
+                Assert.IsEmpty(LandmarkRegistry.Landmarks); Assert.IsEmpty(StoryClueRegistry.Clues);
+                Assert.True(oldLandmarks.All(value => value == null)); Assert.True(oldClues.All(value => value == null));
+                Assert.True(oldCreatures.All(value => value == null)); Assert.True(oldVegetation.All(value => value == null));
+                Assert.True(oldInterior == null); Assert.True(oldBoat == null); Assert.True(first.StoryProgression == null);
+                GameEventBus.PublishStorySignal(StorySignalIds.CrashSurvived);
+                Assert.AreEqual(0, oldNotifications, "Cleared story runtime retained a gameplay subscription.");
                 Assert.IsNotNull(unrelatedPlayer, "ClearGeneratedWorld destroyed an unrelated Player root.");
                 Assert.IsNotNull(unrelatedTerrain, "ClearGeneratedWorld destroyed an unrelated TerrainRoot.");
                 Assert.IsNotNull(unrelatedCamera, "ClearGeneratedWorld destroyed an unrelated Main Camera root.");
@@ -76,10 +102,20 @@ namespace ApexShift.Tests.Regression
                 WorldGenerationContext second = generator.CurrentGeneration;
                 Assert.NotNull(second, "The second generation did not create a context.");
                 Assert.AreNotSame(firstGenerationRoot, second.GenerationRoot);
+                Assert.AreEqual(1, CountNamed(generatorObject.transform, WorldRuntimeOwner.GenerationRootName));
+                AssertStoryOwnership(second);
+                foreach (string rootName in new[] { "TerrainRoot", "ResourceRoot", "VegetationRoot", "CreatureRoot" })
+                    Assert.AreEqual(1, CountNamed(second.GenerationRoot, rootName));
+                Assert.AreEqual(1, generatorObject.GetComponentsInChildren<StoryProgressionRuntime>(true).Length);
+                int newNotifications = 0;
+                second.StoryProgression.MilestoneCompleted += _ => newNotifications++;
+                GameEventBus.PublishStorySignal(StorySignalIds.CrashSurvived);
+                Assert.AreEqual(1, newNotifications); Assert.AreEqual(0, oldNotifications);
+                Assert.AreEqual(StoryStageIds.EstablishSurvival, second.StoryProgression.CurrentStageId);
                 Assert.AreEqual(1, CountNamed(second.GenerationRoot, "Player"));
                 Assert.AreEqual(1, CountNamed(second.GenerationRoot, "Main Camera"));
-            Assert.AreEqual(1, CountNamed(second.GenerationRoot, "EcosystemRuntime"));
-            Assert.AreEqual(1, CountNamed(second.GenerationRoot, "DayNightRuntime"));
+                Assert.AreEqual(1, CountNamed(second.GenerationRoot, "EcosystemRuntime"));
+                Assert.AreEqual(1, CountNamed(second.GenerationRoot, "DayNightRuntime"));
             }
             finally
             {
@@ -292,6 +328,19 @@ namespace ApexShift.Tests.Regression
             return root == null
                 ? 0
                 : root.GetComponentsInChildren<Transform>(true).Count(transform => transform.name == name);
+        }
+
+        private static void AssertStoryOwnership(WorldGenerationContext context)
+        {
+            Assert.AreEqual(1, context.GenerationRoot.GetComponentsInChildren<StoryProgressionRuntime>(true).Length);
+            Assert.AreEqual(1, context.GenerationRoot.GetComponentsInChildren<SmugglerBaseInteriorRuntime>(true).Length);
+            Assert.AreEqual(1, context.GenerationRoot.GetComponentsInChildren<EscapeBoatRuntime>(true).Length);
+            CollectionAssert.AreEquivalent(LandmarkPlacementProfile.Production().Select(p => p.LandmarkId),
+                LandmarkRegistry.Landmarks.Select(l => l.LandmarkId));
+            CollectionAssert.AreEquivalent(StoryClueDefinition.Production().Select(c => c.ClueId),
+                StoryClueRegistry.Clues.Select(c => c.ClueId));
+            Assert.True(LandmarkRegistry.Landmarks.All(l => l.transform.IsChildOf(context.GenerationRoot)));
+            Assert.True(StoryClueRegistry.Clues.All(c => c.transform.IsChildOf(context.GenerationRoot)));
         }
     }
 }

@@ -87,6 +87,7 @@ namespace ApexShift.Tests.Editor
             string source = File.ReadAllText("Assets/_Project/Scripts/Runtime/World/Generation/WorldGeneratorRuntime.cs");
             foreach(string forbidden in new[]{"scaleVarnaksByDay","varnakDayOneMaxCount","varnakAbsoluteMaxCount","spawnVarnaksOnDayChange","TrySpawnVarnaksForDay","GetVarnakMaxCountForDay","_spawnedVarnakCount","SpawnRegionCreatures","region.Biome.Creatures"})
                 Assert.That(source, Does.Not.Contain(forbidden));
+            Assert.That(source, Does.Not.Contain("new BiomeClassifier"), "Production terrain must use HabitatClassifier.");
         }
         [TestCase("small_prey", "island_small_prey")]
         [TestCase("grazer", "island_forager")]

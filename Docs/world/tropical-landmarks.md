@@ -1,5 +1,10 @@
 # Tropical landmarks (#100)
 
+#106 extends the existing three-seed production regression with complete hard
+placement constraints, safe deterministic crash spawn and cached environment
+comparison after regeneration. See
+[migration validation](../testing/issue106-migration-validation.md).
+
 New games generate these six stable IDs, independent of seed or coordinates:
 
 | ID | Type / display name | Initially discovered | Vegetation clearance |

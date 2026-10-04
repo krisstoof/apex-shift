@@ -13,6 +13,9 @@ namespace ApexShift.Tests.Regression
         [UnityTest]
         public IEnumerator DriverRaisesBlendStateWhenCreatureChases()
         {
+            // The driver blends with scaled deltaTime; another fixture may leave the menu paused.
+            float previousTimeScale = Time.timeScale;
+            Time.timeScale = 1f;
             GameObject ecosystemObject = new GameObject("Ecosystem");
             GameObject navMeshRoot = null;
             GameObject creature = null;
@@ -83,6 +86,7 @@ namespace ApexShift.Tests.Regression
             }
             finally
             {
+                Time.timeScale = previousTimeScale;
                 if (player != null) Object.DestroyImmediate(player);
                 if (creature != null) Object.DestroyImmediate(creature);
                 if (animObject != null) Object.DestroyImmediate(animObject);

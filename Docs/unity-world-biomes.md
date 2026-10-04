@@ -1,6 +1,15 @@
-# Unity World Biomes
+# Unity environment and legacy world biomes
 
-> **Production world identity:** Runtime island generation now classifies tropical habitats from cached environment fields, not the five legacy biome IDs below. Authoritative habitat IDs are `water`, `coast`, `lowland_jungle`, `jungle_interior`, `wet_jungle`, and `rocky_upland`. The handcrafted `BiomeWorldTest` and old biome profiles remain development/compatibility content. During migration, `LegacyBiomeCompatibility` maps habitats to those profile IDs for existing vegetation/resource/creature systems; do not use that adapter for terrain visuals or environment queries.
+## Current production architecture
+
+One procedural tropical island uses `HabitatClassifier` and cached
+`EnvironmentSample`/`HabitatId` data. Legacy catalog regions still supply resource,
+ecosystem and serialized compatibility profiles; they do not classify terrain.
+See [migration validation and reference audit](testing/issue106-migration-validation.md).
+
+## Legacy/development compatibility
+
+> **Production world identity:** Runtime island generation now classifies tropical habitats from cached environment fields, not the five legacy biome IDs below. Authoritative habitat IDs are `water`, `coast`, `lowland_jungle`, `jungle_interior`, `wet_jungle`, and `rocky_upland`. The handcrafted `BiomeWorldTest` and old biome profiles remain development/compatibility content. `LegacyBiomeCompatibility` maps habitats to old resource/ecosystem profiles and serialized values; production vegetation and fauna eligibility use habitat catalogs directly. Do not use that adapter for terrain visuals or environment queries.
 
 The handcrafted biome world is generated through:
 

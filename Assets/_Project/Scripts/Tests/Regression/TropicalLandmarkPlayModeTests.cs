@@ -112,6 +112,9 @@ namespace ApexShift.Tests.Regression
                     Assert.False(environment.IsWater);
                     Assert.False(environment.IsShoreline);
                     Assert.LessOrEqual(environment.SlopeDegrees, 14f);
+                    Assert.AreNotEqual(ApexShift.Runtime.World.Topography.TerrainType.Ridge, environment.TerrainType);
+                    Assert.True(context.WorldBounds.Contains(playerPosition));
+                    EnvironmentSample[] environmentBefore = SnapshotEnvironment(context);
                     Assert.GreaterOrEqual(DistanceFromCrash("smuggler_cache"), 45f);
                     Assert.GreaterOrEqual(DistanceFromCrash("smuggler_camp"), 60f);
                     Assert.GreaterOrEqual(DistanceFromCrash("base_entrance"), 60f);
@@ -121,6 +124,9 @@ namespace ApexShift.Tests.Regression
                     Assert.That(points.Count, Is.GreaterThan(0), "Production species must generate real placements.");
                     foreach (VegetationDebugPoint point in points)
                     {
+                        Assert.True(context.IslandTopography.TryGetEnvironmentAt(point.Position, out EnvironmentSample vegetationSample));
+                        Assert.True(vegetationSample.IsLand); Assert.False(vegetationSample.IsWater);
+                        Assert.False(vegetationSample.IsShoreline);
                         if (point.Category != VegetationCategory.Tree && point.Category != VegetationCategory.DeadTree) continue;
                         Assert.GreaterOrEqual(LandmarkPlacementPlanner.Distance(point.Position, playerPosition),
                             generator.StartClearingRadius - 0.05f);
@@ -128,6 +134,7 @@ namespace ApexShift.Tests.Regression
                             Assert.GreaterOrEqual(LandmarkPlacementPlanner.Distance(point.Position, landmark.transform.position),
                                 generator.GenerationSettings.Vegetation.LandmarkClearances.GetRadius(landmark.Type) - 0.05f);
                     }
+                    ValidateInstantiatedVegetation(context);
                     foreach (LandmarkPlacementResult result in generator.LandmarkPlacements)
                     {
                         Assert.True(context.IslandTopography.TryGetEnvironmentAt(result.Position, out EnvironmentSample sample));
@@ -139,6 +146,15 @@ namespace ApexShift.Tests.Regression
                             $"{result.LandmarkId} escaped its hard habitat constraint for seed {seed}.");
                         Assert.That(sample.DistanceToCoast, Is.InRange(profile.MinCoastDistance, profile.MaxCoastDistance),
                             $"{result.LandmarkId} escaped its hard coast band for seed {seed}.");
+                        Assert.That(sample.SlopeDegrees, Is.InRange(profile.MinSlope, profile.MaxSlope));
+                        Assert.That(sample.NormalizedElevation, Is.InRange(profile.MinElevation, profile.MaxElevation));
+                        Assert.That(sample.Moisture01, Is.InRange(profile.MinMoisture, profile.MaxMoisture));
+                        if (profile.AllowedTerrain.Length > 0) CollectionAssert.Contains(profile.AllowedTerrain, sample.TerrainType);
+                        if (result.LandmarkId != "plane_crash")
+                            Assert.GreaterOrEqual(DistanceFromCrash(result.LandmarkId), profile.MinStartDistance);
+                        if (result.LandmarkId == "smuggler_camp")
+                            Assert.That(LandmarkPlacementPlanner.Distance(result.Position, LandmarkRegistry.FindById("smuggler_cache").transform.position),
+                                Is.InRange(profile.MinAnchorDistance, profile.MaxAnchorDistance));
                         Debug.Log($"[LandmarkPlacement] seed={seed} id={result.LandmarkId} position={result.Position:F3} habitat={result.HabitatId} terrain={result.TerrainType} slope={result.Slope:F2} elevation={result.Elevation:F3} coast={result.DistanceToCoast:F2} fallback={result.UsedFallback}");
                         foreach (LandmarkPlacementResult other in generator.LandmarkPlacements)
                             if (other != result) Assert.GreaterOrEqual(LandmarkPlacementPlanner.Distance(result.Position, other.Position),
@@ -152,6 +168,9 @@ namespace ApexShift.Tests.Regression
                     // Exercise the real DTO serialization boundary, then regeneration/ApplyLoadedState.
                     GameSaveData saved = JsonUtility.FromJson<GameSaveData>(JsonUtility.ToJson(service.CaptureCurrentState()));
                     Assert.True(service.ApplyLoadedState(saved, "issue100"));
+                    CollectionAssert.AreEqual(environmentBefore, SnapshotEnvironment(generator.CurrentGeneration),
+                        "The same seed must reproduce habitat, terrain, height, slope, moisture, temperature and coast distance.");
+                    Assert.AreEqual(playerPosition, generator.ResolvePlayerSpawnPoint(), "Logical crash spawn changed after regeneration.");
                     CollectionAssert.AreEqual(positions, generator.LandmarkPlacements.Select(p => p.Position).ToArray());
                     Assert.True(LandmarkRegistry.FindById("smuggler_cache").IsDiscovered);
                     Assert.False(LandmarkRegistry.FindById("base_entrance").IsDiscovered);
@@ -179,6 +198,47 @@ namespace ApexShift.Tests.Regression
 
         private static float DistanceFromCrash(string id) => LandmarkPlacementPlanner.Distance(
             LandmarkRegistry.FindById("plane_crash").transform.position, LandmarkRegistry.FindById(id).transform.position);
+
+        private static EnvironmentSample[] SnapshotEnvironment(WorldGenerationContext context)
+        {
+            var samples = new List<EnvironmentSample>();
+            var bounds = context.IslandTopography.WorldBounds;
+            string[] canonical = { "water", "coast", "lowland_jungle", "jungle_interior", "wet_jungle", "rocky_upland" };
+            for (float x = bounds.min.x + 2f; x < bounds.max.x; x += 4f)
+            for (float z = bounds.min.z + 2f; z < bounds.max.z; z += 4f)
+            {
+                Assert.True(context.IslandTopography.TryGetEnvironmentAt(new Vector3(x, 0f, z), out EnvironmentSample sample));
+                CollectionAssert.Contains(canonical, sample.HabitatId, "Production environment must use habitat IDs, never legacy profile IDs.");
+                samples.Add(sample);
+            }
+            return samples.ToArray();
+        }
+
+        private static void ValidateInstantiatedVegetation(WorldGenerationContext context)
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<HabitatVegetationCatalogAsset>(
+                "Assets/_Project/Data/Vegetation/HabitatVegetationCatalog.asset");
+            var instances = context.VegetationRoot.GetComponentsInChildren<VegetationInstanceRuntime>(true);
+            Assert.That(instances.Length, Is.GreaterThan(0), "Check actual production instances, not only planner data.");
+            foreach (var instance in instances)
+            {
+                Vector3 position = instance.transform.position;
+                Assert.True(context.IslandTopography.TryGetEnvironmentAt(position, out EnvironmentSample sample));
+                Assert.True(sample.IsLand); Assert.False(sample.IsWater); Assert.False(sample.IsShoreline);
+                Assert.True(context.WorldBounds.Contains(position));
+                Assert.AreEqual(sample.HabitatId, instance.HabitatId);
+                var profile = catalog.GetProfile(sample.HabitatId);
+                Assert.NotNull(profile, "Production instance must come from the tropical habitat catalog.");
+                var species = profile.Species.Select(entry => entry.Species).Single(s => s.SpeciesId == instance.SpeciesId);
+                Assert.True(species.AllowsHabitat(sample.HabitatId));
+                Assert.True(species.AllowsTerrain(sample.TerrainType));
+                Assert.That(sample.SlopeDegrees, Is.InRange(species.MinSlopeDegrees, species.MaxSlopeDegrees));
+                Assert.That(sample.NormalizedElevation, Is.InRange(species.MinElevation01, species.MaxElevation01));
+                Assert.That(sample.Moisture01, Is.InRange(species.MinMoisture01, species.MaxMoisture01));
+                Assert.That(sample.DistanceToCoast, Is.InRange(species.MinDistanceToCoast, species.MaxDistanceToCoast));
+                Assert.True(instance.transform.IsChildOf(context.GenerationRoot));
+            }
+        }
     }
 }
 #endif

@@ -1,5 +1,13 @@
 # Habitat fauna configuration
 
+## Current production architecture
+
+The tropical island uses habitat eligibility and generic creature roles.
+Legacy species/biome aliases remain save and serialized-asset compatibility;
+they do not select a Varnak-only population path. Creature debug overlays display
+authoritative habitat IDs. See the #106
+[migration validation and reference audit](testing/issue106-migration-validation.md).
+
 Gameplay behavior is selected by CreatureRole, independently of SpeciesId:
 SmallPrey, HerbivoreOmnivore, Predator, or Scavenger. SpeciesDefinition owns
 health/hunger/diet, environment eligibility, physical hitbox, meat/bone yield,

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using ApexShift.Core.Save;
+using ApexShift.Infrastructure.Save;
 using ApexShift.Presentation.HUD;
 using ApexShift.Runtime.Events;
 using ApexShift.Runtime.Flow;
@@ -186,12 +187,25 @@ namespace ApexShift.Tests.Regression
                     Assert.IsFalse(StoryClueRegistry.FindById("smuggler_route_fragment").IsDiscovered);
                     Assert.AreEqual(3, StoryClueRegistry.Clues.Count);
                     Assert.AreEqual(StoryStageIds.LocateSmugglerBase, generator.CurrentGeneration.StoryProgression.CurrentStageId);
+                    Assert.IsTrue(generator.CurrentGeneration.StoryProgression.HasMilestone(
+                        StoryMilestoneIds.ClueDiscovered("smuggler_cache_manifest")));
+                    Assert.IsTrue(generator.CurrentGeneration.StoryProgression.HasMilestone(StoryClueMilestoneIds.HumanTracesFound));
+                    Assert.IsFalse(restored.Discover());
                     Assert.AreEqual(0, signals); Assert.AreEqual(0, inspections); Assert.AreEqual(0, transitions);
                     // Model an old save which predates the additive clueStates member.
                     saved.World.clueStates = null;
                     Assert.IsTrue(service.ApplyLoadedState(saved));
                     Assert.AreEqual(3, StoryClueRegistry.Clues.Count);
                     Assert.IsTrue(StoryClueRegistry.Clues.All(c => !c.IsDiscovered));
+                    Assert.AreEqual(0, signals); Assert.AreEqual(0, inspections); Assert.AreEqual(0, transitions);
+                    var legacy = new UnityJsonGameSaveSerializer().Deserialize(@"{""world"":{
+                        ""seed"":12345,""day"":3,""timeOfDay"":0.5,
+                        ""biomeStates"":[{""biomeId"":""westwood"",""plantBiomass"":70,
+                        ""maxPlantBiomass"":100,""varnakPopulation"":2}]}}");
+                    Assert.IsTrue(service.ApplyLoadedState(legacy), "A pre-story save with legacy biome data must load into production.");
+                    Assert.AreEqual(StoryStageIds.SurviveCrash, generator.CurrentGeneration.StoryProgression.CurrentStageId);
+                    Assert.IsEmpty(generator.CurrentGeneration.StoryProgression.CompletedMilestones);
+                    Assert.IsFalse(generator.CurrentGeneration.SmugglerBaseInterior.IsPlayerInside);
                     Assert.AreEqual(0, signals); Assert.AreEqual(0, inspections); Assert.AreEqual(0, transitions);
                     yield return null;
                 }

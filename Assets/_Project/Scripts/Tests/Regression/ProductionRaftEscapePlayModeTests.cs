@@ -3,6 +3,8 @@ using System.Collections;
 using System.Linq;
 using ApexShift.Runtime.Buildings;
 using ApexShift.Runtime.Escape;
+using ApexShift.Runtime.Events;
+using ApexShift.Infrastructure.Save;
 using ApexShift.Runtime.Player;
 using ApexShift.Runtime.Save;
 using ApexShift.Runtime.Story;
@@ -71,9 +73,16 @@ namespace ApexShift.Tests.Regression
                 Assert.IsFalse(registry.Structures.Any(s => s.BuildingId == "raft"));
 
                 var save = owner.GetComponent<GameSaveService>() ?? owner.AddComponent<GameSaveService>();
-                var data = save.CaptureCurrentState();
+                var serializer = new UnityJsonGameSaveSerializer();
+                var data = serializer.Deserialize(serializer.Serialize(save.CaptureCurrentState()));
                 Assert.IsFalse(data.World.BuildingStates.Any(b => b.BuildingId == "raft"));
-                Assert.IsTrue(save.ApplyLoadedState(data));
+                int failedSignals = 0;
+                using (GameEventBus.Subscribe(e => { if (e.kind == GameplayEventKind.StorySignal
+                    && e.signalId == StorySignalIds.RaftEscapeFailed) failedSignals++; }))
+                {
+                    Assert.IsTrue(save.ApplyLoadedState(data));
+                    Assert.AreEqual(0, failedSignals, "Restore must not replay the raft failure.");
+                }
                 yield return null;
                 var restored = generator.CurrentGeneration;
                 Assert.AreNotSame(player, restored.Player);

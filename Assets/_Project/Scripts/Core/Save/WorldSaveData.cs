@@ -47,6 +47,32 @@ namespace ApexShift.Core.Save
         {
         }
 
+        // JsonUtility can leave missing or explicitly null fields uninitialized.
+        // Normalize the serialized fields themselves before any runtime consumes them.
+        public void EnsureDefaults()
+        {
+            day = Math.Max(1, day);
+            timeOfDay = NormalizeTimeOfDay(timeOfDay);
+            ecosystemTickTimer = float.IsNaN(ecosystemTickTimer) || float.IsInfinity(ecosystemTickTimer)
+                ? 0f : Math.Max(0f, ecosystemTickTimer);
+            ecosystemStateSource = string.IsNullOrWhiteSpace(ecosystemStateSource) ? "generated" : ecosystemStateSource.Trim();
+            resources ??= new List<ResourceSaveData>();
+            treeStates ??= new List<TreeSaveData>();
+            pickups ??= new List<PickupSaveData>();
+            biomeStates ??= new List<BiomeEcosystemSaveData>();
+            creatureStates ??= new List<CreatureSaveData>();
+            buildingStates ??= new List<BuildingSaveData>();
+            landmarkStates ??= new List<LandmarkSaveData>();
+            clueStates ??= new List<StoryClueSaveData>();
+            storyState ??= StorySaveData.Default;
+            if (string.IsNullOrWhiteSpace(storyState.currentStageId))
+                storyState.currentStageId = StorySaveData.Default.CurrentStageId;
+            storyState.completedMilestoneIds ??= new List<string>();
+            playerLocation ??= PlayerLocationSaveData.Island;
+            escapeBoatState ??= EscapeBoatSaveData.Default;
+            escapeBoatState.collectedRequirementSourceIds ??= new List<string>();
+        }
+
         public WorldSaveData(int seed, int day, float timeOfDay, IReadOnlyList<ResourceSaveData> resources)
             : this(seed, day, timeOfDay, resources, Array.Empty<PickupSaveData>(), Array.Empty<BiomeEcosystemSaveData>())
         {

@@ -103,6 +103,12 @@ this feature.
 
 ## Validation
 
+#106 extends the production persistence test with a serializer boundary and an
+assertion that loading failed escape never replays `raft_escape_failed`.
+Current full-suite results are recorded in
+[migration validation](../testing/issue106-migration-validation.md); the counts
+below describe the original #102 validation.
+
 Unity 6000.6.2f1: full EditMode **212/212 PASS**, full PlayMode **319/319 PASS**.
 Raft tests cover crafting and placement, missing bounds/cache, measured water
 coast distance, rejected actors/relaunch, movement beyond player bounds,

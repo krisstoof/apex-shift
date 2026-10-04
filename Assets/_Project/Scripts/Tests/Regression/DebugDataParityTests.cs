@@ -10,6 +10,12 @@ namespace ApexShift.Tests.Regression
     public sealed class DebugDataParityTests
     {
         [Test]
+        public void DebugPointerQuerySupportsTheActiveInputBackend()
+        {
+            Assert.DoesNotThrow(() => DebugUIBounds.IsMouseOverAnyWindow());
+        }
+
+        [Test]
         public void CreatureDebugDataHandlesMissingTargetsAndOptionalComponents()
         {
             GameObject creature = new GameObject("Creature_small_prey");
@@ -72,6 +78,9 @@ namespace ApexShift.Tests.Regression
                 Assert.Greater(data.maxHealth, 0f);
                 Assert.AreEqual("near", data.simulationLevel);
                 StringAssert.Contains("hun:", data.ToOverlayText());
+                Assert.AreEqual(creature.GetComponent<CreatureBehaviorBrain>().CurrentHabitatId, data.currentHabitatId);
+                StringAssert.Contains("habitat: " + data.currentHabitatId, data.ToOverlayText());
+                StringAssert.DoesNotContain("bio:", data.ToOverlayText());
             }
             finally
             {

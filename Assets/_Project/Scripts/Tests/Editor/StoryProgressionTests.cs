@@ -124,12 +124,32 @@ namespace ApexShift.Tests.Editor
         [Test]
         public void CompleteFlowIsTerminalAndCaptureIsSortedAndIndependent()
         {
-            EarlyFlow();
-            story.Signal(StoryClueMilestoneIds.HumanTracesFound);
-            story.Signal(StoryMilestoneIds.LandmarkDiscovered("base_entrance"));
-            story.Signal(StorySignalIds.BaseAccessGained);
-            story.Signal(StorySignalIds.BoatPrepared);
-            story.Signal(StorySignalIds.IslandEscaped);
+            string[] signals = { StorySignalIds.CrashSurvived, StorySignalIds.SurvivalEstablished,
+                StorySignalIds.RaftBuilt, StorySignalIds.RaftEscapeFailed, StoryClueMilestoneIds.HumanTracesFound,
+                StoryMilestoneIds.LandmarkDiscovered("base_entrance"), StorySignalIds.BaseAccessGained,
+                StorySignalIds.BoatPrepared, StorySignalIds.IslandEscaped };
+            string[] stages = { StoryStageIds.EstablishSurvival, StoryStageIds.BuildRaft,
+                StoryStageIds.AttemptRaftEscape, StoryStageIds.InvestigateHumanTraces,
+                StoryStageIds.LocateSmugglerBase, StoryStageIds.GainBaseAccess,
+                StoryStageIds.PrepareBoat, StoryStageIds.EscapeIsland, StoryStageIds.Completed };
+            int transitions = 0, milestones = 0, updates = 0, completion = 0;
+            story.StageChanged += stage => { transitions++; if (stage.Id == StoryStageIds.Completed) completion++; };
+            story.MilestoneCompleted += _ => milestones++;
+            story.StateChanged += () => updates++;
+            for (int i = 0; i < signals.Length; i++)
+            {
+                Assert.IsTrue(story.Signal(signals[i]));
+                Assert.AreEqual(stages[i], story.CurrentStageId);
+                for (int repeat = 0; repeat < 3; repeat++) Assert.IsFalse(story.Signal(signals[i]));
+                Assert.AreEqual(i + 1, transitions);
+                Assert.AreEqual(i + 1, milestones);
+                Assert.AreEqual(i + 1, updates);
+                Assert.AreEqual(i + 1, story.CompletedMilestones.Count);
+            }
+            foreach (string signal in signals) Assert.IsFalse(story.Signal(signal));
+            Assert.AreEqual(9, transitions); Assert.AreEqual(9, milestones); Assert.AreEqual(9, updates);
+            Assert.AreEqual(1, completion);
+            Assert.IsEmpty(GameEventBus.RecentEvents, "Direct duplicate signals must not publish gameplay/presentation events.");
             Assert.AreEqual(StoryStageIds.Completed, story.CurrentStageId);
             Assert.AreEqual(9, story.CompletedMilestones.Count);
             Assert.IsFalse(story.Signal(StorySignalIds.IslandEscaped));
