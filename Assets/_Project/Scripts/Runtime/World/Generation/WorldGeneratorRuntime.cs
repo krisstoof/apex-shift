@@ -283,6 +283,8 @@ namespace ApexShift.Runtime.World.Generation
                 _generationContext.CreatureRoot = _creatureRoot;
                 _generationContext.BuildingRoot = _buildingRoot;
                 _generationContext.LandmarkRoot = _landmarkRoot;
+                _generationContext.InteriorRoot = CreateRoot("InteriorRoot");
+                _generationContext.InteriorRoot.gameObject.SetActive(false);
             }
         }
 
@@ -512,6 +514,7 @@ namespace ApexShift.Runtime.World.Generation
             {
                 _landmarkPlacements = LandmarkWorldGenerator.Generate(_landmarkRoot, _islandTopography, seed, SampleTerrainHeight);
                 ApexShift.Runtime.Story.Clues.StoryClueWorldGenerator.Generate(_landmarkRoot, _islandTopography, seed, SampleTerrainHeight);
+                ApexShift.Runtime.World.Interiors.SmugglerBaseInteriorBuilder.Build(_generationContext, this);
             }
         }
 

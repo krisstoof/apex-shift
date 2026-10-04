@@ -174,6 +174,7 @@ namespace ApexShift.Runtime.Buildings
 
         private bool TryPlaceCurrentPose()
         {
+            if (!enabled) return false;
             if (selectedDefinition.SurfaceMode == PlaceableSurfaceMode.ShorelineWater)
                 currentPosition.y = WorldWaterLevel.SurfaceY;
             currentValidation = ValidatePlacement(selectedDefinition, currentPosition, currentRotation);

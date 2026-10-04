@@ -118,10 +118,12 @@ namespace ApexShift.Runtime.Save
 
             InventorySaveData inventory = playerInventory != null ? playerInventory.ToSaveData() : InventorySaveData.Empty;
             SurvivalSaveData survival = playerSurvival != null ? playerSurvival.ToSaveData() : SurvivalSaveData.Default;
+            var interior = worldGenerator != null ? worldGenerator.CurrentGeneration?.SmugglerBaseInterior : null;
 
             if (playerSurvival != null)
             {
                 Vector3 pos = playerSurvival.transform.position;
+                if (interior != null && interior.IsInsidePlayer(playerSurvival.gameObject)) pos = interior.IslandReturnPosition;
                 if (buildingRegistry != null && buildingRegistry.TryGetActiveRaftAttempt(out var raft)
                     && raft.MountedPlayer == playerSurvival.gameObject)
                     pos = raft.SafeReturnPoint;
@@ -185,6 +187,8 @@ namespace ApexShift.Runtime.Save
             world.clueStates = ApexShift.Runtime.Story.Clues.StoryClueRegistry.CaptureSaveData();
             world.treeStates = treeStates;
             world.storyState = storyProgression != null ? storyProgression.CaptureSaveData() : StorySaveData.Default;
+            world.playerLocation = interior != null && playerSurvival != null
+                ? interior.CapturePlayerLocation(playerSurvival.gameObject) : PlayerLocationSaveData.Island;
 
             return new GameSaveData(inventory, survival, world);
         }
@@ -270,8 +274,16 @@ namespace ApexShift.Runtime.Save
             if (playerSurvival != null)
             {
                 playerSurvival.LoadFromSaveData(saveData.Survival);
-                if (saveData.Survival.hasPosition)
+                var interior = worldGenerator != null ? worldGenerator.CurrentGeneration?.SmugglerBaseInterior : null;
+                Vector3 fallback = saveData.Survival.hasPosition
+                    ? new Vector3(saveData.Survival.posX, saveData.Survival.posY, saveData.Survival.posZ)
+                    : playerSurvival.transform.position;
+                if (interior != null)
+                    interior.RestorePlayerLocation(playerSurvival.gameObject, saveData.World.PlayerLocation, fallback);
+                else if (saveData.Survival.hasPosition)
                 {
+                    if (saveData.World.PlayerLocation.AreaId != "island")
+                        Debug.LogWarning("[Interior] Saved interior missing; using island survival fallback.");
                     Vector3 targetPos = new Vector3(saveData.Survival.posX, saveData.Survival.posY, saveData.Survival.posZ);
                     ApplyPlayerPosition(targetPos);
                 }

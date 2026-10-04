@@ -74,6 +74,32 @@ namespace ApexShift.Runtime.Player
         private float _verticalVelocity;
         private const float Gravity = -22f;
         private bool hadTopographyState;
+        private Bounds movementBoundsOverride;
+        public bool HasMovementBoundsOverride { get; private set; }
+        public bool TopographyWaterQueriesEnabled { get; private set; } = true;
+        public void SetMovementBoundsOverride(Bounds bounds)
+        {
+            movementBoundsOverride = bounds;
+            HasMovementBoundsOverride = true;
+        }
+        public void ClearMovementBoundsOverride() => HasMovementBoundsOverride = false;
+        public void SetTopographyWaterQueriesEnabled(bool enabled)
+        {
+            TopographyWaterQueriesEnabled = enabled;
+            if (!enabled)
+            {
+                SetWaterState(false, "area_override");
+                if (animationDriver == null) animationDriver = GetComponent<PlayerAnimationDriver>();
+                animationDriver?.SetSwimming(false);
+                _verticalVelocity = 0f;
+                if (visualRoot != null)
+                {
+                    visualRoot.localPosition = visualDefaultLocalPosition;
+                    visualRoot.localRotation = visualDefaultLocalRotation;
+                }
+            }
+        }
+        public void ResetVerticalVelocity() => _verticalVelocity = 0f;
 
         private void Awake()
         {
@@ -132,7 +158,7 @@ namespace ApexShift.Runtime.Player
         /// </summary>
         private void SyncWaterStateFromTopography()
         {
-            if (!useTopographyWaterState)
+            if (!useTopographyWaterState || !TopographyWaterQueriesEnabled)
             {
                 return;
             }
@@ -147,6 +173,7 @@ namespace ApexShift.Runtime.Player
 
         private bool IsWaterAtPosition(Vector3 position)
         {
+            if (!TopographyWaterQueriesEnabled) return false;
             IslandTopographyRuntime topo = IslandTopographyRuntime.Active;
             if (topo != null && topo.IsBuilt)
             {
@@ -243,6 +270,13 @@ namespace ApexShift.Runtime.Player
             }
 
             WorldBounds worldBounds = WorldBounds.Active;
+            if (HasMovementBoundsOverride)
+            {
+                desiredPosition.x = Mathf.Clamp(desiredPosition.x, movementBoundsOverride.min.x, movementBoundsOverride.max.x);
+                desiredPosition.z = Mathf.Clamp(desiredPosition.z, movementBoundsOverride.min.z, movementBoundsOverride.max.z);
+                ApplyMovement(desiredPosition);
+                return;
+            }
             if (worldBounds == null)
             {
                 transform.position = desiredPosition;
@@ -322,6 +356,7 @@ namespace ApexShift.Runtime.Player
         /// <summary>Called by PlayerWaterDetector when the player enters a water trigger volume.</summary>
         public void EnterWater()
         {
+            if (!TopographyWaterQueriesEnabled) return;
             if (!hadTopographyState || IsWaterAtPosition(transform.position)) SetWaterState(true, "trigger");
         }
 

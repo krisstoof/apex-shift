@@ -22,6 +22,8 @@ namespace ApexShift.Runtime.World.Generation
         public Transform CreatureRoot { get; set; }
         public Transform BuildingRoot { get; set; }
         public Transform LandmarkRoot { get; set; }
+        public Transform InteriorRoot { get; set; }
+        public ApexShift.Runtime.World.Interiors.SmugglerBaseInteriorRuntime SmugglerBaseInterior { get; set; }
         public GameObject Player { get; set; }
         public GameObject MainCamera { get; set; }
         public IslandTopographyRuntime IslandTopography { get; set; }

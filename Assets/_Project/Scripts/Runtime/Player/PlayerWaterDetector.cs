@@ -26,6 +26,7 @@ namespace ApexShift.Runtime.Player
 
         private void OnTriggerEnter(Collider other)
         {
+            if (!controller.TopographyWaterQueriesEnabled) return;
             if (other.GetComponent<WaterVolume>() == null) return;
 
             waterVolumeCount++;
