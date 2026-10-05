@@ -95,6 +95,11 @@ namespace ApexShift.Tests.Editor
         [Test]
         public void EnsureAssets_IsIdempotentAndPreservesAssignedVisualReferences()
         {
+            if (TropicalSpeedTreeVegetationBinder.IsActivated)
+            {
+                AssertTropicalIdempotency();
+                return;
+            }
             const string root = "Assets/_Project/Data/Vegetation";
             string[] ids = { "tree_leafy_01", "tree_conifer_01", "tree_dead_01", "shrub_forest_01", "groundcover_forest_01" };
             float[] expectedSpacing = { 4.2f, 3.8f, 4.5f, 1.4f, 0.55f };
@@ -261,6 +266,15 @@ namespace ApexShift.Tests.Editor
                 { "shrub_forest_01", "ES_BerryBush.prefab" },
                 { "groundcover_forest_01", "ES_GrassPatch.prefab" }
             };
+            if (TropicalSpeedTreeVegetationBinder.IsActivated)
+            {
+                defaults.Clear();
+                foreach (var entry in TropicalSpeedTreeManifest.Load().assets)
+                    if (!entry.hero) defaults.Add(entry.speciesId, entry.WrapperPath);
+                defaults.Add("tree_conifer_01", visuals + "ES_ConiferTree.prefab");
+            }
+            else
+                foreach (string id in new List<string>(defaults.Keys)) defaults[id] = visuals + defaults[id];
             var depletedById = new Dictionary<string, GameObject>();
             foreach (var pair in defaults)
             {
@@ -281,10 +295,54 @@ namespace ApexShift.Tests.Editor
             foreach (var pair in defaults)
             {
                 var species = AssetDatabase.LoadAssetAtPath<VegetationSpeciesAsset>(root + pair.Key + ".asset");
-                GameObject expected = AssetDatabase.LoadAssetAtPath<GameObject>(visuals + pair.Value);
-                Assert.That(expected, Is.Not.Null, visuals + pair.Value);
+                GameObject expected = AssetDatabase.LoadAssetAtPath<GameObject>(pair.Value);
+                Assert.That(expected, Is.Not.Null, pair.Value);
                 Assert.That(species.VisualPrefab, Is.SameAs(expected), pair.Key);
                 Assert.That(species.DepletedVisualPrefab, Is.SameAs(depletedById[pair.Key]));
+            }
+        }
+
+        private void AssertTropicalIdempotency()
+        {
+            const string root = "Assets/_Project/Data/Vegetation/";
+            var catalog = AssetDatabase.LoadAssetAtPath<VegetationCatalogAsset>(root + "VegetationCatalog.asset");
+            var visuals = new Dictionary<string, GameObject>();
+            var depleted = new Dictionary<string, GameObject>();
+            var guids = new Dictionary<string, string>();
+            foreach (var species in catalog.Species)
+            {
+                var backup = ScriptableObject.CreateInstance<VegetationSpeciesAsset>();
+                EditorUtility.CopySerialized(species, backup);
+                speciesBackups.Add(species, backup);
+                string id = species.SpeciesId;
+                visuals.Add(id, CreateTemporaryPrefab(root + "__Test_" + id + "_Visual.prefab"));
+                depleted.Add(id, CreateTemporaryPrefab(root + "__Test_" + id + "_Depleted.prefab"));
+                guids.Add(id, AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(species)));
+                var serialized = new SerializedObject(species);
+                serialized.FindProperty("visualPrefab").objectReferenceValue = visuals[id];
+                serialized.FindProperty("depletedVisualPrefab").objectReferenceValue = depleted[id];
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
+            int count = AssetDatabase.FindAssets("t:VegetationSpeciesAsset", new[] { root + "Species" }).Length;
+            VegetationDataAssetCreator.EnsureAssets();
+            VegetationDataAssetCreator.EnsureAssets();
+            Assert.That(catalog.Species.Count, Is.EqualTo(26));
+            Assert.That(AssetDatabase.FindAssets("t:VegetationSpeciesAsset", new[] { root + "Species" }).Length, Is.EqualTo(count));
+            foreach (var species in catalog.Species)
+            {
+                Assert.That(species.VisualPrefab, Is.SameAs(visuals[species.SpeciesId]));
+                Assert.That(species.DepletedVisualPrefab, Is.SameAs(depleted[species.SpeciesId]));
+                Assert.That(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(species)), Is.EqualTo(guids[species.SpeciesId]));
+            }
+            var habitats = AssetDatabase.LoadAssetAtPath<HabitatVegetationCatalogAsset>(root + "HabitatVegetationCatalog.asset");
+            Assert.That(habitats.Profiles.Count, Is.EqualTo(5));
+            Assert.That(habitats.GetProfile("water"), Is.Null);
+            foreach (var profile in TropicalSpeedTreeManifest.Load().profiles)
+            {
+                AssertProfileDensity(profile.habitatId, profile.density);
+                var weights = new List<(string speciesId, float weight)>();
+                foreach (var entry in profile.entries) weights.Add((entry.speciesId, entry.weight));
+                AssertProfileWeights(profile.habitatId, weights.ToArray());
             }
         }
 

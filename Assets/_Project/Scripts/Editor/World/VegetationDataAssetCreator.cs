@@ -23,12 +23,20 @@ namespace ApexShift.Editor.World
         public static void CreateOrUpdateAssets()
         {
             EnsureAssets();
-            AssetDatabase.SaveAssets();
+            TropicalSpeedTreeVegetationBinder.SaveDataAssets();
             Debug.Log("Vegetation species and tropical habitat profiles created/updated. Assigned visual/stump prefabs preserved.");
         }
 
         public static void EnsureAssets()
         {
+            // A migrated catalog stays migrated. Availability of exports alone never activates the plan.
+            if (TropicalSpeedTreeVegetationBinder.IsActivated)
+            {
+                var manifest = TropicalSpeedTreeManifest.Load();
+                TropicalSpeedTreeVegetationBinder.RequireReady(manifest);
+                EnsureTropicalAssets(manifest, false);
+                return;
+            }
             EnsureFolder(Root);
             EnsureFolder(SpeciesFolder);
             EnsureFolder(ProfilesFolder);
@@ -66,6 +74,69 @@ namespace ApexShift.Editor.World
             EditorUtility.SetDirty(habitatCatalog);
             // Existing serialized RuntimeWorld points at this asset; no scene migration is needed.
             BiomeCatalogAsset biomeCatalog = AssetDatabase.LoadAssetAtPath<BiomeCatalogAsset>(BiomeCatalogPath);
+            if (biomeCatalog == null) throw new FileNotFoundException("Required world data anchor is missing.", BiomeCatalogPath);
+            biomeCatalog.SetHabitatVegetationCatalog(habitatCatalog);
+            EditorUtility.SetDirty(biomeCatalog);
+        }
+
+        // Called only after a complete preflight, within the binder's rollback transaction.
+        internal static void EnsureTropicalAssets(TropicalSpeedTreeManifest manifest, bool bindCanonicalVisuals)
+        {
+            EnsureFolder(SpeciesFolder);
+            EnsureFolder(ProfilesFolder);
+            var species = new List<VegetationSpeciesAsset>();
+            var byId = new Dictionary<string, VegetationSpeciesAsset>();
+            foreach (var entry in manifest.assets)
+            {
+                if (entry.hero) continue;
+                var asset = LoadOrCreate<VegetationSpeciesAsset>(SpeciesFolder + "/" + entry.speciesId + ".asset");
+                var visual = !bindCanonicalVisuals && asset.VisualPrefab != null ? asset.VisualPrefab
+                    : AssetDatabase.LoadAssetAtPath<GameObject>(entry.WrapperPath);
+                if (visual == null) throw new FileNotFoundException("Required canonical SpeedTree wrapper is missing.", entry.WrapperPath);
+                bool tree = entry.IsTree;
+                // Existing four species retain GUID and optional depleted visual. Decoratives are not promoted as trees.
+                asset.Configure(entry.speciesId, entry.modelName, visual, entry.Category, .8f, 1.2f, entry.spacing,
+                    entry.minSlope, entry.maxSlope, entry.minElevation, entry.maxElevation,
+                    entry.minMoisture, entry.maxMoisture, entry.allowedHabitats, true, entry.harvestable,
+                    entry.resourceKind, asset.DepletedVisualPrefab,
+                    tree || entry.speciesId == "shrub_forest_01" ? VegetationCollisionMode.GameplayResource : VegetationCollisionMode.None,
+                    tree ? entry.trunkRadius : .05f, tree ? entry.trunkHeight : .25f, tree ? entry.trunkCenterY : .125f,
+                    entry.category == "DeadTree" ? 70 : 100, tree ? (entry.category == "DeadTree" ? 4 : 5) : 0,
+                    tree ? (entry.category == "DeadTree" ? .9f : 1.2f) : 0f);
+                asset.ConfigureEnvironment(entry.Form, entry.minCoast, entry.maxCoast, entry.Terrains);
+                EditorUtility.SetDirty(asset);
+                species.Add(asset);
+                byId.Add(entry.speciesId, asset);
+            }
+            // Compatibility asset stays available, with its existing ID, visual and resource kind; never in the active mix.
+            var conifer = LoadOrCreate<VegetationSpeciesAsset>(SpeciesFolder + "/tree_conifer_01.asset");
+            if (conifer.VisualPrefab == null)
+                conifer = EnsureSpecies("tree_conifer_01", "Conifer Tree 01", VegetationCategory.Tree, VegetationForm.CanopyTree,
+                    3.8f, .16f, 2.1f, 1.05f, 120f, 6, 1.35f, new[] { HabitatIds.RockyUpland }, true, "conifer_tree", "ES_ConiferTree.prefab");
+            species.Add(conifer);
+            var catalog = LoadOrCreate<VegetationCatalogAsset>(CatalogPath);
+            catalog.SetSpecies(species);
+            EditorUtility.SetDirty(catalog);
+            var profiles = new List<HabitatVegetationProfileAsset>();
+            foreach (var definition in manifest.profiles)
+            {
+                var profile = LoadOrCreate<HabitatVegetationProfileAsset>(ProfilesFolder + "/" + definition.habitatId + "_vegetation.asset");
+                var entries = new List<HabitatVegetationSpeciesEntry>();
+                foreach (var weight in definition.entries)
+                {
+                    var item = byId[weight.speciesId];
+                    float multiplier = definition.habitatId == HabitatIds.Coast
+                        ? item.Category == VegetationCategory.Tree ? .25f : item.Category == VegetationCategory.Shrub ? .6f : 1f : 1f;
+                    entries.Add(new HabitatVegetationSpeciesEntry(item, weight.weight, multiplier));
+                }
+                profile.Configure(definition.habitatId, definition.density, entries);
+                EditorUtility.SetDirty(profile);
+                profiles.Add(profile);
+            }
+            var habitatCatalog = LoadOrCreate<HabitatVegetationCatalogAsset>(HabitatCatalogPath);
+            habitatCatalog.SetProfiles(profiles);
+            EditorUtility.SetDirty(habitatCatalog);
+            var biomeCatalog = AssetDatabase.LoadAssetAtPath<BiomeCatalogAsset>(BiomeCatalogPath);
             if (biomeCatalog == null) throw new FileNotFoundException("Required world data anchor is missing.", BiomeCatalogPath);
             biomeCatalog.SetHabitatVegetationCatalog(habitatCatalog);
             EditorUtility.SetDirty(biomeCatalog);

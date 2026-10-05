@@ -1,5 +1,24 @@
 # Vegetation data authoring
 
+## SpeedTree integration preparation (#109)
+
+The [tropical SpeedTree authoring guide](art/speedtree-tropical-vegetation.md)
+and `Tools/SpeedTree/Tropical/TropicalSpeedTreeManifest.json` stage 25 procedural
+variants and one non-procedural hero. No native exports or wrappers have been
+authored yet; the production mix described below is still active. SpeedTree
+Modeler v10.2.0 and a local MCP adapter appeared during this task. An empty
+CLI ST9 diagnostic ran, but full authoring control, license entitlement and all
+26 usable production exports remain unverified/missing.
+
+The explicit **Bind Tropical SpeedTree Vegetation** menu requires the complete
+native set, validated wrappers, measured trunks and authoring/wind/provenance
+records before any data mutation. Failure lists missing paths and leaves current
+production data untouched. Successful activation retains the four reused IDs,
+depleted references and compatibility conifer, and installs the manifest's exact
+five habitat profiles. Thereafter Create/Update retains the migrated catalog and
+manual visual references. Runtime placement, resource registries, streaming,
+pooling and save DTOs need no architectural changes.
+
 ## Current production architecture
 
 Production uses tropical habitat profiles. Legacy five-biome vegetation tables

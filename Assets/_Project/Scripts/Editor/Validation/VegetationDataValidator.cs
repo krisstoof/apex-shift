@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ApexShift.Editor.World;
 using ApexShift.Runtime.World.Biomes;
 using ApexShift.Runtime.World.Vegetation;
 using UnityEditor;
@@ -35,6 +36,8 @@ namespace ApexShift.EditorTools.Validation
             var errors = new List<string>();
             var species = AssetDatabase.LoadAssetAtPath<VegetationCatalogAsset>(Root + "VegetationCatalog.asset");
             var habitats = AssetDatabase.LoadAssetAtPath<HabitatVegetationCatalogAsset>(Root + "HabitatVegetationCatalog.asset");
+            TropicalSpeedTreeManifest plan = TropicalSpeedTreeVegetationBinder.IsActivated ? TropicalSpeedTreeManifest.Load() : null;
+            if (plan != null) errors.AddRange(TropicalSpeedTreeValidator.CollectReadinessProblems(plan));
             if (species == null) errors.Add("Missing VegetationCatalog.asset.");
             if (habitats == null) errors.Add("Missing HabitatVegetationCatalog.asset.");
             if (species != null)
@@ -44,6 +47,12 @@ namespace ApexShift.EditorTools.Validation
                     if (item != null)
                     {
                         ValidatePrefab(item.VisualPrefab, item.SpeciesId, errors);
+                        if (plan != null && item.SpeciesId != "tree_conifer_01")
+                        {
+                            foreach (var entry in plan.assets)
+                                if (!entry.hero && entry.speciesId == item.SpeciesId)
+                                    TropicalSpeedTreeValidator.ValidateWrapper(entry, item.VisualPrefab, errors);
+                        }
                         if (item.DepletedVisualPrefab != null) ValidatePrefab(item.DepletedVisualPrefab, item.SpeciesId + " depleted", errors);
                     }
             }
