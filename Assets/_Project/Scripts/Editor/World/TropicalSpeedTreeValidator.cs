@@ -45,7 +45,7 @@ namespace ApexShift.Editor.World
         {
             var model = AssetDatabase.LoadAssetAtPath<GameObject>(entry.ModelPath);
             if (model == null) { errors.Add("Missing native SpeedTree export: " + entry.ModelPath); return; }
-            if (!(AssetImporter.GetAtPath(entry.ModelPath) is SpeedTreeImporter))
+            if (!IsNativeSt9Importer(AssetImporter.GetAtPath(entry.ModelPath)))
                 errors.Add("Model is not imported by the native SpeedTree importer: " + entry.ModelPath);
             ValidateGeometry(entry, model, errors);
         }
@@ -56,7 +56,7 @@ namespace ApexShift.Editor.World
             string path = AssetDatabase.GetAssetPath(wrapper);
             if (path != entry.WrapperPath) errors.Add("Wrong canonical wrapper path: " + path);
             if (!AssetDatabase.GetDependencies(path, true).Contains(entry.ModelPath)
-                || !(AssetImporter.GetAtPath(entry.ModelPath) is SpeedTreeImporter))
+                || !IsNativeSt9Importer(AssetImporter.GetAtPath(entry.ModelPath)))
                 errors.Add(entry.modelName + ": wrapper must depend on its authentic native .st9 export, not a renamed FBX.");
             if (!Identity(wrapper.transform)) errors.Add(entry.modelName + ": wrapper root must have identity transform.");
             var model = wrapper.transform.Find("SpeedTreeModel");
@@ -87,6 +87,14 @@ namespace ApexShift.Editor.World
                     }
             }
             else ValidateGameplayContract(wrapper, entry.gameplayTemplate, errors);
+        }
+
+        // ST9 uses a distinct scripted importer, rather than the legacy SpeedTreeImporter.
+        // Resolve the editor-owned type so a custom importer with the same short name cannot pass.
+        public static bool IsNativeSt9Importer(AssetImporter importer)
+        {
+            var nativeType = typeof(AssetImporter).Assembly.GetType("UnityEditor.SpeedTree.Importer.SpeedTree9Importer");
+            return importer != null && nativeType != null && nativeType.IsInstanceOfType(importer);
         }
 
         // Preserve actual serialized resource/food values, including private fields for which no public accessor exists.
