@@ -1,6 +1,12 @@
 # Issue #109 SpeedTree vegetation integration validation
 
-Status: **#109 NOT COMPLETE — SpeedTree authoring blocked**. This is the repo-side preparation path; no production art activation is claimed. Preparation commit message: `#109 prepare SpeedTree vegetation integration` (SHA is reported in the delivery message).
+Status: **#109 NOT COMPLETE — native reference visual QA passes; production batch remains pending**. No production art activation is claimed. Preparation commit message: `#109 prepare SpeedTree vegetation integration` (SHA is reported in the delivery message).
+
+## Current reference verification, 2026-10-05
+
+`ApexShift_TropicalTree_Test01` is approved as the reference for native SpeedTree export/import, materials, orientation/scale and LOD configuration. The blue/red preview was a failure of the earlier immediate batch capture: the unchanged native materials render correctly in initialized Unity editor and actual Play Mode frames. PC deferred and Mobile forward were verified, with 11 screenshots across 781 Play frames. See [native material QA, screenshots and production texture policy](issue109-speedtree-native-materials.md).
+
+The isolated scene is `Assets/_Project/Art/Vegetation/SpeedTree/Test/QA/ApexShift_TropicalTree_Test01_NativeQA.unity`; it contains one reference-tree instance. Runtime leaf imports use a 1024 max-size setting; full-resolution sources remain intact. Wind is disabled in the exported source data and is not approved as an animated reference. No production manifest flags, biome placement, registries or existing vegetation were changed. Earlier trial/preparation statements below are historical and are superseded by this reference verification where applicable.
 
 ## Environment and scope
 

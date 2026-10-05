@@ -1,6 +1,6 @@
 # ApexShift_TropicalTree_Test01
 
-One new procedural broadleaf test asset, authored with SpeedTree MCP and regenerated/exported by installed SpeedTree Modeler 10.2.0. No world, biome, gameplay, vegetation registry or existing asset was changed. No canonical wrapper, gameplay collider or world placement was created.
+One new procedural broadleaf test asset, authored with SpeedTree MCP and regenerated/exported by installed SpeedTree Modeler 10.2.0. No world, biome, gameplay, vegetation registry or existing asset was changed. No canonical wrapper or world placement was created. The native importer retains its inherited collider/Rigidbody; the separate QA scene uses only an instance-level kinematic override.
 
 ## Files
 
@@ -21,7 +21,7 @@ Measured Unity LOD0 bounds: **4.787 m wide × 9.486 m tall × 5.180 m deep**. Na
 | 1 | 1,371 | 1,177 | 2 | 0.25 |
 | 2 | 544 | 497 | 2 | 0.01 |
 
-There are two generated material subassets, with the native URP SpeedTree9 shader and seven resolved texture maps. Leaf maps are 2048×2048; bark maps are 256×1024. The requested 1024 limit was not reflected in the leaf atlas output; these are measured sizes, not assumed preset results. No billboard LOD was observed.
+There are two generated material subassets, with the native URP SpeedTree9 shader and seven resolved texture maps. Exported leaf PNGs remain 2048×2048; Unity runtime leaf imports now use max size 1024 and measure 1024×1024. Bark maps remain 256×1024. Source maps were preserved without regeneration. No billboard LOD was observed.
 
 Seed: **104201**, with recorded per-generator generation/spine seeds. The graph uses a 20-foot nominal trunk, base radius 1.1 feet with a taper profile, subtle trunk noise/curvature, nine asymmetric primary branches, five secondary branches per primary and eight broadleaf clusters per secondary. Length, angle, gravity, leaf size and leaf orientation variance are explicitly configured. Actual generated counts may differ due to inherited pruning/LOD rules; the mesh measurements above are authoritative. Existing cached thumbnail/statistics and TreeInfo describe the starter sample and are not validation evidence.
 
@@ -29,9 +29,11 @@ Seed: **104201**, with recorded per-generator generation/spine seeds. The graph 
 
 Server connection, executable detection, content/template discovery, graph editing, native export, file hashes, geometry, LODs, pivot/orientation and texture references were checked. The final MCP export exited successfully and `verify_export` returned no errors. The source template was preserved. Delivery exclusively created this previously absent Test directory; no existing vegetation assets were overwritten.
 
-**Native shader visual QA remains open.** Isolated Unity renders with `SpeedTree9_URP` show blue/red surfaces despite valid green albedo maps. This occurred in both forward and deferred preview attempts, including synchronous shader compilation and disabled debug display modes. Do not interpret resolved texture references as an approved final material appearance.
+**REFERENCE SPEEDTREE ASSET for #109: native visual QA passes.** Original embedded `SpeedTree9_URP` materials render brown bark and green foliage with cutout and shadows in actual Play Mode on PC deferred and Mobile forward. The previous blue/red single-request preview was a false failure in the immediate batch capture; initialized native frames pass without replacing tree materials. The precise internal Unity mechanism behind the cold capture was not isolated.
 
-Audit previews and logs are in ignored `Logs/SpeedTreeTest01_20261005/`: `preview-native-speedtree.png` records the issue. `preview-texture-reference.png` uses temporary URP/Lit materials on the same native geometry to inspect the actual exported textures and silhouette; it does **not** certify native SpeedTree shading or wind. Neither preview changed the exported materials or created a production prefab. Runtime wind animation, gameplay colliders, biome placement and performance at world density remain for the later Unity integration task.
+Open only `QA/ApexShift_TropicalTree_Test01_NativeQA.unity` and press Play to inspect this one tree. Native orientation/scale, all three LODs, automatic LOD selection and backlighting were checked. `QA/ApexShift_TropicalTree_Test01_NativeQA.json` records the current native material/texture configuration, fingerprints and approval scope. Detailed results, actual native screenshots and production texture policy are in `Docs/testing/issue109-speedtree-native-materials.md`.
+
+**Animated wind is not approved.** The real SpeedTreeWindAsset exists, but all five motion modules and material wind toggles are disabled. Before/after WindZone captures are identical; enabling importer wind alone does not author missing source motion. No world placement, production binder/manifest activation, collider approval or mass-density performance check is inferred. Historical Lit-reference previews are not approval evidence.
 
 The initial General-only export presets yielded a sideways model. The final export additionally uses the CLI `[Options]` schema observed in the source's saved quick-export settings; upright output was confirmed without rotating the Unity instance. The only delivered game format is ST9. ST was tested on the same tree during diagnostics but is not delivered as a second asset.
 

@@ -1,0 +1,327 @@
+{
+  "asset": "ApexShift_TropicalTree_Test01",
+  "date": "2026-10-05",
+  "status": "reference_native_visual_qa_passed_wind_disabled",
+  "referenceApproved": true,
+  "approvalScope": [
+    "native_source_export_import",
+    "native_urp_materials",
+    "orientation_scale",
+    "lod_configuration"
+  ],
+  "animatedWindApproved": false,
+  "productionPlacementApproved": false,
+  "productionBatchComplete": false,
+  "rootCause": {
+    "confirmed": "False failure from immediate first-request batch capture. The next Game-camera request renders correctly with unchanged native model/materials/textures and inactive debug modes. Actual initialized Play Mode frames render correctly.",
+    "exactUnityInternalMechanism": "Not isolated; startup/render-state initialization is an inference, not a demonstrated material or importer bug.",
+    "fix": "Validate normal native Play Mode frames after initialization with a persistent camera target, wait after scene/LOD/lighting changes, restore RenderTexture.active after readback. Do not substitute generic tree materials."
+  },
+  "treeMaterialEdits": [],
+  "treeMaterialReplacements": 0,
+  "unity": {
+    "importer": "UnityEditor.SpeedTree.Importer.SpeedTree9Importer",
+    "materials": [
+      {
+        "name": "Bark_2_Mat",
+        "shader": "Universal Render Pipeline/Nature/SpeedTree9_URP",
+        "shaderPath": "Packages/com.unity.render-pipelines.universal/Shaders/Nature/SpeedTree9_URP.shadergraph",
+        "supported": true,
+        "keywords": [],
+        "alphaClip": 0.1,
+        "tint": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "normal": 1.0,
+        "extra": 1.0,
+        "subsurface": 0.0,
+        "subsurfaceIndirect": 0.25,
+        "backfaceNormal": 0.0,
+        "queue": 2450,
+        "wind": 0.0
+      },
+      {
+        "name": "Tree_01_Mat",
+        "shader": "Universal Render Pipeline/Nature/SpeedTree9_URP",
+        "shaderPath": "Packages/com.unity.render-pipelines.universal/Shaders/Nature/SpeedTree9_URP.shadergraph",
+        "supported": true,
+        "keywords": [],
+        "alphaClip": 0.1,
+        "tint": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "normal": 1.0,
+        "extra": 1.0,
+        "subsurface": 1.0,
+        "subsurfaceIndirect": 0.25,
+        "backfaceNormal": 0.0,
+        "queue": 2450,
+        "wind": 0.0
+      }
+    ],
+    "textures": [
+      {
+        "material": "Bark_2_Mat",
+        "property": "_MainTex",
+        "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Color.png",
+        "width": 256,
+        "height": 1024,
+        "maxSize": 2048,
+        "type": "Default",
+        "srgb": true,
+        "alphaTransparency": true,
+        "mipmaps": true,
+        "preserveCoverage": true,
+        "cutoutReference": 0.1
+      },
+      {
+        "material": "Bark_2_Mat",
+        "property": "_NormalMap",
+        "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Normal.png",
+        "width": 256,
+        "height": 1024,
+        "maxSize": 2048,
+        "type": "NormalMap",
+        "srgb": false,
+        "alphaTransparency": false,
+        "mipmaps": true,
+        "preserveCoverage": false,
+        "cutoutReference": 0.5
+      },
+      {
+        "material": "Bark_2_Mat",
+        "property": "_ExtraTex",
+        "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Extra.png",
+        "width": 256,
+        "height": 1024,
+        "maxSize": 2048,
+        "type": "Default",
+        "srgb": false,
+        "alphaTransparency": false,
+        "mipmaps": true,
+        "preserveCoverage": false,
+        "cutoutReference": 0.5
+      },
+      {
+        "material": "Tree_01_Mat",
+        "property": "_MainTex",
+        "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Color.png",
+        "width": 1024,
+        "height": 1024,
+        "maxSize": 1024,
+        "type": "Default",
+        "srgb": true,
+        "alphaTransparency": true,
+        "mipmaps": true,
+        "preserveCoverage": true,
+        "cutoutReference": 0.1
+      },
+      {
+        "material": "Tree_01_Mat",
+        "property": "_NormalMap",
+        "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Normal.png",
+        "width": 1024,
+        "height": 1024,
+        "maxSize": 1024,
+        "type": "NormalMap",
+        "srgb": false,
+        "alphaTransparency": false,
+        "mipmaps": true,
+        "preserveCoverage": false,
+        "cutoutReference": 0.5
+      },
+      {
+        "material": "Tree_01_Mat",
+        "property": "_ExtraTex",
+        "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Extra.png",
+        "width": 1024,
+        "height": 1024,
+        "maxSize": 1024,
+        "type": "Default",
+        "srgb": false,
+        "alphaTransparency": false,
+        "mipmaps": true,
+        "preserveCoverage": false,
+        "cutoutReference": 0.5
+      },
+      {
+        "material": "Tree_01_Mat",
+        "property": "_SubsurfaceTex",
+        "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Subsurface.png",
+        "width": 1024,
+        "height": 1024,
+        "maxSize": 1024,
+        "type": "Default",
+        "srgb": true,
+        "alphaTransparency": false,
+        "mipmaps": true,
+        "preserveCoverage": false,
+        "cutoutReference": 0.5
+      }
+    ],
+    "lods": [
+      {
+        "level": 0,
+        "transition": 0.5,
+        "fadeWidth": 0.0,
+        "vertices": 2328,
+        "triangles": 2060
+      },
+      {
+        "level": 1,
+        "transition": 0.25,
+        "fadeWidth": 0.0,
+        "vertices": 1371,
+        "triangles": 1177
+      },
+      {
+        "level": 2,
+        "transition": 0.01,
+        "fadeWidth": 0.0,
+        "vertices": 544,
+        "triangles": 497
+      }
+    ],
+    "fadeMode": "CrossFade",
+    "animatedCrossfade": true
+  },
+  "dimensionsMeters": {
+    "x": 4.78733491897583,
+    "y": 9.48559856414795,
+    "z": 5.180144309997559
+  },
+  "sourceAndExport": [
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01.spm",
+      "bytes": 169176,
+      "sha256": "d0f8d8ceec5fc476e751afe12e11138bae5e59c15836f3e4f591d6cad3eb2372"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/ApexShift_TropicalTree_Test01.st9",
+      "bytes": 659608,
+      "sha256": "5cd917a18b2bd0f0e1ecb14e1f458304ba1c384ff5723d3a06d214333abb7e70"
+    }
+  ],
+  "runtimeTextureContent": [
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Color.png",
+      "bytes": 867555,
+      "sha256": "9f6912e27e515be29e1e230ba9a29bd456d8fb5aba6617dcdf87e2c9d5800648"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Normal.png",
+      "bytes": 524390,
+      "sha256": "03918e2fe79a4704f5a456f570d16404f8763dad9a02b685f7bcf1f22e03d178"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Extra.png",
+      "bytes": 359334,
+      "sha256": "4261c1297a09a66012daa736aacbd0153bcdda32f0d9fffef6552d35c5238af9"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Color.png",
+      "bytes": 4577785,
+      "sha256": "21bf2cb8f074db58644d79eaae91b2872c2c1159d9e16369b38ae84cac55a720"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Normal.png",
+      "bytes": 2010024,
+      "sha256": "893f2b4032c27b935e406c43536761b482fca8ca2a59c890c4ac7d96d51f428b"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Extra.png",
+      "bytes": 1843163,
+      "sha256": "d1b532473532b0850df979d304ef088ee316d0e3e46bbca57179c6c455b0ad81"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Subsurface.png",
+      "bytes": 2341368,
+      "sha256": "66f4b0cf436018519edfbfe777bd20e2f0b70ce3d23e29a7561c440edaec8338"
+    }
+  ],
+  "playVerification": {
+    "success": true,
+    "frames": 781,
+    "screenshots": 11,
+    "nativeTreeMaterialOverrides": 0
+  },
+  "testedPipelines": [
+    "PC_RPAsset deferred",
+    "Mobile_RPAsset forward"
+  ],
+  "wind": {
+    "nativeAssetPresent": true,
+    "importerEnableWind": true,
+    "motionModules": {
+      "shared": false,
+      "branch1": false,
+      "branch2": false,
+      "ripple": false,
+      "shimmer": false
+    },
+    "windZoneTested": true,
+    "framesBetweenWindCaptures": 180,
+    "beforeSha256": "4ff2dd7f9e7aa8a70d5938fb71b6e0eb64b7ec0329a88c89ee92273a5156b1d1",
+    "afterSha256": "4ff2dd7f9e7aa8a70d5938fb71b6e0eb64b7ec0329a88c89ee92273a5156b1d1",
+    "result": "No motion; all native wind modules disabled in export. No animated wind approval."
+  },
+  "screenshots": [
+    {
+      "path": "Docs/testing/issue109-speedtree-native-qa/play-backlight.png",
+      "bytes": 218221,
+      "sha256": "aba151bab0a19a1b687d8a6f9e523871041a8020a6d9884af83307174ca4026b"
+    },
+    {
+      "path": "Docs/testing/issue109-speedtree-native-qa/play-lod0.png",
+      "bytes": 319319,
+      "sha256": "4ff2dd7f9e7aa8a70d5938fb71b6e0eb64b7ec0329a88c89ee92273a5156b1d1"
+    },
+    {
+      "path": "Docs/testing/issue109-speedtree-native-qa/play-lod1.png",
+      "bytes": 315602,
+      "sha256": "5603aaf292a9be13ba05b314bc8c376db8cde07e040ecaa2f38401a4c4bb7005"
+    },
+    {
+      "path": "Docs/testing/issue109-speedtree-native-qa/play-lod2.png",
+      "bytes": 305387,
+      "sha256": "15118ad492214b2074f43709933ab02d103e2ccdf9357f5a9af00dfaa6f8920d"
+    },
+    {
+      "path": "Docs/testing/issue109-speedtree-native-qa/play-mobile.png",
+      "bytes": 255268,
+      "sha256": "ee37e9fd7c99b3181f09c0ec605b21023ce1b9f07771a1c7a681d050792bfbdf"
+    }
+  ],
+  "testScene": "Assets/_Project/Art/Vegetation/SpeedTree/Test/QA/ApexShift_TropicalTree_Test01_NativeQA.unity",
+  "testSceneOnlyOverrides": [
+    "kinematic inherited Rigidbody, gravity disabled"
+  ],
+  "texturePolicy": {
+    "hero_landmark": "up to 2048",
+    "large_canopy": "1024-2048",
+    "regular_tree": "1024 preferred",
+    "sapling_shrub": "512-1024",
+    "fern_ground_cover": "512-1024"
+  },
+  "warnings": [
+    "Wind disabled in exported motion configuration; not an animated production reference.",
+    "Preserved editable SPM is not a Unity runtime mesh and can emit legacy importer/no-runtime-data warnings; use the ST9.",
+    "Native shader has an implicit vector truncation compiler warning; no observed compilation error.",
+    "Temporal crossfade video and mass-density performance were not measured; stills verify native LOD appearance and automatic selection.",
+    "Installed sample texture provenance/license remains as recorded; no independent license entitlement audit.",
+    "The precise internal Unity cause of the first-request capture artifact was not established."
+  ],
+  "scopeChecks": {
+    "worldBiomeGenerationChanged": false,
+    "existingVegetationChanged": false,
+    "productionManifestChanged": false,
+    "additionalTreesGenerated": false,
+    "sourceDataUnchanged": true
+  }
+}

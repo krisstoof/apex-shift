@@ -1,6 +1,6 @@
 {
   "asset": "ApexShift_TropicalTree_Test01",
-  "status": "native_export_created_visual_shader_qa_pending",
+  "status": "reference_native_visual_qa_passed_wind_disabled",
   "server": "http://127.0.0.1:9877/mcp",
   "adapter_version": "0.1.1",
   "modeler_installed_version": "10.2.0",
@@ -72,29 +72,29 @@
         "material": "Tree_01_Mat",
         "property": "_MainTex",
         "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Color.png",
-        "width": 2048,
-        "height": 2048
+        "width": 1024,
+        "height": 1024
       },
       {
         "material": "Tree_01_Mat",
         "property": "_NormalMap",
         "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Normal.png",
-        "width": 2048,
-        "height": 2048
+        "width": 1024,
+        "height": 1024
       },
       {
         "material": "Tree_01_Mat",
         "property": "_ExtraTex",
         "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Extra.png",
-        "width": 2048,
-        "height": 2048
+        "width": 1024,
+        "height": 1024
       },
       {
         "material": "Tree_01_Mat",
         "property": "_SubsurfaceTex",
         "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Subsurface.png",
-        "width": 2048,
-        "height": 2048
+        "width": 1024,
+        "height": 1024
       }
     ],
     "materials": 2,
@@ -107,12 +107,12 @@
   "no_existing_files_overwritten": true,
   "production_world_changes": false,
   "warnings": [
-    "Native SpeedTree9_URP preview renders blue/red despite resolved green color maps. Native material/shader visual QA remains open.",
-    "The texture-reference preview uses temporary URP/Lit scene materials; it does not certify the native SpeedTree shader or wind.",
-    "Initial General-only presets did not produce the intended orientation. Final export uses the CLI Options schema and imports upright at identity transform.",
-    "Requested 1024 texture limits were not reflected in actual atlas size: leaf maps are 2048x2048; bark maps are 256x1024.",
-    "Runtime wind, collider setup and world/biome placement were not performed.",
-    "The MCP atlas basename Tree_01 is retained for its embedded texture references. The editable source and native model use the requested asset name."
+    "Wind disabled in exported motion configuration; not an animated production reference.",
+    "Preserved editable SPM is not a Unity runtime mesh and can emit legacy importer/no-runtime-data warnings; use the ST9.",
+    "Native shader has an implicit vector truncation compiler warning; no observed compilation error.",
+    "Temporal crossfade video and mass-density performance were not measured; stills verify native LOD appearance and automatic selection.",
+    "Installed sample texture provenance/license remains as recorded; no independent license entitlement audit.",
+    "The precise internal Unity cause of the first-request capture artifact was not established."
   ],
   "files": [
     {
@@ -608,7 +608,7 @@
     {
       "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Color.png.meta",
       "bytes": 2714,
-      "sha256": "c43f5bc7ac78a4c9acf5e0fa3debd821ab8b481e464ad9a5a93ff1c0c9af6557"
+      "sha256": "12dd378c4c66b17d1231d986f93b21ac2b243c99a0d0f1efc6587292b4f28b68"
     },
     {
       "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Extra.png",
@@ -618,7 +618,7 @@
     {
       "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Extra.png.meta",
       "bytes": 2714,
-      "sha256": "df1c97c32ce0fe01319501606070e795196e048aa16256d4a29ab2e842405eae"
+      "sha256": "4a062fac2d5c3f948b7c588315062a9c790def5998449dcc4a68d87ae9749f6c"
     },
     {
       "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Normal.png",
@@ -628,7 +628,7 @@
     {
       "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Normal.png.meta",
       "bytes": 2714,
-      "sha256": "d8f2ceaf6139b9d78402e4bd4819e0257a84e0031df176af4f6375d4ab53e16a"
+      "sha256": "9f87d8136c66d4e0c6135b881d3015a89c6baf414e90b36005fbd441b303f5c2"
     },
     {
       "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Subsurface.png",
@@ -638,7 +638,7 @@
     {
       "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Subsurface.png.meta",
       "bytes": 2714,
-      "sha256": "89df35630e27af37236e972a2e012afa39f1cbf692ba0c4a7faa44bcdbd9507b"
+      "sha256": "35161c06d4123f1c64580e55e9afa8f4eb9dc69df310e9f4fce4450ca9f0cf80"
     },
     {
       "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/ApexShift_TropicalTree_Test01.st9.meta",
@@ -664,6 +664,41 @@
       "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01_RefinementRecipe.json",
       "bytes": 1866,
       "sha256": "5c38977621517c7045e9e38db6b4ab0bbeb622ea48fedbc094b23d406f8dcaf2"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/README.md",
+      "bytes": 8356,
+      "sha256": "02bd0755171f2802bb2644d1f1e308cc713c69186827b58bff08f8c34ee857c0"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/QA/ApexShift_TropicalTree_Test01_NativeQA.json",
+      "bytes": 11270,
+      "sha256": "a5548f3fa9dfcb6d219861d3f0c4121c83615d1a1b56017fb2e8136d1c31f7f3"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/QA/ApexShift_TropicalTree_Test01_NativeQA.json.meta",
+      "bytes": 158,
+      "sha256": "5d2595d4a3dc4ef82f29611de683fd20922d51882722acd91cc5cc38f0f49aa7"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/QA/ApexShift_TropicalTree_Test01_NativeQA.unity",
+      "bytes": 15628,
+      "sha256": "118c86a3ec2429ae25e4b9aadfdeac7632bcf9339067ffbb620a099881330947"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/QA/ApexShift_TropicalTree_Test01_NativeQA.unity.meta",
+      "bytes": 155,
+      "sha256": "eac2741c01d698b9bfbd1cfdccf4523526e3849fabb78eff1c4aafffd3bdf8a6"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/QA/QA_Ground.mat",
+      "bytes": 3925,
+      "sha256": "4f8334ffa917e0e842a6817b96385026ccbc5fcb1e011d0596fe0ca01413b9da"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/QA/QA_Ground.mat.meta",
+      "bytes": 188,
+      "sha256": "c8c158f78bdd0f282c79c4deb761141e0574d745afe73fe0055fa2204f7dbf52"
     }
   ],
   "createdUnityPaths": [
@@ -677,9 +712,15 @@
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Extra.png.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Normal.png",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Normal.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/QA/ApexShift_TropicalTree_Test01_NativeQA.json",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/QA/ApexShift_TropicalTree_Test01_NativeQA.json.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/QA/ApexShift_TropicalTree_Test01_NativeQA.unity",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/QA/ApexShift_TropicalTree_Test01_NativeQA.unity.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/QA/QA_Ground.mat",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/QA/QA_Ground.mat.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/QA.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/README.md",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/README.md.meta",
-    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01.spm",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01.spm.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01_ExportOptions.ini",
@@ -688,7 +729,6 @@
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01_InitialRecipe.json.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01_RefinementRecipe.json",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01_RefinementRecipe.json.meta",
-    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2.png",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2.png.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_AO.png",
@@ -699,8 +739,7 @@
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_Height.png.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_Normal.png",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_Normal.png.meta",
-    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster.meta",
-    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare.png",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare.png.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare_AO.png",
@@ -791,7 +830,7 @@
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Subsurface.png.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_SubsurfaceAmount.png",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_SubsurfaceAmount.png.meta",
-    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall.png",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall.png.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_AO.png",
@@ -872,6 +911,9 @@
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Subsurface.png.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_SubsurfaceAmount.png",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_SubsurfaceAmount.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Color.png",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Color.png.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Extra.png",
@@ -880,9 +922,9 @@
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Normal.png.meta",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Subsurface.png",
     "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Subsurface.png.meta",
-    "Assets\\_Project\\Art\\Vegetation\\SpeedTree\\Test.meta",
-    "Assets\\_Project\\Art\\Vegetation\\SpeedTree.meta",
-    "Assets\\_Project\\Art\\Vegetation.meta"
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test.meta",
+    "Assets/_Project/Art/Vegetation.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree.meta"
   ],
   "verificationChecks": {
     "nativeSignature": true,
@@ -891,5 +933,32 @@
     "installedSourceUnchanged": true,
     "sourceReferencesPresent": 90,
     "existingFilesOverwritten": false
-  }
+  },
+  "native_visual_qa": {
+    "referenceApproved": true,
+    "animatedWindApproved": false,
+    "report": "Assets/_Project/Art/Vegetation/SpeedTree/Test/QA/ApexShift_TropicalTree_Test01_NativeQA.json"
+  },
+  "initial_delivery_changed_import_settings": [
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Color.png.meta",
+      "bytes": 2714,
+      "sha256": "c43f5bc7ac78a4c9acf5e0fa3debd821ab8b481e464ad9a5a93ff1c0c9af6557"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Extra.png.meta",
+      "bytes": 2714,
+      "sha256": "df1c97c32ce0fe01319501606070e795196e048aa16256d4a29ab2e842405eae"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Normal.png.meta",
+      "bytes": 2714,
+      "sha256": "d8f2ceaf6139b9d78402e4bd4819e0257a84e0031df176af4f6375d4ab53e16a"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Subsurface.png.meta",
+      "bytes": 2714,
+      "sha256": "89df35630e27af37236e972a2e012afa39f1cbf692ba0c4a7faa44bcdbd9507b"
+    }
+  ]
 }
