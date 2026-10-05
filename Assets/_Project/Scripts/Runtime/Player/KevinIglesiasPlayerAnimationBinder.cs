@@ -74,6 +74,17 @@ namespace ApexShift.Runtime.Player
 #if UNITY_EDITOR
         public static RuntimeAnimatorController TryBuildKevinController()
         {
+            AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(GeneratedControllerPath);
+            // Play Mode must consume the authored controller, not rebuild/save a shared asset.
+            // Rebuilding while live Animators use it can invalidate transitions and serialize
+            // an empty parameter list into the production controller.
+            if (Application.isPlaying)
+            {
+                if (controller == null)
+                    Debug.LogWarning("[KevinIglesiasAnimationBinder] Generated controller is missing. Generate it in Edit Mode.");
+                return controller;
+            }
+
             ClipResolution resolution = ResolveKevinClips();
             if (resolution.Clips.Idle == null || resolution.Clips.Walk == null || resolution.Clips.Run == null)
             {
@@ -82,12 +93,10 @@ namespace ApexShift.Runtime.Player
             }
 
             EnsureGeneratedDirectory();
-            AnimatorController controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(GeneratedControllerPath);
             if (controller == null) controller = AnimatorController.CreateAnimatorControllerAtPath(GeneratedControllerPath);
             RebuildController(controller, resolution.Clips);
             EditorUtility.SetDirty(controller);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            AssetDatabase.SaveAssetIfDirty(controller);
             return controller;
         }
 
@@ -231,21 +240,24 @@ namespace ApexShift.Runtime.Player
 
         private static void RebuildController(AnimatorController controller, ClipSet clips)
         {
-            controller.parameters = Array.Empty<AnimatorControllerParameter>();
-            AddParameter(controller, "Speed", AnimatorControllerParameterType.Float);
-            AddParameter(controller, "IsMoving", AnimatorControllerParameterType.Bool);
-            AddParameter(controller, "IsSprinting", AnimatorControllerParameterType.Bool);
-            AddParameter(controller, "IsSwimming", AnimatorControllerParameterType.Bool);
-            AddParameter(controller, "Attack", AnimatorControllerParameterType.Trigger);
-            AddParameter(controller, "Interact", AnimatorControllerParameterType.Trigger);
-            AddParameter(controller, "Gather", AnimatorControllerParameterType.Trigger);
-            AddParameter(controller, "SpearAttack", AnimatorControllerParameterType.Trigger);
-            AddParameter(controller, "BowAttack", AnimatorControllerParameterType.Trigger);
-            AddParameter(controller, "AxeUse", AnimatorControllerParameterType.Trigger);
-            AddParameter(controller, "PickaxeUse", AnimatorControllerParameterType.Trigger);
-            AddParameter(controller, "TorchUse", AnimatorControllerParameterType.Trigger);
-            AddParameter(controller, "Hurt", AnimatorControllerParameterType.Trigger);
-            AddParameter(controller, "Death", AnimatorControllerParameterType.Trigger);
+            // Replace atomically: existing transitions must never see an empty parameter set.
+            controller.parameters = new[]
+            {
+                Parameter("Speed", AnimatorControllerParameterType.Float),
+                Parameter("IsMoving", AnimatorControllerParameterType.Bool),
+                Parameter("IsSprinting", AnimatorControllerParameterType.Bool),
+                Parameter("IsSwimming", AnimatorControllerParameterType.Bool),
+                Parameter("Attack", AnimatorControllerParameterType.Trigger),
+                Parameter("Interact", AnimatorControllerParameterType.Trigger),
+                Parameter("Gather", AnimatorControllerParameterType.Trigger),
+                Parameter("SpearAttack", AnimatorControllerParameterType.Trigger),
+                Parameter("BowAttack", AnimatorControllerParameterType.Trigger),
+                Parameter("AxeUse", AnimatorControllerParameterType.Trigger),
+                Parameter("PickaxeUse", AnimatorControllerParameterType.Trigger),
+                Parameter("TorchUse", AnimatorControllerParameterType.Trigger),
+                Parameter("Hurt", AnimatorControllerParameterType.Trigger),
+                Parameter("Death", AnimatorControllerParameterType.Trigger)
+            };
 
             AnimatorStateMachine machine = controller.layers[0].stateMachine;
             ClearStateMachine(machine);
@@ -342,7 +354,8 @@ namespace ApexShift.Runtime.Player
             transition.AddCondition(cv ? AnimatorConditionMode.If : AnimatorConditionMode.IfNot, 0f, c);
         }
 
-        private static void AddParameter(AnimatorController controller, string name, AnimatorControllerParameterType type) => controller.AddParameter(name, type);
+        private static AnimatorControllerParameter Parameter(string name, AnimatorControllerParameterType type)
+            => new AnimatorControllerParameter { name = name, type = type };
 
         private static void ClearStateMachine(AnimatorStateMachine machine)
         {

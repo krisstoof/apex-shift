@@ -1,0 +1,895 @@
+{
+  "asset": "ApexShift_TropicalTree_Test01",
+  "status": "native_export_created_visual_shader_qa_pending",
+  "server": "http://127.0.0.1:9877/mcp",
+  "adapter_version": "0.1.1",
+  "modeler_installed_version": "10.2.0",
+  "unity_version": "6000.6.2f1",
+  "seed": 104201,
+  "export_format": "st9",
+  "native_readback": {
+    "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/ApexShift_TropicalTree_Test01.st9",
+    "importer": "UnityEditor.SpeedTree.Importer.SpeedTree9Importer",
+    "boundsSize": {
+      "x": 4.78733491897583,
+      "y": 9.48559856414795,
+      "z": 5.180144309997559
+    },
+    "boundsMin": {
+      "x": -2.663776397705078,
+      "y": -0.0020151138305664062,
+      "z": -2.637913465499878
+    },
+    "lods": [
+      {
+        "level": 0,
+        "vertices": 2328,
+        "triangles": 2060,
+        "submeshes": 2,
+        "transition": 0.5
+      },
+      {
+        "level": 1,
+        "vertices": 1371,
+        "triangles": 1177,
+        "submeshes": 2,
+        "transition": 0.25
+      },
+      {
+        "level": 2,
+        "vertices": 544,
+        "triangles": 497,
+        "submeshes": 2,
+        "transition": 0.009999999776482582
+      }
+    ],
+    "shaders": [
+      "Universal Render Pipeline/Nature/SpeedTree9_URP"
+    ],
+    "textures": [
+      {
+        "material": "Bark_2_Mat",
+        "property": "_MainTex",
+        "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Color.png",
+        "width": 256,
+        "height": 1024
+      },
+      {
+        "material": "Bark_2_Mat",
+        "property": "_NormalMap",
+        "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Normal.png",
+        "width": 256,
+        "height": 1024
+      },
+      {
+        "material": "Bark_2_Mat",
+        "property": "_ExtraTex",
+        "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Extra.png",
+        "width": 256,
+        "height": 1024
+      },
+      {
+        "material": "Tree_01_Mat",
+        "property": "_MainTex",
+        "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Color.png",
+        "width": 2048,
+        "height": 2048
+      },
+      {
+        "material": "Tree_01_Mat",
+        "property": "_NormalMap",
+        "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Normal.png",
+        "width": 2048,
+        "height": 2048
+      },
+      {
+        "material": "Tree_01_Mat",
+        "property": "_ExtraTex",
+        "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Extra.png",
+        "width": 2048,
+        "height": 2048
+      },
+      {
+        "material": "Tree_01_Mat",
+        "property": "_SubsurfaceTex",
+        "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Subsurface.png",
+        "width": 2048,
+        "height": 2048
+      }
+    ],
+    "materials": 2,
+    "serializedWindSettings": [],
+    "validated_isolated_path": "Assets/__SpeedTreeTest01/CLIOptions/ApexShift_TropicalTree_Test01.st9"
+  },
+  "source_dependency_count": 90,
+  "runtime_texture_count": 7,
+  "runtime_material_count": 2,
+  "no_existing_files_overwritten": true,
+  "production_world_changes": false,
+  "warnings": [
+    "Native SpeedTree9_URP preview renders blue/red despite resolved green color maps. Native material/shader visual QA remains open.",
+    "The texture-reference preview uses temporary URP/Lit scene materials; it does not certify the native SpeedTree shader or wind.",
+    "Initial General-only presets did not produce the intended orientation. Final export uses the CLI Options schema and imports upright at identity transform.",
+    "Requested 1024 texture limits were not reflected in actual atlas size: leaf maps are 2048x2048; bark maps are 256x1024.",
+    "Runtime wind, collider setup and world/biome placement were not performed.",
+    "The MCP atlas basename Tree_01 is retained for its embedded texture references. The editable source and native model use the requested asset name."
+  ],
+  "files": [
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2.png",
+      "bytes": 521758,
+      "sha256": "0b3e1286f41394944b661f885395b7b75c9b96de3204f294c633f2e86d79c052"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_AO.png",
+      "bytes": 158128,
+      "sha256": "cb8cfbf70c06e6966c77cc519ab0b3cb2c8016a8d64fbdce273075bd33d2e999"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_Gloss.png",
+      "bytes": 128237,
+      "sha256": "5111868f9bb6290d1ee3a014290f851f79fc46c6ba2d22a1809e6b3c0de024e6"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_Height.png",
+      "bytes": 195990,
+      "sha256": "ca5be8523f856bd9610b7808746b692cf54b4140bac8a10777bbfba6f50c77c9"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_Normal.png",
+      "bytes": 454747,
+      "sha256": "82ba7ad9ed2e420d59849b7ceebd33a3310e27558d09444fbb004df5b85b2f63"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare.png",
+      "bytes": 320820,
+      "sha256": "779aab8c61d80861593d42d2ae4a82da830e694e785128ec147a9b0b49d53713"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare_AO.png",
+      "bytes": 102604,
+      "sha256": "44b4a0f73d53d52d217c543d210fc6aa78b943b4b5ecf08390dcce700188d7a3"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare_Gloss.png",
+      "bytes": 124208,
+      "sha256": "d1f8932a64d4b2103b663aa6d8107b37fad283dcb7c570933d6e8ca01594742d"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare_Normal.png",
+      "bytes": 505392,
+      "sha256": "1d04a2fdacdd1fa87d070498e29befbb4693340d8c931dcf17580f2fe176db07"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare_Opacity.png",
+      "bytes": 42199,
+      "sha256": "ed30201e0f87201cafa486a005f79da11248e38bbc10406cdd62dd3b344544f6"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall.png",
+      "bytes": 599722,
+      "sha256": "440e30c4c98292d943ec8759b0632626005092e477721fe1ca992baa16323f44"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_AO.png",
+      "bytes": 250611,
+      "sha256": "bfd889418f902363f042e38e176625c1b5315427623fc6180b70790cb3ecfd54"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Gloss.png",
+      "bytes": 200074,
+      "sha256": "5f9480d9e825fdce62a313c836ae3df0f4dd4c6bab59d3eb8531c7838fcb3462"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Height.png",
+      "bytes": 149713,
+      "sha256": "421b5ab9c246752ad3f4e9cfc21e5b468084195079ef09210c262b0bd0222292"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Normal.png",
+      "bytes": 694442,
+      "sha256": "309c8e2d076beece035f622b6b052f1daa794395c4a0eeabec4a805b0cc66b6e"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Opacity.png",
+      "bytes": 84395,
+      "sha256": "7edd00bd41aa8444e9eb72acee4ae08b3ae61cab22560f713e9a1323f3b3fb75"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Subsurface.png",
+      "bytes": 476785,
+      "sha256": "4772f183e4baa78c2166ae953086e0e3241194576d3365526b539dcdbe8f64b1"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_SubsurfaceAmount.png",
+      "bytes": 236662,
+      "sha256": "f7c5583972d03c9202bf8a589c0f36367e5ff48e12b395d242be6b1902020a80"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition.png",
+      "bytes": 647584,
+      "sha256": "dff87762385e1827cdbe487b83eb0c92ba34af1c90795daa6d9485c554cb83e4"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_AO.png",
+      "bytes": 268012,
+      "sha256": "03881e8a520fdce0133c526aa88f9dcc24a66960a5aef931d2327879c2b76881"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_Gloss.png",
+      "bytes": 213920,
+      "sha256": "81c94dced6106f8988644d8382b0a0ad7ef0c777e0425ad51fbafbae79090cb1"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_Height.png",
+      "bytes": 165256,
+      "sha256": "421f331407cb1ce364ba1acbc987952aa4fdc70b8bb88f5da93b32d20d42761a"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_Normal.png",
+      "bytes": 728625,
+      "sha256": "bf2f61292515b8df23add7dfcd6cdc25d986f90e79fc74b13f9ca12c8ea1824b"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_Opacity.png",
+      "bytes": 92309,
+      "sha256": "4b1f215a50e49d687f9e38f706efbbdd052ccecf2ff3488ec8f782115bdfbe30"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_Subsurface.png",
+      "bytes": 522375,
+      "sha256": "d5049ed04244708ad4f0aad22cc975c5895e2acf2dc89e4d16c41a029231a0fe"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_SubsurfaceAmount.png",
+      "bytes": 265112,
+      "sha256": "2bf67055445c3ab02bccd957532751c524daff1b386a4bd99d726d7225716152"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring.png",
+      "bytes": 661936,
+      "sha256": "7dfbb116faba1b3180c564ba7cf540c89a58e8d78d0d4d2ec608beb1497f077b"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_AO.png",
+      "bytes": 268113,
+      "sha256": "b8fcdb27b039aed9c10aaa0169a7ebc9c003253047de86c775910159b7330b00"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_Gloss.png",
+      "bytes": 212107,
+      "sha256": "682b6d987aaafb5b9de08981f42137d835cfd296aee012e5c0a4266834608de9"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_Height.png",
+      "bytes": 261276,
+      "sha256": "8747ca76788a8d42c1fbcb1d4ae4dbaae9d6e4ae2283e9d791fa6db99b2c860b"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_Normal.png",
+      "bytes": 726054,
+      "sha256": "189c810f2f01145bcde06693a860fce4590c1eeb31d81d044b91175b71d0542b"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_Opacity.png",
+      "bytes": 92298,
+      "sha256": "396b7f42340adb8d681d298c9b0504385117f8499a89132e8d5c782bd12a04e0"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_Subsurface.png",
+      "bytes": 566540,
+      "sha256": "405cf5c59b50caa41182661f4cfaa683cdb13635e31e0354981bd6f784523e98"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_SubsurfaceAmount.png",
+      "bytes": 264551,
+      "sha256": "be50b47c186eb8f8f8e18ad03e171514302ef92ce2ecb5d3d58e2414a123cb55"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer.png",
+      "bytes": 673074,
+      "sha256": "236cdbd998c22ff18b7c5cd73f121c153091924c0e0c7a00267c0ba0bd5ebd8b"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_AO.png",
+      "bytes": 267550,
+      "sha256": "bbd24c2900040cef33f3786eecaea09834a4b5ef99cf16f6e35e100fd416db33"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_Gloss.png",
+      "bytes": 213819,
+      "sha256": "0bd77bd8c1e59a21c453f10878384c3656e7853b33bd197cd937c809062e48fc"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_Height.png",
+      "bytes": 217215,
+      "sha256": "7b9c1f085c15e05b4a7c6b2c55c8d34ab73892655a2d143f97814988766bc3fe"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_Normal.png",
+      "bytes": 730730,
+      "sha256": "59683a762194cfcf474ec870c974b4589354ec49254f3f94ee05602a5c89ce9d"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_Opacity.png",
+      "bytes": 92134,
+      "sha256": "7187a40d9ebd7cd75d9e1f94ebcd8becaf2c0885a7035f0436c0b1b717201d2a"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_Subsurface.png",
+      "bytes": 479607,
+      "sha256": "0da9c74a8896f74806cd38aca5a7f1164a1322b3aa316beb590fe14993c0c7ed"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_SubsurfaceAmount.png",
+      "bytes": 263824,
+      "sha256": "974d0d4ff32f9d3d4a81ca7b374126f7656b0accdf7d647670f9be9f20876c18"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter.png",
+      "bytes": 542884,
+      "sha256": "45c2259d86ac6daa6d9ae9a3eae1edc62944a1797a1de750653ccd05b0e1f2ae"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_AO.png",
+      "bytes": 215985,
+      "sha256": "cc9bbdb7dafac44f49479aa1f1b1c7c92da1a413233f94621df8a6d5b2407a65"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Gloss.png",
+      "bytes": 183268,
+      "sha256": "260843105ca719ee60ae84f324494188dc1f3b2fac742564ddacefcad439ec19"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Height.png",
+      "bytes": 121670,
+      "sha256": "0abb5ccb40d190c358ed3b71b3d6ec0f0fc591550b91efad8375e31248e10ac8"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Normal.png",
+      "bytes": 651157,
+      "sha256": "42b1016afd5f5fbd25fbca9ec8dbb38e40df490f54e4b7f6165c9bf1e240e39c"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Opacity.png",
+      "bytes": 69061,
+      "sha256": "9614e41d0737b30f67c6e1b0a92174114c6d2b4aac581f396b14b5b126a64fbd"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Subsurface.png",
+      "bytes": 372140,
+      "sha256": "f765f973e70effbc280f41e04b331b4b222830e75167e6e8921b38d7618144af"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_SubsurfaceAmount.png",
+      "bytes": 182074,
+      "sha256": "e5b030843e0faf75643427c5adead2b18e063125e19877afcc076d5fc4d8ba10"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall.png",
+      "bytes": 460715,
+      "sha256": "b5fa5baeb2d33f795e7f88631b9b0de56bcab23f4e908d2ba6a53121b4ff6c7d"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_AO.png",
+      "bytes": 221575,
+      "sha256": "03f1fbc3b8a1a2f90e691a983953197b375b0458fc7d56cfc32eda7c4ec5cd95"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Gloss.png",
+      "bytes": 173239,
+      "sha256": "b5f09b5532983f70a1b36bfb823de03517036fa68dd193d34903495af67fbdc4"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Height.png",
+      "bytes": 228532,
+      "sha256": "e92cc15f5f471ab82d66ec302d1580ab6b1a4b1b2aebb4e8c350c6e7b78426e3"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Normal.png",
+      "bytes": 469571,
+      "sha256": "7546bb0a7c5398a0626185dd8c91c5cc1ff00f16ef608376ca68577736ed8a34"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Opacity.png",
+      "bytes": 12771,
+      "sha256": "6f1840a1ec394680809eb95c0615f2402bdb027c067cf90e8d4b4f4cf55acd7a"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Subsurface.png",
+      "bytes": 480483,
+      "sha256": "e76fc0e8a937c015e506f581f9f370a9e6639be2a2ea9bc3f19330ae34064411"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_SubsurfaceAmount.png",
+      "bytes": 275130,
+      "sha256": "598b6f7f71782665269b645bacf69a811dfa14a9a0f9110b5f1456ff5e3fc230"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition.png",
+      "bytes": 484856,
+      "sha256": "c1f3ff1a4c49673d0dc71f56e38c449f6d950d6007e700121990e023f6e92257"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_AO.png",
+      "bytes": 221579,
+      "sha256": "4fc4730142a7c12d6024299c551b35fdf8634479d08b51e02c5f819bd2696955"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_Gloss.png",
+      "bytes": 173241,
+      "sha256": "b5f30469209cd43b607a279c6f458de8757c0af6fedca823b7b9480293ebdc2f"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_Height.png",
+      "bytes": 228534,
+      "sha256": "093de4a38d25cb14ae128139c85df2d1d43e0e97feb1fa5d1506f27f0dd567cb"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_Normal.png",
+      "bytes": 469573,
+      "sha256": "90e3e80dedbd6dceae0faf5d33231146fcb87ee9030d40037eb5ab576af515b4"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_Opacity.png",
+      "bytes": 12771,
+      "sha256": "e75674019c4ee720be6965fdc0d73137cbb7577d8170e9727f32a91b3be4eeea"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_Subsurface.png",
+      "bytes": 491169,
+      "sha256": "adf8753b0438dc5aa933ea4203704636f48d6452578c77b937485d6dcbd977bd"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_SubsurfaceAmount.png",
+      "bytes": 275134,
+      "sha256": "0f1c018055cb617ac868ebf1d83a10f967e6aff0f7ebebce00cd1ad8e8936f88"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring.png",
+      "bytes": 517709,
+      "sha256": "6c7555e636b358e777900a9ef27d3fb6560d3f53c230ac67a4ddc09ead35f8d9"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_AO.png",
+      "bytes": 242520,
+      "sha256": "6a95e1d91b47de472ba402d4530796a441c374e1d6b47236c465994d0926d862"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_Gloss.png",
+      "bytes": 173241,
+      "sha256": "ee79fea714febbb74c2d52ac9f3b63c46e5cad3176fa83c44b5d36c19ae19a19"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_Height.png",
+      "bytes": 228534,
+      "sha256": "171ac2b2aa1321a6b251b6d05acfa6f16312a6f14b7d1df0ee2a2309e74d3f21"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_Normal.png",
+      "bytes": 469573,
+      "sha256": "cfe1172dd74b9a133a0d3f2e8c7829bdec728fc5eb143e04902d28647d0e3db4"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_Opacity.png",
+      "bytes": 12771,
+      "sha256": "6266dddfd29c15582223f2da2d18ace462bbe1dbf3afc430e369938e9cf0611a"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_Subsurface.png",
+      "bytes": 538120,
+      "sha256": "bc1f4f2c9fe1eed1943355fd332c43418ce40f91bb15f448b1c843d3213b6966"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_SubsurfaceAmount.png",
+      "bytes": 275134,
+      "sha256": "6f09c9376974e30830a0d96748e93ebf7e1edaa0fb1ee602ee32b2187f412197"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer.png",
+      "bytes": 518313,
+      "sha256": "ffc1145e95eff0de568cd58808404014888cde478523489d6f0f6366aeb56b89"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_AO.png",
+      "bytes": 221577,
+      "sha256": "96944aeec7b3b729c55f0149ff14542edb00e04f42581c6a1d2283331f8aa242"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_Gloss.png",
+      "bytes": 173239,
+      "sha256": "3d2b58c6cf30699b98ac2c4ba8be04510876700bd81520f3bceef8a6f007c349"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_Height.png",
+      "bytes": 228532,
+      "sha256": "0ba8ef7dba7024831dc99e467d5459eb4fd755c7ea29c15d384a3628c05ede22"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_Normal.png",
+      "bytes": 469571,
+      "sha256": "55e12fe6c5945544d5f65207f6e1639a79283805abdc60b0ee494973fdf6e1a1"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_Opacity.png",
+      "bytes": 12769,
+      "sha256": "0d918a582b716073f940e8efac315ab27c2028ffca7d95040362d60b7e893897"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_Subsurface.png",
+      "bytes": 482143,
+      "sha256": "ee5fa66ad89132ebb3747e5c0323e28a25acd99b5d9d746161d326be3a5dac29"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_SubsurfaceAmount.png",
+      "bytes": 275134,
+      "sha256": "62b8013793722e04ce0920e247dd7c45c073921f43f89c61eab207e1d608cc50"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter.png",
+      "bytes": 326566,
+      "sha256": "4d7e8e0ed69e066b9d1d19bf2f9a4f18facb2ca3432c1ad916e3426c00c14a71"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_AO.png",
+      "bytes": 152035,
+      "sha256": "90019baa0230d2b9a35719ad5b414ba304e58d085f40c66927d88316641aaaf1"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Gloss.png",
+      "bytes": 124292,
+      "sha256": "227bc91d111dcd0d4b0945b290dfc9697767c4a6c6ee316c407f0912290c0b8c"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Height.png",
+      "bytes": 151483,
+      "sha256": "01a64bf5c014f55516d174e641bd6c377c19fb260425af01ad980b6f7aba732c"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Normal.png",
+      "bytes": 315095,
+      "sha256": "eb51afd8cd0e873c61f7cceb39d3ca6b1259714dd63b5ed35c1fb0782f80c2f5"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Opacity.png",
+      "bytes": 8584,
+      "sha256": "c4997a56034b08487f99cb8261d0a721179f3a77120c0bddcf4d74eb9e837c10"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Subsurface.png",
+      "bytes": 305463,
+      "sha256": "c2f5034fbdccf35dbe6c7310070701b4dddeca1a1e92a27cb0e1b109179e6eda"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_SubsurfaceAmount.png",
+      "bytes": 182575,
+      "sha256": "f120a7c3a6b97498260cba28b0bc62ac7ba353626ac0feda6d9fa8a347487f00"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01.spm",
+      "bytes": 169176,
+      "sha256": "d0f8d8ceec5fc476e751afe12e11138bae5e59c15836f3e4f591d6cad3eb2372"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Color.png",
+      "bytes": 867555,
+      "sha256": "9f6912e27e515be29e1e230ba9a29bd456d8fb5aba6617dcdf87e2c9d5800648"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Color.png.meta",
+      "bytes": 2714,
+      "sha256": "e10838a0586413d05f79ee528721e0e81d4d94e8af798ab37c12df55bdcf5387"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Extra.png",
+      "bytes": 359334,
+      "sha256": "4261c1297a09a66012daa736aacbd0153bcdda32f0d9fffef6552d35c5238af9"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Extra.png.meta",
+      "bytes": 2714,
+      "sha256": "a7e336c8bffe10a62d0747fe3ac866e3688665ac4eebeb5d52e602c34eaca955"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Normal.png",
+      "bytes": 524390,
+      "sha256": "03918e2fe79a4704f5a456f570d16404f8763dad9a02b685f7bcf1f22e03d178"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Normal.png.meta",
+      "bytes": 2714,
+      "sha256": "3482d4ff4076ca135a9439e6af27efdfc79120178c0f68d871e1a703ce2fc38d"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Color.png",
+      "bytes": 4577785,
+      "sha256": "21bf2cb8f074db58644d79eaae91b2872c2c1159d9e16369b38ae84cac55a720"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Color.png.meta",
+      "bytes": 2714,
+      "sha256": "c43f5bc7ac78a4c9acf5e0fa3debd821ab8b481e464ad9a5a93ff1c0c9af6557"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Extra.png",
+      "bytes": 1843163,
+      "sha256": "d1b532473532b0850df979d304ef088ee316d0e3e46bbca57179c6c455b0ad81"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Extra.png.meta",
+      "bytes": 2714,
+      "sha256": "df1c97c32ce0fe01319501606070e795196e048aa16256d4a29ab2e842405eae"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Normal.png",
+      "bytes": 2010024,
+      "sha256": "893f2b4032c27b935e406c43536761b482fca8ca2a59c890c4ac7d96d51f428b"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Normal.png.meta",
+      "bytes": 2714,
+      "sha256": "d8f2ceaf6139b9d78402e4bd4819e0257a84e0031df176af4f6375d4ab53e16a"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Subsurface.png",
+      "bytes": 2341368,
+      "sha256": "66f4b0cf436018519edfbfe777bd20e2f0b70ce3d23e29a7561c440edaec8338"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Subsurface.png.meta",
+      "bytes": 2714,
+      "sha256": "89df35630e27af37236e972a2e012afa39f1cbf692ba0c4a7faa44bcdbd9507b"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/ApexShift_TropicalTree_Test01.st9.meta",
+      "bytes": 1836,
+      "sha256": "f18b6362b4cd69d9e4db84a271a4e0c786b18b6152ab4c90ba118d96ca8675b7"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/ApexShift_TropicalTree_Test01.st9",
+      "bytes": 659608,
+      "sha256": "5cd917a18b2bd0f0e1ecb14e1f458304ba1c384ff5723d3a06d214333abb7e70"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01_ExportOptions.ini",
+      "bytes": 1005,
+      "sha256": "d5680757b5d428a8c8266869cdb3d3330ec5513bc57fd10ca30eef5e502797ca"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01_InitialRecipe.json",
+      "bytes": 13886,
+      "sha256": "8ae5189ae7665409b0b65656c878fb8613af5e76f8ff4f8b9871e01fab01b449"
+    },
+    {
+      "path": "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01_RefinementRecipe.json",
+      "bytes": 1866,
+      "sha256": "5c38977621517c7045e9e38db6b4ab0bbeb622ea48fedbc094b23d406f8dcaf2"
+    }
+  ],
+  "createdUnityPaths": [
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/ApexShift_TropicalTree_Test01.st9",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/ApexShift_TropicalTree_Test01.st9.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/ApexShift_TropicalTree_Test01_Verification.json",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/ApexShift_TropicalTree_Test01_Verification.json.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Color.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Color.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Extra.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Extra.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Normal.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Bark_2_Normal.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/README.md",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/README.md.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01.spm",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01.spm.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01_ExportOptions.ini",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01_ExportOptions.ini.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01_InitialRecipe.json",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01_InitialRecipe.json.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01_RefinementRecipe.json",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/ApexShift_TropicalTree_Test01_RefinementRecipe.json.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_AO.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_AO.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_Gloss.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_Gloss.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_Height.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_Height.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_Normal.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Bark/Bark_2_Normal.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare_AO.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare_AO.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare_Gloss.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare_Gloss.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare_Normal.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare_Normal.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare_Opacity.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Bare_Opacity.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_AO.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_AO.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Gloss.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Gloss.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Height.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Height.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Normal.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Normal.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Opacity.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Opacity.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Subsurface.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Subsurface.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_SubsurfaceAmount.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_SubsurfaceAmount.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_AO.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_AO.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_Gloss.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_Gloss.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_Height.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_Height.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_Normal.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_Normal.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_Opacity.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_Opacity.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_Subsurface.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_Subsurface.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_SubsurfaceAmount.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Fall_Transition_SubsurfaceAmount.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_AO.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_AO.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_Gloss.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_Gloss.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_Height.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_Height.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_Normal.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_Normal.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_Opacity.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_Opacity.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_Subsurface.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_Subsurface.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_SubsurfaceAmount.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Spring_SubsurfaceAmount.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_AO.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_AO.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_Gloss.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_Gloss.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_Height.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_Height.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_Normal.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_Normal.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_Opacity.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_Opacity.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_Subsurface.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_Subsurface.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_SubsurfaceAmount.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Summer_SubsurfaceAmount.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_AO.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_AO.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Gloss.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Gloss.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Height.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Height.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Normal.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Normal.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Opacity.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Opacity.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Subsurface.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_Subsurface.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_SubsurfaceAmount.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_1/Leaf_Cluster_1_Winter_SubsurfaceAmount.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_AO.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_AO.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Gloss.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Gloss.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Height.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Height.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Normal.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Normal.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Opacity.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Opacity.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Subsurface.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Subsurface.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_SubsurfaceAmount.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_SubsurfaceAmount.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_AO.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_AO.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_Gloss.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_Gloss.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_Height.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_Height.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_Normal.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_Normal.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_Opacity.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_Opacity.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_Subsurface.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_Subsurface.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_SubsurfaceAmount.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Fall_Transition_SubsurfaceAmount.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_AO.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_AO.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_Gloss.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_Gloss.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_Height.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_Height.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_Normal.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_Normal.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_Opacity.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_Opacity.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_Subsurface.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_Subsurface.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_SubsurfaceAmount.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Spring_SubsurfaceAmount.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_AO.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_AO.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_Gloss.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_Gloss.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_Height.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_Height.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_Normal.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_Normal.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_Opacity.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_Opacity.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_Subsurface.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_Subsurface.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_SubsurfaceAmount.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Summer_SubsurfaceAmount.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_AO.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_AO.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Gloss.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Gloss.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Height.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Height.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Normal.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Normal.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Opacity.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Opacity.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Subsurface.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_Subsurface.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_SubsurfaceAmount.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Source/Cluster/Leaf_Cluster_2/Leaf_Cluster_2_Winter_SubsurfaceAmount.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Color.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Color.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Extra.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Extra.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Normal.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Normal.png.meta",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Subsurface.png",
+    "Assets/_Project/Art/Vegetation/SpeedTree/Test/Tree_01_Subsurface.png.meta",
+    "Assets\\_Project\\Art\\Vegetation\\SpeedTree\\Test.meta",
+    "Assets\\_Project\\Art\\Vegetation\\SpeedTree.meta",
+    "Assets\\_Project\\Art\\Vegetation.meta"
+  ],
+  "verificationChecks": {
+    "nativeSignature": true,
+    "allDeliveredDataHashesMatch": true,
+    "editableGeneratorCount": 5,
+    "installedSourceUnchanged": true,
+    "sourceReferencesPresent": 90,
+    "existingFilesOverwritten": false
+  }
+}

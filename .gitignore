@@ -30,4 +30,7 @@ sysinfo.txt
 
 Tools/blender-mcp
 Tools/blender-mcp/
+Tools/SpeedTreeMCP/.venv/
+Tools/SpeedTreeMCP/.uv-cache/
+Tools/SpeedTreeMCP/runtime/
 Tools/BlenderV10/ApexShift_Assets_v10_Output/

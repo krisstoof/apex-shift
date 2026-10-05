@@ -1,0 +1,69 @@
+{
+  "source_path": "C:\\Users\\kriss\\apex-shift\\Logs\\SpeedTreeTest01_20261005\\Authoring01\\ApexShift_TropicalTree_Test01.spm",
+  "output_path": "C:\\Users\\kriss\\apex-shift\\Logs\\SpeedTreeTest01_20261005\\Authoring02\\ApexShift_TropicalTree_Test01.spm",
+  "operations": [
+    {
+      "op": "set_property",
+      "node_id": "za7jFMA34lKAJgOATdabkQ==",
+      "name": "Spine:Length:Absolute",
+      "component": "Value",
+      "value": 20
+    },
+    {
+      "op": "set_property",
+      "node_id": "za7jFMA34lKAJgOATdabkQ==",
+      "name": "Skin:Radius:Absolute",
+      "component": "Value",
+      "value": 1.1
+    },
+    {
+      "op": "set_property",
+      "node_id": "hXndh+mpCVq8jDtt5x+HQw==",
+      "name": "Generation:Mode",
+      "component": "Value",
+      "value": 3
+    },
+    {
+      "op": "set_property",
+      "node_id": "hXndh+mpCVq8jDtt5x+HQw==",
+      "name": "Generation:Absolute:Number",
+      "component": "Value",
+      "value": 8
+    },
+    {
+      "op": "set_property",
+      "node_id": "hXndh+mpCVq8jDtt5x+HQw==",
+      "name": "Generation:Absolute:Jumble",
+      "component": "Value",
+      "value": 0.65
+    },
+    {
+      "op": "set_property",
+      "node_id": "hXndh+mpCVq8jDtt5x+HQw==",
+      "name": "Leaves:Size",
+      "component": "Value",
+      "value": 2.6
+    },
+    {
+      "op": "set_property",
+      "node_id": "NoYe38M4/Em2R6d2KkG1k==",
+      "name": "Vertex Color:Red",
+      "component": "Value",
+      "value": 1
+    },
+    {
+      "op": "set_property",
+      "node_id": "NoYe38M4/Em2R6d2KkG1k==",
+      "name": "Vertex Color:Green",
+      "component": "Value",
+      "value": 1
+    },
+    {
+      "op": "set_property",
+      "node_id": "NoYe38M4/Em2R6d2KkG1k==",
+      "name": "Vertex Color:Blue",
+      "component": "Value",
+      "value": 1
+    }
+  ]
+}

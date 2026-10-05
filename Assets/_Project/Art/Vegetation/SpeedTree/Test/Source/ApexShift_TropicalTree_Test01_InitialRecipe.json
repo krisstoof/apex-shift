@@ -1,0 +1,510 @@
+{
+  "source_path": "C:\\Program Files\\SpeedTree\\SpeedTree Modeler v10.2.0\\samples\\Games\\Bush\\Bush_Desktop.spm",
+  "output_path": "C:\\Users\\kriss\\apex-shift\\Logs\\SpeedTreeTest01_20261005\\Authoring01\\ApexShift_TropicalTree_Test01.spm",
+  "operations": [
+    {
+      "op": "remove",
+      "node_id": "CdzYK80KWUKhJtefQxV1Bw==",
+      "cascade": true
+    },
+    {
+      "op": "remove",
+      "node_id": "vx+6LF1CiEmdAG36WQv65Q==",
+      "cascade": true
+    },
+    {
+      "op": "add",
+      "template_path": "C:\\Program Files\\SpeedTree\\SpeedTree Modeler v10.2.0\\tree_templates\\Games\\Broadleaf.spm",
+      "template_node_id": "eJTj0AaA7Uyfael5eYFbYg==",
+      "node_id": "za7jFMA34lKAJgOATdabkQ==",
+      "name": "Trunk Generator",
+      "parent_id": "NoYe38M4/Em2R6d2KkG1k=="
+    },
+    {
+      "op": "add",
+      "template_path": "C:\\Program Files\\SpeedTree\\SpeedTree Modeler v10.2.0\\tree_templates\\Games\\Broadleaf.spm",
+      "template_node_id": "eiuxw6gYakKTEk9qP2TDdg==",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Primary Generator",
+      "parent_id": "za7jFMA34lKAJgOATdabkQ=="
+    },
+    {
+      "op": "add",
+      "template_path": "C:\\Program Files\\SpeedTree\\SpeedTree Modeler v10.2.0\\tree_templates\\Games\\Broadleaf.spm",
+      "template_node_id": "JPCGN9E2REGtwCnqt8Jxa==",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Secondary Generator",
+      "parent_id": "Txpa+QvWN1Ki4UzG0cOS3g=="
+    },
+    {
+      "op": "add",
+      "template_path": "C:\\Program Files\\SpeedTree\\SpeedTree Modeler v10.2.0\\tree_templates\\Games\\Broadleaf.spm",
+      "template_node_id": "jL5kpILnO06IOL7NjQ5VQQ==",
+      "node_id": "hXndh+mpCVq8jDtt5x+HQw==",
+      "name": "Leaves Generator",
+      "parent_id": "k12mkdlYE1CA39YqXsrMBw=="
+    },
+    {
+      "op": "set_property",
+      "node_id": "NoYe38M4/Em2R6d2KkG1k==",
+      "name": "Global:Randomize with seed",
+      "component": "Value",
+      "value": 104201
+    },
+    {
+      "op": "set_property",
+      "node_id": "NoYe38M4/Em2R6d2KkG1k==",
+      "name": "Shape:Radius",
+      "component": "Value",
+      "value": 0
+    },
+    {
+      "op": "set_property",
+      "node_id": "za7jFMA34lKAJgOATdabkQ==",
+      "name": "Random Seeds:Generation",
+      "component": "Value",
+      "value": 104201
+    },
+    {
+      "op": "set_property",
+      "node_id": "za7jFMA34lKAJgOATdabkQ==",
+      "name": "Random Seeds:Spine",
+      "component": "Value",
+      "value": 104201
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Random Seeds:Generation",
+      "component": "Value",
+      "value": 104304
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Random Seeds:Spine",
+      "component": "Value",
+      "value": 104412
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Random Seeds:Generation",
+      "component": "Value",
+      "value": 104407
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Random Seeds:Spine",
+      "component": "Value",
+      "value": 104623
+    },
+    {
+      "op": "set_property",
+      "node_id": "hXndh+mpCVq8jDtt5x+HQw==",
+      "name": "Random Seeds:Generation",
+      "component": "Value",
+      "value": 104510
+    },
+    {
+      "op": "set_property",
+      "node_id": "za7jFMA34lKAJgOATdabkQ==",
+      "name": "Spine:Length:Absolute",
+      "component": "Value",
+      "value": 26
+    },
+    {
+      "op": "set_property",
+      "node_id": "za7jFMA34lKAJgOATdabkQ==",
+      "name": "Spine:Length:Absolute",
+      "component": "Variance",
+      "value": 0
+    },
+    {
+      "op": "set_property",
+      "node_id": "za7jFMA34lKAJgOATdabkQ==",
+      "name": "Spine:Length:+ % of parent",
+      "component": "Value",
+      "value": 0
+    },
+    {
+      "op": "set_property",
+      "node_id": "za7jFMA34lKAJgOATdabkQ==",
+      "name": "Skin:Radius:Absolute",
+      "component": "Value",
+      "value": 0.85
+    },
+    {
+      "op": "set_property",
+      "node_id": "za7jFMA34lKAJgOATdabkQ==",
+      "name": "Skin:Radius:+ % of parent",
+      "component": "Value",
+      "value": 0
+    },
+    {
+      "op": "set_property",
+      "node_id": "za7jFMA34lKAJgOATdabkQ==",
+      "name": "Skin:Radius:Absolute",
+      "component": "ProfileSpline/ControlPoint[2]/Y",
+      "value": 0.08
+    },
+    {
+      "op": "set_property",
+      "node_id": "za7jFMA34lKAJgOATdabkQ==",
+      "name": "Spine:Noise:Late:Amount",
+      "component": "Value",
+      "value": 0.38
+    },
+    {
+      "op": "set_property",
+      "node_id": "za7jFMA34lKAJgOATdabkQ==",
+      "name": "Displacement:Flares:Radius",
+      "component": "Value",
+      "value": 0.4
+    },
+    {
+      "op": "set_property",
+      "node_id": "za7jFMA34lKAJgOATdabkQ==",
+      "name": "Materials:Branch:0:Material",
+      "component": "Value",
+      "value": 3
+    },
+    {
+      "op": "set_property",
+      "node_id": "za7jFMA34lKAJgOATdabkQ==",
+      "name": "Segments:Accuracy",
+      "component": "Value",
+      "value": 65
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Generation:Mode",
+      "component": "Value",
+      "value": 3
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Generation:Absolute:Number",
+      "component": "Value",
+      "value": 9
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Generation:Absolute:Jumble",
+      "component": "Value",
+      "value": 0.62
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Generation:Orientation:Balanced",
+      "component": "Value",
+      "value": false
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Generation:Orientation:Offset",
+      "component": "Variance",
+      "value": 0.14
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Generation:First",
+      "component": "Value",
+      "value": 0.42
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Generation:Last",
+      "component": "Value",
+      "value": 0.97
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Spine:Length:Absolute",
+      "component": "Value",
+      "value": 0
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Spine:Length:+ % of parent",
+      "component": "Value",
+      "value": 0.38
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Spine:Length:+ % of parent",
+      "component": "Variance",
+      "value": 0.09
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Spine:Orientation:Start angle",
+      "component": "Value",
+      "value": 0.34
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Spine:Orientation:Start angle",
+      "component": "Variance",
+      "value": 0.065
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Spine:Shape:Gravity",
+      "component": "Value",
+      "value": -0.06
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Spine:Shape:Gravity",
+      "component": "Variance",
+      "value": 0.025
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Spine:Noise:Late:Amount",
+      "component": "Value",
+      "value": 0.32
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Skin:Radius:+ % of parent",
+      "component": "Value",
+      "value": 0.48
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Skin:Radius:Absolute",
+      "component": "ProfileSpline/ControlPoint[2]/Y",
+      "value": 0.03
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Materials:Branch:0:Material",
+      "component": "Value",
+      "value": 3
+    },
+    {
+      "op": "set_property",
+      "node_id": "Txpa+QvWN1Ki4UzG0cOS3g==",
+      "name": "Segments:Accuracy",
+      "component": "Value",
+      "value": 45
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Generation:Mode",
+      "component": "Value",
+      "value": 3
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Generation:Absolute:Number",
+      "component": "Value",
+      "value": 5
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Generation:Absolute:Jumble",
+      "component": "Value",
+      "value": 0.62
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Generation:Orientation:Balanced",
+      "component": "Value",
+      "value": false
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Generation:Orientation:Offset",
+      "component": "Variance",
+      "value": 0.14
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Generation:First",
+      "component": "Value",
+      "value": 0.2
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Generation:Last",
+      "component": "Value",
+      "value": 0.97
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Spine:Length:Absolute",
+      "component": "Value",
+      "value": 0
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Spine:Length:+ % of parent",
+      "component": "Value",
+      "value": 0.48
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Spine:Length:+ % of parent",
+      "component": "Variance",
+      "value": 0.09
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Spine:Orientation:Start angle",
+      "component": "Value",
+      "value": 0.32
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Spine:Orientation:Start angle",
+      "component": "Variance",
+      "value": 0.065
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Spine:Shape:Gravity",
+      "component": "Value",
+      "value": -0.06
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Spine:Shape:Gravity",
+      "component": "Variance",
+      "value": 0.025
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Spine:Noise:Late:Amount",
+      "component": "Value",
+      "value": 0.32
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Skin:Radius:+ % of parent",
+      "component": "Value",
+      "value": 0.42
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Skin:Radius:Absolute",
+      "component": "ProfileSpline/ControlPoint[2]/Y",
+      "value": 0.03
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Materials:Branch:0:Material",
+      "component": "Value",
+      "value": 3
+    },
+    {
+      "op": "set_property",
+      "node_id": "k12mkdlYE1CA39YqXsrMBw==",
+      "name": "Segments:Accuracy",
+      "component": "Value",
+      "value": 45
+    },
+    {
+      "op": "set_property",
+      "node_id": "hXndh+mpCVq8jDtt5x+HQw==",
+      "name": "Generation:Interval:Frequency",
+      "component": "Value",
+      "value": 3.0
+    },
+    {
+      "op": "set_property",
+      "node_id": "hXndh+mpCVq8jDtt5x+HQw==",
+      "name": "Generation:Interval:Count",
+      "component": "Value",
+      "value": 2
+    },
+    {
+      "op": "set_property",
+      "node_id": "hXndh+mpCVq8jDtt5x+HQw==",
+      "name": "Generation:First",
+      "component": "Value",
+      "value": 0.16
+    },
+    {
+      "op": "set_property",
+      "node_id": "hXndh+mpCVq8jDtt5x+HQw==",
+      "name": "Leaves:Size",
+      "component": "Value",
+      "value": 3.2
+    },
+    {
+      "op": "set_property",
+      "node_id": "hXndh+mpCVq8jDtt5x+HQw==",
+      "name": "Leaves:Size",
+      "component": "Variance",
+      "value": 0.38
+    },
+    {
+      "op": "set_property",
+      "node_id": "hXndh+mpCVq8jDtt5x+HQw==",
+      "name": "Leaves:Type:0:Material",
+      "component": "Value",
+      "value": 37
+    },
+    {
+      "op": "set_property",
+      "node_id": "hXndh+mpCVq8jDtt5x+HQw==",
+      "name": "Local Orientation:Fold",
+      "component": "Variance",
+      "value": 0.12
+    },
+    {
+      "op": "set_property",
+      "node_id": "hXndh+mpCVq8jDtt5x+HQw==",
+      "name": "Local Orientation:Align",
+      "component": "Value",
+      "value": 0.2
+    },
+    {
+      "op": "set_property",
+      "node_id": "hXndh+mpCVq8jDtt5x+HQw==",
+      "name": "Local Orientation:Face",
+      "component": "Variance",
+      "value": 0.2
+    }
+  ]
+}
